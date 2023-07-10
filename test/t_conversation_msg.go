@@ -1,11 +1,23 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package test
 
 import (
 	"encoding/json"
 	"fmt"
-	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
@@ -13,9 +25,13 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
-//func DotestSetConversationRecvMessageOpt() {
+//funcation DotestSetConversationRecvMessageOpt() {
 //	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
@@ -25,7 +41,7 @@ import (
 //	fmt.Println("SetConversationRecvMessageOpt", string(jsontest))
 //}
 //
-//func DoTestGetMultipleConversation() {
+//funcation DoTestGetMultipleConversation() {
 //	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
@@ -36,7 +52,7 @@ import (
 //	fmt.Println("GetMultipleConversation", string(jsontest))
 //}
 //
-//func DoTestGetConversationRecvMessageOpt() {
+//funcation DoTestGetConversationRecvMessageOpt() {
 //	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
@@ -68,16 +84,16 @@ func DoTestSearchLocalMessages() {
 	open_im_sdk.SearchLocalMessages(testSearchLocalMessagesCallBack, testSearchLocalMessagesCallBack.OperationID, utils.StructToJsonString(params))
 }
 
-func DoTestGetHistoryMessage(userID string) {
-	var testGetHistoryCallBack GetHistoryCallBack
-	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
-	var params sdk_params_callback.GetHistoryMessageListParams
-	params.UserID = userID
-	params.ConversationID = "super_group_3907826375"
-	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
-	params.Count = 10
-	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
-}
+//	funcation DoTestGetHistoryMessage(userID string) {
+//		var testGetHistoryCallBack GetHistoryCallBack
+//		testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+//		var params sdk_params_callback.GetHistoryMessageListParams
+//		params.UserID = userID
+//		params.ConversationID = "super_group_3907826375"
+//		//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
+//		params.Count = 10
+//		open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+//	}
 func DoTestFindMessageList() {
 	var testFindMessageListCallBack FindMessageListCallBack
 	testFindMessageListCallBack.OperationID = utils.OperationIDGenerator()
@@ -104,8 +120,8 @@ func DoTestSetMessageReactionExtensions() {
 	s.GroupID = "1420026997"
 	s.ClientMsgID = "831c270ae1d7472dc633e7be06b37db5"
 	//params = append(params, &temp1)
-	open_im_sdk.SetMessageReactionExtensions(testSetMessageReactionExtensionsCallBack, testSetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
-		utils.StructToJsonString(params))
+	// open_im_sdk.SetMessageReactionExtensions(testSetMessageReactionExtensionsCallBack, testSetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
+	// 	utils.StructToJsonString(params))
 }
 func DoTestAddMessageReactionExtensions(index int, operationID string) {
 	var testAddMessageReactionExtensionsCallBack AddMessageReactionExtensionsCallBack
@@ -124,8 +140,8 @@ func DoTestAddMessageReactionExtensions(index int, operationID string) {
 	s.GroupID = "1623878302774460418"
 	s.ClientMsgID = "7ca152a836a0f784c07a3b74d4e2a97d"
 	//params = append(params, &temp1)
-	open_im_sdk.AddMessageReactionExtensions(testAddMessageReactionExtensionsCallBack, testAddMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
-		utils.StructToJsonString(params))
+	// open_im_sdk.AddMessageReactionExtensions(testAddMessageReactionExtensionsCallBack, testAddMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
+	// 	utils.StructToJsonString(params))
 }
 func DoTestGetMessageListReactionExtensions(operationID string) {
 	var testGetMessageReactionExtensionsCallBack GetMessageListReactionExtensionsCallBack
@@ -143,7 +159,7 @@ func DoTestGetMessageListReactionExtensions(operationID string) {
 	ss = append(ss, s)
 	ss = append(ss, s1)
 	//params = append(params, &temp1)
-	open_im_sdk.GetMessageListReactionExtensions(testGetMessageReactionExtensionsCallBack, testGetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(ss))
+	// open_im_sdk.GetMessageListReactionExtensions(testGetMessageReactionExtensionsCallBack, testGetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(ss))
 }
 func DoTestUpdateFcmToken() {
 	var testUpdateFcmTokenCallBack UpdateFcmTokenCallBack
@@ -161,32 +177,24 @@ func DoTestGetAdvancedHistoryMessageList() {
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
 	params.UserID = ""
-	params.ConversationID = "super_group_1420026997"
+	params.ConversationID = "si_7788_7789"
 	//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
-	params.Count = 3
+	params.Count = 20
 	//params.LastMinSeq = seq
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
-func DoTestGetHistoryMessageReverse(userID string) {
-	var testGetHistoryReverseCallBack GetHistoryReverseCallBack
-	testGetHistoryReverseCallBack.OperationID = utils.OperationIDGenerator()
-	var params sdk_params_callback.GetHistoryMessageListParams
-	params.UserID = userID
-	params.Count = 10
-	params.ConversationID = "single_707008149"
-	params.StartClientMsgID = "d40dde77f29b14d3a16ca6f422776890"
-	open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
-}
-func DoTestGetGroupHistoryMessage() {
-	var testGetHistoryCallBack GetHistoryCallBack
-	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
-	var params sdk_params_callback.GetHistoryMessageListParams
-	params.GroupID = "cb7aaa8e5f83d92db2ed1573cd01870c"
-	params.Count = 10
-	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
-}
 
-//func DoTestGetGroupHistoryMessage() {
+//funcation DoTestGetHistoryMessageReverse(userID string) {
+//	var testGetHistoryReverseCallBack GetHistoryReverseCallBack
+//	testGetHistoryReverseCallBack.OperationID = utils.OperationIDGenerator()
+//	var params sdk_params_callback.GetHistoryMessageListParams
+//	params.UserID = userID
+//	params.Count = 10
+//	params.ConversationID = "single_707008149"
+//	params.StartClientMsgID = "d40dde77f29b14d3a16ca6f422776890"
+//	open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
+//}
+//funcation DoTestGetGroupHistoryMessage() {
 //	var testGetHistoryCallBack GetHistoryCallBack
 //	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 //	var params sdk_params_callback.GetHistoryMessageListParams
@@ -195,7 +203,16 @@ func DoTestGetGroupHistoryMessage() {
 //	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 //}
 
-//func DoTestDeleteConversation(conversationID string) {
+//funcation DoTestGetGroupHistoryMessage() {
+//	var testGetHistoryCallBack GetHistoryCallBack
+//	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+//	var params sdk_params_callback.GetHistoryMessageListParams
+//	params.GroupID = "cb7aaa8e5f83d92db2ed1573cd01870c"
+//	params.Count = 10
+//	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+//}
+
+//funcation DoTestDeleteConversation(conversationID string) {
 //	var testDeleteConversation DeleteConversationCallBack
 //	open_im_sdk.DeleteConversation(conversationID, testDeleteConversation)
 //
@@ -229,39 +246,10 @@ func (d DeleteMessageCallBack) GetMessage() string {
 	return d.Msg
 }
 
-func DoTestDeleteMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, message string) {
-	cb := &DeleteMessageCallBack{}
-	msg := server_api_params.MsgData{
-		SendID:           "",
-		RecvID:           "",
-		GroupID:          "",
-		ClientMsgID:      "",
-		ServerMsgID:      "",
-		SenderPlatformID: 0,
-		SenderNickname:   "",
-		SenderFaceURL:    "",
-		SessionType:      0,
-		MsgFrom:          0,
-		ContentType:      0,
-		Content:          nil,
-		Seq:              0,
-		SendTime:         0,
-		CreateTime:       0,
-		Status:           0,
-		Options:          nil,
-		OfflinePushInfo:  nil,
-		//XXX_NoUnkeyedLiteral: struct{}{},
-		//XXX_unrecognized:     nil,
-		//XXX_sizecache:        0,
-	}
-	operationID := utils.OperationIDGenerator()
-	open_im_sdk.DeleteMessageFromLocalAndSvr(cb, operationID, utils.StructToJsonString(msg))
-}
-
 func DoTestDeleteConversationMsgFromLocalAndSvr(conversationID string) {
 	cb := &DeleteMessageCallBack{}
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.DeleteConversationFromLocalAndSvr(cb, operationID, conversationID)
+	open_im_sdk.DeleteConversationAndDeleteAllMsg(cb, operationID, conversationID)
 }
 
 type TestGetAllConversationListCallBack struct {
@@ -314,28 +302,39 @@ func DoTestSetConversationRecvMessageOpt(conversationIDs []string, opt int) {
 	open_im_sdk.SetConversationRecvMessageOpt(callback, callback.OperationID, s, opt)
 }
 
+//func DoTestRevoke() {
+//	var callback testProcessGroupApplication
+//	open_im_sdk.RevokeMessage(callback, "si_3232515230_8650796072", utils.StructToJsonString(&sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
+//		ClientMsgID: "ebfe4e0aa11e7602de3dfe0670b484cd", Seq: 12, SendID: "8650796072", RecvID: "3232515230"}))
+//}
+
+func DoTestClearOneConversation() {
+	var callback testProcessGroupApplication
+	open_im_sdk.ClearConversationAndDeleteAllMsg(callback, "df", "si_2456093263_9169012630")
+}
+
 func DoTestSetConversationPinned(conversationID string, pin bool) {
 	var test TestSetConversationPinnedCallback
-	test.OperationID = utils.OperationIDGenerator()
+	test.OperationID = "testping"
 	open_im_sdk.PinConversation(test, test.OperationID, conversationID, pin)
-}
-
-func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool) {
-	var test TestSetConversationPinnedCallback
-	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationPrivateChat(test, test.OperationID, conversationID, privateChat)
-}
-
-func DoTestSetBurnDuration(conversationID string) {
-	var test TestSetConversationPinnedCallback
-	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationBurnDuration(test, test.OperationID, conversationID, 180)
 }
 
 func DoTestSetOneConversationRecvMessageOpt(conversationID string, opt int) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationRecvMessageOpt(test, test.OperationID, conversationID, opt)
+	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, conversationID, opt)
+}
+
+func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool) {
+	var test TestSetConversationPinnedCallback
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetConversationPrivateChat(test, test.OperationID, conversationID, privateChat)
+}
+
+func DoTestSetBurnDuration(conversationID string) {
+	var test TestSetConversationPinnedCallback
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetConversationBurnDuration(test, test.OperationID, conversationID, 300)
 }
 
 type TestGetConversationListSplitCallBack struct {
@@ -384,21 +383,9 @@ func (t TestGetConversationRecvMessageOpt) OnSuccess(data string) {
 	fmt.Printf("TestGetConversationRecvMessageOpt , success,data:%v\n", data)
 }
 
-//	func DoTestGetOneConversation(sourceID string, sessionType int) {
-//		var test TestGetOneConversationCallBack
-//		//GetOneConversation(Friend_uid, SingleChatType, test)
-//		open_im_sdk.GetOneConversation(sourceID, sessionType, test)
-//
-// }
 func DoTestCreateTextMessage(text string) string {
 	operationID := utils.OperationIDGenerator()
 	return open_im_sdk.CreateTextMessage(operationID, text)
-}
-
-func DoTestCreateTextMessageReliability(mgr *login.LoginMgr, text string) string {
-	operationID := utils.OperationIDGenerator()
-	return mgr.Conversation().CreateTextMessage(text, operationID)
-
 }
 
 func DoTestCreateImageMessageFromFullPath() string {
@@ -418,7 +405,7 @@ func DoTestCreateVideoMessageFromFullPath() string {
 	return open_im_sdk.CreateVideoMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4", "mp4", 5, "C:\\Users\\Administrator\\Desktop\\shot.jpg")
 }
 
-//	func DoTestSetConversationDraft() {
+//	funcation DoTestSetConversationDraft() {
 //		var test TestSetConversationDraft
 //		open_im_sdk.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
 //
@@ -547,6 +534,13 @@ func (g SearchLocalMessagesCallBack) OnSuccess(data string) {
 type MsgListenerCallBak struct {
 }
 
+func (m *MsgListenerCallBak) OnMsgDeleted(s string) {}
+
+func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
 	fmt.Printf("OnRecvMessageExtensionsAdded", msgID, reactionExtensionList)
 	log.Info("internal", "OnRecvMessageExtensionsAdded ", msgID, reactionExtensionList)
@@ -575,13 +569,16 @@ func (m *BatchMsg) OnRecvNewMessages(groupMsgReceiptList string) {
 	log.Info("OnRecvNewMessages , ", groupMsgReceiptList)
 }
 
+func (m *BatchMsg) OnRecvOfflineNewMessages(messageList string) {
+	log.Info("OnRecvOfflineNewMessages , ", messageList)
+}
+
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
 	if err != nil {
 		log.Error("", "Unmarshal failed", err.Error())
 	} else {
-		//		log.Info("", "recv time: ", time.Now().UnixNano(), "send_time: ", mm.SendTime, " client_msg_id: ", mm.ClientMsgID, "server_msg_id", mm.ServerMsgID)
 		RecvMsgMapLock.Lock()
 		defer RecvMsgMapLock.Unlock()
 		t := SendRecvTime{SendIDRecvID: mm.SendID + mm.RecvID, RecvTime: utils.GetCurrentTimestampByMill()}
@@ -602,7 +599,7 @@ func (t TestSearchLocalMessages) OnSuccess(data string) {
 	log.Info(t.OperationID, "SearchLocalMessages , OnSuccess %v\n", data)
 }
 
-//func DoTestSearchLocalMessages() {
+//funcation DoTestSearchLocalMessages() {
 //	var t TestSearchLocalMessages
 //	operationID := utils.OperationIDGenerator()
 //	t.OperationID = operationID
@@ -625,13 +622,7 @@ func (t TestDeleteConversation) OnError(errCode int32, errMsg string) {
 func (t TestDeleteConversation) OnSuccess(data string) {
 	log.Info(t.OperationID, "TestDeleteConversation , OnSuccess %v\n", data)
 }
-func DoTestDeleteConversation() {
-	var t TestDeleteConversation
-	operationID := utils.OperationIDGenerator()
-	t.OperationID = operationID
-	conversationID := "single_17396220460"
-	open_im_sdk.DeleteConversation(t, operationID, conversationID)
-}
+
 func (m MsgListenerCallBak) OnRecvC2CReadReceipt(data string) {
 	fmt.Println("OnRecvC2CReadReceipt , ", data)
 }
@@ -693,7 +684,7 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 	fmt.Println("testMarkC2CMessageAsRead, OnError", code, msg)
 }
 
-//func DoTestMarkC2CMessageAsRead() {
+//funcation DoTestMarkC2CMessageAsRead() {
 //	var test testMarkC2CMessageAsRead
 //	readid := "2021-06-23 12:25:36-7eefe8fc74afd7c6adae6d0bc76929e90074d5bc-8522589345510912161"
 //	var xlist []string
@@ -735,7 +726,7 @@ func DoTestSendMsg2(sendId, recvID string) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
@@ -749,7 +740,7 @@ func DoTestSendMsg2Group(sendId, groupID string, index int) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
@@ -761,7 +752,7 @@ func DoTestSendMsg2GroupWithMessage(sendId, groupID string, message string) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
@@ -775,7 +766,7 @@ func DoTestSendMsg2c2c(sendId, recvID string, index int) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
@@ -793,38 +784,32 @@ func (t TestMarkGroupMessageAsRead) OnError(errCode int32, errMsg string) {
 func (t TestMarkGroupMessageAsRead) OnSuccess(data string) {
 	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnSuccess %v \n", data)
 }
-func DoTestMarkGroupMessageAsRead() {
-	groupID := "769129589"
-	msgIDList := []string{"b4602c5a9f261c3832f6513a21cf55d6"}
-	operationID := utils.OperationIDGenerator()
-	var testMarkGroupMessageAsRead TestMarkGroupMessageAsRead
-	testMarkGroupMessageAsRead.OperationID = operationID
-	open_im_sdk.MarkGroupMessageAsRead(&testMarkGroupMessageAsRead, operationID, groupID, utils.StructToJsonString(msgIDList))
-
-}
 
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
-	var mstruct sdk_struct.MsgStruct
-	_ = json.Unmarshal([]byte(s), &mstruct)
+	ctx := mcontext.NewCtx(operationID)
+	s, err := allLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
+	if err != nil {
+		log.Error(operationID, "CreateTextMessage", err)
+		return
+	}
 
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
 	testSendMsg.sendTime = utils.GetCurrentTimestampByMill()
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "title"
 	o.Desc = "desc"
 	testSendMsg.sendID = sendId
 	testSendMsg.recvID = recvID
 	testSendMsg.groupID = groupID
-	testSendMsg.msgID = mstruct.ClientMsgID
+	testSendMsg.msgID = s.ClientMsgID
 	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
 	if recvID != "" {
-		allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, "", &o)
 	} else {
-		allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, "", groupID, utils.StructToJsonString(o), operationID)
+		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, "", groupID, &o)
 	}
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
@@ -833,7 +818,7 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 }
 
 //
-//func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
+//funcation DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
 //	m := "test msg " + sendId + ":" + recvID + ":" + idx
 //	operationID := utils.OperationIDGenerator()
 //	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
@@ -859,24 +844,24 @@ func DoTestSendImageMsg(recvID string) {
 	s := DoTestCreateImageMessageFromFullPath()
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
 }
 
-func DotestUploadFile() {
-	operationID := utils.OperationIDGenerator()
-	var testSendMsg TestSendMsgCallBack
-	open_im_sdk.UploadFile(&testSendMsg, operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4")
-}
+//funcation DotestUploadFile() {
+//	operationID := utils.OperationIDGenerator()
+//	var testSendMsg TestSendMsgCallBack
+//	open_im_sdk.UploadFile(&testSendMsg, operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4")
+//}
 
 func DoTestSendOtherMsg(sendId, recvID string) {
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateOtherMessageFromFullPath()
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
@@ -887,7 +872,7 @@ func DoTestSendVideo(sendId, recvID string) {
 	s := DoTestCreateVideoMessageFromFullPath()
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	log.NewInfo(operationID, s)

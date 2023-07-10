@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package ws_local_server
 
 import (
@@ -70,7 +84,7 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 	c := sdk_struct.IMConfig{}
 	json.Unmarshal([]byte(config), &c)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if userWorker.InitSDK(c, &initcb, operationID) {
+	if userWorker.InitSDK(c, &initcb) {
 		//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", operationID})
 	} else {
 		//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), open_im_sdk.ErrCodeInitLogin, "init config failed", "", operationID})
@@ -154,7 +168,7 @@ func (wsRouter *WsFuncRouter) GetLoginStatus(input string, operationID string) {
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", int32ToString(int32(userWorker.GetLoginStatus())), operationID})
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) getMyLoginStatus() int32 {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, "", "", runFuncName(), nil) {
@@ -163,7 +177,7 @@ func (wsRouter *WsFuncRouter) getMyLoginStatus() int32 {
 	return userWorker.GetLoginStatus()
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) GetLoginUser(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {

@@ -1,6 +1,18 @@
-package model_struct
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-import "time"
+package model_struct
 
 //
 //message FriendInfo{
@@ -34,48 +46,48 @@ type LocalFriend struct {
 	OwnerUserID    string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
 	FriendUserID   string `gorm:"column:friend_user_id;primary_key;type:varchar(64)" json:"userID"`
 	Remark         string `gorm:"column:remark;type:varchar(255)" json:"remark"`
-	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
+	CreateTime     int64  `gorm:"column:create_time" json:"createTime"`
 	AddSource      int32  `gorm:"column:add_source" json:"addSource"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Nickname       string `gorm:"column:name;type:varchar;type:varchar(255)" json:"nickname"`
 	FaceURL        string `gorm:"column:face_url;type:varchar;type:varchar(255)" json:"faceURL"`
-	Gender         int32  `gorm:"column:gender" json:"gender"`
-	PhoneNumber    string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	Birth          uint32 `gorm:"column:birth" json:"birth"`
-	Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
-	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	//Gender         int32  `gorm:"column:gender" json:"gender"`
+	//PhoneNumber    string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
+	//Birth          uint32 `gorm:"column:birth" json:"birth"`
+	//Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
+	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
-//message FriendRequest{
-//string  FromUserID = 1;
-//string ToUserID = 2;
-//int32 HandleResult = 3;
-//string ReqMsg = 4;
-//int64 CreateTime = 5;
-//string HandlerUserID = 6;
-//string HandleMsg = 7;
-//int64 HandleTime = 8;
-//string Ex = 9;
-//}
-//open_im_sdk.FriendRequest == imdb.FriendRequest
+// message FriendRequest{
+// string  FromUserID = 1;
+// string ToUserID = 2;
+// int32 HandleResult = 3;
+// string ReqMsg = 4;
+// int64 CreateTime = 5;
+// string HandlerUserID = 6;
+// string HandleMsg = 7;
+// int64 HandleTime = 8;
+// string Ex = 9;
+// }
+// open_im_sdk.FriendRequest == imdb.FriendRequest
 type LocalFriendRequest struct {
 	FromUserID   string `gorm:"column:from_user_id;primary_key;type:varchar(64)" json:"fromUserID"`
 	FromNickname string `gorm:"column:from_nickname;type:varchar;type:varchar(255)" json:"fromNickname"`
 	FromFaceURL  string `gorm:"column:from_face_url;type:varchar;type:varchar(255)" json:"fromFaceURL"`
-	FromGender   int32  `gorm:"column:from_gender" json:"fromGender"`
+	//FromGender   int32  `gorm:"column:from_gender" json:"fromGender"`
 
 	ToUserID   string `gorm:"column:to_user_id;primary_key;type:varchar(64)" json:"toUserID"`
 	ToNickname string `gorm:"column:to_nickname;type:varchar;type:varchar(255)" json:"toNickname"`
 	ToFaceURL  string `gorm:"column:to_face_url;type:varchar;type:varchar(255)" json:"toFaceURL"`
-	ToGender   int32  `gorm:"column:to_gender" json:"toGender"`
+	//ToGender   int32  `gorm:"column:to_gender" json:"toGender"`
 
 	HandleResult  int32  `gorm:"column:handle_result" json:"handleResult"`
 	ReqMsg        string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
-	CreateTime    uint32 `gorm:"column:create_time" json:"createTime"`
+	CreateTime    int64  `gorm:"column:create_time" json:"createTime"`
 	HandlerUserID string `gorm:"column:handler_user_id;type:varchar(64)" json:"handlerUserID"`
 	HandleMsg     string `gorm:"column:handle_msg;type:varchar(255)" json:"handleMsg"`
-	HandleTime    uint32 `gorm:"column:handle_time" json:"handleTime"`
+	HandleTime    int64  `gorm:"column:handle_time" json:"handleTime"`
 	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 
 	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
@@ -84,7 +96,7 @@ type LocalFriendRequest struct {
 //message GroupInfo{
 //  string GroupID = 1;
 //  string GroupName = 2;
-//  string Notification = 3;
+//  string NotificationCmd = 3;
 //  string Introduction = 4;
 //  string FaceUrl = 5;
 //  string OwnerUserID = 6;
@@ -110,14 +122,12 @@ type LocalFriendRequest struct {
 //	)`
 
 type LocalGroup struct {
-	//`json:"operationID" binding:"required"`
-	//`protobuf:"bytes,1,opt,name=GroupID" json:"GroupID,omitempty"` `json:"operationID" binding:"required"`
 	GroupID                string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID" binding:"required"`
 	GroupName              string `gorm:"column:name;size:255" json:"groupName"`
 	Notification           string `gorm:"column:notification;type:varchar(255)" json:"notification"`
 	Introduction           string `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
 	FaceURL                string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	CreateTime             uint32 `gorm:"column:create_time" json:"createTime"`
+	CreateTime             int64  `gorm:"column:create_time" json:"createTime"`
 	Status                 int32  `gorm:"column:status" json:"status"`
 	CreatorUserID          string `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
 	GroupType              int32  `gorm:"column:group_type" json:"groupType"`
@@ -128,7 +138,7 @@ type LocalGroup struct {
 	NeedVerification       int32  `gorm:"column:need_verification"  json:"needVerification"`
 	LookMemberInfo         int32  `gorm:"column:look_member_info" json:"lookMemberInfo"`
 	ApplyMemberFriend      int32  `gorm:"column:apply_member_friend" json:"applyMemberFriend"`
-	NotificationUpdateTime uint32 `gorm:"column:notification_update_time" json:"notificationUpdateTime"`
+	NotificationUpdateTime int64  `gorm:"column:notification_update_time" json:"notificationUpdateTime"`
 	NotificationUserID     string `gorm:"column:notification_user_id;size:64" json:"notificationUserID"`
 }
 
@@ -159,33 +169,33 @@ type LocalGroupMember struct {
 	Nickname       string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
 	FaceURL        string `gorm:"column:user_group_face_url;type:varchar(255)" json:"faceURL"`
 	RoleLevel      int32  `gorm:"column:role_level" json:"roleLevel"`
-	JoinTime       uint32 `gorm:"column:join_time;index:index_join_time;" json:"joinTime"`
+	JoinTime       int64  `gorm:"column:join_time;index:index_join_time;" json:"joinTime"`
 	JoinSource     int32  `gorm:"column:join_source" json:"joinSource"`
 	InviterUserID  string `gorm:"column:inviter_user_id;size:64"  json:"inviterUserID"`
-	MuteEndTime    uint32 `gorm:"column:mute_end_time;default:0" json:"muteEndTime"`
+	MuteEndTime    int64  `gorm:"column:mute_end_time;default:0" json:"muteEndTime"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
-//message GroupRequest{
-//string UserID = 1;
-//string GroupID = 2;
-//string HandleResult = 3;
-//string ReqMsg = 4;
-//string  HandleMsg = 5;
-//int64 ReqTime = 6;
-//string HandleUserID = 7;
-//int64 HandleTime = 8;
-//string Ex = 9;
-//}open_im_sdk.GroupRequest == imdb.GroupRequest
+// message GroupRequest{
+// string UserID = 1;
+// string GroupID = 2;
+// string HandleResult = 3;
+// string ReqMsg = 4;
+// string  HandleMsg = 5;
+// int64 ReqTime = 6;
+// string HandleUserID = 7;
+// int64 HandleTime = 8;
+// string Ex = 9;
+// }open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalGroupRequest struct {
 	GroupID       string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
 	GroupName     string `gorm:"column:group_name;size:255" json:"groupName"`
 	Notification  string `gorm:"column:notification;type:varchar(255)" json:"notification"`
 	Introduction  string `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
 	GroupFaceURL  string `gorm:"column:face_url;type:varchar(255)" json:"groupFaceURL"`
-	CreateTime    uint32 `gorm:"column:create_time" json:"createTime"`
+	CreateTime    int64  `gorm:"column:create_time" json:"createTime"`
 	Status        int32  `gorm:"column:status" json:"status"`
 	CreatorUserID string `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
 	GroupType     int32  `gorm:"column:group_type" json:"groupType"`
@@ -195,63 +205,58 @@ type LocalGroupRequest struct {
 	UserID      string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
 	Nickname    string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
 	UserFaceURL string `gorm:"column:user_face_url;type:varchar(255)" json:"userFaceURL"`
-	Gender      int32  `gorm:"column:gender" json:"gender"`
+	//Gender      int32  `gorm:"column:gender" json:"gender"`
 
 	HandleResult  int32  `gorm:"column:handle_result" json:"handleResult"`
 	ReqMsg        string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
 	HandledMsg    string `gorm:"column:handle_msg;type:varchar(255)" json:"handledMsg"`
-	ReqTime       uint32 `gorm:"column:req_time" json:"reqTime"`
+	ReqTime       int64  `gorm:"column:req_time" json:"reqTime"`
 	HandleUserID  string `gorm:"column:handle_user_id;type:varchar(64)" json:"handleUserID"`
-	HandledTime   uint32 `gorm:"column:handle_time" json:"handledTime"`
+	HandledTime   int64  `gorm:"column:handle_time" json:"handledTime"`
 	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo  string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	JoinSource    int32  `gorm:"column:join_source" json:"joinSource"`
 	InviterUserID string `gorm:"column:inviter_user_id;size:64"  json:"inviterUserID"`
 }
 
-//string UserID = 1;
-//string Nickname = 2;
-//string FaceUrl = 3;
-//int32 Gender = 4;
-//string PhoneNumber = 5;
-//string Birth = 6;
-//string Email = 7;
-//string Ex = 8;
-//int64 CreateTime = 9;
-//int32 AppMangerLevel = 10;
-//open_im_sdk.User == imdb.User
+// string UserID = 1;
+// string Nickname = 2;
+// string FaceUrl = 3;
+// int32 Gender = 4;
+// string PhoneNumber = 5;
+// string Birth = 6;
+// string Email = 7;
+// string Ex = 8;
+// int64 CreateTime = 9;
+// int32 AppMangerLevel = 10;
+// open_im_sdk.User == imdb.User
 type LocalUser struct {
-	UserID           string    `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname         string    `gorm:"column:name;type:varchar(255)" json:"nickname"`
-	FaceURL          string    `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	Gender           int32     `gorm:"column:gender" json:"gender"`
-	PhoneNumber      string    `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	Birth            uint32    `gorm:"column:birth" json:"birth"`
-	Email            string    `gorm:"column:email;type:varchar(64)" json:"email"`
-	CreateTime       uint32    `gorm:"column:create_time" json:"createTime"`
-	AppMangerLevel   int32     `gorm:"column:app_manger_level" json:"-"`
-	Ex               string    `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo     string    `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-	GlobalRecvMsgOpt int32     `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
-	BirthTime        time.Time `gorm:"column:birth_time" json:"birthTime"`
+	UserID           string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname         string `gorm:"column:name;type:varchar(255)" json:"nickname"`
+	FaceURL          string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
+	AppMangerLevel   int32  `gorm:"column:app_manger_level" json:"-"`
+	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	GlobalRecvMsgOpt int32  `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
 }
 
-//message BlackInfo{
-//string OwnerUserID = 1;
-//int64 CreateTime = 2;
-//PublicUserInfo BlackUserInfo = 4;
-//int32 AddSource = 5;
-//string OperatorUserID = 6;
-//string Ex = 7;
-//}
+// message BlackInfo{
+// string OwnerUserID = 1;
+// int64 CreateTime = 2;
+// PublicUserInfo BlackUserInfo = 4;
+// int32 AddSource = 5;
+// string OperatorUserID = 6;
+// string Ex = 7;
+// }
 // open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID)
 type LocalBlack struct {
-	OwnerUserID    string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
-	BlockUserID    string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname       string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
-	FaceURL        string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	Gender         int32  `gorm:"column:gender" json:"gender"`
-	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
+	OwnerUserID string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
+	BlockUserID string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname    string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
+	FaceURL     string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	//Gender         int32  `gorm:"column:gender" json:"gender"`
+	CreateTime     int64  `gorm:"column:create_time" json:"createTime"`
 	AddSource      int32  `gorm:"column:add_source" json:"addSource"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
@@ -268,26 +273,41 @@ type LocalSeq struct {
 	MinSeq uint32 `gorm:"column:min_seq"`
 }
 
-//`create table if not exists  chat_log (
-//      client_msg_id char(64)   NOT NULL,
-//      server_msg_id char(64)   DEFAULT NULL,
-//	  send_id char(64)   NOT NULL ,
-//	  is_read int NOT NULL ,
-//	  seq INTEGER DEFAULT NULL ,
-//	  status int NOT NULL ,
-//	  session_type int NOT NULL ,
-//	  recv_id char(64)   NOT NULL ,
-//	  content_type int NOT NULL ,
-//      sender_face_url varchar(100) DEFAULT NULL,
-//      sender_nick_name varchar(64) DEFAULT NULL,
-//	  msg_from int NOT NULL ,
-//	  content varchar(1000)   NOT NULL ,
-//	  sender_platform_id int NOT NULL ,
-//	  send_time INTEGER DEFAULT NULL ,
-//	  create_time INTEGER  DEFAULT NULL,
-//      ex varchar(1024) DEFAULT NULL,
-//	  PRIMARY KEY (client_msg_id)
-//	)`
+// `create table if not exists  chat_log (
+//
+//	     client_msg_id char(64)   NOT NULL,
+//	     server_msg_id char(64)   DEFAULT NULL,
+//		  send_id char(64)   NOT NULL ,
+//		  is_read int NOT NULL ,
+//		  seq INTEGER DEFAULT NULL ,
+//		  status int NOT NULL ,
+//		  session_type int NOT NULL ,
+//		  recv_id char(64)   NOT NULL ,
+//		  content_type int NOT NULL ,
+//	     sender_face_url varchar(100) DEFAULT NULL,
+//	     sender_nick_name varchar(64) DEFAULT NULL,
+//		  msg_from int NOT NULL ,
+//		  content varchar(1000)   NOT NULL ,
+//		  sender_platform_id int NOT NULL ,
+//		  send_time INTEGER DEFAULT NULL ,
+//		  create_time INTEGER  DEFAULT NULL,
+//	     ex varchar(1024) DEFAULT NULL,
+//		  PRIMARY KEY (client_msg_id)
+//		)`
+
+// 删除会话，可能会话没有
+// 确认删除，告诉会话 ID
+// 清空聊天记录的发，会话有，但是聊天记录没有
+// DeleteMlessageFromlocalAndSvr
+// db
+
+// 不同的会话本地有一个单独的表，其中单聊的话也是这样，有一个单聊的表
+
+// 删除的话，先删除表，在删除本地的 seq ，最后清楚这个表。
+// 删除所有的消息的话，全部都是服务器来做，调用接口，然后客户端收到回调，然后删除本地的所有的信息。
+// 删除一条信息，删除最新的话，会话上有一条最新的消息，删除这条消息，会话上就没有消息了，此时显示的是第二条。
+// 和微信一样，我们 Go get error 分支，然后调用最新的 APi
+
 type LocalChatLog struct {
 	ClientMsgID          string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
 	ServerMsgID          string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
@@ -302,18 +322,19 @@ type LocalChatLog struct {
 	Content              string `gorm:"column:content;type:varchar(1000)" json:"content"`
 	IsRead               bool   `gorm:"column:is_read" json:"isRead"`
 	Status               int32  `gorm:"column:status" json:"status"`
-	Seq                  uint32 `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
+	Seq                  int64  `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
 	SendTime             int64  `gorm:"column:send_time;index:index_send_time;" json:"sendTime"`
 	CreateTime           int64  `gorm:"column:create_time" json:"createTime"`
 	AttachedInfo         string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                   string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	LocalEx              string `gorm:"column:local_ex;type:varchar(1024)" json:"localEx"`
 	IsReact              bool   `gorm:"column:is_react" json:"isReact"`
 	IsExternalExtensions bool   `gorm:"column:is_external_extensions" json:"isExternalExtensions"`
 	MsgFirstModifyTime   int64  `gorm:"column:msg_first_modify_time" json:"msgFirstModifyTime"`
 }
 
 type LocalErrChatLog struct {
-	Seq              uint32 `gorm:"column:seq;primary_key" json:"seq"`
+	Seq              int64  `gorm:"column:seq;primary_key" json:"seq"`
 	ClientMsgID      string `gorm:"column:client_msg_id;type:char(64)" json:"clientMsgID"`
 	ServerMsgID      string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
 	SendID           string `gorm:"column:send_id;type:char(64)" json:"sendID"`
@@ -346,29 +367,31 @@ type TempCacheLocalChatLog struct {
 	Content          string `gorm:"column:content;type:varchar(1000)" json:"content"`
 	IsRead           bool   `gorm:"column:is_read" json:"isRead"`
 	Status           int32  `gorm:"column:status" json:"status"`
-	Seq              uint32 `gorm:"column:seq;default:0" json:"seq"`
+	Seq              int64  `gorm:"column:seq;default:0" json:"seq"`
 	SendTime         int64  `gorm:"column:send_time;" json:"sendTime"`
 	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
 	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
-//`create table if not exists  conversation (
-//  conversation_id char(128) NOT NULL,
-//  conversation_type int(11) NOT NULL,
-//  user_id varchar(128)  DEFAULT NULL,
-//  group_id varchar(128)  DEFAULT NULL,
-//  show_name varchar(128)  NOT NULL,
-//  face_url varchar(128)  NOT NULL,
-//  recv_msg_opt int(11) NOT NULL ,
-//  unread_count int(11) NOT NULL ,
-//  latest_msg varchar(255)  NOT NULL ,
-//  latest_msg_send_time INTEGER(255)  NOT NULL ,
-//  draft_text varchar(255)  DEFAULT NULL ,
-//  draft_timestamp INTEGER(255)  DEFAULT NULL ,
-//  is_pinned int(10) NOT NULL ,
-//  PRIMARY KEY (conversation_id)
-//)
+// `create table if not exists  conversation (
+//
+//	conversation_id char(128) NOT NULL,
+//	conversation_type int(11) NOT NULL,
+//	user_id varchar(128)  DEFAULT NULL,
+//	group_id varchar(128)  DEFAULT NULL,
+//	show_name varchar(128)  NOT NULL,
+//	face_url varchar(128)  NOT NULL,
+//	recv_msg_opt int(11) NOT NULL ,
+//	unread_count int(11) NOT NULL ,
+//	latest_msg varchar(255)  NOT NULL ,
+//	latest_msg_send_time INTEGER(255)  NOT NULL ,
+//	draft_text varchar(255)  DEFAULT NULL ,
+//	draft_timestamp INTEGER(255)  DEFAULT NULL ,
+//	is_pinned int(10) NOT NULL ,
+//	PRIMARY KEY (conversation_id)
+//
+// )
 type LocalConversation struct {
 	ConversationID        string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
 	ConversationType      int32  `gorm:"column:conversation_type" json:"conversationType"`
@@ -390,6 +413,10 @@ type LocalConversation struct {
 	UpdateUnreadCountTime int64  `gorm:"column:update_unread_count_time" json:"updateUnreadCountTime"`
 	AttachedInfo          string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                    string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+
+	MaxSeq     int64 `gorm:"column:max_seq" json:"maxSeq"`
+	MinSeq     int64 `gorm:"column:min_seq" json:"minSeq"`
+	HasReadSeq int64 `gorm:"column:has_read_seq" json:"hasReadSeq"`
 }
 type LocalConversationUnreadMessage struct {
 	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
@@ -398,61 +425,61 @@ type LocalConversationUnreadMessage struct {
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
-//message GroupRequest{
-//string UserID = 1;
-//string GroupID = 2;
-//string HandleResult = 3;
-//string ReqMsg = 4;
-//string  HandleMsg = 5;
-//int64 ReqTime = 6;
-//string HandleUserID = 7;
-//int64 HandleTime = 8;
-//string Ex = 9;
-//}open_im_sdk.GroupRequest == imdb.GroupRequest
+// message GroupRequest{
+// string UserID = 1;
+// string GroupID = 2;
+// string HandleResult = 3;
+// string ReqMsg = 4;
+// string  HandleMsg = 5;
+// int64 ReqTime = 6;
+// string HandleUserID = 7;
+// int64 HandleTime = 8;
+// string Ex = 9;
+// }open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalAdminGroupRequest struct {
 	LocalGroupRequest
 }
 
-type LocalDepartment struct {
-	DepartmentID     string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
-	FaceURL          string `gorm:"column:face_url;size:255" json:"faceURL"`
-	Name             string `gorm:"column:name;size:256" json:"name" binding:"required"`
-	ParentID         string `gorm:"column:parent_id;size:64" json:"parentID" binding:"required"` // "0" or Real parent id
-	Order            int32  `gorm:"column:order_department" json:"order" `                       // 1, 2, ...
-	DepartmentType   int32  `gorm:"column:department_type" json:"departmentType"`                //1, 2...
-	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
-	SubDepartmentNum uint32 `gorm:"column:sub_department_num" json:"subDepartmentNum"`
-	MemberNum        uint32 `gorm:"column:member_num" json:"memberNum"`
-	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-}
-
-type LocalDepartmentMember struct {
-	UserID      string `gorm:"column:user_id;primary_key;size:64" json:"userID"`
-	Nickname    string `gorm:"column:nickname;size:256" json:"nickname"`
-	EnglishName string `gorm:"column:english_name;size:256" json:"englishName"`
-	FaceURL     string `gorm:"column:face_url;size:256" json:"faceURL"`
-	Gender      int32  `gorm:"column:gender" json:"gender"` //1 ,2
-	Mobile      string `gorm:"column:mobile;size:32" json:"mobile"`
-	Telephone   string `gorm:"column:telephone;size:32" json:"telephone"`
-	Birth       uint32 `gorm:"column:birth" json:"birth"`
-	Email       string `gorm:"column:email;size:64" json:"email"`
-
-	DepartmentID string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
-	Order        int32  `gorm:"column:order_member" json:"order"` //1,2
-	Position     string `gorm:"column:position;size:256" json:"position"`
-	Leader       int32  `gorm:"column:leader" json:"leader"` //-1, 1
-	Status       int32  `gorm:"column:status" json:"status"` //-1, 1
-	CreateTime   uint32 `gorm:"column:create_time" json:"createTime"`
-	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-}
-
-type SearchDepartmentMemberResult struct {
-	LocalDepartmentMember
-	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
-}
 type LocalChatLogReactionExtensions struct {
 	ClientMsgID             string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
 	LocalReactionExtensions []byte `gorm:"column:local_reaction_extensions" json:"localReactionExtensions"`
+}
+type LocalWorkMomentsNotification struct {
+	JsonDetail string `gorm:"column:json_detail"`
+	CreateTime int64  `gorm:"create_time"`
+}
+
+type WorkMomentNotificationMsg struct {
+	NotificationMsgType int32  `json:"notificationMsgType"`
+	ReplyUserName       string `json:"replyUserName"`
+	ReplyUserID         string `json:"replyUserID"`
+	Content             string `json:"content"`
+	ContentID           string `json:"contentID"`
+	WorkMomentID        string `json:"workMomentID"`
+	UserID              string `json:"userID"`
+	UserName            string `json:"userName"`
+	FaceURL             string `json:"faceURL"`
+	WorkMomentContent   string `json:"workMomentContent"`
+	CreateTime          int32  `json:"createTime"`
+}
+
+func (LocalWorkMomentsNotification) TableName() string {
+	return "local_work_moments_notification"
+}
+
+type LocalWorkMomentsNotificationUnreadCount struct {
+	UnreadCount int `gorm:"unread_count" json:"unreadCount"`
+}
+
+func (LocalWorkMomentsNotificationUnreadCount) TableName() string {
+	return "local_work_moments_notification_unread_count"
+}
+
+type NotificationSeqs struct {
+	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	Seq            int64  `gorm:"column:seq" json:"seq"`
+}
+
+func (NotificationSeqs) TableName() string {
+	return "local_notification_seqs"
 }

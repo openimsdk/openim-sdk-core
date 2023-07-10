@@ -1,13 +1,28 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package common
 
 import (
-	"github.com/golang/protobuf/proto"
-	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/golang/protobuf/proto"
 )
 
-func UnmarshalTips(msg *api.MsgData, detail proto.Message) error {
-	var tips api.TipsComm
+func UnmarshalTips(msg *sdkws.MsgData, detail proto.Message) error {
+	var tips sdkws.TipsComm
 	if err := proto.Unmarshal(msg.Content, &tips); err != nil {
 		return utils.Wrap(err, "")
 	}

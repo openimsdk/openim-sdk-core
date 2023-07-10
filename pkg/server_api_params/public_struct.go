@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server_api_params
 
 import (
@@ -8,13 +22,8 @@ type ApiUserInfo struct {
 	UserID           string `json:"userID" binding:"required,min=1,max=64"`
 	Nickname         string `json:"nickname" binding:"omitempty,min=1,max=64"`
 	FaceURL          string `json:"faceURL" binding:"omitempty,max=1024"`
-	Gender           int32  `json:"gender" binding:"omitempty,oneof=0 1 2"`
-	PhoneNumber      string `json:"phoneNumber" binding:"omitempty,max=32"`
-	Birth            uint32 `json:"birth" binding:"omitempty"`
-	Email            string `json:"email" binding:"omitempty,max=64"`
 	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt" binding:"omitempty,oneof=0 1 2"`
 	Ex               string `json:"ex" binding:"omitempty,max=1024"`
-	BirthStr         string `json:"birthStr" binding:"omitempty"`
 }
 
 type GroupAddMemberInfo struct {
@@ -22,15 +31,23 @@ type GroupAddMemberInfo struct {
 	RoleLevel int32  `json:"roleLevel" validate:"required"`
 }
 
+type PublicUser struct {
+	UserID     string `json:"userID"`
+	Nickname   string `json:"nickname"`
+	FaceURL    string `json:"faceURL"`
+	Ex         string `json:"ex"`
+	CreateTime int64  `json:"createTime"`
+}
+
 type FullUserInfo struct {
-	PublicInfo *PublicUserInfo           `json:"publicInfo"`
+	PublicInfo *PublicUser               `json:"publicInfo"`
 	FriendInfo *model_struct.LocalFriend `json:"friendInfo"`
 	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
 
 //GroupName    string                `json:"groupName"`
 //	Introduction string                `json:"introduction"`
-//	Notification string                `json:"notification"`
+//	NotificationCmd string                `json:"notification"`
 //	FaceUrl      string                `json:"faceUrl"`
 //	OperationID  string                `json:"operationID" binding:"required"`
 //	GroupType    int32                 `json:"groupType"`
@@ -39,7 +56,7 @@ type FullUserInfo struct {
 //type GroupInfo struct {
 //	GroupID       string `json:"groupID"`
 //	GroupName     string `json:"groupName"`
-//	Notification  string `json:"notification"`
+//	NotificationCmd  string `json:"notification"`
 //	Introduction  string `json:"introduction"`
 //	FaceUrl       string `json:"faceUrl"`
 //	OwnerUserID   string `json:"ownerUserID"`

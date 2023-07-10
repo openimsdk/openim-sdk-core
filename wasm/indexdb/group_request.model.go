@@ -1,4 +1,23 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build js && wasm
+// +build js,wasm
+
 package indexdb
+
+import "context"
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
@@ -8,22 +27,26 @@ import (
 type LocalGroupRequest struct {
 }
 
-func (i *LocalGroupRequest) InsertGroupRequest(groupRequest *model_struct.LocalGroupRequest) error {
+func NewLocalGroupRequest() *LocalGroupRequest {
+	return &LocalGroupRequest{}
+}
+
+func (i *LocalGroupRequest) InsertGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i *LocalGroupRequest) DeleteGroupRequest(groupID, userID string) error {
+func (i *LocalGroupRequest) DeleteGroupRequest(ctx context.Context, groupID, userID string) error {
 	_, err := Exec(groupID, userID)
 	return err
 }
 
-func (i *LocalGroupRequest) UpdateGroupRequest(groupRequest *model_struct.LocalGroupRequest) error {
+func (i *LocalGroupRequest) UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i *LocalGroupRequest) GetSendGroupApplication() ([]*model_struct.LocalGroupRequest, error) {
+func (i *LocalGroupRequest) GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error) {
 	result, err := Exec()
 	if err != nil {
 		return nil, err
@@ -39,22 +62,22 @@ func (i *LocalGroupRequest) GetSendGroupApplication() ([]*model_struct.LocalGrou
 	}
 }
 
-func (i IndexDB) InsertAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
+func (i *LocalGroupRequest) InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i IndexDB) DeleteAdminGroupRequest(groupID, userID string) error {
+func (i *LocalGroupRequest) DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error {
 	_, err := Exec(groupID, userID)
 	return err
 }
 
-func (i IndexDB) UpdateAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
+func (i *LocalGroupRequest) UpdateAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i IndexDB) GetAdminGroupApplication() ([]*model_struct.LocalAdminGroupRequest, error) {
+func (i *LocalGroupRequest) GetAdminGroupApplication(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
 	result, err := Exec()
 	if err != nil {
 		return nil, err

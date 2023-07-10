@@ -1,13 +1,29 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package common
 
 import (
+	"context"
 	"errors"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"runtime"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
@@ -18,35 +34,31 @@ func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperG
 	return sendCmd(joinedSuperGroupCh, c2v, 100)
 }
 
-func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
+func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	if len(msg.MsgList) == 0 {
-		return nil
-	}
 
-	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
+	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg, Ctx: ctx}
 	return sendCmd(conversationCh, c2v, 100)
 }
+
 func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	//if len(msg.MsgList) == 0 {
-	//	return nil
-	//}
 
 	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdLogout(ch chan Cmd2Value) error {
-	if ch == nil {
+func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: nil}
-	return sendCmd(ch, c2v, 100)
+
+	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
+	return sendCmd(conversationCh, c2v, 100)
 }
 
 func TriggerCmdWakeUp(ch chan Cmd2Value) error {
@@ -80,37 +92,60 @@ func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversat
 
 	return sendCmd(conversationCh, c2v, 100)
 }
-func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Value) error {
+
+func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conversationCh chan<- Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
 		Value: node,
+		Ctx:   ctx,
 	}
 
 	return sendCmd(conversationCh, c2v, 100)
 }
-func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Value) error {
+
+func TriggerCmdUpdateMessage(ctx context.Context, node UpdateMessageNode, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateMessage,
 		Value: node,
+		Ctx:   ctx,
 	}
 
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) error {
+// Push message, msg for msgData slice
+func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 
-	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg}
+	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
 }
 
-func TriggerCmdMaxSeq(seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
+// seq trigger
+func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq}
+	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq, Ctx: ctx}
+	return sendCmd(ch, c2v, 100)
+}
+
+func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
+	if ch == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdLogOut, Ctx: ctx}
+	return sendCmd(ch, c2v, 100)
+}
+
+// Connection success trigger
+func TriggerCmdConnected(ctx context.Context, ch chan Cmd2Value) error {
+	if ch == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdConnSuccesss, Value: nil, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
 }
 
@@ -138,8 +173,12 @@ type UpdateMessageNode struct {
 type Cmd2Value struct {
 	Cmd   string
 	Value interface{}
+	Ctx   context.Context
 }
-
+type UpdateConInfo struct {
+	UserID  string
+	GroupID string
+}
 type UpdateMessageInfo struct {
 	UserID   string
 	FaceURL  string
@@ -150,6 +189,8 @@ type UpdateMessageInfo struct {
 type SourceIDAndSessionType struct {
 	SourceID    string
 	SessionType int
+	FaceURL     string
+	Nickname    string
 }
 
 func UnInitAll(conversationCh chan Cmd2Value) error {
@@ -160,35 +201,27 @@ func UnInitAll(conversationCh chan Cmd2Value) error {
 type goroutine interface {
 	Work(cmd Cmd2Value)
 	GetCh() chan Cmd2Value
+	//GetContext() context.Context
 }
 
-func DoListener(Li goroutine) {
-	log.Info("internal", "doListener start.", Li.GetCh())
+func DoListener(Li goroutine, ctx context.Context) {
 	for {
 		select {
 		case cmd := <-Li.GetCh():
-			if cmd.Cmd == constant.CmdUnInit {
-				log.Warn("", "close doListener channel ", Li.GetCh())
-				//	close(Li.GetCh())
-				runtime.Goexit()
-			}
-			//	log.Info("doListener work.")
 			Li.Work(cmd)
+		case <-ctx.Done():
+			log.ZInfo(ctx, "conversation done sdk logout.....")
+			return
 		}
 	}
+
 }
 
-func sendCmd(ch chan Cmd2Value, value Cmd2Value, timeout int64) error {
-	var flag = 0
+func sendCmd(ch chan<- Cmd2Value, value Cmd2Value, timeout int64) error {
 	select {
 	case ch <- value:
-		flag = 1
-	case <-time.After(time.Millisecond * time.Duration(timeout)):
-		flag = 2
-	}
-	if flag == 1 {
 		return nil
-	} else {
+	case <-time.After(time.Millisecond * time.Duration(timeout)):
 		return errors.New("send cmd timeout")
 	}
 }

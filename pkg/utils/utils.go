@@ -1,15 +1,34 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package utils
 
 import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/sdk_struct"
+	"open_im_sdk/ws_wrapper/utils"
+	"sort"
+
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"open_im_sdk/pkg/constant"
+
+	"reflect"
 
 	"github.com/pkg/errors"
-	"reflect"
 
 	"math/rand"
 	"runtime"
@@ -38,23 +57,26 @@ func GetCurrentTimestampBySecond() int64 {
 	return time.Now().Unix()
 }
 
-//Get the current timestamp by Mill
+// Get the current timestamp by Mill
 func GetCurrentTimestampByMill() int64 {
 	return time.Now().UnixNano() / 1e6
 }
 
-//Convert nano timestamp to time.Time type
+// Convert nano timestamp to time.Time type
 func UnixNanoSecondToTime(nanoSecond int64) time.Time {
 	return time.Unix(0, nanoSecond)
 }
 
-//Get the current timestamp by Nano
+// Get the current timestamp by Nano
 func GetCurrentTimestampByNano() int64 {
 	return time.Now().UnixNano()
 }
 
 func StructToJsonString(param interface{}) string {
-	dataType, _ := json.Marshal(param)
+	dataType, err := json.Marshal(param)
+	if err != nil {
+		panic(err)
+	}
 	dataString := string(dataType)
 	return dataString
 }
@@ -66,7 +88,7 @@ func StructToJsonStringDefault(param interface{}) string {
 	return StructToJsonString(param)
 }
 
-//The incoming parameter must be a pointer
+// The incoming parameter must be a pointer
 func JsonStringToStruct(s string, args interface{}) error {
 	return Wrap(json.Unmarshal([]byte(s), args), "json Unmarshal failed")
 }
@@ -118,7 +140,7 @@ func LogBegin(v ...interface{}) {
 	//fname := runtime.FuncForPC(pc).Name()
 	//i := strings.LastIndex(b, "/")
 	//if i != -1 {
-	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func begin, args: ", v)
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call funcation begin, args: ", v)
 	//}
 }
 
@@ -134,7 +156,7 @@ func LogEnd(v ...interface{}) {
 	//fname := runtime.FuncForPC(pc).Name()
 	//i := strings.LastIndex(b, "/")
 	//if i != -1 {
-	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func end, args: ", v)
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call funcation end, args: ", v)
 	//}
 }
 
@@ -150,7 +172,7 @@ func LogStart(v ...interface{}) {
 	//fname := runtime.FuncForPC(pc).Name()
 	//i := strings.LastIndex(b, "/")
 	//if i != -1 {
-	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "func start, args: ", v)
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "funcation start, args: ", v)
 	//}
 }
 
@@ -207,7 +229,7 @@ type LogInfo struct {
 	Info string `json:"info"`
 }
 
-//judge a string whether in the  string list
+// judge a string whether in the  string list
 func IsContain(target string, List []string) bool {
 
 	for _, element := range List {
@@ -293,24 +315,43 @@ func StructToMap(user interface{}) map[string]interface{} {
 	json.Unmarshal(data, &m)
 	return m
 }
-func GetConversationIDBySessionType(sourceID string, sessionType int) string {
-	switch sessionType {
+
+//	funcation GetConversationIDBySessionType(sourceID string, sessionType int) string {
+//		switch sessionType {
+//		case constant.SingleChatType:
+//			return "single_" + sourceID
+//		case constant.GroupChatType:
+//			return "group_" + sourceID
+//		case constant.SuperGroupChatType:
+//			return "super_group_" + sourceID
+//		case constant.NotificationChatType:
+//			return "notification_" + sourceID
+//		}
+//		return ""
+//	}
+func GetConversationIDByMsg(msg *sdk_struct.MsgStruct) string {
+	switch msg.SessionType {
 	case constant.SingleChatType:
-		return "single_" + sourceID
+		l := []string{msg.SendID, msg.RecvID}
+		sort.Strings(l)
+		return "si_" + strings.Join(l, "_") // single chat
 	case constant.GroupChatType:
-		return "group_" + sourceID
+		return "g_" + msg.GroupID // group chat
 	case constant.SuperGroupChatType:
-		return "super_group_" + sourceID
+		return "sg_" + msg.GroupID // super group chat
 	case constant.NotificationChatType:
-		return "notification_" + sourceID
+		return "sn_" + msg.SendID + "_" + msg.RecvID // server notification chat
 	}
 	return ""
 }
-func GetSuperGroupTableName(groupID string) string {
-	return constant.SuperGroupChatLogsTableNamePre + groupID
+func GetConversationTableName(conversationID string) string {
+	return constant.ChatLogsTableNamePre + conversationID
 }
-func GetErrSuperGroupTableName(groupID string) string {
-	return constant.SuperGroupErrChatLogsTableNamePre + groupID
+func GetTableName(conversationID string) string {
+	return constant.ChatLogsTableNamePre + conversationID
+}
+func GetErrTableName(conversationID string) string {
+	return constant.SuperGroupErrChatLogsTableNamePre + conversationID
 }
 func RemoveRepeatedStringInList(slc []string) []string {
 	var result []string
@@ -325,9 +366,11 @@ func RemoveRepeatedStringInList(slc []string) []string {
 	return result
 }
 
-/**
+/*
+*
 KMP
-**/
+*
+*/
 func KMP(rMainString string, rSubString string) (isInMainString bool) {
 	mainString := strings.ToLower(rMainString)
 	subString := strings.ToLower(rSubString)
@@ -392,10 +435,10 @@ func TrimStringList(list []string) (result []string) {
 
 }
 
-//Get the intersection of two slices
-func Intersect(slice1, slice2 []uint32) []uint32 {
-	m := make(map[uint32]bool)
-	n := make([]uint32, 0)
+// Get the intersection of two slices
+func Intersect(slice1, slice2 []int64) []int64 {
+	m := make(map[int64]bool)
+	n := make([]int64, 0)
 	for _, v := range slice1 {
 		m[v] = true
 	}
@@ -408,10 +451,10 @@ func Intersect(slice1, slice2 []uint32) []uint32 {
 	return n
 }
 
-//Get the diff of two slices
-func DifferenceSubset(mainSlice, subSlice []uint32) []uint32 {
-	m := make(map[uint32]bool)
-	n := make([]uint32, 0)
+// Get the diff of two slices
+func DifferenceSubset(mainSlice, subSlice []int64) []int64 {
+	m := make(map[int64]bool)
+	n := make([]int64, 0)
 	for _, v := range subSlice {
 		m[v] = true
 	}
@@ -463,4 +506,33 @@ func GetUserIDForMinSeq(userID string) string {
 
 func GetGroupIDForMinSeq(groupID string) string {
 	return "g_" + groupID
+}
+
+func TimeStringToTime(timeString string) (time.Time, error) {
+	t, err := time.Parse("2006-01-02", timeString)
+	return t, err
+}
+
+func TimeToString(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+func Uint32ListConvert(list []uint32) []int64 {
+	var result []int64
+	for _, v := range list {
+		result = append(result, int64(v))
+	}
+	return result
+}
+
+func UnmarshalNotificationElem(bytes []byte, t interface{}) error {
+	var n sdk_struct.NotificationElem
+	err := utils.JsonStringToStruct(string(bytes), &n)
+	if err != nil {
+		return err
+	}
+	err = utils.JsonStringToStruct(n.Detail, t)
+	if err != nil {
+		return err
+	}
+	return nil
 }

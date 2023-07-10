@@ -1,4 +1,23 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build js && wasm
+// +build js,wasm
+
 package indexdb
+
+import "context"
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
@@ -7,23 +26,27 @@ import (
 
 type LocalGroups struct{}
 
-func (i *LocalGroups) InsertGroup(groupInfo *model_struct.LocalGroup) error {
+func NewLocalGroups() *LocalGroups {
+	return &LocalGroups{}
+}
+
+func (i *LocalGroups) InsertGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	_, err := Exec(utils.StructToJsonString(groupInfo))
 	return err
 }
 
-func (i *LocalGroups) DeleteGroup(groupID string) error {
+func (i *LocalGroups) DeleteGroup(ctx context.Context, groupID string) error {
 	_, err := Exec(groupID)
 	return err
 }
 
-//该函数需要全更新
-func (i *LocalGroups) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
+// 该函数需要全更新
+func (i *LocalGroups) UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	_, err := Exec(groupInfo.GroupID, utils.StructToJsonString(groupInfo))
 	return err
 }
 
-func (i *LocalGroups) GetJoinedGroupListDB() (result []*model_struct.LocalGroup, err error) {
+func (i *LocalGroups) GetJoinedGroupListDB(ctx context.Context) (result []*model_struct.LocalGroup, err error) {
 	gList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -45,7 +68,7 @@ func (i *LocalGroups) GetJoinedGroupListDB() (result []*model_struct.LocalGroup,
 	}
 }
 
-func (i *LocalGroups) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
+func (i *LocalGroups) GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
 	c, err := Exec(groupID)
 	if err != nil {
 		return nil, err
@@ -63,7 +86,7 @@ func (i *LocalGroups) GetGroupInfoByGroupID(groupID string) (*model_struct.Local
 	}
 }
 
-func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) (result []*model_struct.LocalGroup, err error) {
+func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) (result []*model_struct.LocalGroup, err error) {
 	gList, err := Exec(keyword, isSearchGroupID, isSearchGroupName)
 	if err != nil {
 		return nil, err
@@ -85,12 +108,28 @@ func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSear
 	}
 }
 
-func (i *LocalGroups) AddMemberCount(groupID string) error {
+func (i *LocalGroups) AddMemberCount(ctx context.Context, groupID string) error {
 	_, err := Exec(groupID)
 	return err
 }
 
-func (i *LocalGroups) SubtractMemberCount(groupID string) error {
+func (i *LocalGroups) SubtractMemberCount(ctx context.Context, groupID string) error {
 	_, err := Exec(groupID)
 	return err
+}
+func (i *LocalGroups) GetGroupMemberAllGroupIDs(ctx context.Context) (result []string, err error) {
+	groupIDList, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := groupIDList.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
