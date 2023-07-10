@@ -24,7 +24,7 @@ import (
 
 var allDB []*db.DataBase
 
-//func TestDB(loginUserID string) {
+//funcation TestDB(loginUserID string) {
 //	operationID := utils.OperationIDGenerator()
 //	dbUser, err := db.NewDataBase(loginUserID, "/data/test/Open-IM-Server/db/sdk/", operationID)
 //	if err != nil {
@@ -96,7 +96,7 @@ func main() {
 	strMyUidx := "3370431052"
 	tokenx := test.RunGetToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
-	//go func() {
+	//go funcation() {
 	//	time.Sleep(2 * time.Second)
 	//	test.InOutLogou()
 	//}()
@@ -157,7 +157,7 @@ func main() {
 }
 
 //
-//func main() {
+//funcation main() {
 //	testClientNum := 100
 //	intervalSleep := 2
 //	imIP := "43.128.5.63"
@@ -183,7 +183,7 @@ func main() {
 //
 //}
 
-//func printCallerNameAndLine() string {
+//funcation printCallerNameAndLine() string {
 //	pc, _, line, _ := runtime.Caller(2)
 //	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
 //}

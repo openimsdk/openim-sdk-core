@@ -31,7 +31,7 @@ import (
 )
 
 //// deprecated use CreateGroup
-//func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
+//funcation (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
 //	req := &group.CreateGroupReq{
 //		GroupInfo: &sdkws.GroupInfo{
 //			GroupName:    groupBaseInfo.GroupName,
@@ -222,7 +222,7 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 	return groups, nil
 }
 
-//func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
+//funcation (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
 //	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
 //		GroupID:          groupID,
 //		GroupName:        groupInfo.GroupName,
@@ -258,7 +258,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 }
 
 func (g *Group) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
-	return g.db.GetGroupMemberOwnerAndAdmin(ctx, groupID)
+	return g.db.GetGroupMemberOwnerAndAdminDB(ctx, groupID)
 }
 
 func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, userIDs []string) ([]*model_struct.LocalGroupMember, error) {

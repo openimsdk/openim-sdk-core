@@ -29,7 +29,7 @@ import (
 const COMMONEVENTFUNC = "commonEventFunc"
 
 var ErrArgsLength = errors.New("from javascript args length err")
-var ErrFunNameNotSet = errors.New("reflect func not to set")
+var ErrFunNameNotSet = errors.New("reflect funcation not to set")
 
 type SetListener struct {
 	*WrapperCommon
@@ -69,8 +69,8 @@ func (s *SetListener) setUserListener() {
 }
 
 func (s *SetListener) setSignalingListener() {
-	callback := event_listener.NewSignalingCallback(s.commonFunc)
-	open_im_sdk.SetSignalingListener(callback)
+	//callback := event_listener.NewSignalingCallback(s.commonFunc)
+	//open_im_sdk.SetSignalingListener(callback)
 }
 
 func (s *SetListener) SetAllListener() {

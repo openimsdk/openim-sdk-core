@@ -22,11 +22,14 @@ import (
 var LogLevel uint32 = 6
 var PlatformID = int32(2)
 var LogName = ""
+var IsLogStandardOutput = true
+var LogFilePath = ""
 
 var ReliabilityUserA = 1234567
 var ReliabilityUserB = 1234567
 var (
-	TESTIP = "121.5.182.23"
+	//TESTIP = "121.5.182.23"
+	TESTIP = "59.36.173.89"
 	//TESTIP              = "121.37.25.71"
 
 	//TESTIP  = "open-im-test.rentsoft.cn"
@@ -35,7 +38,7 @@ var (
 	WSADDR              = "ws://" + TESTIP + ":10001"
 	REGISTERADDR        = APIADDR + "/auth/user_register"
 	TOKENADDR           = APIADDR + "/auth/user_token"
-	SECRET              = "tuoyuntuoyun"
+	SECRET              = "tuoyun"
 	SENDINTERVAL        = 20
 	GETSELFUSERINFO     = APIADDR + "/user/get_self_user_info"
 	CREATEGROUP         = APIADDR + constant.CreateGroupRouter
@@ -65,3 +68,8 @@ var msgNumInOneClient = 0
 var sendMsgClient = 0
 
 var MaxNumGoroutine = 100000
+
+// 常量
+var (
+	RELIABILITY = "reliability_"
+)

@@ -153,7 +153,7 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 	if len(users) > 0 {
 		return users[0], nil
 	}
-	return nil, sdkerrs.ErrRecordNotFound.Wrap(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
+	return nil, sdkerrs.ErrUserIDNotFound.Wrap(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
 }
 
 // getSelfUserInfo retrieves the user's information.
@@ -165,9 +165,10 @@ func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 			return nil, errServer
 		}
 		if len(srvUserInfo) == 0 {
-			return nil, sdkerrs.ErrRecordNotFound
+			return nil, sdkerrs.ErrUserIDNotFound
 		}
 		userInfo = ServerUserToLocalUser(srvUserInfo[0])
+		_ = u.InsertLoginUser(ctx, userInfo)
 	}
 	return userInfo, nil
 }

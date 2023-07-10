@@ -31,7 +31,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
-//func DotestSetConversationRecvMessageOpt() {
+//funcation DotestSetConversationRecvMessageOpt() {
 //	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
@@ -41,7 +41,7 @@ import (
 //	fmt.Println("SetConversationRecvMessageOpt", string(jsontest))
 //}
 //
-//func DoTestGetMultipleConversation() {
+//funcation DoTestGetMultipleConversation() {
 //	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
@@ -52,7 +52,7 @@ import (
 //	fmt.Println("GetMultipleConversation", string(jsontest))
 //}
 //
-//func DoTestGetConversationRecvMessageOpt() {
+//funcation DoTestGetConversationRecvMessageOpt() {
 //	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
@@ -84,7 +84,7 @@ func DoTestSearchLocalMessages() {
 	open_im_sdk.SearchLocalMessages(testSearchLocalMessagesCallBack, testSearchLocalMessagesCallBack.OperationID, utils.StructToJsonString(params))
 }
 
-//	func DoTestGetHistoryMessage(userID string) {
+//	funcation DoTestGetHistoryMessage(userID string) {
 //		var testGetHistoryCallBack GetHistoryCallBack
 //		testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 //		var params sdk_params_callback.GetHistoryMessageListParams
@@ -184,7 +184,7 @@ func DoTestGetAdvancedHistoryMessageList() {
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
 
-//func DoTestGetHistoryMessageReverse(userID string) {
+//funcation DoTestGetHistoryMessageReverse(userID string) {
 //	var testGetHistoryReverseCallBack GetHistoryReverseCallBack
 //	testGetHistoryReverseCallBack.OperationID = utils.OperationIDGenerator()
 //	var params sdk_params_callback.GetHistoryMessageListParams
@@ -194,7 +194,7 @@ func DoTestGetAdvancedHistoryMessageList() {
 //	params.StartClientMsgID = "d40dde77f29b14d3a16ca6f422776890"
 //	open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
 //}
-//func DoTestGetGroupHistoryMessage() {
+//funcation DoTestGetGroupHistoryMessage() {
 //	var testGetHistoryCallBack GetHistoryCallBack
 //	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 //	var params sdk_params_callback.GetHistoryMessageListParams
@@ -203,7 +203,7 @@ func DoTestGetAdvancedHistoryMessageList() {
 //	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 //}
 
-//func DoTestGetGroupHistoryMessage() {
+//funcation DoTestGetGroupHistoryMessage() {
 //	var testGetHistoryCallBack GetHistoryCallBack
 //	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 //	var params sdk_params_callback.GetHistoryMessageListParams
@@ -212,7 +212,7 @@ func DoTestGetAdvancedHistoryMessageList() {
 //	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 //}
 
-//func DoTestDeleteConversation(conversationID string) {
+//funcation DoTestDeleteConversation(conversationID string) {
 //	var testDeleteConversation DeleteConversationCallBack
 //	open_im_sdk.DeleteConversation(conversationID, testDeleteConversation)
 //
@@ -302,11 +302,11 @@ func DoTestSetConversationRecvMessageOpt(conversationIDs []string, opt int) {
 	open_im_sdk.SetConversationRecvMessageOpt(callback, callback.OperationID, s, opt)
 }
 
-func DoTestRevoke() {
-	var callback testProcessGroupApplication
-	open_im_sdk.RevokeMessage(callback, "si_4222679462_9169012630", utils.StructToJsonString(&sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
-		ClientMsgID: "1c2080ec921bb5c5f7c67be02be1f312", Seq: 10, SendID: "9169012630", RecvID: "4222679462"}))
-}
+//func DoTestRevoke() {
+//	var callback testProcessGroupApplication
+//	open_im_sdk.RevokeMessage(callback, "si_3232515230_8650796072", utils.StructToJsonString(&sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
+//		ClientMsgID: "ebfe4e0aa11e7602de3dfe0670b484cd", Seq: 12, SendID: "8650796072", RecvID: "3232515230"}))
+//}
 
 func DoTestClearOneConversation() {
 	var callback testProcessGroupApplication
@@ -334,7 +334,13 @@ func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool
 func DoTestSetBurnDuration(conversationID string) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetConversationBurnDuration(test, test.OperationID, conversationID, 180)
+	open_im_sdk.SetConversationBurnDuration(test, test.OperationID, conversationID, 300)
+}
+
+func DoTestSetMsgDestructTime(conversationID string) {
+	var test TestSetConversationPinnedCallback
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetConversationMsgDestructTime(test, test.OperationID, conversationID, 30000)
 }
 
 type TestGetConversationListSplitCallBack struct {
@@ -405,7 +411,7 @@ func DoTestCreateVideoMessageFromFullPath() string {
 	return open_im_sdk.CreateVideoMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4", "mp4", 5, "C:\\Users\\Administrator\\Desktop\\shot.jpg")
 }
 
-//	func DoTestSetConversationDraft() {
+//	funcation DoTestSetConversationDraft() {
 //		var test TestSetConversationDraft
 //		open_im_sdk.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
 //
@@ -536,7 +542,7 @@ type MsgListenerCallBak struct {
 
 func (m *MsgListenerCallBak) OnMsgDeleted(s string) {}
 
-func (m *MsgListenerCallBak) OnRecvOfflineNewMessages(messageList string) {
+func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -599,7 +605,7 @@ func (t TestSearchLocalMessages) OnSuccess(data string) {
 	log.Info(t.OperationID, "SearchLocalMessages , OnSuccess %v\n", data)
 }
 
-//func DoTestSearchLocalMessages() {
+//funcation DoTestSearchLocalMessages() {
 //	var t TestSearchLocalMessages
 //	operationID := utils.OperationIDGenerator()
 //	t.OperationID = operationID
@@ -684,7 +690,7 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 	fmt.Println("testMarkC2CMessageAsRead, OnError", code, msg)
 }
 
-//func DoTestMarkC2CMessageAsRead() {
+//funcation DoTestMarkC2CMessageAsRead() {
 //	var test testMarkC2CMessageAsRead
 //	readid := "2021-06-23 12:25:36-7eefe8fc74afd7c6adae6d0bc76929e90074d5bc-8522589345510912161"
 //	var xlist []string
@@ -818,7 +824,7 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 }
 
 //
-//func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
+//funcation DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
 //	m := "test msg " + sendId + ":" + recvID + ":" + idx
 //	operationID := utils.OperationIDGenerator()
 //	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
@@ -850,7 +856,7 @@ func DoTestSendImageMsg(recvID string) {
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
 }
 
-//func DotestUploadFile() {
+//funcation DotestUploadFile() {
 //	operationID := utils.OperationIDGenerator()
 //	var testSendMsg TestSendMsgCallBack
 //	open_im_sdk.UploadFile(&testSendMsg, operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4")

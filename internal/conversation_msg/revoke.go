@@ -43,6 +43,8 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
+		} else {
+			log.ZDebug(ctx, "revoker member name", "groupMember", groupMember)
 		}
 		revokerRole = groupMember.RoleLevel
 		revokerNickname = groupMember.Nickname
@@ -50,6 +52,8 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		_, userName, err := c.cache.GetUserNameAndFaceURL(ctx, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetUserNameAndFaceURL failed", err, "tips", &tips)
+		} else {
+			log.ZDebug(ctx, "revoker user name", "userName", userName)
 		}
 		revokerNickname = userName
 	}
@@ -62,10 +66,11 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		SourceMessageSendTime:       revokedMsg.SendTime,
 		SourceMessageSendID:         revokedMsg.SendID,
 		SourceMessageSenderNickname: revokedMsg.SenderNickname,
-		SessionType:                 int32(tips.SesstionType),
+		SessionType:                 tips.SesstionType,
 		Seq:                         tips.Seq,
 		Ex:                          revokedMsg.Ex,
 	}
+	// log.ZDebug(ctx, "callback revokeMessage", "m", m)
 	var n sdk_struct.NotificationElem
 	n.Detail = utils.StructToJsonString(m)
 	if err := c.db.UpdateMessageBySeq(ctx, tips.ConversationID, &model_struct.LocalChatLog{Seq: tips.Seq,
@@ -104,7 +109,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		}
 	}
 	c.msgListener.OnNewRecvMessageRevoked(utils.StructToJsonString(m))
-	msgList, err := c.db.SearchAllMessageByContentType(ctx, constant.Quote)
+	msgList, err := c.db.SearchAllMessageByContentType(ctx, conversation.ConversationID, constant.Quote)
 	if err != nil {
 		log.ZError(ctx, "SearchAllMessageByContentType failed", err, "tips", &tips)
 		return
@@ -132,29 +137,26 @@ func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID 
 	}
 }
 
-func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
-	var conversationID string
-	switch req.SessionType {
-	case constant.SingleChatType:
-		conversationID = utils2.GetConversationIDBySessionType(int(req.SessionType), req.SendID, req.RecvID)
-	case constant.SuperGroupChatType:
-		conversationID = utils2.GetConversationIDBySessionType(int(req.SessionType), req.GroupID)
+func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, clientMsgID string) error {
+	conversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
 	}
-	message, err := c.db.GetMessage(ctx, conversationID, req.ClientMsgID)
+	message, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
 	if err != nil {
 		return err
 	}
 	if message.Status != constant.MsgStatusSendSuccess {
 		return errors.New("only send success message can be revoked")
 	}
-	switch req.SessionType {
+	switch conversation.ConversationType {
 	case constant.SingleChatType:
 		if message.SendID != c.loginUserID {
 			return errors.New("only send by yourself message can be revoked")
 		}
 	case constant.SuperGroupChatType:
 		if message.SendID != c.loginUserID {
-			groupAdmins, err := c.db.GetGroupMemberOwnerAndAdmin(ctx, req.GroupID)
+			groupAdmins, err := c.db.GetGroupMemberOwnerAndAdminDB(ctx, conversation.GroupID)
 			if err != nil {
 				return err
 			}
@@ -178,8 +180,8 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 		Seq:            message.Seq,
 		RevokerUserID:  c.loginUserID,
 		RevokeTime:     utils2.GetCurrentTimestampBySecond(),
-		SesstionType:   int32(req.SessionType),
-		ClientMsgID:    req.ClientMsgID,
+		SesstionType:   conversation.ConversationType,
+		ClientMsgID:    clientMsgID,
 	})
 	return nil
 }

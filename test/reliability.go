@@ -63,6 +63,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	timeStamp := utils.Int64ToString(time.Now().Unix())
 
 	var wg sync.WaitGroup
+	// 注册
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
@@ -76,10 +77,11 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	log.Warn("", " init, login, send msg, start ")
 	rand.Seed(time.Now().UnixNano())
 
+	// 一半用户立刻登录发消息
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
-		isSend := 0
+		isSend := 0 // 消息是否成功发送控制量
 		if isSend == 0 {
 			go func(idx int) {
 				log.Warn("", " send msg flag true ", idx)
@@ -99,6 +101,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	log.Warn("send msg finish,  CheckReliabilityResult")
 
 	for {
+		// 消息异步落库可能出现延迟，每隔五秒再检查一次
 		if CheckReliabilityResult(msgNumOneClient, clientNum) {
 			log.Warn("", "CheckReliabilityResult ok, exit")
 			os.Exit(0)
@@ -316,23 +319,22 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Info("", "start check map send -> map recv")
 	sameNum := 0
 
+	// 消息数量不一致说明出现丢失
 	if len(SendSuccAllMsg)+len(SendFailedAllMsg) != msgNumOneClient*clientNum {
-		log.Warn("", utils.GetSelfFuncName(), " send msg succ number: ", len(SendSuccAllMsg), " send  msg failed number: ", len(SendFailedAllMsg), " all: ", msgNumOneClient*clientNum)
+		log.Warn("", utils.GetSelfFuncName(), " send msg success number: ", len(SendSuccAllMsg),
+			" send msg failed number: ", len(SendFailedAllMsg), " all: ", msgNumOneClient*clientNum)
 		return false
 	}
 
 	for ksend, _ := range SendSuccAllMsg {
-		_, ok := RecvAllMsg[ksend]
+		_, ok := RecvAllMsg[ksend] // RecvAllMsg 的初始化何时？
 		if ok {
 			sameNum++
-			//x := vsend
-			//y := krecv
-			//x = x + x
-			//y = y + y
-
 		} else {
-			log.Error("", "check failed  not in recv ", ksend)
-			log.Error("", "send failed num: ", len(SendFailedAllMsg), " send success num: ", len(SendSuccAllMsg), " recv num: ", len(RecvAllMsg))
+			// 埋点日志，第 ksend 个消息数据 本地和服务器不一致
+			log.Error("", "check failed not in recv ", ksend)
+			log.Error("", "send failed num: ", len(SendFailedAllMsg),
+				" send success num: ", len(SendSuccAllMsg), " recv num: ", len(RecvAllMsg))
 			return false
 		}
 	}
@@ -376,7 +378,8 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Warn("", "send msg succ num ", len(SendSuccAllMsg))
 	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
 	log.Warn("", "recv msg succ num ", len(RecvAllMsg))
-	log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms", " maxCostMsgID: ", maxCostMsgID)
+	log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ",
+		totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms", " maxCostMsgID: ", maxCostMsgID)
 
 	return true
 }
@@ -385,13 +388,13 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
+	log.Info("", "login ok client num: ", len(allLoginMgr), "userID ", strMyUid, "token: ", token, " index: ", index)
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
-	log.Info("", "login ok client num: ", len(allLoginMgr))
+
 	log.Warn("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
+
 	msgnum := msgNumInOneClient
 	uidNum := len(allLoginMgr)
-	var recvId string
-	var idx string
 	rand.Seed(time.Now().UnixNano())
 	if msgnum == 0 {
 		os.Exit(0)
@@ -407,15 +410,11 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 				if r == index {
 					continue
 				} else {
-
 					break
 				}
-
 			}
-
-			recvId = allLoginMgr[r].userID
-
-			idx = strconv.FormatInt(int64(i), 10)
+			recvId := allLoginMgr[r].userID
+			idx := strconv.FormatInt(int64(i), 10)
 			for {
 				if runtime.NumGoroutine() > MaxNumGoroutine {
 					time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
@@ -425,9 +424,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 					break
 				}
 			}
-
 			DoTestSendMsg(index, strMyUid, recvId, "", idx)
-
 		}
 		//Msgwg.Done()
 	}
@@ -532,7 +529,7 @@ func WorkGroupMsgDelayOne(index int, beforeLoginSleep int, isSendMsg bool, inter
 }
 
 //
-//func WorkGroupMsgDelayOne(sendID1 string, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int, groupID string) {
+//funcation WorkGroupMsgDelayOne(sendID1 string, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int, groupID string) {
 //	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 //	strMyUid := allLoginMgr[index].userID
 //	token := allLoginMgr[index].token

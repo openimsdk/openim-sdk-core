@@ -27,6 +27,9 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -111,6 +114,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
+	//fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
 	go c.readPump(ctx)
 	go c.writePump(ctx)
 	go c.heartbeat(ctx)
@@ -154,12 +158,14 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
+
 func (c *LongConnMgr) readPump(ctx context.Context) {
+	log.ZDebug(ctx, "readPump start", "goroutine ID:", getGoroutineID())
 	defer func() {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
-	//c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	//c.conn.SetPongHandler(funcation(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 		err := c.reConn(ctx, &connNum)
@@ -177,7 +183,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			//}
 			//break
 			//c.closedErr = err
-			log.ZError(c.ctx, "readMessage err", err)
+			log.ZError(c.ctx, "readMessage err", err, "goroutine ID:", getGoroutineID())
 			_ = c.close()
 			continue
 		}
@@ -209,6 +215,8 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *LongConnMgr) writePump(ctx context.Context) {
+	log.ZDebug(ctx, "writePump start", "goroutine ID:", getGoroutineID())
+
 	defer func() {
 		c.close()
 		close(c.send)
@@ -254,9 +262,11 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 }
 
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
+	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
+		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat done sdk logout.....")
 	}()
 	for {
 		select {
@@ -271,6 +281,16 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	}
 
 }
+func getGoroutineID() int64 {
+	buf := make([]byte, 64)
+	buf = buf[:runtime.Stack(buf, false)]
+	idField := strings.Fields(strings.TrimPrefix(string(buf), "goroutine "))[0]
+	id, err := strconv.ParseInt(idField, 10, 64)
+	if err != nil {
+		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
+	}
+	return id
+}
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
 		return
@@ -279,7 +299,7 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	m.UserID = ccontext.Info(ctx).UserID()
 	opID := utils.OperationIDGenerator()
 	sCtx := ccontext.WithOperationID(c.ctx, opID)
-	log.ZInfo(sCtx, "ping and getMaxSeq start")
+	log.ZInfo(sCtx, "ping and getMaxSeq start", "goroutine ID:", getGoroutineID())
 	data, err := proto.Marshal(&m)
 	if err != nil {
 		log.ZError(sCtx, "proto.Marshal", err)
@@ -334,13 +354,13 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWsResp, error) {
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
-	if c.GetConnectionStatus() == Closed && msg.ReqIdentifier == constant.GetNewestSeq {
+	if c.GetConnectionStatus() != Connected && msg.ReqIdentifier == constant.GetNewestSeq {
 		return tempChan, sdkerrs.ErrNetwork.Wrap("connection closed,conning...")
 	}
 	for i := 0; i < 60; i++ {
 		err := c.writeBinaryMsg(*msg)
 		if err != nil {
-			log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", msg)
+			log.ZError(c.ctx, "send binary message error", err, "message", msg)
 			c.closedErr = err
 			_ = c.close()
 			time.Sleep(time.Second * 1)
@@ -358,6 +378,9 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 	encodeBuf, err := c.encoder.Encode(req)
 	if err != nil {
 		return err
+	}
+	if c.GetConnectionStatus() == Closed {
+		return sdkerrs.ErrNetwork.Wrap("connection closed,re conning...")
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	if c.IsCompression {
@@ -428,7 +451,7 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		}
 	default:
 		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
-		return sdkerrs.ErrMsgTypeNotSupport
+		return sdkerrs.ErrMsgBinaryTypeNotSupport
 	}
 	return nil
 }
@@ -509,7 +532,7 @@ func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error
 	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
 }
 func (c *LongConnMgr) Close(ctx context.Context) {
-	if c.GetConnectionStatus() != Closed {
+	if c.GetConnectionStatus() == Connected {
 		log.ZInfo(ctx, "network change conn close")
 		c.closedErr = errors.New("closed by client network change")
 		_ = c.close()

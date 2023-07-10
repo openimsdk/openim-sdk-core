@@ -17,14 +17,15 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
@@ -322,7 +323,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 
 }
 
-//func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
+//funcation (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 //	if c.ConversationListener == nil {
 //		// log.Error("internal", "not set conversationListener")
 //		return
@@ -355,7 +356,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 //		// for _, result := range apiResp {
 //		// 	log.Warn(node.OperationID, "api return reslut is:", result.ClientMsgID, result.ReactionExtensionList)
 //		// }
-//		onLocal := func(data []*model_struct.LocalChatLogReactionExtensions) []*server_api_params.SingleMessageExtensionResult {
+//		onLocal := funcation(data []*model_struct.LocalChatLogReactionExtensions) []*server_api_params.SingleMessageExtensionResult {
 //			var result []*server_api_params.SingleMessageExtensionResult
 //			for _, v := range data {
 //				temp := new(server_api_params.SingleMessageExtensionResult)
@@ -426,7 +427,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 //					c.msgListener.OnRecvMessageExtensionsDeleted(v.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 //				}
 //			} else {
-//				deleteKeyList, changedKv := func(local, server map[string]*sdkws.KeyValue) ([]string, []*sdkws.KeyValue) {
+//				deleteKeyList, changedKv := funcation(local, server map[string]*sdkws.KeyValue) ([]string, []*sdkws.KeyValue) {
 //					var deleteKeyList []string
 //					var changedKv []*sdkws.KeyValue
 //					for k, v := range local {
@@ -638,19 +639,16 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		if len(msgs.Msgs) != 0 {
 			lastMsg := msgs.Msgs[len(msgs.Msgs)-1]
 			log.ZDebug(ctx, "SetNotificationSeq", "conversationID", conversationID, "seq", lastMsg.Seq)
-			if err := c.db.SetNotificationSeq(ctx, conversationID, lastMsg.Seq); err != nil {
-				log.ZError(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "lastMsg", lastMsg)
+			if lastMsg.Seq != 0 {
+				if err := c.db.SetNotificationSeq(ctx, conversationID, lastMsg.Seq); err != nil {
+					log.ZError(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "lastMsg", lastMsg)
+				}
 			}
 		}
 		for _, v := range msgs.Msgs {
 			switch {
 			case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 				c.DoNotification(ctx, v)
-			case v.ContentType == constant.MsgDeleteNotification:
-				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
-			case v.ContentType == constant.SuperGroupUpdateNotification:
-				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
-				continue
 			case v.ContentType == constant.ConversationUnreadNotification:
 				var tips sdkws.ConversationHasReadTips
 				_ = json.Unmarshal(v.Content, &tips)
@@ -659,7 +657,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
 				continue
 			case v.ContentType == constant.BusinessNotification:
-				c.business.DoNotification(ctx, string(v.Content))
+				c.business.DoNotification(ctx, v)
 				continue
 			case v.ContentType == constant.RevokeNotification:
 				c.doRevokeMsg(ctx, v)
@@ -680,14 +678,13 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				} else if utils2.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
 					c.group.DoNotification(ctx, v)
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					c.signaling.DoNotification(ctx, v, c.GetCh())
+
 					continue
 				}
 			case constant.GroupChatType, constant.SuperGroupChatType:
 				if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
 					c.group.DoNotification(ctx, v)
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					c.signaling.DoNotification(ctx, v, c.GetCh())
 					continue
 				}
 			}

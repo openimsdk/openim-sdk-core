@@ -25,8 +25,6 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/signaling"
-	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/third"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
@@ -38,6 +36,7 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"sync"
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/push"
@@ -47,14 +46,18 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
+const (
+	Logout = iota + 1
+	Logging
+	Logged
+)
+
 type LoginMgr struct {
 	friend       *friend.Friend
 	group        *group.Group
-	superGroup   *super_group.SuperGroup
 	conversation *conv.Conversation
 	user         *user.User
 	file         *file.File
-	signaling    *signaling.LiveSignaling
 	business     *business.Business
 
 	full         *full.Full
@@ -70,6 +73,9 @@ type LoginMgr struct {
 	loginTime int64
 
 	justOnceFlag bool
+
+	w           sync.Mutex
+	loginStatus int
 
 	groupListener               open_im_sdk_callback.OnGroupListener
 	friendListener              open_im_sdk_callback.OnFriendshipListener
@@ -144,10 +150,6 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
-func (u *LoginMgr) Signaling() *signaling.LiveSignaling {
-	return u.signaling
-}
-
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	if u.conversation != nil {
 		u.conversation.SetConversationListener(conversationListener)
@@ -202,22 +204,6 @@ func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListe
 	}
 }
 
-func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
-	if u.signaling != nil {
-		u.signaling.SetListener(listener)
-	} else {
-		u.signalingListener = listener
-	}
-}
-
-func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.OnSignalingListener) {
-	if u.signaling != nil {
-		u.signaling.SetListenerForService(listener)
-	} else {
-		u.signalingListenerFroService = listener
-	}
-}
-
 func (u *LoginMgr) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
 	if u.friend == nil || u.group == nil || u.conversation == nil {
 		return
@@ -247,7 +233,27 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 
 }
 
+func NewLoginMgr() *LoginMgr {
+	return &LoginMgr{
+		info: &ccontext.GlobalConfig{}, // 分配内存空间
+	}
+}
+func (u *LoginMgr) getLoginStatus(_ context.Context) int {
+	u.w.Lock()
+	defer u.w.Unlock()
+	return u.loginStatus
+}
+func (u *LoginMgr) setLoginStatus(status int) {
+	u.w.Lock()
+	defer u.w.Unlock()
+	u.loginStatus = status
+}
+
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
+	if u.getLoginStatus(ctx) == Logged {
+		return sdkerrs.ErrLoginRepeat
+	}
+	u.setLoginStatus(Logging)
 	u.info.UserID = userID
 	u.info.Token = token
 	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token)
@@ -269,9 +275,8 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend.SetLoginTime(u.loginTime)
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db)
 	u.cache = cache.NewCache(u.user, u.friend)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db)
 	u.business = business.NewBusiness(u.db)
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
@@ -282,15 +287,8 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.longConnMgr.Run(ctx)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full, u.file)
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.cache, u.full, u.file)
 	u.conversation.SetLoginTime()
-	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.PlatformID, u.db)
-	if u.signalingListener != nil {
-		u.signaling.SetListener(u.signalingListener)
-	}
-	if u.signalingListenerFroService != nil {
-		u.signaling.SetListenerForService(u.signalingListenerFroService)
-	}
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
@@ -322,7 +320,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 			}
 		}
 	}()
+
 	go u.logoutListener(ctx)
+	u.setLoginStatus(Logged)
 	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
 }
@@ -349,6 +349,7 @@ func (u *LoginMgr) initResources() {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.setLoginStatus(Logout)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }
 
@@ -381,15 +382,10 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 		}
 		return nil
 	}
-
 }
 
 func (u *LoginMgr) GetLoginUserID() string {
 	return u.loginUserID
-}
-
-func (u *LoginMgr) GetLoginStatus() int {
-	return u.longConnMgr.GetConnectionStatus()
 }
 
 func CheckToken(userID, token string, operationID string) (int64, error) {

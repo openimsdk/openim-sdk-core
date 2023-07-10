@@ -85,24 +85,25 @@ func setNumeric(in interface{}, out interface{}) {
 }
 
 func call_(operationID string, fn any, args ...any) (res any, err error) {
-	//defer func() {
-	//	if r := recover(); r != nil {
-	//		err = fmt.Errorf("call panic: %+v", r)
-	//	}
-	//}()
-	if operationID == "" {
-		return nil, sdkerrs.ErrArgs.Wrap("call func operationID is empty")
-	}
-	//if err := CheckResourceLoad(UserForSDK); err != nil {
-	//	return nil, err
-	//}
-	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
-	log.ZInfo(ctx, "call func", "in sdk args", args)
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("call panic: %+v", r)
+		}
+	}()
 	funcPtr := reflect.ValueOf(fn).Pointer()
 	funcName := runtime.FuncForPC(funcPtr).Name()
+	if operationID == "" {
+		return nil, sdkerrs.ErrArgs.Wrap("call function operationID is empty")
+	}
+	if err := CheckResourceLoad(UserForSDK, funcName); err != nil {
+		return nil, sdkerrs.ErrResourceLoad.Wrap("not load resource")
+	}
+	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
+	log.ZInfo(ctx, "call function", "in sdk args", args)
+
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
-		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("call func fn is not func, is %T", fn))
+		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("call function fn is not function, is %T", fn))
 	}
 	fnt := fnv.Type()
 	nin := fnt.NumIn()
@@ -110,7 +111,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go code error: fn in args num is not match"))
 	}
 	t := time.Now()
-	log.ZInfo(ctx, "input req", "func name", funcName, "args", args)
+	log.ZInfo(ctx, "input req", "function name", funcName, "args", args)
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -159,7 +160,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	}
 	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
 		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
-			log.ZError(ctx, "fn call error", errValueOf.Interface().(error), "func name", funcName, "cost time", time.Since(t))
+			log.ZError(ctx, "fn call error", errValueOf.Interface().(error), "function name", funcName, "cost time", time.Since(t))
 			return nil, errValueOf.Interface().(error)
 		}
 		if len(outs) == 1 {
@@ -181,14 +182,14 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		}
 	}
 	if len(outs) == 1 {
-		log.ZInfo(ctx, "output resp", "func name", funcName, "resp", outs[0].Interface(), "cost time", time.Since(t))
+		log.ZInfo(ctx, "output resp", "function name", funcName, "resp", outs[0].Interface(), "cost time", time.Since(t))
 		return outs[0].Interface(), nil
 	}
 	val := make([]any, 0, len(outs))
 	for i := range outs {
 		val = append(val, outs[i].Interface())
 	}
-	log.ZInfo(ctx, "output resp", "func name", funcName, "resp", val, "cost time", time.Since(t))
+	log.ZInfo(ctx, "output resp", "function name", funcName, "resp", val, "cost time", time.Since(t))
 	return val, nil
 }
 
@@ -209,7 +210,7 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 		}
 		data, err := json.Marshal(res)
 		if err != nil {
-			callback.OnError(sdkerrs.SdkInternalError, fmt.Sprintf("func res json.Marshal error: %s", err))
+			callback.OnError(sdkerrs.SdkInternalError, fmt.Sprintf("function res json.Marshal error: %s", err))
 			return
 		}
 		callback.OnSuccess(string(data))
@@ -217,23 +218,16 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 }
 
 func syncCall(operationID string, fn any, args ...any) string {
-	//defer func() {
-	//	if r := recover(); r != nil {
-	//		//callback.OnError(10001, fmt.Sprintf("%+v", r))
-	//		return
-	//	}
-	//}()
 	if operationID == "" {
 		//callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
 		return ""
 	}
-	if err := CheckResourceLoad(UserForSDK); err != nil {
-		//callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
 		return ""
 	}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
-		//callback.OnError(10000, "go code error: fn is not func")
+		//callback.OnError(10000, "go code error: fn is not function")
 		return ""
 	}
 	funcPtr := reflect.ValueOf(fn).Pointer()
@@ -245,14 +239,10 @@ func syncCall(operationID string, fn any, args ...any) string {
 		return ""
 	}
 	ins := make([]reflect.Value, 0, numIn)
-	//ctx := context.Background()
-	//ctx = context.WithValue(ctx, "operationID", operationID)
-	//ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
-	//ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
 
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	t := time.Now()
-	log.ZInfo(ctx, "input req", "func name", funcName, "args", args)
+	log.ZInfo(ctx, "input req", "function name", funcName, "args", args)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
 		tag := fnt.In(i + 1)
@@ -267,7 +257,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 				v := reflect.New(tag)
 				if args[i].(string) != "" {
 					if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-						log.ZWarn(ctx, "json.Unmarshal error", err, "func name", funcName, "arg", args[i], "v", v.Interface())
+						log.ZWarn(ctx, "json.Unmarshal error", err, "function name", funcName, "arg", args[i], "v", v.Interface())
 						//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
 						return ""
 					}
@@ -335,7 +325,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 		//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
 		return ""
 	}
-	log.ZInfo(ctx, "output resp", "func name", funcName, "resp", jsonVal, "cost time", time.Since(t))
+	log.ZInfo(ctx, "output resp", "function name", funcName, "resp", jsonVal, "cost time", time.Since(t))
 	return string(jsonData)
 }
 func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
@@ -357,13 +347,13 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 		callback.OnError(sdkerrs.ArgsError, sdkerrs.ErrArgs.Wrap("operationID is empty").Error())
 		return
 	}
-	if err := CheckResourceLoad(UserForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
 		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "resource load error: "+err.Error())
 		return
 	}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
-		callback.OnError(sdkerrs.SdkInternalError, "go code error: fn is not func")
+		callback.OnError(sdkerrs.SdkInternalError, "go code error: fn is not function")
 		return
 	}
 	fnt := fnv.Type()

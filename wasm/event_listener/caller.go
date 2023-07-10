@@ -47,7 +47,7 @@ func extractArrayBuffer(arrayBuffer js.Value) []byte {
 type FuncLogic func()
 
 var ErrNotSetCallback = errors.New("not set callback to call")
-var ErrNotSetFunc = errors.New("not set func to call")
+var ErrNotSetFunc = errors.New("not set funcation to call")
 
 type ReflectCall struct {
 	funcName  interface{}
@@ -187,6 +187,8 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 				case reflect.Bool:
 					result = append(result, v.Bool())
 				case reflect.Int32:
+					result = append(result, v.Int())
+				case reflect.Int:
 					result = append(result, v.Int())
 				default:
 					panic("not support type")

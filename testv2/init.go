@@ -34,7 +34,7 @@ var (
 )
 
 func init() {
-	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test v2 init func <<<<<<<<<<<<<<<<<<<------------------------")
+	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test v2 init funcation <<<<<<<<<<<<<<<<<<<------------------------")
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
@@ -67,7 +67,8 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	jsonReqData, err := json.Marshal(map[string]any{
 		"userID":     userID,
 		"platformID": 1,
-		//"secret":     "openIM123",
+		"secret":     "openIM123",
+		//"secret": "111111",
 	})
 	if err != nil {
 		return "", err
@@ -211,15 +212,20 @@ type onAdvancedMsgListener struct {
 	ctx context.Context
 }
 
+func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 }
 
-//func (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
+//funcation (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
 //	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 //}
 //
-//func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
+//funcation (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 //	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 //}
 

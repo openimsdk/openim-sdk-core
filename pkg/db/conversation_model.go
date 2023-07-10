@@ -170,7 +170,7 @@ func (d *DataBase) UpdateConversationForSync(ctx context.Context, c *model_struc
 	t := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", c.ConversationID).
 		Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat,
 			"group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "update_unread_count_time": c.UpdateUnreadCountTime, "ex": c.Ex, "attached_info": c.AttachedInfo,
-			"burn_duration": c.BurnDuration})
+			"burn_duration": c.BurnDuration, "msg_destruct_time": c.MsgDestructTime})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

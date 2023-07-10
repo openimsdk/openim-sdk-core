@@ -19,7 +19,6 @@ package indexdb
 
 import (
 	"context"
-	"encoding/json"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/indexdb/temp_struct"
@@ -126,8 +125,8 @@ func (i *LocalChatLogs) UpdateColumnsMessageList(ctx context.Context, clientMsgI
 }
 
 // UpdateColumnsMessage updates a column of a message in the local chat log.
-func (i *LocalChatLogs) UpdateColumnsMessage(ctx context.Context, clientMsgID string, args map[string]interface{}) error {
-	_, err := Exec(clientMsgID, utils.StructToJsonString(args))
+func (i *LocalChatLogs) UpdateColumnsMessage(ctx context.Context, conversationID, clientMsgID string, args map[string]interface{}) error {
+	_, err := Exec(conversationID, clientMsgID, utils.StructToJsonString(args))
 	return err
 }
 
@@ -174,7 +173,7 @@ func (i *LocalChatLogs) GetMessageList(ctx context.Context, conversationID strin
 
 // GetMessageListNoTime retrieves a list of messages from the local chat log without specifying a start time.
 func (i *LocalChatLogs) GetMessageListNoTime(ctx context.Context, conversationID string, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(conversationID, count, isReverse, i.loginUserID)
+	msgList, err := Exec(conversationID, count, isReverse)
 	if err != nil {
 		return nil, err
 	} else {
@@ -224,7 +223,7 @@ func (i *LocalChatLogs) SearchMessageByContentType(ctx context.Context, contentT
 	}
 }
 
-//func (i *LocalChatLogs) SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+//funcation (i *LocalChatLogs) SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
 //	msgList, err := Exec(utils.StructToJsonString(contentType), sourceID, startTime, endTime, sessionType, offset, count)
 //	if err != nil {
 //		return nil, err
@@ -397,8 +396,8 @@ func (i *LocalChatLogs) GetMsgSeqByClientMsgID(ctx context.Context, clientMsgID 
 }
 
 // Search all messages by content type
-func (i *LocalChatLogs) SearchAllMessageByContentType(ctx context.Context, contentType int) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType)
+func (i *LocalChatLogs) SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(conversationID, contentType)
 	if err != nil {
 		return nil, err
 	} else {
@@ -553,15 +552,15 @@ func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID
 }
 
 // GetAlreadyExistSeqList get already exist seq list
-func (i *LocalChatLogs) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) ([]int64, error) {
-	seqList, err := Exec(conversationID, lostSeqList)
+func (i *LocalChatLogs) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (result []int64, err error) {
+	seqList, err := Exec(conversationID, utils.StructToJsonString(lostSeqList))
 	if err != nil {
 		return nil, err
 	} else {
-		if v, ok := seqList.([]int64); ok {
-			result := make([]int64, len(v))
-			for i, value := range v {
-				result[i] = value.(int64)
+		if v, ok := seqList.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
 			return result, nil
 		} else {
@@ -591,54 +590,103 @@ func (i *LocalChatLogs) GetMessageBySeq(ctx context.Context, conversationID stri
 
 // UpdateMessageBySeq update message
 func (i *LocalChatLogs) UpdateMessageBySeq(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
-	data, err := json.Marshal(c)
-	if err != nil {
-		return err
+	if c.Seq == 0 {
+		return PrimaryKeyNull
 	}
-	_, err = Exec(conversationID, c.Seq, string(data))
+	tempLocalChatLog := temp_struct.LocalChatLog{
+		ServerMsgID:          c.ServerMsgID,
+		SendID:               c.SendID,
+		RecvID:               c.RecvID,
+		SenderPlatformID:     c.SenderPlatformID,
+		SenderNickname:       c.SenderNickname,
+		SenderFaceURL:        c.SenderFaceURL,
+		SessionType:          c.SessionType,
+		MsgFrom:              c.MsgFrom,
+		ContentType:          c.ContentType,
+		Content:              c.Content,
+		IsRead:               c.IsRead,
+		Status:               c.Status,
+		Seq:                  c.Seq,
+		SendTime:             c.SendTime,
+		CreateTime:           c.CreateTime,
+		AttachedInfo:         c.AttachedInfo,
+		Ex:                   c.Ex,
+		IsReact:              c.IsReact,
+		IsExternalExtensions: c.IsExternalExtensions,
+		MsgFirstModifyTime:   c.MsgFirstModifyTime,
+	}
+	_, err := Exec(conversationID, c.Seq, utils.StructToJsonString(tempLocalChatLog))
 	return err
 }
 
-func (i *LocalChatLogs) UpdateMessageByClientMsgID(ctx context.Context, clientMsgID string, data map[string]any) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *LocalChatLogs) MarkConversationMessageAsRead(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
-	//TODO implement me
-	panic("implement me")
+func (i *LocalChatLogs) MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
+	rows, err := Exec(conversationID, utils.StructToJsonString(msgIDs), i.loginUserID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := rows.(float64); ok {
+			rowsAffected = int64(v)
+			return rowsAffected, err
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *LocalChatLogs) GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error) {
-	//TODO implement me
-	panic("implement me")
+	rows, err := Exec(conversationID, utils.StructToJsonString(seqs), i.loginUserID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := rows.(float64); ok {
+			rowsAffected = int64(v)
+			return rowsAffected, err
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) MarkConversationAllMessageAsRead(ctx context.Context, conversationID string) (rowsAffected int64, err error) {
-	//TODO implement me
-	panic("implement me")
+	rows, err := Exec(conversationID, i.loginUserID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := rows.(float64); ok {
+			rowsAffected = int64(v)
+			return rowsAffected, err
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
-func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) ([]*model_struct.LocalChatLog, error) {
-	msgs, err := Exec(conversationID, msgIDs)
+func (i *LocalChatLogs) GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error) {
+	msgs, err := Exec(conversationID, i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
 		if v, ok := msgs.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
 			}
-			result := make([]*model_struct.LocalChatLog, len(temp))
-			for i, v := range temp {
-				v1 := v
-				result[i] = &v1
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (result []*model_struct.LocalChatLog, err error) {
+	msgs, err := Exec(conversationID, utils.StructToJsonString(msgIDs))
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgs.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
 			return result, err
 		} else {
@@ -649,7 +697,7 @@ func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversat
 
 // GetMessagesBySeqs gets messages by seqs
 func (i *LocalChatLogs) GetMessagesBySeqs(ctx context.Context, conversationID string, seqs []int64) (result []*model_struct.LocalChatLog, err error) {
-	msgs, err := Exec(conversationID, seqs)
+	msgs, err := Exec(conversationID, utils.StructToJsonString(seqs))
 	if err != nil {
 		return nil, err
 	} else {
@@ -692,8 +740,10 @@ func (i *LocalChatLogs) GetConversationPeerNormalMsgSeq(ctx context.Context, con
 	if err != nil {
 		return 0, err
 	} else {
-		if v, ok := seq.(int64); ok {
-			return v, nil
+		if v, ok := seq.(float64); ok {
+			var result int64
+			result = int64(v)
+			return result, nil
 		} else {
 			return 0, ErrType
 		}
@@ -709,43 +759,23 @@ func (i *LocalChatLogs) GetConversationAbnormalMsgSeq(ctx context.Context, group
 // DeleteConversationAllMessages deletes all messages of the session
 func (i *LocalChatLogs) DeleteConversationAllMessages(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return err
 }
 
 // MarkDeleteConversationAllMessages marks all messages of the session as deleted
 func (i *LocalChatLogs) MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return err
 }
 
 // DeleteConversationMsgs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error {
-	_, err := Exec(conversationID, msgIDs)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	_, err := Exec(conversationID, utils.StructToJsonString(msgIDs))
+	return err
 }
 
 // DeleteConversationMsgsBySeqs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error {
-	_, err := Exec(conversationID, seqs)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
-
-func (i *LocalChatLogs) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
-	return nil
+	_, err := Exec(conversationID, utils.StructToJsonString(seqs))
+	return err
 }

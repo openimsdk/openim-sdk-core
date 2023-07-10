@@ -27,8 +27,10 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -54,42 +56,6 @@ func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_str
 
 func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
 	return c.db.GetConversationListSplitDB(ctx, offset, count)
-}
-
-func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string, opt int) error {
-	var conversations []*pbConversation.Conversation
-	for _, conversationID := range conversationIDList {
-		localConversation, err := c.db.GetConversation(ctx, conversationID)
-		if err != nil {
-			log.ZError(ctx, "GetConversation failed", err, "conversationID", conversationID)
-			continue
-		}
-		if localConversation.ConversationType == constant.SuperGroupChatType && opt == constant.NotReceiveMessage {
-			return sdkerrs.ErrNotSupportOpt
-		}
-		conversations = append(conversations, &pbConversation.Conversation{
-			OwnerUserID:      c.loginUserID,
-			ConversationID:   conversationID,
-			ConversationType: localConversation.ConversationType,
-			UserID:           localConversation.UserID,
-			GroupID:          localConversation.GroupID,
-			RecvMsgOpt:       int32(opt),
-			IsPinned:         localConversation.IsPinned,
-			IsPrivateChat:    localConversation.IsPrivateChat,
-			AttachedInfo:     localConversation.AttachedInfo,
-			Ex:               localConversation.Ex,
-		})
-	}
-	req := &pbConversation.BatchSetConversationsReq{
-		Conversations: conversations,
-		OwnerUserID:   c.loginUserID,
-	}
-	_, err := util.CallApi[pbConversation.BatchSetConversationsResp](ctx, constant.BatchSetConversationRouter, req)
-	if err != nil {
-		return err
-	}
-	c.SyncConversations(ctx)
-	return nil
 }
 
 func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
@@ -151,6 +117,7 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
+		time.Sleep(time.Millisecond * 500)
 		lc, errTemp := c.db.GetConversation(ctx, conversationID)
 		if errTemp == nil {
 			return lc, nil
@@ -220,6 +187,10 @@ func (c *Conversation) PinConversation(ctx context.Context, conversationID strin
 
 func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsPrivateChat: &wrapperspb.BoolValue{Value: isPrivate}})
+}
+
+func (c *Conversation) SetConversationMsgDestructTime(ctx context.Context, conversationID string, msgDestructTime int64) error {
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{MsgDestructTime: &wrapperspb.Int64Value{Value: msgDestructTime}})
 }
 
 func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
@@ -304,7 +275,7 @@ func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.Loc
 }
 
 func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation) {
-	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
+	log.ZDebug(ctx, "this is test send message ", "sendTime", sendTime, "status", status, "clientMsgID", clientMsgID, "serverMsgID", serverMsgID)
 	s.SendTime = sendTime
 	s.Status = status
 	s.ServerMsgID = serverMsgID
@@ -420,8 +391,15 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			return nil, err
 		}
 	} else {
-		if oldMessage.Status != constant.MsgStatusSendFailed {
-			return nil, sdkerrs.ErrMsgRepeated
+		//if oldMessage.Status != constant.MsgStatusSendFailed {
+		//	return nil, sdkerrs.ErrMsgRepeated
+		//} else {
+		//	s.Status = constant.MsgStatusSending
+		//}
+		//opy from v2.3.0,May need to be modified
+		if oldMessage.Status == constant.MsgStatusSendSuccess {
+			callback.OnSuccess(utils.StructToJsonString(oldMessage))
+			runtime.Goexit()
 		} else {
 			s.Status = constant.MsgStatusSending
 		}
@@ -452,7 +430,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			PutID:    s.ClientMsgID,
 			Filepath: sourcePath,
 			Name:     c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
-		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		}, NewFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
@@ -489,7 +467,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			PutID:    s.ClientMsgID,
 			Filepath: sourcePath,
 			Name:     c.fileName("voice", s.ClientMsgID) + filepath.Ext(sourcePath),
-		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		}, NewFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
@@ -516,27 +494,44 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
 
-		snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
-			PutID:    s.ClientMsgID + "snap",
-			Filepath: snapPath,
-			Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
-		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-		if err != nil {
-			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-			return nil, err
-		}
+		var wg sync.WaitGroup
+		wg.Add(2)
+		var putErrs [2]error
+		go func() {
+			defer wg.Done()
+			snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID + "snap",
+				Filepath: snapPath,
+				Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
+			}, nil)
+			if err != nil {
+				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+				putErrs[0] = err
+				return
+			}
+			s.VideoElem.SnapshotURL = snapRes.URL
+		}()
 
-		res, err := c.file.PutFile(ctx, &file.PutArgs{
-			PutID:    s.ClientMsgID,
-			Filepath: videoPath,
-			Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
-		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-		if err != nil {
-			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+		go func() {
+			defer wg.Done()
+			res, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID,
+				Filepath: videoPath,
+				Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
+			}, NewFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
+			if err != nil {
+				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+				putErrs[1] = err
+			}
+			s.VideoElem.VideoURL = res.URL
+		}()
+		wg.Wait()
+		if err := putErrs[0]; err != nil {
 			return nil, err
 		}
-		s.VideoElem.SnapshotURL = snapRes.URL
-		s.VideoElem.VideoURL = res.URL
+		if err := putErrs[1]; err != nil {
+			return nil, err
+		}
 		s.Content = utils.StructToJsonString(s.VideoElem)
 	case constant.File:
 		if s.Status == constant.MsgStatusSendSuccess {
@@ -547,7 +542,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			PutID:    s.ClientMsgID,
 			Filepath: s.FileElem.FilePath,
 			Name:     c.fileName("file", s.ClientMsgID) + filepath.Ext(s.FileElem.FilePath),
-		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		}, NewFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
@@ -738,10 +733,13 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	//Protocol conversion
 	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
+	wsMsgData.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	//wsMsgData.AtUserIDList = s.AtElem.AtUserList
+	if wsMsgData.ContentType == constant.AtText {
+		wsMsgData.AtUserIDList = s.AtTextElem.AtUserList
+	}
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	s.Content = ""
 	var sendMsgResp sdkws.UserSendMsgResp
@@ -876,15 +874,15 @@ func (c *Conversation) GetHistoryMessageListReverse(ctx context.Context, req sdk
 	return c.getHistoryMessageList(ctx, req, true)
 }
 
-func (c *Conversation) RevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
-	return c.revokeOneMessage(ctx, req)
+func (c *Conversation) RevokeMessage(ctx context.Context, conversationID, clientMsgID string) error {
+	return c.revokeOneMessage(ctx, conversationID, clientMsgID)
 }
 
 func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
 	return c.typingStatusUpdate(ctx, recvID, msgTip)
 }
 
-// func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
+// funcation (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
 // 	if len(msgIDList) == 0 {
 // 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
 // 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
@@ -896,7 +894,7 @@ func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip st
 // }
 
 // deprecated
-// func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
+// funcation (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
 // 	conversationID := c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 // 	_ = c.setOneConversationUnread(ctx, conversationID, 0)
 // 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
@@ -1036,7 +1034,7 @@ func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk
 
 }
 func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID string, clientMsgID string, localEx string) error {
-	return c.db.SetMessageLocalEx(ctx, conversationID, clientMsgID, localEx)
+	return c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"local_ex": localEx})
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	file, err := os.Open(filePath)
@@ -1094,7 +1092,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 //// 删除本地和服务器
 //// 删除本地的话不用改服务器的数据
 //// 删除服务器的话，需要把本地的消息状态改成删除
-//func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+//funcation (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
 //	// Use conversationID to remove conversations and messages from the server first
 //	err := c.clearConversationFromSvr(ctx, conversationID)
 //	if err != nil {
@@ -1140,7 +1138,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 /**
 **Get some reaction extensions in reactionExtensionKeyList of message list
  */
-//func (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
+//funcation (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
 //	var messagelist []*sdk_struct.MsgStruct
 //	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
 //	var list []string
@@ -1149,14 +1147,14 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
+//funcation (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	result := c.setTypeKeyInfo(callback, &s, typeKey, ex, isCanRepeat, operationID)
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
+//funcation (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	var list []string
@@ -1165,7 +1163,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
+//funcation (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	result := c.getAllTypeKeyInfo(callback, &s, operationID)

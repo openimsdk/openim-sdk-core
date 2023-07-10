@@ -44,7 +44,7 @@ func Test_CreateGroupV2(t *testing.T) {
 }
 
 func Test_JoinGroup(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().JoinGroup(ctx, "xadxwr24", "1234", 1)
+	err := open_im_sdk.UserForSDK.Group().JoinGroup(ctx, "1728503199", "1234", 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func Test_QuitGroup(t *testing.T) {
 }
 
 func Test_DismissGroup(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().DismissGroup(ctx, "3939796894")
+	err := open_im_sdk.UserForSDK.Group().DismissGroup(ctx, "1728503199")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -226,7 +226,7 @@ func Test_KickGroupMember(t *testing.T) {
 }
 
 func Test_TransferGroupOwner(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().TransferGroupOwner(ctx, "3459296007", "863454357")
+	err := open_im_sdk.UserForSDK.Group().TransferGroupOwner(ctx, "1728503199", "5226390099")
 	if err != nil {
 		t.Fatal(err)
 	}

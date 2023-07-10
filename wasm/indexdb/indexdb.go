@@ -99,7 +99,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 				}
 			}
 		}()
-		log.Debug("js then func", "=> (main go context) "+funcName+" with respone ", args[0].String())
+		log.Debug("js then funcation", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		thenChannel <- args
 		return nil
 	})
@@ -117,7 +117,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 				}
 			}
 		}()
-		log.Debug("js catch func", "=> (main go context) "+funcName+" with respone ", args[0].String())
+		log.Debug("js catch funcation", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		catchChannel <- args
 		return nil
 	})

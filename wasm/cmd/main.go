@@ -39,10 +39,10 @@ func main() {
 }
 
 func registerFunc() {
-	//register global listener func
+	//register global listener funcation
 	globalFuc := wasm_wrapper.NewWrapperCommon()
 	js.Global().Set(wasm_wrapper.COMMONEVENTFUNC, js.FuncOf(globalFuc.CommonEventFunc))
-	//register init login func
+	//register init login funcation
 	wrapperInitLogin := wasm_wrapper.NewWrapperInitLogin(globalFuc)
 	js.Global().Set("initSDK", js.FuncOf(wrapperInitLogin.InitSDK))
 	js.Global().Set("login", js.FuncOf(wrapperInitLogin.Login))
@@ -50,7 +50,7 @@ func registerFunc() {
 	js.Global().Set("getLoginStatus", js.FuncOf(wrapperInitLogin.GetLoginStatus))
 	js.Global().Set("setAppBackgroundStatus", js.FuncOf(wrapperInitLogin.SetAppBackgroundStatus))
 	js.Global().Set("networkStatusChanged", js.FuncOf(wrapperInitLogin.NetworkStatusChanged))
-	//register conversation and message func
+	//register conversation and message funcation
 	wrapperConMsg := wasm_wrapper.NewWrapperConMsg(globalFuc)
 	js.Global().Set("createTextMessage", js.FuncOf(wrapperConMsg.CreateTextMessage))
 	js.Global().Set("createImageMessage", js.FuncOf(wrapperConMsg.CreateImageMessage))
@@ -80,6 +80,7 @@ func registerFunc() {
 	js.Global().Set("createLocationMessage", js.FuncOf(wrapperConMsg.CreateLocationMessage))
 	js.Global().Set("createVideoMessageFromFullPath", js.FuncOf(wrapperConMsg.CreateVideoMessageFromFullPath))
 	js.Global().Set("createImageMessageFromFullPath", js.FuncOf(wrapperConMsg.CreateImageMessageFromFullPath))
+	js.Global().Set("getAtAllTag", js.FuncOf(wrapperConMsg.GetAtAllTag))
 	js.Global().Set("markConversationMessageAsRead", js.FuncOf(wrapperConMsg.MarkConversationMessageAsRead))
 	js.Global().Set("markMessagesAsReadByMsgID", js.FuncOf(wrapperConMsg.MarkMessagesAsReadByMsgID))
 	js.Global().Set("sendMessage", js.FuncOf(wrapperConMsg.SendMessage))
@@ -99,9 +100,9 @@ func registerFunc() {
 	js.Global().Set("getMultipleConversation", js.FuncOf(wrapperConMsg.GetMultipleConversation))
 	js.Global().Set("setConversationPrivateChat", js.FuncOf(wrapperConMsg.SetConversationPrivateChat))
 	js.Global().Set("setConversationRecvMessageOpt", js.FuncOf(wrapperConMsg.SetConversationRecvMessageOpt))
-	js.Global().Set("setConversationRecvMessageOpt", js.FuncOf(wrapperConMsg.SetConversationRecvMessageOpt))
 	js.Global().Set("setGlobalRecvMessageOpt", js.FuncOf(wrapperConMsg.SetGlobalRecvMessageOpt))
 	js.Global().Set("deleteAllConversationFromLocal", js.FuncOf(wrapperConMsg.DeleteAllConversationFromLocal))
+	js.Global().Set("hideConversation", js.FuncOf(wrapperConMsg.HideConversation))
 	js.Global().Set("setConversationDraft", js.FuncOf(wrapperConMsg.SetConversationDraft))
 	js.Global().Set("resetConversationGroupAtType", js.FuncOf(wrapperConMsg.ResetConversationGroupAtType))
 	js.Global().Set("pinConversation", js.FuncOf(wrapperConMsg.PinConversation))
@@ -119,8 +120,9 @@ func registerFunc() {
 	js.Global().Set("insertSingleMessageToLocalStorage", js.FuncOf(wrapperConMsg.InsertSingleMessageToLocalStorage))
 	js.Global().Set("insertGroupMessageToLocalStorage", js.FuncOf(wrapperConMsg.InsertGroupMessageToLocalStorage))
 	js.Global().Set("searchLocalMessages", js.FuncOf(wrapperConMsg.SearchLocalMessages))
+	js.Global().Set("setMessageLocalEx", js.FuncOf(wrapperConMsg.SetMessageLocalEx))
 
-	//register group func
+	//register group funcation
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)
 	js.Global().Set("createGroup", js.FuncOf(wrapperGroup.CreateGroup))
 	js.Global().Set("getSpecifiedGroupsInfo", js.FuncOf(wrapperGroup.GetSpecifiedGroupsInfo))
@@ -149,6 +151,7 @@ func registerFunc() {
 	js.Global().Set("refuseGroupApplication", js.FuncOf(wrapperGroup.RefuseGroupApplication))
 	js.Global().Set("setGroupMemberNickname", js.FuncOf(wrapperGroup.SetGroupMemberNickname))
 	js.Global().Set("searchGroupMembers", js.FuncOf(wrapperGroup.SearchGroupMembers))
+	js.Global().Set("isJoinGroup", js.FuncOf(wrapperGroup.IsJoinGroup))
 
 	wrapperUser := wasm_wrapper.NewWrapperUser(globalFuc)
 	js.Global().Set("getSelfUserInfo", js.FuncOf(wrapperUser.GetSelfUserInfo))
@@ -171,13 +174,13 @@ func registerFunc() {
 	js.Global().Set("removeBlack", js.FuncOf(wrapperFriend.RemoveBlack))
 	js.Global().Set("addBlack", js.FuncOf(wrapperFriend.AddBlack))
 
-	wrapperSignaling := wasm_wrapper.NewWrapperSignaling(globalFuc)
-	js.Global().Set("signalingInviteInGroup", js.FuncOf(wrapperSignaling.SignalingInviteInGroup))
-	js.Global().Set("signalingInvite", js.FuncOf(wrapperSignaling.SignalingInvite))
-	js.Global().Set("signalingAccept", js.FuncOf(wrapperSignaling.SignalingAccept))
-	js.Global().Set("signalingReject", js.FuncOf(wrapperSignaling.SignalingReject))
-	js.Global().Set("signalingCancel", js.FuncOf(wrapperSignaling.SignalingCancel))
-	js.Global().Set("signalingHungUp", js.FuncOf(wrapperSignaling.SignalingHungUp))
+	//wrapperSignaling := wasm_wrapper.NewWrapperSignaling(globalFuc)
+	//js.Global().Set("signalingInviteInGroup", js.FuncOf(wrapperSignaling.SignalingInviteInGroup))
+	//js.Global().Set("signalingInvite", js.FuncOf(wrapperSignaling.SignalingInvite))
+	//js.Global().Set("signalingAccept", js.FuncOf(wrapperSignaling.SignalingAccept))
+	//js.Global().Set("signalingReject", js.FuncOf(wrapperSignaling.SignalingReject))
+	//js.Global().Set("signalingCancel", js.FuncOf(wrapperSignaling.SignalingCancel))
+	//js.Global().Set("signalingHungUp", js.FuncOf(wrapperSignaling.SignalingHungUp))
 
 	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
 	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))

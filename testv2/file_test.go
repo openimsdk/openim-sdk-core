@@ -15,6 +15,7 @@
 package testv2
 
 import (
+	"flag"
 	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"open_im_sdk/internal/file"
@@ -71,4 +72,9 @@ func TestPut(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("url", str)
+}
+
+func Test_Fmt(t *testing.T) {
+	i := flag.Int("sn", 2, "sender num")
+	fmt.Println(i)
 }

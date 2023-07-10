@@ -21,6 +21,7 @@ import (
 	X "log"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
@@ -445,10 +446,12 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.PlatformID = 1
 	cf.DataDir = "./"
+	cf.IsLogStandardOutput = true
 	cf.LogLevel = uint32(LogLevel)
-	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
+	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 	operationID := utils.OperationIDGenerator()
+
 	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
 	lg := new(login.LoginMgr)
@@ -456,6 +459,8 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	allLoginMgr[index].mgr = lg
 	lg.InitSDK(cf, &testinit)
+
+	ctx = ccontext.WithOperationID(lg.Context(), operationID)
 
 	log.Info(operationID, "InitSDK ", cf)
 
@@ -476,10 +481,10 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
-	lg.Login(ctx, uid, tk)
 
 	for {
 		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
+			lg.User().GetSelfUserInfo(ctx)
 			return
 		}
 	}
@@ -560,8 +565,6 @@ func DoTest(uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)
 
-	var signalingListener testSignalingListener
-	open_im_sdk.SetSignalingListener(&signalingListener)
 	time.Sleep(1 * time.Second)
 
 	for !lllogin(uid, tk) {

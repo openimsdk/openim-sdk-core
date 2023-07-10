@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
@@ -32,6 +31,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
@@ -333,6 +334,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
 		temp.AttachedInfoElem = &attachedInfo
 		temp.Ex = v.Ex
+		temp.LocalEx = v.LocalEx
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
 			log.ZError(ctx, "Parsing data error", err, "temp", temp)
@@ -344,6 +346,9 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 		case constant.SuperGroupChatType:
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
+		}
+		if attachedInfo.IsPrivateChat && temp.SendTime+int64(attachedInfo.BurnDuration) < time.Now().Unix() {
+			continue
 		}
 		messageList = append(messageList, &temp)
 	}
@@ -400,7 +405,7 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 
 }
 
-//	func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
+//	funcation (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
 //		var localMessage db.LocalChatLog
 //		var newMessageIDList []string
 //		messages, err := c.db.GetMultipleMessage(msgIDList)
@@ -529,6 +534,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
 	// log.Debug("", "get raw data length is", len(list))
+	log.ZDebug(ctx, "get raw data length is", len(list))
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID
@@ -554,6 +560,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
 			// log.Error("", "Parsing data error:", err.Error(), temp)
+			log.ZError(ctx, "Parsing data error:", err, "msg", temp)
 			continue
 		}
 		if temp.ContentType == constant.File && !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName, searchParam.KeywordListMatchType) {
@@ -562,6 +569,10 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if temp.ContentType == constant.AtText && !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtTextElem.Text, searchParam.KeywordListMatchType) {
 			continue
 		}
+		if temp.ContentType == constant.Text && !c.judgeMultipleSubString(searchParam.KeywordList, temp.TextElem.Content, searchParam.KeywordListMatchType) {
+			continue
+		}
+
 		switch temp.SessionType {
 		case constant.SingleChatType:
 			if temp.SendID == c.loginUserID {
@@ -638,7 +649,7 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 }
 
 // old WS method
-//func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
+//funcation (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 //	seq, err := c.db.GetMsgSeqByClientMsgID(s.ClientMsgID)
 //	common.CheckDBErrCallback(callback, err, operationID)
 //	if seq == 0 {
@@ -956,7 +967,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 
 }
 
-//	func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+//	funcation (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
 //		if len(messageList) == 0 {
 //			common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
 //		}
@@ -1013,7 +1024,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 //		return result
 //	}
 //
-//	func (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
+//	funcation (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
 //		message, err := c.db.GetMessageController(s)
 //		common.CheckDBErrCallback(callback, err, operationID)
 //		if message.Status != constant.MsgStatusSendSuccess {
@@ -1151,7 +1162,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 //		return apiResp.ApiResult.Result
 //	}
 //
-//	func getIndexTypeKey(typeKey string, index int) string {
+//	funcation getIndexTypeKey(typeKey string, index int) string {
 //		return typeKey + "$" + utils.IntToString(index)
 //	}
 func getPrefixTypeKey(typeKey string) string {
@@ -1162,7 +1173,7 @@ func getPrefixTypeKey(typeKey string) string {
 	return ""
 }
 
-//func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+//funcation (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
 //	message, err := c.db.GetMessageController(s)
 //	common.CheckDBErrCallback(callback, err, operationID)
 //	if message.Status != constant.MsgStatusSendSuccess {
@@ -1203,7 +1214,7 @@ func getPrefixTypeKey(typeKey string) string {
 //	return result
 //}
 //
-//func (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+//funcation (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
 //	message, err := c.db.GetMessageController(s)
 //	common.CheckDBErrCallback(callback, err, operationID)
 //	if message.Status != constant.MsgStatusSendSuccess {

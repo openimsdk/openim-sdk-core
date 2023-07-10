@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 func (d *DataBase) initChatLog(ctx context.Context, conversationID string) {
@@ -194,7 +196,6 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 	}
 	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
 	condition += subCondition
-	log.Info("key owrd", condition)
 	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
 	return result, err
 }
@@ -215,8 +216,92 @@ func (d *DataBase) GetAlreadyExistSeqList(ctx context.Context, conversationID st
 	return seqList, nil
 }
 
-func (d *DataBase) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
-	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Model(model_struct.LocalChatLog{}).Where("client_msg_id=? ", clientMsgID).Updates(
-		map[string]interface{}{"local_ex": localEx}).Error, utils.GetSelfFuncName()+" failed")
+func (d *DataBase) UpdateColumnsMessage(ctx context.Context, conversationID, ClientMsgID string, args map[string]interface{}) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	c := model_struct.LocalChatLog{ClientMsgID: ClientMsgID}
+	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Model(&c).Updates(args)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
+}
+func (d *DataBase) SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) (result []*model_struct.LocalChatLog, err error) {
+	err = d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Model(&model_struct.LocalChatLog{}).Where("content_type = ?", contentType).Find(&result).Error
+	return result, err
+}
+func (d *DataBase) GetUnreadMessage(ctx context.Context, conversationID string) (msgs []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Debug().Where("send_id != ? AND is_read = ?", d.loginUserID, 0).Find(&msgs).Error, "GetMessageList failed")
+	return msgs, err
+}
 
+func (d *DataBase) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("seq in ? AND send_id != ?", seqs, d.loginUserID).Update("is_read", constant.HasRead)
+	if t.RowsAffected == 0 {
+		return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+
+func (d *DataBase) MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var msgs []*model_struct.LocalChatLog
+	if err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Find(&msgs).Error; err != nil {
+		return 0, utils.Wrap(err, "MarkConversationMessageAsReadDB failed")
+	}
+	for _, msg := range msgs {
+		var attachedInfo sdk_struct.AttachedInfoElem
+		utils.JsonStringToStruct(msg.AttachedInfo, &attachedInfo)
+		attachedInfo.HasReadTime = utils.GetCurrentTimestampByMill()
+		msg.IsRead = true
+		msg.AttachedInfo = utils.StructToJsonString(attachedInfo)
+		if err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id = ?", msg.ClientMsgID).Updates(msg).Error; err != nil {
+			log.ZError(ctx, "MarkConversationMessageAsReadDB failed", err, "msg", msg)
+		} else {
+			rowsAffected++
+		}
+	}
+	// t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Update("is_read", constant.HasRead)
+	// if t.RowsAffected == 0 {
+	// 	return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	// }
+	return rowsAffected, nil
+}
+
+func (d *DataBase) MarkConversationAllMessageAsRead(ctx context.Context, conversationID string) (rowsAffected int64, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("send_id != ? AND is_read == ?", d.loginUserID, false).Update("is_read", constant.HasRead)
+	if t.RowsAffected == 0 {
+		return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+
+func (d *DataBase) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (msgs []*model_struct.LocalChatLog, err error) {
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id IN ?", msgIDs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesByClientMsgIDs error")
+	return msgs, err
+}
+
+func (d *DataBase) GetMessagesBySeqs(ctx context.Context, conversationID string, seqs []int64) (msgs []*model_struct.LocalChatLog, err error) {
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("seq IN ?", seqs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesBySeqs error")
+	return msgs, err
+}
+
+func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	d.initChatLog(ctx, conversationID)
+	var seq int64
+	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	return seq, utils.Wrap(err, "GetConversationNormalMsgSeq")
+}
+
+func (d *DataBase) GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	var seq int64
+	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Where("send_id != ?", d.loginUserID).Find(&seq).Error
+	return seq, utils.Wrap(err, "GetConversationPeerNormalMsgSeq")
 }

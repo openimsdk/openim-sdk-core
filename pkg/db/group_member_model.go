@@ -48,12 +48,12 @@ func (d *DataBase) GetAllGroupMemberUserIDList(ctx context.Context) ([]model_str
 	return groupMemberList, utils.Wrap(d.conn.WithContext(ctx).Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
 
-func (d *DataBase) GetGroupMemberCount(ctx context.Context, groupID string) (uint32, error) {
+func (d *DataBase) GetGroupMemberCount(ctx context.Context, groupID string) (int32, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var count int64
 	err := d.conn.WithContext(ctx).Model(&model_struct.LocalGroupMember{}).Where("group_id = ? ", groupID).Count(&count).Error
-	return uint32(count), utils.Wrap(err, "GetGroupMemberCount failed")
+	return int32(count), utils.Wrap(err, "GetGroupMemberCount failed")
 }
 
 func (d *DataBase) GetGroupSomeMemberInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
@@ -116,7 +116,7 @@ func (d *DataBase) GetGroupMemberListSplit(ctx context.Context, groupID string, 
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberOwnerAndAdminDB(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
@@ -183,7 +183,7 @@ func (d *DataBase) InsertGroupMember(ctx context.Context, groupMember *model_str
 	return utils.Wrap(d.conn.WithContext(ctx).Create(groupMember).Error, "")
 }
 
-//func (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
+//funcation (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
 //	if MessageList == nil {
 //		return nil
 //	}

@@ -30,11 +30,11 @@ package workMoments
 //	db          db_interface.DataBase
 //}
 //
-//func NewWorkMoments(loginUserID string, db db_interface.DataBase) *WorkMoments {
+//funcation NewWorkMoments(loginUserID string, db db_interface.DataBase) *WorkMoments {
 //	return &WorkMoments{loginUserID: loginUserID, db: db}
 //}
 //
-//func (w *WorkMoments) DoNotification(ctx context.Context, jsonDetail string) {
+//funcation (w *WorkMoments) DoNotification(ctx context.Context, jsonDetail string) {
 //	if w.listener == nil {
 //		return
 //	}
@@ -49,7 +49,7 @@ package workMoments
 //	w.listener.OnRecvNewNotification()
 //}
 //
-//func (w *WorkMoments) getWorkMomentsNotification(ctx context.Context, offset, count int) ([]*model_struct.WorkMomentNotificationMsg, error) {
+//funcation (w *WorkMoments) getWorkMomentsNotification(ctx context.Context, offset, count int) ([]*model_struct.WorkMomentNotificationMsg, error) {
 //	if err := w.db.MarkAllWorkMomentsNotificationAsRead(ctx); err != nil {
 //		return nil, err
 //	}
@@ -69,10 +69,10 @@ package workMoments
 //	return msgs, nil
 //}
 //
-//func (w *WorkMoments) clearWorkMomentsNotification(ctx context.Context) error {
+//funcation (w *WorkMoments) clearWorkMomentsNotification(ctx context.Context) error {
 //	return w.db.ClearWorkMomentsNotification(ctx)
 //}
 //
-//func (w *WorkMoments) getWorkMomentsNotificationUnReadCount(ctx context.Context) (model_struct.LocalWorkMomentsNotificationUnreadCount, error) {
+//funcation (w *WorkMoments) getWorkMomentsNotificationUnReadCount(ctx context.Context) (model_struct.LocalWorkMomentsNotificationUnreadCount, error) {
 //	return w.db.GetWorkMomentsUnReadCount(ctx)
 //}
