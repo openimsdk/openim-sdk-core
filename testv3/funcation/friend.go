@@ -78,7 +78,7 @@ func ReliabilityInitAndLogin(index int, uid, token string) {
 
 	lg.InitSDK(cf, &testinit)
 	log.Info(uid, "new login ", lg)
-	allLoginMgr[index].mgr = lg
+	AllLoginMgr[index].mgr = lg
 	log.Info(uid, "InitSDK ", cf, "index mgr", index, lg)
 
 	lg.SetConversationListener(&testConversation)
