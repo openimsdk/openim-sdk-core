@@ -19,20 +19,10 @@ import (
 	"fmt"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"sync"
 
 	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
-
-var cf = sdk_struct.IMConfig{
-	ApiAddr:             APIADDR,
-	WsAddr:              WSADDR,
-	PlatformID:          PlatformID,
-	DataDir:             "./../",
-	LogLevel:            LogLevel,
-	IsLogStandardOutput: true,
-}
 
 // log and token
 var (
@@ -74,7 +64,7 @@ var (
 )
 
 var coreMgrLock sync.RWMutex
-var AllLoginMgr map[int]*CoreNode
+var allLoginMgr map[int]*CoreNode
 var userLock sync.RWMutex
 var allUserID []string
 

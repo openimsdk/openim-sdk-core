@@ -19,7 +19,7 @@ func RegisterReliabilityUser(id int, timeStamp string) {
 	token, _ := RunGetToken(userID)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
-	AllLoginMgr[id] = &CoreNode{token: token, userID: userID}
+	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
 
 func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
@@ -66,7 +66,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	// 所有成员拉取自己的会话是否有更新
 	for i := 0; i < clientNum; i++ {
 		var params sdk_params_callback.GetAdvancedHistoryMessageListParams
-		params.UserID = AllLoginMgr[i].userID
+		params.UserID = allLoginMgr[i].userID
 		//params.ConversationID = "si_7788_7789"
 		//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
 		params.Count = 20
@@ -88,14 +88,14 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 
 func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
 	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
-	strMyUid := AllLoginMgr[index].userID
-	token := AllLoginMgr[index].token
+	strMyUid := allLoginMgr[index].userID
+	token := allLoginMgr[index].token
 	ReliabilityInitAndLogin(index, strMyUid, token)
-	log.Info("", "login ok client num: ", len(AllLoginMgr))
+	log.Info("", "login ok client num: ", len(allLoginMgr))
 	log.Warn("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 
 	msgnum := msgNumInOneClient
-	uidNum := len(AllLoginMgr)
+	uidNum := len(allLoginMgr)
 	rand.Seed(time.Now().UnixNano())
 	if msgnum == 0 {
 		os.Exit(0)
@@ -115,7 +115,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 					break
 				}
 			}
-			recvId := AllLoginMgr[r].userID
+			recvId := allLoginMgr[r].userID
 			idx := strconv.FormatInt(int64(i), 10)
 			for {
 				if runtime.NumGoroutine() > MaxNumGoroutine {
@@ -156,6 +156,21 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 		}
 	}
 	log.Info("", "check map send -> map recv ok ", sameNum)
+	//log.Info("", "start check map recv -> map send ")
+	//sameNum = 0
+
+	//for k1, _ := range RecvAllMsg {
+	//	_, ok := SendSuccAllMsg[k1]
+	//	if ok {
+	//		sameNum++
+	//		//x := v1 + v2
+	//		//x = x + x
+	//
+	//	} else {
+	//		log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
+	//		//	return false
+	//	}
+	//}
 	maxCostMsgID := ""
 	minCostTime := int64(1000000)
 	maxCostTime := int64(0)
