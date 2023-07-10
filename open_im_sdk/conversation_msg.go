@@ -43,6 +43,10 @@ func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID str
 	call(callback, operationID, UserForSDK.Conversation().SetGlobalRecvMessageOpt, opt)
 }
 
+func SetConversationMsgDestructTime(callback open_im_sdk_callback.Base, operationID string, conversationID string, msgDestructTime int64) {
+	call(callback, operationID, UserForSDK.Conversation().SetConversationMsgDestructTime, conversationID, msgDestructTime)
+}
+
 func HideConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	call(callback, operationID, UserForSDK.Conversation().HideConversation, conversationID)
 }
