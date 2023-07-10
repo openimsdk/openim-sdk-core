@@ -34,7 +34,7 @@ func (d *DataBase) GetLoginUser(ctx context.Context, userID string) (*model_stru
 func (d *DataBase) UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
 	d.userMtx.Lock()
 	defer d.userMtx.Unlock()
-	t := d.conn.WithContext(ctx).Updates(user)
+	t := d.conn.WithContext(ctx).Model(user).Select("*").Updates(user)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

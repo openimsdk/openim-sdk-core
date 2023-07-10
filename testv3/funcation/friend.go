@@ -81,7 +81,6 @@ func ReliabilityInitAndLogin(index int, uid, token string) {
 	allLoginMgr[index].mgr = lg
 	log.Info(uid, "InitSDK ", cf, "index mgr", index, lg)
 
-	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
 
 	var testUser userCallback
@@ -139,10 +138,33 @@ type conversationCallBack struct {
 	SyncFlag int
 }
 
+func (c *conversationCallBack) OnError(errCode int32, errMsg string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *conversationCallBack) OnSuccess(data string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *conversationCallBack) OnNewConversation(conversationList string) {
+	log.Info("", "OnNewConversation returnList is ", conversationList)
+}
+
+func (c *conversationCallBack) OnConversationChanged(conversationList string) {
+	log.Info("", "OnConversationChanged returnList is", conversationList)
+}
+
 type userCallback struct {
 }
 
 type MsgListenerCallBak struct {
+}
+
+func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
@@ -310,14 +332,6 @@ func (c *conversationCallBack) OnSyncServerFinish() {
 
 func (c *conversationCallBack) OnSyncServerFailed() {
 	log.Info("", utils.GetSelfFuncName())
-}
-
-func (c *conversationCallBack) OnNewConversation(conversationList string) {
-	log.Info("", "OnNewConversation returnList is ", conversationList)
-}
-
-func (c *conversationCallBack) OnConversationChanged(conversationList string) {
-	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
 func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {

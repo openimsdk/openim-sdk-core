@@ -41,9 +41,9 @@ func getMyIP() string {
 }
 
 func getToken(uid string) (string, int64) {
-	initContext(uid)
+	InitContext(uid)
 	config.Token = ""
-	req := authPB.UserTokenReq{PlatformID: PlatformID, UserID: uid}
+	req := authPB.UserTokenReq{PlatformID: PlatformID, UserID: uid, Secret: Secret}
 	resp := authPB.UserTokenResp{}
 	err := util.ApiPost(ctx, "/auth/user_token", &req, &resp)
 	if err != nil {
@@ -70,7 +70,7 @@ func RunGetToken(strMyUid string) (string, int64) {
 	return token, exprie
 }
 
-func initContext(uid string) {
+func InitContext(uid string) context.Context {
 	config = ccontext.GlobalConfig{
 		UserID: uid,
 		Token:  AdminToken,
@@ -83,4 +83,5 @@ func initContext(uid string) {
 	}
 	ctx = ccontext.WithInfo(context.Background(), &config)
 	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+	return ctx
 }

@@ -22,5 +22,4 @@ func Test_Delay(t *testing.T) {
 		" single sender msg num: ", *singleSenderMsgNum, " send msg total num: ", *senderNum**singleSenderMsgNum)
 
 	funcation.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
-
 }
