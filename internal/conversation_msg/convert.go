@@ -34,6 +34,7 @@ func ServerConversationToLocal(conversation *pbConversation.Conversation) *model
 		AttachedInfo:     conversation.AttachedInfo,
 		Ex:               conversation.Ex,
 		MsgDestructTime:  conversation.MsgDestructTime,
+		IsMsgDestruct:    conversation.IsMsgDestruct,
 	}
 }
 
@@ -51,5 +52,6 @@ func LocalConversationToServer(conversation *model_struct.LocalConversation) *pb
 		AttachedInfo:     conversation.AttachedInfo,
 		MsgDestructTime:  conversation.MsgDestructTime,
 		Ex:               conversation.Ex,
+		IsMsgDestruct:    conversation.IsMsgDestruct,
 	}
 }

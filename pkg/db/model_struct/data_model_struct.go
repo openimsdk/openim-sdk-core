@@ -416,7 +416,8 @@ type LocalConversation struct {
 	MaxSeq                int64  `gorm:"column:max_seq" json:"maxSeq"`
 	MinSeq                int64  `gorm:"column:min_seq" json:"minSeq"`
 	HasReadSeq            int64  `gorm:"column:has_read_seq" json:"hasReadSeq"`
-	MsgDestructTime       int64  `gorm:"column:msg_destruct_time;default:0"`
+	MsgDestructTime       int64  `gorm:"column:msg_destruct_time;default:604800"`
+	IsMsgDestruct         bool   `gorm:"column:is_msg_destruct;default:false"`
 }
 type LocalConversationUnreadMessage struct {
 	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`

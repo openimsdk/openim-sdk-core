@@ -193,6 +193,10 @@ func (c *Conversation) SetConversationMsgDestructTime(ctx context.Context, conve
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{MsgDestructTime: &wrapperspb.Int64Value{Value: msgDestructTime}})
 }
 
+func (c *Conversation) SetConversationIsMsgDestruct(ctx context.Context, conversationID string, isMsgDestruct bool) error {
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsMsgDestruct: &wrapperspb.BoolValue{Value: isMsgDestruct}})
+}
+
 func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{BurnDuration: &wrapperspb.Int32Value{Value: burnDuration}})
 }

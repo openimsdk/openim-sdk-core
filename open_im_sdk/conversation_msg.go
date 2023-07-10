@@ -47,6 +47,10 @@ func SetConversationMsgDestructTime(callback open_im_sdk_callback.Base, operatio
 	call(callback, operationID, UserForSDK.Conversation().SetConversationMsgDestructTime, conversationID, msgDestructTime)
 }
 
+func SetConversationIsMsgDestruct(callback open_im_sdk_callback.Base, operationID string, conversationID string, isMsgDestruct bool) {
+	call(callback, operationID, UserForSDK.Conversation().SetConversationIsMsgDestruct, conversationID, isMsgDestruct)
+}
+
 func HideConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	call(callback, operationID, UserForSDK.Conversation().HideConversation, conversationID)
 }

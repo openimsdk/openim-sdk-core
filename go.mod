@@ -23,7 +23,7 @@ require (
 
 require golang.org/x/net v0.11.0
 
-require github.com/OpenIMSDK/Open-IM-Server v0.0.0-20230710020951-7bf9d5a30503
+require github.com/OpenIMSDK/Open-IM-Server v0.0.0-20230710065417-4b8af3be2ee5
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
