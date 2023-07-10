@@ -58,6 +58,8 @@ type SendRecvTime struct {
 }
 
 var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:
+var SendFailedAllMsg map[string]string
+var RecvAllMsg map[string]*SendRecvTime //msgid->send+recv
 
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
