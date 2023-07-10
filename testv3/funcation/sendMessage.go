@@ -24,15 +24,15 @@ import (
 
 func init() {
 	//sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
-	allLoginMgr = make(map[int]*CoreNode)
+	AllLoginMgr = make(map[int]*CoreNode)
 
 	SendSuccAllMsg = make(map[string]*SendRecvTime)
 
 }
 
 type CoreNode struct {
-	token             string
-	userID            string
+	Token             string
+	UserID            string
 	mgr               *login.LoginMgr
 	sendMsgSuccessNum uint32
 	sendMsgFailedNum  uint32
@@ -64,8 +64,8 @@ var RecvAllMsg map[string]*SendRecvTime //msgid->send+recv
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	log.Info(operationID, "CreateTextMessage  conv: ", allLoginMgr[index].mgr.Conversation(), "index: ", index)
-	s, err := allLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
+	log.Info(operationID, "CreateTextMessage  conv: ", AllLoginMgr[index].mgr.Conversation(), "index: ", index)
+	s, err := AllLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
 	if err != nil {
 		log.Error(operationID, "CreateTextMessage", err)
 		return
@@ -83,7 +83,7 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 
 	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
 	// 如果 recvID 为空 代表发送群聊消息，反之
-	allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, groupID, &o)
+	AllLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, groupID, &o)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	x := SendRecvTime{SendTime: utils.GetCurrentTimestampByMill()}
