@@ -5,48 +5,13 @@ import (
 	userPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
-	"sync"
 	"time"
 )
 
-type Users struct {
-	Uid      string
-	Nickname string
-	FaceUrl  string
-}
-
-func RegisterOne(uid, nickname, faceurl string) (bool, error) {
+func Register(uid, nickname, faceurl string) (bool, error) {
 	InitContext(uid)
 	err := checkUserAccount(uid)
 	return registerUserAccount(uid, nickname, faceurl), err
-}
-
-// 批量注册
-// 返回值：成功注册和失败注册的 uidList
-func RegisterBatch(users []*Users) ([]string, []string) {
-	var successList, failList []string
-	var wg sync.WaitGroup
-	wg.Add(len(users))
-	for i := 0; i < len(users); i++ {
-		i := i
-		go func(idx int) {
-			uid := users[i].Uid
-			nickname := users[i].Nickname
-			faceUrl := users[i].FaceUrl
-			bool, err := RegisterOne(uid, nickname, faceUrl)
-			if err != nil {
-				log.Error(utils.OperationIDGenerator(), err)
-			}
-			if bool == false {
-				failList = append(failList, uid)
-			} else {
-				successList = append(successList, uid)
-			}
-		}(i)
-	}
-	wg.Wait()
-	return successList, failList
 }
 
 func checkUserAccount(uid string) error {
