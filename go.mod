@@ -13,7 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/shamsher31/goimgtype v1.0.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.2
 	github.com/tencentyun/qcloud-cos-sts-sdk v0.0.0-20220106031843-2efeb10ca2f6
 	google.golang.org/protobuf v1.31.0 // indirect
 	gorm.io/driver/sqlite v1.3.6
@@ -23,7 +23,7 @@ require (
 
 require golang.org/x/net v0.11.0
 
-require github.com/OpenIMSDK/Open-IM-Server v0.0.0-20230710065417-4b8af3be2ee5
+require github.com/OpenIMSDK/Open-IM-Server v0.0.0-20230710095157-04474c67472f
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
@@ -31,7 +31,7 @@ require (
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/mattn/go-sqlite3 v1.14.12 // indirect
