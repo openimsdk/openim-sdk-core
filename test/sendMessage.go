@@ -1,35 +1,22 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package test
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	//	"open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
+	"open_im_sdk/sdk_struct"
 )
 
 func init() {
-	//sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
+	sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
 	allLoginMgr = make(map[int]*CoreNode)
-
 }
 
-//funcation InitMgr(num int) {
+//func InitMgr(num int) {
 //	log.Warn("", "allLoginMgr cap:  ", num)
 //	allLoginMgr = make(map[int]*CoreNode, num)
 //}
@@ -55,7 +42,7 @@ func addSendFailed() {
 }
 
 //
-//funcation TestSendCostTime() {
+//func TestSendCostTime() {
 //	GenWsConn(0)
 //	sendID := allUserID[0]
 //	recvID := allUserID[0]
@@ -72,7 +59,7 @@ func addSendFailed() {
 //	}
 //
 //}
-//funcation TestSend(idx int, text string, uidNum, intervalSleep int) {
+//func TestSend(idx int, text string, uidNum, intervalSleep int) {
 //	for {
 //		operationID := utils.OperationIDGenerator()
 //		sendID := allUserID[idx]
@@ -88,7 +75,7 @@ func addSendFailed() {
 //}
 //
 
-//funcation sendPressMsg(idx int, text string, uidNum, intervalSleep int) {
+//func sendPressMsg(idx int, text string, uidNum, intervalSleep int) {
 //	for {
 //		operationID := utils.OperationIDGenerator()
 //		sendID := allUserID[idx]
@@ -105,10 +92,10 @@ func addSendFailed() {
 
 func sendPressMsg(index int, sendId, recvID string, groupID string, idx string) bool {
 
-	return SendTextMessageOnlyForPress(idx, sendId, recvID, groupID, utils.OperationIDGenerator())
+	return SendTextMessageOnlyForPress(idx, sendId, recvID, groupID, utils.OperationIDGenerator(), allLoginMgr[index].mgr.Ws())
 }
-func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID string) bool {
-	var wsMsgData sdkws.MsgData
+func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID string, ws *interaction.Ws) bool {
+	var wsMsgData server_api_params.MsgData
 	options := make(map[string]bool, 2)
 	wsMsgData.SendID = senderID
 	if groupID == "" {
@@ -128,12 +115,12 @@ func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID st
 	wsMsgData.CreateTime = utils.GetCurrentTimestampByMill()
 	wsMsgData.Options = options
 	wsMsgData.OfflinePushInfo = nil
-	//timeout := 300
+	timeout := 300
 	log.Info(operationID, "SendReqTest begin ", wsMsgData)
-	//flag := ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
-	//
-	//if flag != true {
-	//	log.Warn(operationID, "SendReqTest failed ", wsMsgData)
-	//}
-	return true
+	flag := ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
+
+	if flag != true {
+		log.Warn(operationID, "SendReqTest failed ", wsMsgData)
+	}
+	return flag
 }

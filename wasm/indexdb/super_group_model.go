@@ -1,35 +1,14 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-//go:build js && wasm
-// +build js,wasm
-
 package indexdb
 
 import (
-	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
 type LocalSuperGroup struct{}
 
-func NewLocalSuperGroup() *LocalSuperGroup {
-	return &LocalSuperGroup{}
-}
-
-func (i *LocalSuperGroup) GetJoinedSuperGroupList(ctx context.Context) (result []*model_struct.LocalGroup, err error) {
+func (i *LocalSuperGroup) GetJoinedSuperGroupList() (result []*model_struct.LocalGroup, err error) {
 	groupList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -50,27 +29,49 @@ func (i *LocalSuperGroup) GetJoinedSuperGroupList(ctx context.Context) (result [
 		}
 	}
 }
-
-func (i *LocalSuperGroup) InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
+func (i *LocalSuperGroup) InsertSuperGroup(groupInfo *model_struct.LocalGroup) error {
 	_, err := Exec(utils.StructToJsonString(groupInfo))
 	return err
 }
-func (i *LocalSuperGroup) UpdateSuperGroup(ctx context.Context, g *model_struct.LocalGroup) error {
-	_, err := Exec(g.GroupID, utils.StructToJsonString(g))
+func (i *LocalSuperGroup) UpdateSuperGroup(g *model_struct.LocalGroup) error {
+	if g.GroupID == "" {
+		return PrimaryKeyNull
+	}
+	tempLocalSuperGroup := temp_struct.LocalSuperGroup{
+		GroupID:                g.GroupID,
+		GroupName:              g.GroupName,
+		Notification:           g.Notification,
+		Introduction:           g.Introduction,
+		FaceURL:                g.FaceURL,
+		CreateTime:             g.CreateTime,
+		Status:                 g.Status,
+		CreatorUserID:          g.CreatorUserID,
+		GroupType:              g.GroupType,
+		OwnerUserID:            g.OwnerUserID,
+		MemberCount:            g.MemberCount,
+		Ex:                     g.Ex,
+		AttachedInfo:           g.AttachedInfo,
+		NeedVerification:       g.NeedVerification,
+		LookMemberInfo:         g.LookMemberInfo,
+		ApplyMemberFriend:      g.ApplyMemberFriend,
+		NotificationUpdateTime: g.NotificationUpdateTime,
+		NotificationUserID:     g.NotificationUserID,
+	}
+	_, err := Exec(g.GroupID, utils.StructToJsonString(tempLocalSuperGroup))
 	return err
 }
 
-func (i *LocalSuperGroup) DeleteSuperGroup(ctx context.Context, groupID string) error {
+func (i *LocalSuperGroup) DeleteSuperGroup(groupID string) error {
 	_, err := Exec(groupID)
 	return err
 }
 
-func (i *LocalSuperGroup) DeleteAllSuperGroup(ctx context.Context) error {
+func (i *LocalSuperGroup) DeleteAllSuperGroup() error {
 	_, err := Exec()
 	return err
 }
 
-func (i *LocalSuperGroup) GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
+func (i *LocalSuperGroup) GetSuperGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
 	groupInfo, err := Exec(groupID)
 	if err != nil {
 		return nil, err
@@ -88,7 +89,7 @@ func (i *LocalSuperGroup) GetSuperGroupInfoByGroupID(ctx context.Context, groupI
 	}
 }
 
-func (i *LocalSuperGroup) GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error) {
+func (i *LocalSuperGroup) GetJoinedWorkingGroupIDList() ([]string, error) {
 	IDList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -104,7 +105,7 @@ func (i *LocalSuperGroup) GetJoinedWorkingGroupIDList(ctx context.Context) ([]st
 	return nil, ErrType
 }
 
-func (i *LocalSuperGroup) GetJoinedWorkingGroupList(ctx context.Context) (result []*model_struct.LocalGroup, err error) {
+func (i *LocalSuperGroup) GetJoinedWorkingGroupList() (result []*model_struct.LocalGroup, err error) {
 	groupList, err := Exec()
 	if err != nil {
 		return nil, err

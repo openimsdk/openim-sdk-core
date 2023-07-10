@@ -1,20 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-//go:build js && wasm
-// +build js,wasm
-
 package event_listener
 
 import (
@@ -95,6 +78,18 @@ type AdvancedMsgCallback struct {
 	CallbackWriter
 }
 
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
+	panic("implement me")
+}
+
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
+	panic("implement me")
+}
+
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
+	panic("implement me")
+}
+
 func NewAdvancedMsgCallback(callback *js.Value) *AdvancedMsgCallback {
 	return &AdvancedMsgCallback{CallbackWriter: NewEventData(callback)}
 }
@@ -116,35 +111,6 @@ func (a AdvancedMsgCallback) OnRecvMessageRevoked(msgID string) {
 
 func (a AdvancedMsgCallback) OnNewRecvMessageRevoked(messageRevoked string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageRevoked).SendMessage()
-}
-func (a AdvancedMsgCallback) OnRecvMessageModified(message string) {
-	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
-}
-func (a AdvancedMsgCallback) OnRecvMessageExtensionsChanged(clientMsgID string, reactionExtensionList string) {
-	m := make(map[string]interface{})
-	m["clientMsgID"] = clientMsgID
-	m["reactionExtensionList"] = reactionExtensionList
-	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
-}
-
-func (a AdvancedMsgCallback) OnRecvMessageExtensionsDeleted(clientMsgID string, reactionExtensionKeyList string) {
-	m := make(map[string]interface{})
-	m["clientMsgID"] = clientMsgID
-	m["reactionExtensionKeyList"] = reactionExtensionKeyList
-	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
-}
-func (a AdvancedMsgCallback) OnRecvMessageExtensionsAdded(clientMsgID string, reactionExtensionList string) {
-	m := make(map[string]interface{})
-	m["clientMsgID"] = clientMsgID
-	m["reactionExtensionList"] = reactionExtensionList
-	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
-}
-func (a AdvancedMsgCallback) OnRecvOfflineNewMessage(message string) {
-	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
-}
-
-func (a AdvancedMsgCallback) OnMsgDeleted(message string) {
-	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }
 
 type BaseCallback struct {
@@ -198,9 +164,6 @@ func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
 }
 
 func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
-	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
-}
-func (b *BatchMessageCallback) OnRecvOfflineNewMessages(messageList string) {
 	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
 }
 
@@ -283,9 +246,6 @@ func (f *GroupCallback) OnGroupApplicationAccepted(groupApplication string) {
 }
 func (f *GroupCallback) OnGroupApplicationRejected(groupApplication string) {
 	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
-}
-func (f *GroupCallback) OnGroupDismissed(groupInfo string) {
-	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupInfo).SendMessage()
 }
 
 type UserCallback struct {

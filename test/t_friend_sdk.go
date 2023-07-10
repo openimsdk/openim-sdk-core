@@ -1,27 +1,14 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package test
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	X "log"
 	"open_im_sdk/internal/login"
+	"open_im_sdk/pkg/server_api_params"
+
+	//"gorm.io/gorm/callbacks"
+	X "log"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
@@ -29,8 +16,6 @@ import (
 	"os"
 	"runtime"
 	"time"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 var loggerf *X.Logger
@@ -61,7 +46,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "3126758667"
+var Friend_uid = "13911112222"
 
 func SetTestFriendID(friendUserID string) {
 	Friend_uid = friendUserID
@@ -77,7 +62,7 @@ func DoTestGetFriendApplicationList() {
 	var test testGetFriendApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ")
-	// open_im_sdk.GetRecvFriendApplicationList(test, test.OperationID)
+	open_im_sdk.GetRecvFriendApplicationList(test, test.OperationID)
 
 }
 
@@ -89,7 +74,7 @@ type testSetSelfInfo struct {
 func DoTestSetSelfInfo() {
 	var test testSetSelfInfo
 	test.OperationID = utils.OperationIDGenerator()
-	userInfo := sdkws.UserInfo{}
+	userInfo := server_api_params.UserInfo{}
 	userInfo.Nickname = "new 4444444444444 Gordon001"
 	jsonString := utils.StructToJsonStringDefault(userInfo)
 	fmt.Println("SetSelfInfo, input: ")
@@ -129,7 +114,7 @@ func DoTestGetDesignatedFriendsInfo() {
 
 	jsontest, _ := json.Marshal(test.uid)
 	fmt.Println("testGetFriendsInfo, input: ", string(jsontest))
-	// open_im_sdk.GetDesignatedFriendsInfo(test, "xxxxxxxxxxx", string(jsontest))
+	open_im_sdk.GetDesignatedFriendsInfo(test, "xxxxxxxxxxx", string(jsontest))
 }
 
 // /////////////////////////////////////////////////////
@@ -145,10 +130,11 @@ func (t testAddToBlackList) OnError(code int32, msg string) {
 	log.Info(t.OperationID, "testAddToBlackList, OnError, ", code, msg)
 }
 
-func DoTestAddToBlackList(userID string) {
+func DoTestAddToBlackList() {
 	var test testAddToBlackList
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.AddBlack(test, test.OperationID, userID)
+	fmt.Println("AddToBlackList, input: ", Friend_uid)
+	open_im_sdk.AddBlack(test, test.OperationID, Friend_uid)
 }
 
 // /////////////////////////////////////////////////////
@@ -156,10 +142,11 @@ type testDeleteFromBlackList struct {
 	baseCallback
 }
 
-func DoTestDeleteFromBlackList(userID string) {
+func DoTestDeleteFromBlackList() {
 	var test testDeleteFromBlackList
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.RemoveBlack(test, test.OperationID, userID)
+	fmt.Println("DeleteFromBlackList, input: ")
+	open_im_sdk.RemoveBlack(test, test.OperationID, Friend_uid)
 }
 
 // ////////////////////////////////////////////////////
@@ -211,7 +198,7 @@ func DotestSetFriendRemark() {
 
 	var param sdk_params_callback.SetFriendRemarkParams
 	param.ToUserID = Friend_uid
-	param.Remark = "4444 "
+	param.Remark = "ttttttttttttttttt "
 	jsontest := utils.StructToJsonString(param)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jsontest)
 	open_im_sdk.SetFriendRemark(test, test.OperationID, jsontest)
@@ -224,10 +211,12 @@ type testDeleteFriend struct {
 	baseCallback
 }
 
-func DotestDeleteFriend(userID string) {
+func DotestDeleteFriend() {
 	var test testDeleteFriend
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.DeleteFriend(test, test.OperationID, userID)
+
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ")
+	open_im_sdk.DeleteFriend(test, test.OperationID, Friend_uid)
 }
 
 // /////////////////////////////////////////////////////
@@ -273,7 +262,7 @@ func DoTestGetSendFriendApplicationList() {
 	var test testGetSendFriendApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, "GetSendFriendApplicationList input:")
-	// open_im_sdk.GetSendFriendApplicationList(test, test.OperationID)
+	open_im_sdk.GetSendFriendApplicationList(test, test.OperationID)
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -385,6 +374,106 @@ func DoTestRefuseFriendApplication() {
 
 ////////////////////////////////////////////////////////////////////
 
+type BaseSuccessFailed struct {
+	successData string
+	errCode     int
+	errMsg      string
+	funcName    string
+	time        time.Time
+}
+
+func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
+	b.errCode = -1
+	b.errMsg = errMsg
+	log.Error("login failed", errCode, errMsg)
+
+}
+
+func (b *BaseSuccessFailed) OnSuccess(data string) {
+	b.errCode = 1
+	b.successData = data
+	log.Info("login success", data, time.Since(b.time))
+}
+
+func InOutlllogin(uid, tk string) {
+	var callback BaseSuccessFailed
+	callback.time = time.Now()
+	callback.funcName = utils.GetSelfFuncName()
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.Login(&callback, operationID, uid, tk)
+	for {
+		if callback.errCode == 1 {
+			return
+		} else if callback.errCode == -1 {
+			time.Sleep(100 * time.Millisecond)
+		} else {
+			time.Sleep(100 * time.Millisecond)
+			log.Info(operationID, "waiting login ")
+		}
+	}
+}
+
+func InOutLogou() {
+	var callback BaseSuccessFailed
+	callback.funcName = utils.GetSelfFuncName()
+	opretaionID := utils.OperationIDGenerator()
+	open_im_sdk.Logout(&callback, opretaionID)
+}
+
+func InOutDoTest(uid, tk, ws, api string) {
+	var cf sdk_struct.IMConfig
+	cf.ApiAddr = api
+	cf.Platform = 1
+	cf.WsAddr = ws
+	cf.DataDir = "./"
+	cf.LogLevel = LogLevel
+	cf.ObjectStorage = "minio"
+	cf.IsCompression = true
+	cf.IsExternalExtensions = true
+
+	var s string
+	b, _ := json.Marshal(cf)
+	s = string(b)
+	fmt.Println(s)
+	var testinit testInitLister
+
+	operationID := utils.OperationIDGenerator()
+	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
+		log.Error("", "InitSDK failed")
+		return
+	}
+
+	var testConversation conversationCallBack
+	open_im_sdk.SetConversationListener(&testConversation)
+
+	var testUser userCallback
+	open_im_sdk.SetUserListener(testUser)
+
+	var msgCallBack MsgListenerCallBak
+	open_im_sdk.SetAdvancedMsgListener(&msgCallBack)
+
+	var batchMsg BatchMsg
+	open_im_sdk.SetBatchMsgListener(&batchMsg)
+
+	var friendListener testFriendListener
+	open_im_sdk.SetFriendListener(friendListener)
+
+	var groupListener testGroupListener
+	open_im_sdk.SetGroupListener(groupListener)
+	var signalingListener testSignalingListener
+	open_im_sdk.SetSignalingListener(&signalingListener)
+
+	var organizationListener testOrganizationListener
+	open_im_sdk.SetOrganizationListener(organizationListener)
+
+	var workMomentsListener testWorkMomentsListener
+	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
+
+	InOutlllogin(uid, tk)
+
+	log.Warn("", "InOutDoTest fin")
+}
+
 func SetListenerAndLogin(uid, tk string) {
 	//
 	//var testConversation conversationCallBack
@@ -413,7 +502,7 @@ func SetListenerAndLogin(uid, tk string) {
 	//var workMomentsListener testWorkMomentsListener
 	//open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
-	//InOutlllogin(uid, tk)
+	InOutlllogin(uid, tk)
 
 	log.Warn("", "SetListenerAndLogin fin")
 }
@@ -444,25 +533,21 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
-	cf.PlatformID = 1
+	cf.Platform = 1
 	cf.DataDir = "./"
-	cf.IsLogStandardOutput = true
 	cf.LogLevel = uint32(LogLevel)
-
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
-	operationID := utils.OperationIDGenerator()
 
-	ctx := mcontext.NewCtx(operationID)
+	operationID := utils.OperationIDGenerator()
 	var testinit testInitLister
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
+	sdk_struct.SvrConf = cf
 	allLoginMgr[index].mgr = lg
-	lg.InitSDK(cf, &testinit)
+	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
 
-	ctx = ccontext.WithOperationID(lg.Context(), operationID)
-
-	log.Info(operationID, "InitSDK ", cf)
+	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
 	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
@@ -479,14 +564,22 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
 
+	var organizationListener testOrganizationListener
+	lg.SetOrganizationListener(organizationListener)
+
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
+	lg.Login(&callback, uid, tk, operationID)
 
 	for {
 		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
-			lg.User().GetSelfUserInfo(ctx)
+			log.Warn(operationID, "login ok, and sync finished ", uid)
 			return
+		} else {
+			log.Warn(operationID, "waiting login...", uid, callback.errCode, testConversation.SyncFlag)
 		}
+		//		log.Warn(operationID, "waiting login...", uid)
+		//	time.Sleep(100 * time.Millisecond)
 	}
 
 }
@@ -495,21 +588,21 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
-	cf.PlatformID = 1
+	cf.Platform = 1
 	cf.DataDir = "./"
 	cf.LogLevel = uint32(LogLevel)
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()
-	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
+	sdk_struct.SvrConf = cf
 	allLoginMgr[index].mgr = lg
-	lg.InitSDK(cf, &testinit)
+	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
 
-	log.Info(operationID, "InitSDK ", cf)
+	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
 	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
@@ -526,17 +619,32 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
 
-	err := lg.Login(ctx, uid, tk)
-	if err != nil {
-		log.Error(operationID, "login failed", err)
+	var organizationListener testOrganizationListener
+	lg.SetOrganizationListener(organizationListener)
+
+	var callback BaseSuccessFailed
+	callback.funcName = utils.GetSelfFuncName()
+	lg.Login(&callback, uid, tk, operationID)
+
+	for {
+		if callback.errCode == 1 {
+			log.Warn(operationID, "login ok ", uid)
+			return
+		} else {
+			log.Warn(operationID, "waiting login...", uid, callback.errCode)
+		}
+		//		log.Warn(operationID, "waiting login...", uid)
+		//	time.Sleep(100 * time.Millisecond)
 	}
+
 }
 
 func DoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api // "http://120.24.45.199:10000"
-	cf.WsAddr = ws   //"ws://120.24.45.199:17778"
-	cf.PlatformID = 1
+	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
+	cf.WsAddr = ws //"ws://120.24.45.199:17778"
+	cf.Platform = 1
 	cf.DataDir = "./"
 
 	var s string
@@ -565,6 +673,8 @@ func DoTest(uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)
 
+	var signalingListener testSignalingListener
+	open_im_sdk.SetSignalingListener(&signalingListener)
 	time.Sleep(1 * time.Second)
 
 	for !lllogin(uid, tk) {

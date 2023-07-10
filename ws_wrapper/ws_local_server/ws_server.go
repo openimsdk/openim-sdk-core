@@ -9,6 +9,7 @@ package ws_local_server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
 	_ "net/http/pprof"
 	"open_im_sdk/open_im_sdk"
@@ -20,8 +21,6 @@ import (
 	"runtime/debug"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 const WriteTimeoutSeconds = 30
@@ -66,6 +65,9 @@ func (ws *WServer) OnInit(wsPort int) {
 
 func (ws *WServer) Run() {
 	go ws.getMsgAndSend()
+	go func() {
+		http.ListenAndServe("0.0.0.0:45000", nil)
+	}()
 	http.HandleFunc("/", ws.wsHandler)         //Get request from client to handle by wsHandler
 	err := http.ListenAndServe(ws.wsAddr, nil) //Start listening
 	if err != nil {
@@ -338,3 +340,16 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request, operation
 		return false
 	}
 }
+
+//
+//func log.Info(operationID string, v ...interface{}) {
+//	if !log.IsNil() {
+//		log.NewInfo("", v...)
+//		return
+//	}
+//	_, b, c, _ := runtime.Caller(1)
+//	i := strings.LastIndex(b, "/")
+//	if i != -1 {
+//		sLog.Println("[OperationID:", operationID, "]", "[", b[i+1:len(b)], ":", c, "]", v)
+//	}
+//}

@@ -1,20 +1,4 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package server_api_params
-
-import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 type ParamsCommFriend struct {
 	OperationID string `json:"operationID" binding:"required"`
@@ -73,7 +57,7 @@ type GetBlackListReq struct {
 }
 type GetBlackListResp struct {
 	CommResp
-	BlackUserInfoList []*sdkws.PublicUserInfo
+	BlackUserInfoList []*PublicUserInfo
 	Data              []map[string]interface{} `json:"data"`
 }
 
@@ -115,7 +99,7 @@ type GetFriendsInfoReq struct {
 }
 type GetFriendsInfoResp struct {
 	CommResp
-	FriendInfoList []*sdkws.FriendInfo
+	FriendInfoList []*FriendInfo
 	Data           []map[string]interface{} `json:"data"`
 }
 
@@ -125,7 +109,7 @@ type GetFriendListReq struct {
 }
 type GetFriendListResp struct {
 	CommResp
-	FriendInfoList []*sdkws.FriendInfo
+	FriendInfoList []*FriendInfo
 	Data           []map[string]interface{} `json:"data"`
 }
 
@@ -135,7 +119,7 @@ type GetFriendApplyListReq struct {
 }
 type GetFriendApplyListResp struct {
 	CommResp
-	FriendRequestList []*sdkws.FriendRequest
+	FriendRequestList []*FriendRequest
 	Data              []map[string]interface{} `json:"data"`
 }
 
@@ -145,6 +129,6 @@ type GetSelfFriendApplyListReq struct {
 }
 type GetSelfFriendApplyListResp struct {
 	CommResp
-	FriendRequestList []*sdkws.FriendRequest
+	FriendRequestList []*FriendRequest
 	Data              []map[string]interface{} `json:"data"`
 }

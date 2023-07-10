@@ -1,17 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package constant
 
 const (
@@ -39,21 +25,14 @@ const (
 	NewestSeqRouter        = "/chat/newest_seq"
 
 	//msg
-	ClearConversationMsgRouter             = RouterMsg + "/clear_conversation_msg" // Clear the message of the specified conversation
-	ClearAllMsgRouter                      = RouterMsg + "/user_clear_all_msg"     // Clear all messages of the current user
-	DeleteMsgsRouter                       = RouterMsg + "/delete_msgs"            // Delete the specified message
-	RevokeMsgRouter                        = RouterMsg + "/revoke_msg"
-	SetMessageReactionExtensionsRouter     = RouterMsg + "/set_message_reaction_extensions"
-	AddMessageReactionExtensionsRouter     = RouterMsg + "/add_message_reaction_extensions"
-	MarkMsgsAsReadRouter                   = RouterMsg + "/mark_msgs_as_read"
-	GetConversationsHasReadAndMaxSeqRouter = RouterMsg + "/get_conversations_has_read_and_max_seq"
-
-	MarkConversationAsRead    = RouterMsg + "/mark_conversation_as_read"
-	MarkMsgsAsRead            = RouterMsg + "/mark_msgs_as_read"
-	SetConversationHasReadSeq = RouterMsg + "/set_conversation_has_read_seq"
+	DeleteMsgRouter                    = RouterMsg + "/del_msg"
+	ClearMsgRouter                     = RouterMsg + "/clear_msg"
+	DeleteSuperGroupMsgRouter          = RouterMsg + "/del_super_group_msg"
+	SetMessageReactionExtensionsRouter = RouterMsg + "/set_message_reaction_extensions"
+	AddMessageReactionExtensionsRouter = RouterMsg + "/add_message_reaction_extensions"
 
 	GetMessageListReactionExtensionsRouter = RouterMsg + "/get_message_list_reaction_extensions"
-	DeleteMessageReactionExtensionsRouter  = RouterMsg + "/delete_message_reaction_extensions"
+	DeleteMessageReactionExtensionsRouter  = RouterMsg + "//delete_message_reaction_extensions"
 
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"
@@ -66,7 +45,6 @@ const (
 	JoinGroupRouter                   = RouterGroup + "/join_group"
 	QuitGroupRouter                   = RouterGroup + "/quit_group"
 	GetGroupsInfoRouter               = RouterGroup + "/get_groups_info"
-	GetGroupMemberListRouter          = RouterGroup + "/get_group_member_list"
 	GetGroupAllMemberListRouter       = RouterGroup + "/get_group_all_member_list"
 	GetGroupMembersInfoRouter         = RouterGroup + "/get_group_members_info"
 	InviteUserToGroupRouter           = RouterGroup + "/invite_user_to_group"
@@ -95,7 +73,6 @@ const (
 	GetConversationRouter              = ConversationGroup + "/get_conversation"
 	BatchSetConversationRouter         = ConversationGroup + "/batch_set_conversation"
 	ModifyConversationFieldRouter      = ConversationGroup + "/modify_conversation_field"
-	SetConversationsRouter             = ConversationGroup + "/set_conversations"
 
 	//organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
@@ -118,12 +95,4 @@ const (
 	RouterSuperGroup   = "/super_group"
 	RouterMsg          = "/msg"
 	RouterThird        = "/third"
-)
-
-const (
-	FileApplyPutRouter   = "/third/apply_put"
-	FileGetPutRouter     = "/third/get_put"
-	FileConfirmPutRouter = "/third/confirm_put"
-	FileGetHashRouter    = "/third/get_hash"
-	FileGetURLRouter     = "/third/object"
 )

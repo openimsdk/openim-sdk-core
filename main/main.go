@@ -1,32 +1,21 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
 	"fmt"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 	"time"
 )
 
 func main() {
-	APIADDR := "http://203.56.175.233:10002"
-	WSADDR := "ws://203.56.175.233:10001"
+	//APIADDR := "https://test-web.rentsoft.cn/api"
+	//WSADDR := "wss://test-web.rentsoft.cn/msg_gateway"
+	APIADDR := "http://59.36.173.89:10002"
+	WSADDR := "ws://59.36.173.89:10001"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
-	SECRET := "tuoyun"
+	SECRET := "openIM123"
 	SENDINTERVAL := 20
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
@@ -34,27 +23,90 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "9184785285"
+	strMyUidx := "1010930629"
 
+	//	var onlineNum *int          //Number of online users
+	//	var senderNum *int          //Number of users sending messages
+	//	var singleSenderMsgNum *int //Number of single user send messages
+	//	var intervalTime *int       //Sending time interval, in millseconds
+	//	onlineNum = flag.Int("on", 10000, "online num")
+	//	senderNum = flag.Int("sn", 100, "sender num")
+	//	singleSenderMsgNum = flag.Int("mn", 1000, "single sender msg num")
+	//	intervalTime = flag.Int("t", 1000, "interval time mill second")
+	//	flag.Parse()
+	//strMyUidx := "13900000000"
+
+	log.NewPrivateLog("", 6)
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
-	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	time.Sleep(time.Second * 2)
-	test.DoTestSetBurnDuration("si_9032643662_9184785285")
-	// test.DoTestRevoke()
-	// test.DotestDeleteFriend("8303492153")
-	// test.TestMarkGroupMessageAsRead()
-	// test.DoTestRevoke()
-	// time.Sleep(time.Second * 5)
-	// test.DoTestAddToBlackList("9169012630")
-	// test.DoTestDeleteFromBlackList("9169012630")
-	// test.DotestDeleteFriend("9169012630")
-	// test.DoTestSetConversationPinned("si_2456093263_9169012630", true)
-	// test.DoTestSetOneConversationRecvMessageOpt("si_2456093263_9169012630", 2)
-	// test.DoTestGetConversationRecvMessageOpt("si_2456093263_9169012630")
-	// test.DoTestDeleteConversationMsgFromLocalAndSvr("sg_537415520")
+	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
+	println("start")
+	//test.DoTestCreateGroup()
+	//test.DoTestSearchLocalMessages()
+	// test.DoTestInviteInGroup()
+	//time.Sleep(time.Second*6)
+	//test.DoTestGetSelfUserInfo()
+	//test.DoTestSetBurnDuration("single_2861383134")
+	//test.DoTestInvite("123123")
+	test.DoTestSetAppBackgroundStatus(true)
+	for {
+		//test.DotestDeleteFriend()
+		//test.DoTestSendMsg2("", "1443506268")
+		time.Sleep(time.Second * 10)
+	}
+	//test.DoTestSignalGetRoomByGroupID("1826384574")
+	//test.DoTestSignalGetTokenByRoomID("1826384574")
+	//test.DoTestSendImageMsg("3433303585")
+	//test.DoTestGetUserInDepartment()
+	//test.DoTestGetDepartmentMemberAndSubDepartment()
+	//test.DoTestDeleteAllMsgFromLocalAndSvr()
+	//	test.DoTestGetDepartmentMemberAndSubDepartment()
+	//test.DotestUploadFile()
+	//test.DotestMinio()
+	//test.DotestSearchFriends()
+	//if *senderNum == 0 {
+	//	test.RegisterAccounts(*onlineNum)
+	//	return
+	//}
+	//
+	//test.OnlineTest(*onlineNum)
+	////test.TestSendCostTime()
+	//test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
+	//test.DoTestSearchLocalMessages()
+	//println("start")
+	//test.DoTestSendImageMsg(strMyUidx, "17726378428")
+	//test.DoTestSearchGroups()
+	//test.DoTestGetHistoryMessage("")
+	//test.DoTestGetHistoryMessageReverse("")
+	//test.DoTestInviteInGroup()
+	//test.DoTestCancel()
+	//test.DoTestSendMsg2(strMyUidx, friendID)
+	//test.DoTestGetAllConversation()
+
+	//test.DoTestGetOneConversation("17726378428")
+	//test.DoTestGetConversations(`["single_17726378428"]`)
+	//test.DoTestGetConversationListSplit()
+	//test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
+
+	//set batch
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)
+	//set one
+	////set batch
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
+	////set one
+	//test.DoTestSetConversationPinned("single_17726378428", false)
+	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
+	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
+	//test.DoTestReject()
+	//test.DoTestAccept()
+	//test.DoTestMarkGroupMessageAsRead()
+	//test.DoTestGetGroupHistoryMessage()
+	//test.DoTestGetHistoryMessage("17396220460")
 	for {
 		time.Sleep(10000 * time.Millisecond)
+		log.Warn("", "10000 * time.Millisecond ###################waiting... msg: ")
 	}
 
+	//reliabilityTest()
+	//	test.PressTest(testClientNum, intervalSleep, imIP)
 }

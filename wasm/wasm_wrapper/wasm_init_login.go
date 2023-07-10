@@ -1,18 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-//go:build js && wasm
 // +build js,wasm
 
 package wasm_wrapper
@@ -29,7 +14,7 @@ import (
 const COMMONEVENTFUNC = "commonEventFunc"
 
 var ErrArgsLength = errors.New("from javascript args length err")
-var ErrFunNameNotSet = errors.New("reflect funcation not to set")
+var ErrFunNameNotSet = errors.New("reflect func not to set")
 
 type SetListener struct {
 	*WrapperCommon
@@ -69,8 +54,8 @@ func (s *SetListener) setUserListener() {
 }
 
 func (s *SetListener) setSignalingListener() {
-	//callback := event_listener.NewSignalingCallback(s.commonFunc)
-	//open_im_sdk.SetSignalingListener(callback)
+	callback := event_listener.NewSignalingCallback(s.commonFunc)
+	open_im_sdk.SetSignalingListener(callback)
 }
 
 func (s *SetListener) SetAllListener() {
@@ -123,14 +108,15 @@ func (w *WrapperInitLogin) Logout(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.Logout, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperInitLogin) NetworkStatusChanged(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperInitLogin) WakeUp(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.NetworkStatusChanged, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.WakeUp, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperInitLogin) GetLoginStatus(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.GetLoginStatus, nil, &args).AsyncCallWithOutCallback()
 }
-func (w *WrapperInitLogin) SetAppBackgroundStatus(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetAppBackgroundStatus, callback, &args).AsyncCallWithCallback()
+
+func (w *WrapperInitLogin) GetLoginUser(_ js.Value, args []js.Value) interface{} {
+	return event_listener.NewCaller(open_im_sdk.GetLoginUser, nil, &args).AsyncCallWithOutCallback()
 }

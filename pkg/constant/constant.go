@@ -1,23 +1,9 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package constant
 
 const (
 	CmdFriend                     = "001"
 	CmdBlackList                  = "002"
-	CmdNotification               = "003"
+	CmdFriendApplication          = "003"
 	CmdDeleteConversation         = "004"
 	CmdNewMsgCome                 = "005"
 	CmdSuperGroupMsgCome          = "006"
@@ -36,21 +22,17 @@ const (
 	CmdJoinedSuperGroup = "018"
 	CmdUpdateMessage    = "019"
 
-	CmdReconnect = "020"
-	CmdInit      = "021"
-
-	CmdMaxSeq       = "maxSeq"
-	CmdPushMsg      = "pushMsg"
-	CmdConnSuccesss = "connSuccess"
-	CmdWakeUp       = "wakeUp"
-	CmdLogOut       = "loginOut"
+	CmdMaxSeq  = "maxSeq"
+	CmdPushMsg = "pushMsg"
+	CmdLogout  = "Logout"
+	CmdWakeUp  = "wakeUp"
 )
 
 const (
 	//ContentType
 	Text                            = 101
 	Picture                         = 102
-	Sound                           = 103
+	Voice                           = 103
 	Video                           = 104
 	File                            = 105
 	AtText                          = 106
@@ -58,10 +40,14 @@ const (
 	Card                            = 108
 	Location                        = 109
 	Custom                          = 110
+	Revoke                          = 111 //影响前者消息
+	HasReadReceipt                  = 112 //影响前者消息
 	Typing                          = 113
 	Quote                           = 114
 	Face                            = 115
+	GroupHasReadReceipt             = 116 //影响前者消息
 	AdvancedText                    = 117
+	AdvancedRevoke                  = 118 //影响前者消息
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
 	ReactionMessageModifier         = 121
@@ -123,6 +109,7 @@ const (
 
 	ConversationPrivateChatNotification = 1701
 	ConversationUnreadNotification      = 1702
+	OrganizationChangedNotification     = 1801
 
 	WorkMomentNotificationBegin = 1900
 	WorkMomentNotification      = 1901
@@ -131,16 +118,7 @@ const (
 	BusinessNotification      = 2001
 	BusinessNotificationEnd   = 2099
 
-	RevokeNotification = 2101
-
-	HasReadReceiptNotification      = 2150
-	GroupHasReadReceiptNotification = 2155
-	ClearConversationNotification   = 2101
-	DeleteMsgsNotification          = 2102
-
-	HasReadReceipt = 2200
-
-	NotificationEnd = 5000
+	NotificationEnd = 2200
 
 	////////////////////////////////////////
 
@@ -156,13 +134,13 @@ const (
 	NotificationChatType = 4
 
 	//MsgStatus
-	MsgStatusDefault = 0
-
+	MsgStatusDefault     = 0
 	MsgStatusSending     = 1
 	MsgStatusSendSuccess = 2
 	MsgStatusSendFailed  = 3
 	MsgStatusHasDeleted  = 4
-	MsgStatusFiltered    = 5
+	MsgStatusRevoked     = 5
+	MsgStatusFiltered    = 6
 
 	//OptionsKey
 	IsHistory                  = "history"
@@ -173,6 +151,7 @@ const (
 	IsSenderSync               = "senderSync"
 	IsNotPrivate               = "notPrivate"
 	IsSenderConversationUpdate = "senderConversationUpdate"
+	IsSenderNotificationPush   = "senderNotificationPush"
 
 	//GroupStatus
 	GroupOk              = 0
@@ -205,22 +184,20 @@ const (
 	FriendRelationship = 1
 )
 
-// const (
-//
+//const (
 //	ErrCodeInitLogin    = 1001
 //	ErrCodeFriend       = 2001
 //	ErrCodeConversation = 3001
 //	ErrCodeUserInfo     = 4001
 //	ErrCodeGroup        = 5001
-//
-// )
+//)
 const (
 	NormalGroup                       = 0
 	SuperGroup                        = 1
 	WorkingGroup                      = 2
 	SuperGroupTableName               = "local_super_groups"
 	SuperGroupErrChatLogsTableNamePre = "local_sg_err_chat_logs_"
-	ChatLogsTableNamePre              = "chat_logs_"
+	SuperGroupChatLogsTableNamePre    = "local_sg_chat_logs_"
 )
 
 const (
@@ -279,7 +256,7 @@ const (
 const ZoomScale = "200"
 const MaxTotalMsgLen = 51200
 
-// const MaxTotalMsgLen = 20480
+//const MaxTotalMsgLen = 20480
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
@@ -287,15 +264,15 @@ const (
 )
 
 const (
-	GetNewestSeq        = 1001
-	PullMsgBySeqList    = 1002
-	SendMsg             = 1003
-	SendSignalMsg       = 1004
-	DelMsg              = 1005
-	PushMsg             = 2001
-	KickOnlineMsg       = 2002
-	LogoutMsg           = 2003
-	SetBackgroundStatus = 2004
+	WSGetNewestSeq        = 1001
+	WSPullMsgBySeqList    = 1002
+	WSSendMsg             = 1003
+	WSSendSignalMsg       = 1004
+	WsDelMsg              = 1005
+	WSPushMsg             = 2001
+	WSKickOnlineMsg       = 2002
+	WsLogoutMsg           = 2003
+	WsSetBackgroundStatus = 2004
 
 	WSDataError = 3001
 )
@@ -316,69 +293,56 @@ const (
 	NotPrivateChat = false
 )
 
-const SuccessCallbackDefault = "" // Default value for success callback
+const SuccessCallbackDefault = ""
 
 const (
-	AppOrdinaryUsers = 1 // Application user type: ordinary user
-	AppAdmin         = 2 // Application user type: administrator
+	AppOrdinaryUsers = 1
+	AppAdmin         = 2
 
-	GroupOwner         = 100 // Group member type: owner
-	GroupAdmin         = 60  // Group member type: administrator
-	GroupOrdinaryUsers = 20  // Group member type: ordinary user
+	GroupOrdinaryUsers         = 1
+	GroupOwner                 = 2
+	GroupAdmin                 = 3
+	GroupAdminAndOrdinaryUsers = 4
+	GroupResponseAgree         = 1
+	GroupResponseRefuse        = -1
 
-	GroupFilterAll                   = 0
-	GroupFilterOwner                 = 1
-	GroupFilterAdmin                 = 2
-	GroupFilterOrdinaryUsers         = 3
-	GroupFilterAdminAndOrdinaryUsers = 4
-	GroupFilterOwnerAndAdmin         = 5
+	FriendResponseAgree  = 1
+	FriendResponseRefuse = -1
 
-	GroupResponseAgree  = 1  // Response to group application: agree
-	GroupResponseRefuse = -1 // Response to group application: refuse
-
-	FriendResponseAgree   = 1  // Response to friend request: agree
-	FriendResponseRefuse  = -1 // Response to friend request: refuse
-	FriendResponseDefault = 0
-
-	Male   = 1 // Gender: male
-	Female = 2 // Gender: female
+	Male   = 1
+	Female = 2
 )
 const (
-	AtAllString = "AtAllTag" // String for 'all people' mention tag
-	AtNormal    = 0          // Mention mode: normal
-	AtMe        = 1          // Mention mode: mention sender only
-	AtAll       = 2          // Mention mode: mention all people
-	AtAllAtMe   = 3          // Mention mode: mention all people and sender
+	AtAllString = "AtAllTag"
+	AtNormal    = 0
+	AtMe        = 1
+	AtAll       = 2
+	AtAllAtMe   = 3
+)
+const (
+	FieldRecvMsgOpt    = 1
+	FieldIsPinned      = 2
+	FieldAttachedInfo  = 3
+	FieldIsPrivateChat = 4
+	FieldGroupAtType   = 5
+	FieldIsNotInGroup  = 6
+	FieldEx            = 7
+	FieldUnread        = 8
+	FieldBurnDuration  = 9
+)
+const (
+	SetMessageExtensions = 1
+	AddMessageExtensions = 2
+)
+const (
+	KeywordMatchOr  = 0
+	KeywordMatchAnd = 1
+)
 
-)
-const (
-	FieldRecvMsgOpt    = 1 // Field type: message receiving options
-	FieldIsPinned      = 2 // Field type: whether a message is pinned
-	FieldAttachedInfo  = 3 // Field type: attached information
-	FieldIsPrivateChat = 4 // Field type: whether a message is from a private chat
-	FieldGroupAtType   = 5 // Field type: group mention mode
-	FieldIsNotInGroup  = 6 // Field type: whether a message is not in a group
-	FieldEx            = 7 // Field type: extension field
-	FieldUnread        = 8 // Field type: whether a message is unread
-	FieldBurnDuration  = 9 // Field type: message burn duration
-)
-const (
-	SetMessageExtensions = 1 // Message extension operation type: set extension
-	AddMessageExtensions = 2 // Message extension operation type: add extension
-)
-const (
-	KeywordMatchOr  = 0 // Keyword match mode: match any keyword
-	KeywordMatchAnd = 1 // Keyword match mode: match all keywords
-)
-
-const BigVersion = "v3"
+const BigVersion = "v2"
 const UpdateVersion = ".0.0"
-const SdkVersion = "openim-sdk-core-"
+const SdkVersion = "Open-IM-SDK-Core-"
 const LogFileName = "sdk"
-
-func GetSdkVersion() string {
-	return SdkVersion + BigVersion + UpdateVersion
-}
 
 var HeartbeatInterval = 5
 
@@ -408,9 +372,6 @@ const (
 const SplitGetGroupMemberNum = 1000
 const UseHashGroupMemberNum = 1000
 
-const (
-	Uninitialized    = -1001
-	NoNetwork        = 1 //有网络->无网络
-	NetworkAvailable = 2 //无网络->有网络
-	NetworkVariation = 3 //有网络，但状态有变化
-)
+var OnlyForTest = 0
+
+var KEY = "openIMtest123456789"

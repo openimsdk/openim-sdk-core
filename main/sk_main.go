@@ -1,17 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -24,7 +10,7 @@ import (
 
 var allDB []*db.DataBase
 
-//funcation TestDB(loginUserID string) {
+//func TestDB(loginUserID string) {
 //	operationID := utils.OperationIDGenerator()
 //	dbUser, err := db.NewDataBase(loginUserID, "/data/test/Open-IM-Server/db/sdk/", operationID)
 //	if err != nil {
@@ -96,7 +82,7 @@ func main() {
 	strMyUidx := "3370431052"
 	tokenx := test.RunGetToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
-	//go funcation() {
+	//go func() {
 	//	time.Sleep(2 * time.Second)
 	//	test.InOutLogou()
 	//}()
@@ -157,7 +143,7 @@ func main() {
 }
 
 //
-//funcation main() {
+//func main() {
 //	testClientNum := 100
 //	intervalSleep := 2
 //	imIP := "43.128.5.63"
@@ -183,7 +169,7 @@ func main() {
 //
 //}
 
-//funcation printCallerNameAndLine() string {
+//func printCallerNameAndLine() string {
 //	pc, _, line, _ := runtime.Caller(2)
 //	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
 //}
