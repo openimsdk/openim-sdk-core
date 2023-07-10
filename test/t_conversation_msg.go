@@ -340,7 +340,8 @@ func DoTestSetBurnDuration(conversationID string) {
 func DoTestSetMsgDestructTime(conversationID string) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetConversationMsgDestructTime(test, test.OperationID, conversationID, 30000)
+	open_im_sdk.SetConversationIsMsgDestruct(test, test.OperationID, conversationID, true)
+	open_im_sdk.SetConversationMsgDestructTime(test, test.OperationID, conversationID, 300010)
 }
 
 type TestGetConversationListSplitCallBack struct {
