@@ -19,10 +19,20 @@ import (
 	"fmt"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"sync"
 
 	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
+
+var cf = sdk_struct.IMConfig{
+	ApiAddr:             APIADDR,
+	WsAddr:              WSADDR,
+	PlatformID:          PlatformID,
+	DataDir:             "./../",
+	LogLevel:            LogLevel,
+	IsLogStandardOutput: true,
+}
 
 // log and token
 var (
@@ -56,7 +66,8 @@ func init() {
 
 // system
 var (
-	TESTIP       = "59.36.173.89"
+	// TESTIP       = "59.36.173.89"
+	TESTIP       = "203.56.175.233"
 	APIADDR      = "http://" + TESTIP + ":10002"
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/auth/user_register"
@@ -64,9 +75,9 @@ var (
 )
 
 var coreMgrLock sync.RWMutex
-var allLoginMgr map[int]*CoreNode
+var AllLoginMgr map[string]*CoreNode
 var userLock sync.RWMutex
-var allUserID []string
+var AllUserID []string
 
 // var allWs []*interaction.Ws
 var sendSuccessCount, sendFailedCount int
