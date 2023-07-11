@@ -148,8 +148,9 @@ func (c *Conversation) initSyncer() {
 					"is_pinned": serverConversation.IsPinned, "is_private_chat": serverConversation.IsPrivateChat, "burn_duration": serverConversation.BurnDuration,
 					"is_not_in_group": serverConversation.IsNotInGroup, "group_at_type": serverConversation.GroupAtType,
 					"update_unread_count_time": serverConversation.UpdateUnreadCountTime,
-					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex,
-					"max_seq": serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
+					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex, "msg_destruct_time": serverConversation.MsgDestructTime,
+					"is_msg_destruct": serverConversation.IsMsgDestruct,
+					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
 		},
 		func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
@@ -166,7 +167,9 @@ func (c *Conversation) initSyncer() {
 				server.Ex != local.Ex ||
 				server.MaxSeq != local.MaxSeq ||
 				server.MinSeq != local.MinSeq ||
-				server.HasReadSeq != local.HasReadSeq {
+				server.HasReadSeq != local.HasReadSeq ||
+				server.MsgDestructTime != local.MsgDestructTime ||
+				server.IsMsgDestruct != local.IsMsgDestruct {
 				log.ZDebug(context.Background(), "not same", "conversationID", server.ConversationID, "server", server.RecvMsgOpt, "local", local.RecvMsgOpt)
 				return false
 			}
@@ -363,6 +366,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo
 			nc.Ex = v.Ex
+			nc.IsMsgDestruct = v.IsMsgDestruct
+			nc.MsgDestructTime = v.MsgDestructTime
 		}
 	}
 

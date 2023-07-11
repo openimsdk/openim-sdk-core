@@ -58,42 +58,6 @@ func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, cou
 	return c.db.GetConversationListSplitDB(ctx, offset, count)
 }
 
-func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string, opt int) error {
-	var conversations []*pbConversation.Conversation
-	for _, conversationID := range conversationIDList {
-		localConversation, err := c.db.GetConversation(ctx, conversationID)
-		if err != nil {
-			log.ZError(ctx, "GetConversation failed", err, "conversationID", conversationID)
-			continue
-		}
-		if localConversation.ConversationType == constant.SuperGroupChatType && opt == constant.NotReceiveMessage {
-			return sdkerrs.ErrNotSupportOpt
-		}
-		conversations = append(conversations, &pbConversation.Conversation{
-			OwnerUserID:      c.loginUserID,
-			ConversationID:   conversationID,
-			ConversationType: localConversation.ConversationType,
-			UserID:           localConversation.UserID,
-			GroupID:          localConversation.GroupID,
-			RecvMsgOpt:       int32(opt),
-			IsPinned:         localConversation.IsPinned,
-			IsPrivateChat:    localConversation.IsPrivateChat,
-			AttachedInfo:     localConversation.AttachedInfo,
-			Ex:               localConversation.Ex,
-		})
-	}
-	req := &pbConversation.BatchSetConversationsReq{
-		Conversations: conversations,
-		OwnerUserID:   c.loginUserID,
-	}
-	_, err := util.CallApi[pbConversation.BatchSetConversationsResp](ctx, constant.BatchSetConversationRouter, req)
-	if err != nil {
-		return err
-	}
-	c.SyncConversations(ctx)
-	return nil
-}
-
 func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
 	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter, &pbUser.SetGlobalRecvMessageOptReq{UserID: c.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
 		return err
@@ -223,6 +187,14 @@ func (c *Conversation) PinConversation(ctx context.Context, conversationID strin
 
 func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsPrivateChat: &wrapperspb.BoolValue{Value: isPrivate}})
+}
+
+func (c *Conversation) SetConversationMsgDestructTime(ctx context.Context, conversationID string, msgDestructTime int64) error {
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{MsgDestructTime: &wrapperspb.Int64Value{Value: msgDestructTime}})
+}
+
+func (c *Conversation) SetConversationIsMsgDestruct(ctx context.Context, conversationID string, isMsgDestruct bool) error {
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsMsgDestruct: &wrapperspb.BoolValue{Value: isMsgDestruct}})
 }
 
 func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {

@@ -413,10 +413,11 @@ type LocalConversation struct {
 	UpdateUnreadCountTime int64  `gorm:"column:update_unread_count_time" json:"updateUnreadCountTime"`
 	AttachedInfo          string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                    string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-
-	MaxSeq     int64 `gorm:"column:max_seq" json:"maxSeq"`
-	MinSeq     int64 `gorm:"column:min_seq" json:"minSeq"`
-	HasReadSeq int64 `gorm:"column:has_read_seq" json:"hasReadSeq"`
+	MaxSeq                int64  `gorm:"column:max_seq" json:"maxSeq"`
+	MinSeq                int64  `gorm:"column:min_seq" json:"minSeq"`
+	HasReadSeq            int64  `gorm:"column:has_read_seq" json:"hasReadSeq"`
+	MsgDestructTime       int64  `gorm:"column:msg_destruct_time;default:604800" json:"msgDestructTime"`
+	IsMsgDestruct         bool   `gorm:"column:is_msg_destruct;default:false" json:"isMsgDestruct"`
 }
 type LocalConversationUnreadMessage struct {
 	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`

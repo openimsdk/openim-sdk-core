@@ -121,9 +121,10 @@ const (
 )
 
 const (
-	FileApplyPutRouter   = "/third/apply_put"
-	FileGetPutRouter     = "/third/get_put"
-	FileConfirmPutRouter = "/third/confirm_put"
-	FileGetHashRouter    = "/third/get_hash"
-	FileGetURLRouter     = "/third/object"
+	ObjectPartLimit               = "/object/part_limit"
+	ObjectPartSize                = "/object/part_size"
+	ObjectInitiateMultipartUpload = "/object/initiate_multipart_upload"
+	ObjectAuthSign                = "/object/auth_sign"
+	ObjectCompleteMultipartUpload = "/object/complete_multipart_upload"
+	ObjectAccessURL               = "/object/access_url"
 )
