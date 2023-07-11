@@ -8,11 +8,11 @@ import (
 	"sync"
 )
 
-func LoginOne(idx int, uid string) bool {
+func LoginOne(uid string) bool {
 	// get token
-	collectToken(idx, uid)
+	collectToken(uid)
 	// init and login
-	return initAndLogin(idx, uid, AllLoginMgr[idx].Token)
+	return initAndLogin(uid, AllLoginMgr[uid].Token)
 }
 
 // 批量登录
@@ -25,7 +25,7 @@ func LoginBatch(uidList []string) ([]string, []string) {
 		uid := uid
 		i := i
 		go func(idx int) {
-			if LoginOne(idx, uid) == true {
+			if LoginOne(uid) == true {
 				successList[i] = uid
 			} else {
 				failList[i] = uid
@@ -36,22 +36,22 @@ func LoginBatch(uidList []string) ([]string, []string) {
 	return successList, failList
 }
 
-func collectToken(idx int, uid string) {
+func collectToken(uid string) {
 	token, _ := getToken(uid)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
-	AllLoginMgr[idx] = &CoreNode{Token: token, UserID: uid}
+	AllLoginMgr[uid] = &CoreNode{Token: token, UserID: uid}
 }
 
-func initAndLogin(idx int, uid, token string) bool {
+func initAndLogin(uid, token string) bool {
 	var testinit testInitLister
 
 	lg := new(login.LoginMgr)
 
 	lg.InitSDK(cf, &testinit)
 	log.Info(uid, "new login ", lg)
-	AllLoginMgr[idx].mgr = lg
-	log.Info(uid, "InitSDK ", cf, "index mgr", idx, lg)
+	AllLoginMgr[uid].mgr = lg
+	log.Info(uid, "InitSDK ", cf, "index mgr", uid, lg)
 
 	lg.SetConversationListener(&testConversation)
 
@@ -72,11 +72,11 @@ func initAndLogin(idx int, uid, token string) bool {
 
 	operationID := utils.OperationIDGenerator()
 
-	//ctx := mcontext.NewCtx(operationID)
+	// ctx := mcontext.NewCtx(operationID)
 	ctx := ccontext.WithOperationID(lg.Context(), operationID)
 
 	err := lg.Login(ctx, uid, token)
-	//lg.User().GetSelfUserInfo(ctx)
+	lg.User().GetSelfUserInfo(ctx)
 	if err != nil {
 		log.Error(uid, err)
 		return false
