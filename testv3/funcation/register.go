@@ -10,15 +10,16 @@ import (
 	"time"
 )
 
-type Users struct {
-	Uid      string
-	Nickname string
-	FaceUrl  string
-}
-
 func RegisterOne(uid, nickname, faceurl string) (bool, error) {
 	InitContext(uid)
-	err := checkUserAccount(uid)
+	res, err := checkUserAccount(uid)
+	if err != nil {
+		return false, err
+	}
+	if res != true {
+		log.Error(uid, "user:["+uid+"] account register fail, maybe already registered")
+		return false, nil
+	}
 	return registerUserAccount(uid, nickname, faceurl), err
 }
 
@@ -49,21 +50,21 @@ func RegisterBatch(users []*Users) ([]string, []string) {
 	return successList, failList
 }
 
-func checkUserAccount(uid string) error {
+func checkUserAccount(uid string) (bool, error) {
 	var getAccountCheckReq userPB.AccountCheckReq
 	var getAccountCheckResp userPB.AccountCheckResp
 	getAccountCheckReq.CheckUserIDs = []string{uid}
 	for {
 		err := util.ApiPost(ctx, "/user/account_check", &getAccountCheckReq, &getAccountCheckResp)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if len(getAccountCheckResp.Results) == 1 && getAccountCheckResp.Results[0].AccountStatus == "registered" {
 			log.Warn(getAccountCheckReq.CheckUserIDs[0], "Already registered ", uid, getAccountCheckResp.Results)
 			userLock.Lock()
-			allUserID = append(allUserID, uid)
+			AllUserID = append(AllUserID, uid)
 			userLock.Unlock()
-			return nil
+			return false, nil
 		} else if len(getAccountCheckResp.Results) == 1 && getAccountCheckResp.Results[0].AccountStatus == "unregistered" {
 			log.Info(getAccountCheckReq.CheckUserIDs[0], "not registered ", uid, getAccountCheckResp.Results)
 			break
@@ -72,7 +73,7 @@ func checkUserAccount(uid string) error {
 			continue
 		}
 	}
-	return nil
+	return true, nil
 }
 
 func registerUserAccount(uid, nickname, faceurl string) bool {
@@ -88,7 +89,7 @@ func registerUserAccount(uid, nickname, faceurl string) bool {
 		} else {
 			log.Info("register ok ", REGISTERADDR)
 			userLock.Lock()
-			allUserID = append(allUserID, uid)
+			AllUserID = append(AllUserID, uid)
 			userLock.Unlock()
 			return true
 		}

@@ -18,54 +18,24 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-	//	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/login"
+	"strconv"
 )
 
 func init() {
-	//sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
-	AllLoginMgr = make(map[int]*CoreNode)
-
+	AllLoginMgr = make(map[string]*CoreNode)
 	SendSuccAllMsg = make(map[string]*SendRecvTime)
-
 }
 
-type CoreNode struct {
-	Token             string
-	UserID            string
-	mgr               *login.LoginMgr
-	sendMsgSuccessNum uint32
-	sendMsgFailedNum  uint32
-	idx               int
-}
-
-type TestSendMsgCallBack struct {
-	msg         string
-	OperationID string
-	sendID      string
-	recvID      string
-	msgID       string
-	sendTime    int64
-	recvTime    int64
-	groupID     string
-}
-
-type SendRecvTime struct {
-	SendTime             int64
-	SendSeccCallbackTime int64
-	RecvTime             int64
-	SendIDRecvID         string
-}
-
-var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:
+var SendSuccAllMsg map[string]*SendRecvTime // msgid->send+recv:
 var SendFailedAllMsg map[string]string
-var RecvAllMsg map[string]*SendRecvTime //msgid->send+recv
+var RecvAllMsg map[string]*SendRecvTime // msgid->send+recv
 
+// 基准函数不应该做模拟，这一部分逻辑应该放在 test 文件中自行模拟
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	log.Info(operationID, "CreateTextMessage  conv: ", AllLoginMgr[index].mgr.Conversation(), "index: ", index)
-	s, err := AllLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
+	log.Info(operationID, "CreateTextMessage  conv: ", AllLoginMgr[strconv.Itoa(index)].mgr.Conversation(), "index: ", index)
+	s, err := AllLoginMgr[strconv.Itoa(index)].mgr.Conversation().CreateTextMessage(ctx, m)
 	if err != nil {
 		log.Error(operationID, "CreateTextMessage", err)
 		return
@@ -83,7 +53,7 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 
 	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
 	// 如果 recvID 为空 代表发送群聊消息，反之
-	AllLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, groupID, &o)
+	AllLoginMgr[strconv.Itoa(index)].mgr.Conversation().SendMessage(ctx, s, recvID, groupID, &o)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	x := SendRecvTime{SendTime: utils.GetCurrentTimestampByMill()}

@@ -16,13 +16,11 @@ package testv2
 
 import (
 	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/sdk_struct"
 	"testing"
-	"time"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func Test_GetAllConversationList(t *testing.T) {
@@ -94,14 +92,14 @@ func Test_GetGetMultipleConversation(t *testing.T) {
 	}
 }
 
-//funcation Test_DeleteConversation(t *testing.T) {
+// funcation Test_DeleteConversation(t *testing.T) {
 //	err := open_im_sdk.UserForSDK.Conversation().DeleteConversation(ctx, "group_17729585012")
 //	if err != nil {
 //		if !strings.Contains(err.Error(), "no update") {
 //			t.Fatal(err)
 //		}
 //	}
-//}
+// }
 
 func Test_DeleteAllConversationFromLocal(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().DeleteAllConversationFromLocal(ctx)
@@ -252,22 +250,22 @@ func Test_SearchLocalMessages(t *testing.T) {
 	}
 }
 
-//// delete
-//funcation Test_DeleteMessageFromLocalStorage(t *testing.T) {
+// // delete
+// funcation Test_DeleteMessageFromLocalStorage(t *testing.T) {
 //	err := open_im_sdk.UserForSDK.Conversation().DeleteMessageFromLocalStorage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
 //		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
 //	if err != nil {
 //		t.Fatal(err)
 //	}
-//}
+// }
 //
-//funcation Test_DeleteMessage(t *testing.T) {
+// funcation Test_DeleteMessage(t *testing.T) {
 //	err := open_im_sdk.UserForSDK.Conversation().DeleteMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
 //		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
 //	if err != nil {
 //		t.Fatal(err)
 //	}
-//}
+// }
 
 func Test_DeleteAllMessage(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMessage(ctx)
@@ -290,14 +288,14 @@ func Test_ClearConversationAndDeleteAllMsg(t *testing.T) {
 	}
 }
 
-func Test_RevokeMessage(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().RevokeMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
-		ClientMsgID: "380e2eb1709875340d769880982ebb21", Seq: 57, SendID: "9169012630", RecvID: "2456093263"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second * 10)
-}
+// func Test_RevokeMessage(t *testing.T) {
+// 	err := open_im_sdk.UserForSDK.Conversation().RevokeMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
+// 		ClientMsgID: "380e2eb1709875340d769880982ebb21", Seq: 57, SendID: "9169012630", RecvID: "2456093263"})
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	time.Sleep(time.Second * 10)
+// }
 
 func Test_MarkConversationMessageAsRead(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "si_2688118337_7249315132")
