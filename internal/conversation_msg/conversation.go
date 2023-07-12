@@ -16,7 +16,6 @@ package conversation_msg
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
@@ -946,10 +945,10 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(ctx, msgIDs)
 	for _, v := range extendMessage {
 		var singleResult server_api_params.SingleMessageExtensionResult
-		temp := make(map[string]*sdkws.KeyValue)
-		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
+		// temp := make(map[string]*sdkws.KeyValue)
+		// _ = json.Unmarshal(v.LocalReactionExtensions, &temp)
 		singleResult.ClientMsgID = v.ClientMsgID
-		singleResult.ReactionExtensionList = temp
+		// singleResult.ReactionExtensionList = temp
 		result = append(result, &singleResult)
 	}
 	args := syncReactionExtensionParams{}
