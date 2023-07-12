@@ -25,11 +25,13 @@ func Test_RegisterOne(t *testing.T) {
 
 func Test_RegisterBatch(t *testing.T) {
 	count := 100
-	var users []*funcation.Users
+	var users []funcation.Users
 	for i := 0; i < count; i++ {
-		users[i].Uid = funcation.GenUid(i, "register_test_"+utils.Int64ToString(time.Now().Unix()))
-		users[i].Nickname = "register_test_" + strconv.FormatInt(int64(i), 10)
-		users[i].FaceUrl = ""
+		users = append(users, funcation.Users{
+			Uid:      funcation.GenUid(i, "register_test_"+utils.Int64ToString(time.Now().Unix())),
+			Nickname: "register_test_" + strconv.FormatInt(int64(i), 10),
+			FaceUrl:  "",
+		})
 	}
 	success, fail := funcation.RegisterBatch(users)
 	t.Log(success)

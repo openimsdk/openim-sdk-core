@@ -34,8 +34,8 @@ var RecvAllMsg map[string]*SendRecvTime // msgid->send+recv
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	log.Info(operationID, "CreateTextMessage  conv: ", AllLoginMgr[strconv.Itoa(index)].mgr.Conversation(), "index: ", index)
-	s, err := AllLoginMgr[strconv.Itoa(index)].mgr.Conversation().CreateTextMessage(ctx, m)
+	log.Info(operationID, "CreateTextMessage  conv: ", AllLoginMgr[strconv.Itoa(index)].Mgr.Conversation(), "index: ", index)
+	s, err := AllLoginMgr[strconv.Itoa(index)].Mgr.Conversation().CreateTextMessage(ctx, m)
 	if err != nil {
 		log.Error(operationID, "CreateTextMessage", err)
 		return
@@ -53,7 +53,7 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 
 	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
 	// 如果 recvID 为空 代表发送群聊消息，反之
-	AllLoginMgr[strconv.Itoa(index)].mgr.Conversation().SendMessage(ctx, s, recvID, groupID, &o)
+	AllLoginMgr[strconv.Itoa(index)].Mgr.Conversation().SendMessage(ctx, s, recvID, groupID, &o)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	x := SendRecvTime{SendTime: utils.GetCurrentTimestampByMill()}

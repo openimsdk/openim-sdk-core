@@ -5,7 +5,6 @@ import (
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-	"sync"
 )
 
 func LoginOne(uid string) bool {
@@ -19,20 +18,13 @@ func LoginOne(uid string) bool {
 // 返回值：成功登录和失败登录的 uidList
 func LoginBatch(uidList []string) ([]string, []string) {
 	var successList, failList []string
-	var wg sync.WaitGroup
-	wg.Add(len(uidList))
 	for i, uid := range uidList {
-		uid := uid
-		i := i
-		go func(idx int) {
-			if LoginOne(uid) == true {
-				successList[i] = uid
-			} else {
-				failList[i] = uid
-			}
-		}(i)
+		if LoginOne(uid) == true {
+			successList[i] = uid
+		} else {
+			failList[i] = uid
+		}
 	}
-	wg.Wait()
 	return successList, failList
 }
 
@@ -48,10 +40,10 @@ func initAndLogin(uid, token string) bool {
 
 	lg := new(login.LoginMgr)
 
-	lg.InitSDK(cf, &testinit)
+	lg.InitSDK(Config, &testinit)
 	log.Info(uid, "new login ", lg)
-	AllLoginMgr[uid].mgr = lg
-	log.Info(uid, "InitSDK ", cf, "index mgr", uid, lg)
+	AllLoginMgr[uid].Mgr = lg
+	log.Info(uid, "InitSDK ", Config, "index mgr", uid, lg)
 
 	lg.SetConversationListener(&testConversation)
 
