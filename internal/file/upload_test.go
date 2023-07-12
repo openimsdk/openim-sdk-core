@@ -19,16 +19,24 @@ func TestName(t *testing.T) {
 	})
 	ctx = ccontext.WithOperationID(ctx, `test`)
 	f := NewFile(nil, userID)
-	path := `C:\Users\Admin\Desktop\test.abc`
+
+	//resp, err := f.accessURL(ctx, &third.AccessURLReq{
+	//	Name: `11111112/test.png`,
+	//})
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println(resp)
+
+	path := `C:\Users\Admin\Desktop\test.png`
 	resp, err := f.UploadFile(ctx, &UploadFileReq{
 		Filepath: path,
 		Name:     filepath.Base(path),
 		Cause:    "test",
-	})
+	}, nil)
 	if err != nil {
 		t.Logf("%+v\n", err)
 		return
 	}
 	t.Logf("%+v\n", resp)
-
 }

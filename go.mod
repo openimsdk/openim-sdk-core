@@ -2,7 +2,7 @@ module open_im_sdk
 
 go 1.18
 
-// go get -u github.com/OpenIMSDK/Open-IM-Server@ver3
+// go get -u github.com/OpenIMSDK/Open-IM-Server@main
 require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/golang/protobuf v1.5.3
@@ -23,7 +23,7 @@ require (
 
 require golang.org/x/net v0.11.0
 
-require github.com/OpenIMSDK/Open-IM-Server v0.0.0-20230710095157-04474c67472f
+require github.com/OpenIMSDK/Open-IM-Server v0.0.0-20230712062720-2e6ea7b193c3
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
