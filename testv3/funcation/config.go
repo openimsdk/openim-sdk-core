@@ -25,7 +25,7 @@ import (
 	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
-var cf = sdk_struct.IMConfig{
+var Config = sdk_struct.IMConfig{
 	ApiAddr:             APIADDR,
 	WsAddr:              WSADDR,
 	PlatformID:          PlatformID,

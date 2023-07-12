@@ -91,13 +91,11 @@ func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
 }
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
-	// TODO implement me
-	panic("implement me")
+	log.Info("", message)
 }
 
 func (m *MsgListenerCallBak) OnRecvC2CReadReceipt(msgReceiptList string) {
-	// TODO implement me
-	panic("implement me")
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName())
 }
 
 func (testGroupListener) OnJoinedGroupAdded(callbackInfo string) {

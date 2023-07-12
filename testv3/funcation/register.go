@@ -6,7 +6,6 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-	"sync"
 	"time"
 )
 
@@ -25,28 +24,23 @@ func RegisterOne(uid, nickname, faceurl string) (bool, error) {
 
 // 批量注册
 // 返回值：成功注册和失败注册的 uidList
-func RegisterBatch(users []*Users) ([]string, []string) {
+func RegisterBatch(users []Users) ([]string, []string) {
 	var successList, failList []string
-	var wg sync.WaitGroup
-	wg.Add(len(users))
 	for i := 0; i < len(users); i++ {
-		i := i
-		go func(idx int) {
-			uid := users[i].Uid
-			nickname := users[i].Nickname
-			faceUrl := users[i].FaceUrl
-			bool, err := RegisterOne(uid, nickname, faceUrl)
-			if err != nil {
-				log.Error(utils.OperationIDGenerator(), err)
-			}
-			if bool == false {
-				failList = append(failList, uid)
-			} else {
-				successList = append(successList, uid)
-			}
-		}(i)
+		uid := users[i].Uid
+		nickname := users[i].Nickname
+		faceUrl := users[i].FaceUrl
+		bool, err := RegisterOne(uid, nickname, faceUrl)
+		log.Info("", "注册：", bool, " uid:", uid)
+		if err != nil {
+			log.Error(utils.OperationIDGenerator(), err)
+		}
+		if bool == false {
+			failList = append(failList, uid)
+		} else {
+			successList = append(successList, uid)
+		}
 	}
-	wg.Wait()
 	return successList, failList
 }
 

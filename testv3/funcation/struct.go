@@ -43,7 +43,7 @@ type testGroupListener struct {
 type CoreNode struct {
 	Token             string
 	UserID            string
-	mgr               *login.LoginMgr
+	Mgr               *login.LoginMgr
 	sendMsgSuccessNum uint32
 	sendMsgFailedNum  uint32
 	idx               int
