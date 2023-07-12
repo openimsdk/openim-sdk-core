@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package sdk_params_callback
 
 import (
@@ -56,7 +70,7 @@ type GetHistoryMessageListParams struct {
 type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
 type GetAdvancedHistoryMessageListParams struct {
 	UserID           string `json:"userID"`
-	LastMinSeq       uint32 `json:"lastMinSeq"`
+	LastMinSeq       int64  `json:"lastMinSeq"`
 	GroupID          string `json:"groupID"`
 	ConversationID   string `json:"conversationID"`
 	StartClientMsgID string `json:"startClientMsgID"`
@@ -64,7 +78,7 @@ type GetAdvancedHistoryMessageListParams struct {
 }
 type GetAdvancedHistoryMessageListCallback struct {
 	MessageList []*sdk_struct.MsgStruct `json:"messageList"`
-	LastMinSeq  uint32                  `json:"lastMinSeq"`
+	LastMinSeq  int64                   `json:"lastMinSeq"`
 	IsEnd       bool                    `json:"isEnd"`
 	ErrCode     int32                   `json:"errCode"`
 	ErrMsg      string                  `json:"errMsg"`

@@ -1,74 +1,78 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package workMoments
 
-import (
-	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/db/db_interface"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/utils"
-)
-
-type WorkMoments struct {
-	listener    open_im_sdk_callback.OnWorkMomentsListener
-	loginUserID string
-	db          db_interface.DataBase
-	p           *ws.PostApi
-}
-
-func NewWorkMoments(loginUserID string, db db_interface.DataBase, p *ws.PostApi) *WorkMoments {
-	return &WorkMoments{loginUserID: loginUserID, db: db, p: p}
-}
-
-func (w *WorkMoments) DoNotification(jsonDetailStr string, operationID string) {
-	if w.listener == nil {
-		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetailStr)
-		return
-	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", jsonDetailStr)
-	if err := w.db.InsertWorkMomentsNotification(jsonDetailStr); err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "InsertWorkMomentsNotification failed", err.Error())
-		return
-	}
-	if err := w.db.IncrWorkMomentsNotificationUnreadCount(); err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "IncrWorkMomentsNotificationUnreadCount failed", err.Error())
-		return
-	}
-	w.listener.OnRecvNewNotification()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "do notification callback success")
-}
-
-func (w *WorkMoments) getWorkMomentsNotification(offset, count int, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.GetWorkMomentsNotificationCallback {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), offset, count)
-	err := w.db.MarkAllWorkMomentsNotificationAsRead()
-	common.CheckDBErrCallback(callback, err, operationID)
-	workMomentsNotifications, err := w.db.GetWorkMomentsNotification(offset, count)
-	common.CheckDBErrCallback(callback, err, operationID)
-	msgs := make([]sdk_params_callback.WorkMomentNotificationMsg, len(workMomentsNotifications))
-	for i, v := range workMomentsNotifications {
-		workMomentNotificationMsg := sdk_params_callback.WorkMomentNotificationMsg{}
-		if err := utils.JsonStringToStruct(v.JsonDetail, &workMomentNotificationMsg); err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "JsonStringToStruct failed", err.Error())
-			continue
-		}
-		msgs[i] = workMomentNotificationMsg
-	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
-	return msgs
-}
-
-func (w *WorkMoments) clearWorkMomentsNotification(callback open_im_sdk_callback.Base, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
-	err := w.db.ClearWorkMomentsNotification()
-	common.CheckDBErrCallback(callback, err, operationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
-}
-
-func (w *WorkMoments) getWorkMomentsNotificationUnReadCount(callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.GetWorkMomentsUnReadCountCallback {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
-	unreadCount, err := w.db.GetWorkMomentsUnReadCount()
-	common.CheckDBErrCallback(callback, err, operationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
-	return sdk_params_callback.GetWorkMomentsUnReadCountCallback(unreadCount)
-}
+//
+//import (
+//	"context"
+//	"open_im_sdk/open_im_sdk_callback"
+//	"open_im_sdk/pkg/db/db_interface"
+//	"open_im_sdk/pkg/db/model_struct"
+//	"open_im_sdk/pkg/utils"
+//
+//	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+//)
+//
+//type WorkMoments struct {
+//	listener    open_im_sdk_callback.OnWorkMomentsListener
+//	loginUserID string
+//	db          db_interface.DataBase
+//}
+//
+//funcation NewWorkMoments(loginUserID string, db db_interface.DataBase) *WorkMoments {
+//	return &WorkMoments{loginUserID: loginUserID, db: db}
+//}
+//
+//funcation (w *WorkMoments) DoNotification(ctx context.Context, jsonDetail string) {
+//	if w.listener == nil {
+//		return
+//	}
+//	if err := w.db.InsertWorkMomentsNotification(ctx, jsonDetail); err != nil {
+//		log.ZError(ctx, "InsertWorkMomentsNotification failed", err, "jsonDetail", jsonDetail)
+//		return
+//	}
+//	if err := w.db.IncrWorkMomentsNotificationUnreadCount(ctx); err != nil {
+//		log.ZError(ctx, "IncrWorkMomentsNotificationUnreadCount failed", err)
+//		return
+//	}
+//	w.listener.OnRecvNewNotification()
+//}
+//
+//funcation (w *WorkMoments) getWorkMomentsNotification(ctx context.Context, offset, count int) ([]*model_struct.WorkMomentNotificationMsg, error) {
+//	if err := w.db.MarkAllWorkMomentsNotificationAsRead(ctx); err != nil {
+//		return nil, err
+//	}
+//	workMomentsNotifications, err := w.db.GetWorkMomentsNotification(ctx, offset, count)
+//	if err != nil {
+//		return nil, err
+//	}
+//	msgs := make([]*model_struct.WorkMomentNotificationMsg, len(workMomentsNotifications))
+//	for i, v := range workMomentsNotifications {
+//		workMomentNotificationMsg := model_struct.WorkMomentNotificationMsg{}
+//		if err := utils.JsonStringToStruct(v.JsonDetail, &workMomentNotificationMsg); err != nil {
+//			log.ZError(ctx, "invalid data", err, "jsonDetail", v.JsonDetail)
+//			continue
+//		}
+//		msgs[i] = &workMomentNotificationMsg
+//	}
+//	return msgs, nil
+//}
+//
+//funcation (w *WorkMoments) clearWorkMomentsNotification(ctx context.Context) error {
+//	return w.db.ClearWorkMomentsNotification(ctx)
+//}
+//
+//funcation (w *WorkMoments) getWorkMomentsNotificationUnReadCount(ctx context.Context) (model_struct.LocalWorkMomentsNotificationUnreadCount, error) {
+//	return w.db.GetWorkMomentsUnReadCount(ctx)
+//}

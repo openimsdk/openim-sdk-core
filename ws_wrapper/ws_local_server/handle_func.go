@@ -34,7 +34,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 		if ok {
 			vf.Call(params)
 		} else {
-			log.Info("", "login", "no func name: ", m.ReqFuncName, m)
+			log.Info("", "login", "no funcation name: ", m.ReqFuncName, m)
 			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
 		}
 
@@ -92,7 +92,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	if ok {
 		vf.Call(parms)
 	} else {
-		log.Info("", "msgParse", "no func ", m.ReqFuncName)
+		log.Info("", "msgParse", "no funcation ", m.ReqFuncName)
 		SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
 	}
 

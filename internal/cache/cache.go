@@ -1,17 +1,31 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cache
 
 import (
-	"errors"
+	"context"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
+	"open_im_sdk/pkg/sdkerrs"
 	"sync"
 )
 
 type UserInfo struct {
 	Nickname string
-	faceURL  string
+	FaceURL  string
 }
 type Cache struct {
 	user            *user.User
@@ -25,7 +39,7 @@ func NewCache(user *user.User, friend *friend.Friend) *Cache {
 }
 
 func (c *Cache) Update(userID, faceURL, nickname string) {
-	c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: nickname})
+	c.userMap.Store(userID, UserInfo{FaceURL: faceURL, Nickname: nickname})
 }
 func (c *Cache) UpdateConversation(conversation model_struct.LocalConversation) {
 	c.conversationMap.Store(conversation.ConversationID, conversation)
@@ -62,17 +76,15 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 	}
 	return result
 }
-func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceURL, name string, err error) {
-	//find in cache
-	user, ok := c.userMap.Load(userID)
-	if ok {
-		faceURL = user.(UserInfo).faceURL
-		name = user.(UserInfo).Nickname
-		return faceURL, name, nil
-	}
 
+func (c *Cache) GetUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
+	//find in cache
+	if value, ok := c.userMap.Load(userID); ok {
+		info := value.(UserInfo)
+		return info.FaceURL, info.Nickname, nil
+	}
 	//get from local db
-	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(userID)
+	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, userID)
 	if err == nil {
 		faceURL = friendInfo.FaceURL
 		if friendInfo.Remark != "" {
@@ -82,20 +94,14 @@ func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceUR
 		}
 		return faceURL, name, nil
 	}
-
-	if operationID == "" {
-		operationID = utils.OperationIDGenerator()
-	}
-
-	userInfos, err := c.user.GetUsersInfoFromCacheSvr([]string{userID}, operationID)
+	//get from server db
+	users, err := c.user.GetServerUserInfo(ctx, []string{userID})
 	if err != nil {
 		return "", "", err
 	}
-	for _, v := range userInfos {
-		faceURL = v.FaceURL
-		name = v.Nickname
-		c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: name})
-		return v.FaceURL, v.Nickname, nil
+	if len(users) == 0 {
+		return "", "", sdkerrs.ErrUserIDNotFound.Wrap(userID)
 	}
-	return "", "", errors.New("no user " + userID)
+	c.userMap.Store(userID, UserInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
+	return users[0].FaceURL, users[0].Nickname, nil
 }

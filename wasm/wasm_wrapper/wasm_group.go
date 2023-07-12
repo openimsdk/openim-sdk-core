@@ -1,3 +1,18 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build js && wasm
 // +build js,wasm
 
 package wasm_wrapper
@@ -9,7 +24,7 @@ import (
 	"syscall/js"
 )
 
-//------------------------------------group---------------------------
+// ------------------------------------group---------------------------
 type WrapperGroup struct {
 	*WrapperCommon
 }
@@ -98,9 +113,9 @@ func (w *WrapperGroup) GetGroupMemberListByJoinTimeFilter(_ js.Value, args []js.
 	return event_listener.NewCaller(open_im_sdk.GetGroupMemberListByJoinTimeFilter, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperGroup) GetGroupMembersInfo(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperGroup) GetSpecifiedGroupMembersInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetGroupMembersInfo, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.GetSpecifiedGroupMembersInfo, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperGroup) KickGroupMember(_ js.Value, args []js.Value) interface{} {
@@ -118,14 +133,14 @@ func (w *WrapperGroup) InviteUserToGroup(_ js.Value, args []js.Value) interface{
 	return event_listener.NewCaller(open_im_sdk.InviteUserToGroup, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperGroup) GetRecvGroupApplicationList(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperGroup) GetGroupApplicationListAsRecipient(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetRecvGroupApplicationList, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.GetGroupApplicationListAsRecipient, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperGroup) GetSendGroupApplicationList(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperGroup) GetGroupApplicationListAsApplicant(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetSendGroupApplicationList, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.GetGroupApplicationListAsApplicant, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperGroup) AcceptGroupApplication(_ js.Value, args []js.Value) interface{} {
@@ -148,7 +163,12 @@ func (w *WrapperGroup) SearchGroupMembers(_ js.Value, args []js.Value) interface
 	return event_listener.NewCaller(open_im_sdk.SearchGroupMembers, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperGroup) GetGroupsInfo(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperGroup) IsJoinGroup(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetGroupsInfo, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.IsJoinGroup, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperGroup) GetSpecifiedGroupsInfo(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetSpecifiedGroupsInfo, callback, &args).AsyncCallWithCallback()
 }

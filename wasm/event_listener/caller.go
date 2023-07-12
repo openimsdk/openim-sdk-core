@@ -1,3 +1,20 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build js && wasm
+// +build js,wasm
+
 package event_listener
 
 import (
@@ -30,7 +47,7 @@ func extractArrayBuffer(arrayBuffer js.Value) []byte {
 type FuncLogic func()
 
 var ErrNotSetCallback = errors.New("not set callback to call")
-var ErrNotSetFunc = errors.New("not set func to call")
+var ErrNotSetFunc = errors.New("not set funcation to call")
 
 type ReflectCall struct {
 	funcName  interface{}
@@ -42,12 +59,6 @@ func NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Va
 	return &ReflectCall{funcName: funcName, callback: callback, arguments: *arguments}
 }
 
-//func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
-//	r.funcName = funcName
-//	r.callback = callback
-//	r.arguments = *arguments
-//	return r
-//}
 func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 	return r.callback.HandlerFunc(r.asyncCallWithCallback)
 
@@ -176,6 +187,8 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 				case reflect.Bool:
 					result = append(result, v.Bool())
 				case reflect.Int32:
+					result = append(result, v.Int())
+				case reflect.Int:
 					result = append(result, v.Int())
 				default:
 					panic("not support type")
