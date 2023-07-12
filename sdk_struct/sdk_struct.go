@@ -259,9 +259,10 @@ type AttachedInfoElem struct {
 }
 
 type UploadProgress struct {
-	Total   int64 `json:"total"`
-	Save    int64 `json:"save"`
-	Current int64 `json:"current"`
+	Total    int64  `json:"total"`
+	Save     int64  `json:"save"`
+	Current  int64  `json:"current"`
+	UploadID string `json:"uploadID"`
 }
 
 type ReactionElem struct {

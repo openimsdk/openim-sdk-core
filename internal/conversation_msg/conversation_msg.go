@@ -33,12 +33,10 @@ import (
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
 	"sync"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -148,8 +146,9 @@ func (c *Conversation) initSyncer() {
 					"is_pinned": serverConversation.IsPinned, "is_private_chat": serverConversation.IsPrivateChat, "burn_duration": serverConversation.BurnDuration,
 					"is_not_in_group": serverConversation.IsNotInGroup, "group_at_type": serverConversation.GroupAtType,
 					"update_unread_count_time": serverConversation.UpdateUnreadCountTime,
-					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex,
-					"max_seq": serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
+					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex, "msg_destruct_time": serverConversation.MsgDestructTime,
+					"is_msg_destruct": serverConversation.IsMsgDestruct,
+					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
 		},
 		func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
@@ -166,7 +165,9 @@ func (c *Conversation) initSyncer() {
 				server.Ex != local.Ex ||
 				server.MaxSeq != local.MaxSeq ||
 				server.MinSeq != local.MinSeq ||
-				server.HasReadSeq != local.HasReadSeq {
+				server.HasReadSeq != local.HasReadSeq ||
+				server.MsgDestructTime != local.MsgDestructTime ||
+				server.IsMsgDestruct != local.IsMsgDestruct {
 				log.ZDebug(context.Background(), "not same", "conversationID", server.ConversationID, "server", server.RecvMsgOpt, "local", local.RecvMsgOpt)
 				return false
 			}
@@ -188,7 +189,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	updateMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	//var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
+	var newMessages sdk_struct.NewMsgList
+	// var reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -363,6 +365,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo
 			nc.Ex = v.Ex
+			nc.IsMsgDestruct = v.IsMsgDestruct
+			nc.MsgDestructTime = v.MsgDestructTime
 		}
 	}
 
@@ -390,8 +394,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		c.newMessage(newMessages)
 	}
 	// c.revokeMessage(ctx, newMsgRevokeList)
-	c.doReactionMsgModifier(ctx, reactionMsgModifierList)
-	c.doReactionMsgDeleter(ctx, reactionMsgDeleterList)
+	// c.doReactionMsgModifier(ctx, reactionMsgModifierList)
+	// c.doReactionMsgDeleter(ctx, reactionMsgDeleterList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -575,77 +579,76 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 	//}
 }
 
-func (c *Conversation) doReactionMsgModifier(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
-	for _, msgStruct := range msgReactionList {
-		var n server_api_params.ReactionMessageModifierNotification
-		err := json.Unmarshal([]byte(msgStruct.Content), &n)
-		if err != nil {
-			// log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
-			continue
-		}
-		switch n.Operation {
-		case constant.AddMessageExtensions:
-			var reactionExtensionList []*sdkws.KeyValue
-			for _, value := range n.SuccessReactionExtensionList {
-				reactionExtensionList = append(reactionExtensionList, value)
-			}
-			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
-				c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
-			}
-		case constant.SetMessageExtensions:
-			err = c.db.GetAndUpdateMessageReactionExtension(ctx, n.ClientMsgID, n.SuccessReactionExtensionList)
-			if err != nil {
-				// log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
-				continue
-			}
-			var reactionExtensionList []*sdkws.KeyValue
-			for _, value := range n.SuccessReactionExtensionList {
-				reactionExtensionList = append(reactionExtensionList, value)
-			}
-			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
-				c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
-			}
+// func (c *Conversation) doReactionMsgModifier(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
+// 	for _, msgStruct := range msgReactionList {
+// 		var n server_api_params.ReactionMessageModifierNotification
+// 		err := json.Unmarshal([]byte(msgStruct.Content), &n)
+// 		if err != nil {
+// 			// log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+// 			continue
+// 		}
+// 		switch n.Operation {
+// 		case constant.AddMessageExtensions:
+// 			var reactionExtensionList []*sdkws.KeyValue
+// 			for _, value := range n.SuccessReactionExtensionList {
+// 				reactionExtensionList = append(reactionExtensionList, value)
+// 			}
+// 			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+// 				c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+// 			}
+// 		case constant.SetMessageExtensions:
+// 			err = c.db.GetAndUpdateMessageReactionExtension(ctx, n.ClientMsgID, n.SuccessReactionExtensionList)
+// 			if err != nil {
+// 				// log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+// 				continue
+// 			}
+// 			var reactionExtensionList []*sdkws.KeyValue
+// 			for _, value := range n.SuccessReactionExtensionList {
+// 				reactionExtensionList = append(reactionExtensionList, value)
+// 			}
+// 			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+// 				c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+// 			}
 
-		}
-		t := model_struct.LocalChatLog{}
-		t.ClientMsgID = n.ClientMsgID
-		t.SessionType = n.SessionType
-		t.IsExternalExtensions = n.IsExternalExtensions
-		t.IsReact = n.IsReact
-		t.MsgFirstModifyTime = n.MsgFirstModifyTime
-		if n.SessionType == constant.GroupChatType || n.SessionType == constant.SuperGroupChatType {
-			t.RecvID = n.SourceID
-		}
-		//todo
-		err2 := c.db.UpdateMessage(ctx, "", &t)
-		if err2 != nil {
-			// log.Error("internal", "unmarshal failed err:", err2.Error(), t)
-			continue
-		}
+// 		}
+// 		t := model_struct.LocalChatLog{}
+// 		t.ClientMsgID = n.ClientMsgID
+// 		t.SessionType = n.SessionType
+// 		t.IsExternalExtensions = n.IsExternalExtensions
+// 		t.IsReact = n.IsReact
+// 		t.MsgFirstModifyTime = n.MsgFirstModifyTime
+// 		if n.SessionType == constant.GroupChatType || n.SessionType == constant.SuperGroupChatType {
+// 			t.RecvID = n.SourceID
+// 		}
+// 		//todo
+// 		err2 := c.db.UpdateMessage(ctx, "", &t)
+// 		if err2 != nil {
+// 			// log.Error("internal", "unmarshal failed err:", err2.Error(), t)
+// 			continue
+// 		}
+// 	}
+// }
 
-	}
-
-}
 func (c *Conversation) doReactionMsgDeleter(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
-	for _, msgStruct := range msgReactionList {
-		var n server_api_params.ReactionMessageDeleteNotification
-		err := json.Unmarshal([]byte(msgStruct.Content), &n)
-		if err != nil {
-			// log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
-			continue
-		}
-		err = c.db.DeleteAndUpdateMessageReactionExtension(ctx, n.ClientMsgID, n.SuccessReactionExtensionList)
-		if err != nil {
-			// log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
-			continue
-		}
-		var deleteKeyList []string
-		for _, value := range n.SuccessReactionExtensionList {
-			deleteKeyList = append(deleteKeyList, value.TypeKey)
-		}
-		c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+	// for _, msgStruct := range msgReactionList {
+	// 	var n server_api_params.ReactionMessageDeleteNotification
+	// 	err := json.Unmarshal([]byte(msgStruct.Content), &n)
+	// 	if err != nil {
+	// 		// log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+	// 		continue
+	// 	}
+	// 	err = c.db.DeleteAndUpdateMessageReactionExtension(ctx, n.ClientMsgID, n.SuccessReactionExtensionList)
+	// 	if err != nil {
+	// 		// log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+	// 		continue
+	// 	}
+	// 	var deleteKeyList []string
+	// 	for _, value := range n.SuccessReactionExtensionList {
+	// 		deleteKeyList = append(deleteKeyList, value.TypeKey)
+	// 	}
+	// 	c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 
-	}
+	// }
 }
 
 func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (bool, *sdk_struct.MessageRevoked) {

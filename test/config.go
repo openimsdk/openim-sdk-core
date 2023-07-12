@@ -20,7 +20,7 @@ import (
 )
 
 var LogLevel uint32 = 6
-var PlatformID = int32(2)
+var PlatformID = int32(3)
 var LogName = ""
 var IsLogStandardOutput = true
 var LogFilePath = ""
@@ -29,7 +29,7 @@ var ReliabilityUserA = 1234567
 var ReliabilityUserB = 1234567
 var (
 	//TESTIP = "121.5.182.23"
-	TESTIP = "203.56.175.233"
+	TESTIP = "59.36.173.89"
 	//TESTIP              = "121.37.25.71"
 
 	//TESTIP  = "open-im-test.rentsoft.cn"

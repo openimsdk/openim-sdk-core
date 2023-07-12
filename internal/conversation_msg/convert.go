@@ -33,6 +33,8 @@ func ServerConversationToLocal(conversation *pbConversation.Conversation) *model
 		IsPrivateChat:    conversation.IsPrivateChat,
 		AttachedInfo:     conversation.AttachedInfo,
 		Ex:               conversation.Ex,
+		MsgDestructTime:  conversation.MsgDestructTime,
+		IsMsgDestruct:    conversation.IsMsgDestruct,
 	}
 }
 
@@ -48,6 +50,8 @@ func LocalConversationToServer(conversation *model_struct.LocalConversation) *pb
 		BurnDuration:     conversation.BurnDuration,
 		IsPrivateChat:    conversation.IsPrivateChat,
 		AttachedInfo:     conversation.AttachedInfo,
+		MsgDestructTime:  conversation.MsgDestructTime,
 		Ex:               conversation.Ex,
+		IsMsgDestruct:    conversation.IsMsgDestruct,
 	}
 }
