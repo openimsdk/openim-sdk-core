@@ -1,6 +1,24 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build js && wasm
+// +build js,wasm
+
 package indexdb
 
 import (
+	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/indexdb/temp_struct"
@@ -9,7 +27,11 @@ import (
 type LocalConversations struct {
 }
 
-func (i *LocalConversations) GetAllConversationListDB() (result []*model_struct.LocalConversation, err error) {
+func NewLocalConversations() *LocalConversations {
+	return &LocalConversations{}
+}
+
+func (i *LocalConversations) GetAllConversationListDB(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -30,7 +52,8 @@ func (i *LocalConversations) GetAllConversationListDB() (result []*model_struct.
 		}
 	}
 }
-func (i *LocalConversations) GetConversation(conversationID string) (*model_struct.LocalConversation, error) {
+
+func (i *LocalConversations) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {
 	c, err := Exec(conversationID)
 	if err != nil {
 		return nil, err
@@ -48,7 +71,7 @@ func (i *LocalConversations) GetConversation(conversationID string) (*model_stru
 	}
 }
 
-func (i *LocalConversations) GetHiddenConversationList() (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetHiddenConversationList(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -69,7 +92,7 @@ func (i *LocalConversations) GetHiddenConversationList() (result []*model_struct
 		}
 	}
 }
-func (i *LocalConversations) GetAllConversationListToSync() (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetAllConversations(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -90,11 +113,11 @@ func (i *LocalConversations) GetAllConversationListToSync() (result []*model_str
 		}
 	}
 }
-func (i *LocalConversations) UpdateColumnsConversation(conversationID string, args map[string]interface{}) error {
-	_, err := Exec(conversationID, args)
+func (i *LocalConversations) UpdateColumnsConversation(ctx context.Context, conversationID string, args map[string]interface{}) error {
+	_, err := Exec(conversationID, utils.StructToJsonString(args))
 	return err
 }
-func (i IndexDB) GetConversationByUserID(userID string) (*model_struct.LocalConversation, error) {
+func (i *LocalConversations) GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error) {
 	c, err := Exec(userID)
 	if err != nil {
 		return nil, err
@@ -112,7 +135,7 @@ func (i IndexDB) GetConversationByUserID(userID string) (*model_struct.LocalConv
 	}
 }
 
-func (i IndexDB) GetConversationListSplitDB(offset, count int) (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetConversationListSplitDB(ctx context.Context, offset, count int) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec(offset, count)
 	if err != nil {
 		return nil, err
@@ -134,22 +157,22 @@ func (i IndexDB) GetConversationListSplitDB(offset, count int) (result []*model_
 	}
 }
 
-func (i IndexDB) BatchInsertConversationList(conversationList []*model_struct.LocalConversation) error {
+func (i *LocalConversations) BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
 	_, err := Exec(utils.StructToJsonString(conversationList))
 	return err
 }
 
-func (i IndexDB) InsertConversation(conversationList *model_struct.LocalConversation) error {
+func (i *LocalConversations) InsertConversation(ctx context.Context, conversationList *model_struct.LocalConversation) error {
 	_, err := Exec(utils.StructToJsonString(conversationList))
 	return err
 }
 
-func (i IndexDB) DeleteConversation(conversationID string) error {
+func (i *LocalConversations) DeleteConversation(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
 
-func (i IndexDB) UpdateConversation(c *model_struct.LocalConversation) error {
+func (i *LocalConversations) UpdateConversation(ctx context.Context, c *model_struct.LocalConversation) error {
 	if c.ConversationID == "" {
 		return PrimaryKeyNull
 	}
@@ -168,6 +191,7 @@ func (i IndexDB) UpdateConversation(c *model_struct.LocalConversation) error {
 		DraftTextTime:         c.DraftTextTime,
 		IsPinned:              c.IsPinned,
 		IsPrivateChat:         c.IsPrivateChat,
+		BurnDuration:          c.BurnDuration,
 		IsNotInGroup:          c.IsNotInGroup,
 		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
 		AttachedInfo:          c.AttachedInfo,
@@ -177,7 +201,7 @@ func (i IndexDB) UpdateConversation(c *model_struct.LocalConversation) error {
 	return err
 }
 
-func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) error {
+func (i *LocalConversations) UpdateConversationForSync(ctx context.Context, c *model_struct.LocalConversation) error {
 	if c.ConversationID == "" {
 		return PrimaryKeyNull
 	}
@@ -188,6 +212,7 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 		IsPrivateChat:         c.IsPrivateChat,
 		IsNotInGroup:          c.IsNotInGroup,
 		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
+		BurnDuration:          c.BurnDuration,
 		AttachedInfo:          c.AttachedInfo,
 		Ex:                    c.Ex,
 	}
@@ -195,9 +220,9 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 	return err
 }
 
-func (i IndexDB) BatchUpdateConversationList(conversationList []*model_struct.LocalConversation) error {
+func (i *LocalConversations) BatchUpdateConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
 	for _, v := range conversationList {
-		err := i.UpdateConversation(v)
+		err := i.UpdateConversation(ctx, v)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateConversationList failed")
 		}
@@ -206,7 +231,7 @@ func (i IndexDB) BatchUpdateConversationList(conversationList []*model_struct.Lo
 	return nil
 }
 
-func (i IndexDB) ConversationIfExists(conversationID string) (bool, error) {
+func (i *LocalConversations) ConversationIfExists(ctx context.Context, conversationID string) (bool, error) {
 	seq, err := Exec(conversationID)
 	if err != nil {
 		return false, err
@@ -219,55 +244,55 @@ func (i IndexDB) ConversationIfExists(conversationID string) (bool, error) {
 	}
 }
 
-func (i IndexDB) ResetConversation(conversationID string) error {
+func (i *LocalConversations) ResetConversation(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
 
-func (i IndexDB) ResetAllConversation() error {
+func (i *LocalConversations) ResetAllConversation(ctx context.Context) error {
 	_, err := Exec()
 	return err
 }
 
-func (i IndexDB) ClearConversation(conversationID string) error {
+func (i *LocalConversations) ClearConversation(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
 
-func (i IndexDB) CleaAllConversation() error {
+func (i *LocalConversations) ClearAllConversation(ctx context.Context) error {
 	_, err := Exec()
 	return err
 }
 
-func (i IndexDB) SetConversationDraft(conversationID, draftText string) error {
+func (i *LocalConversations) SetConversationDraftDB(ctx context.Context, conversationID, draftText string) error {
 	_, err := Exec(conversationID, draftText)
 	return err
 }
 
-func (i IndexDB) RemoveConversationDraft(conversationID, draftText string) error {
+func (i *LocalConversations) RemoveConversationDraft(ctx context.Context, conversationID, draftText string) error {
 	_, err := Exec(conversationID, draftText)
 	return err
 }
 
-func (i IndexDB) UnPinConversation(conversationID string, isPinned int) error {
+func (i *LocalConversations) UnPinConversation(ctx context.Context, conversationID string, isPinned int) error {
 	_, err := Exec(conversationID, isPinned)
 	return err
 }
 
-func (i IndexDB) UpdateAllConversation(conversation *model_struct.LocalConversation) error {
+func (i *LocalConversations) UpdateAllConversation(ctx context.Context, conversation *model_struct.LocalConversation) error {
 	_, err := Exec()
 	return err
 }
 
-func (i IndexDB) IncrConversationUnreadCount(conversationID string) error {
+func (i *LocalConversations) IncrConversationUnreadCount(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
-func (i IndexDB) DecrConversationUnreadCount(conversationID string, count int64) error {
+func (i *LocalConversations) DecrConversationUnreadCount(ctx context.Context, conversationID string, count int64) error {
 	_, err := Exec(conversationID, count)
 	return err
 }
-func (i IndexDB) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) {
+func (i *LocalConversations) GetTotalUnreadMsgCountDB(ctx context.Context) (totalUnreadCount int32, err error) {
 	count, err := Exec()
 	if err != nil {
 		return 0, err
@@ -282,12 +307,12 @@ func (i IndexDB) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) 
 	}
 }
 
-func (i IndexDB) SetMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error) {
+func (i *LocalConversations) SetMultipleConversationRecvMsgOpt(ctx context.Context, conversationIDList []string, opt int) (err error) {
 	_, err = Exec(utils.StructToJsonString(conversationIDList), opt)
 	return err
 }
 
-func (i IndexDB) GetMultipleConversationDB(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec(utils.StructToJsonString(conversationIDList))
 	if err != nil {
 		return nil, err
@@ -307,4 +332,80 @@ func (i IndexDB) GetMultipleConversationDB(conversationIDList []string) (result 
 			return nil, ErrType
 		}
 	}
+}
+
+func (i *LocalConversations) GetAllSingleConversationIDList(ctx context.Context) (result []string, err error) {
+	conversationIDs, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := conversationIDs.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, nil
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalConversations) GetAllConversationIDList(ctx context.Context) ([]string, error) {
+	conversationIDList, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := conversationIDList.(string); ok {
+			var result []string
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalConversations) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
+	//conversationIDs, err := Exec(ctx)
+	return nil
+	//if err != nil {
+	//	return err
+	//} else {
+	//	if v, ok := conversationIDs.(string); ok {
+	//		var conversationIDs []string
+	//		err := utils.JsonStringToStruct(v, &conversationIDs)
+	//		if err != nil {
+	//			return err
+	//		}
+	//		var notExistConversations []*model_struct.LocalConversation
+	//		var existConversations []*model_struct.LocalConversation
+	//		for i, v := range conversationList {
+	//			if utils.IsContain(v.ConversationID, conversationIDs) {
+	//				existConversations = append(existConversations, v)
+	//				continue
+	//			} else {
+	//				notExistConversations = append(notExistConversations, conversationList[i])
+	//			}
+	//		}
+	//		if len(notExistConversations) > 0 {
+	//			err := Exec(ctx, notExistConversations)
+	//			if err != nil {
+	//				return err
+	//			}
+	//		}
+	//		for _, v := range existConversations {
+	//			err := Exec(ctx, v)
+	//			if err != nil {
+	//				return err
+	//			}
+	//		}
+	//		return nil
+	//	} else {
+	//		return ErrType
+	//	}
+	//}
 }

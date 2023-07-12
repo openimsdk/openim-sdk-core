@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package ws_local_server
 
 import (
@@ -10,12 +24,12 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
+// import (
 //
-//import (
 //	"encoding/json"
 //	"open_im_sdk/open_im_sdk"
-//)
 //
+// )
 func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
@@ -92,6 +106,9 @@ func (b *BatchMsgListenerCallback) OnRecvNewMessages(messageList string) {
 func (a *AddAdvancedMsgListenerCallback) OnRecvNewMessage(message string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", message, "0"}, a.uid)
 }
+func (a *BatchMsgListenerCallback) OnRecvOfflineNewMessages(messageList string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", messageList, "0"}, a.uid)
+}
 
 func (a *AddAdvancedMsgListenerCallback) OnRecvC2CReadReceipt(msgReceiptList string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgReceiptList, "0"}, a.uid)
@@ -143,7 +160,7 @@ type ConversationCallback struct {
 	uid string
 }
 
-//func (c *ConversationCallback) OnSyncServerProgress(progress int) {
+//funcation (c *ConversationCallback) OnSyncServerProgress(progress int) {
 //	var ed EventData
 //	ed.Event = cleanUpfuncName(runFuncName())
 //	ed.ErrCode = 0
@@ -580,7 +597,7 @@ func (wsRouter *WsFuncRouter) GetHistoryMessageListReverse(getMessageOptions str
 	userWorker.Conversation().GetHistoryMessageListReverse(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
 }
 
-//deprecated
+// deprecated
 func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
@@ -715,7 +732,7 @@ func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, ope
 	userWorker.Conversation().InsertGroupMessageToLocalStorage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["groupID"].(string), m["sendID"].(string), operationID)
 }
 
-//func (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {
+//funcation (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {
 //	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 //	userWorker.Conversation().FindMessages(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, messageIDList)
 //}
@@ -870,19 +887,19 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessageFromLocalAndSvr(input stri
 	userWorker.Conversation().ClearGroupHistoryMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
 
-//func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		log.Info("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
+//	funcation (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
+//		m := make(map[string]interface{})
+//		if err := json.Unmarshal([]byte(input), &m); err != nil {
+//			log.Info("unmarshal failed")
+//			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+//			return
+//		}
+//		if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "flag") {
+//			return
+//		}
+//		userWorker := init.GetUserWorker(wsRouter.uId)
+//		userWorker.SetSdkLog(m["flag"].(int32))
 //	}
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "flag") {
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.SetSdkLog(m["flag"].(int32))
-//}
 func (wsRouter *WsFuncRouter) GetAtAllTag(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {

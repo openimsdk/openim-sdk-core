@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package ws_local_server
 
 import (
@@ -28,7 +42,7 @@ type BaseSuccessFailed struct {
 	uid         string
 }
 
-//e.g open_im_sdk/open_im_sdk.Login ->Login
+// e.g open_im_sdk/open_im_sdk.Login ->Login
 func cleanUpfuncName(funcName string) string {
 	end := strings.LastIndex(funcName, ".")
 	if end == -1 {
@@ -63,7 +77,7 @@ func int64ToString(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 
-//uid->funcname->func
+//uid->funcname->funcation
 
 type WsFuncRouter struct {
 	uId string
@@ -150,7 +164,7 @@ func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
 	SendOneUserMessage(data, wsRouter.uId)
 }
 
-//listener
+// listener
 func SendOneUserMessage(data interface{}, uid string) {
 	var chMsg ChanMsg
 	chMsg.data, _ = json.Marshal(data)

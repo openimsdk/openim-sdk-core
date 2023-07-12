@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package common
 
 import (
@@ -5,8 +19,8 @@ import (
 	"errors"
 	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"runtime"
@@ -14,7 +28,7 @@ import (
 
 //var validate *validator.Validate
 
-//func init() {
+//funcation init() {
 //	validate = validator.New()
 //}
 
@@ -27,30 +41,30 @@ func CheckAnyErrCallback(callback open_im_sdk_callback.Base, errCode int32, err 
 	}
 }
 func CheckConfigErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
-	CheckAnyErrCallback(callback, constant.ErrConfig.ErrCode, err, operationID)
+	CheckAnyErrCallback(callback, sdkerrs.ArgsError, err, operationID)
 }
 
-func CheckTokenErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
-	CheckAnyErrCallback(callback, constant.ErrTokenInvalid.ErrCode, err, operationID)
-}
+//func CheckTokenErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
+//	CheckAnyErrCallback(callback, sdkerrs.TokenInvalidError, err, operationID)
+//}
 
 func CheckDBErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
-	CheckAnyErrCallback(callback, constant.ErrDB.ErrCode, err, operationID)
+	CheckAnyErrCallback(callback, sdkerrs.SdkInternalError, err, operationID)
 }
 
 func CheckDataErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
-	CheckAnyErrCallback(callback, constant.ErrData.ErrCode, err, operationID)
+	CheckAnyErrCallback(callback, sdkerrs.SdkInternalError, err, operationID)
 }
 
 func CheckArgsErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
-	CheckAnyErrCallback(callback, constant.ErrArgs.ErrCode, err, operationID)
+	CheckAnyErrCallback(callback, sdkerrs.ArgsError, err, operationID)
 }
 
 func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp []byte, output interface{}, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
 	if err = CheckErrAndResp(err, resp, output, nil); err != nil {
 		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
-		callback.OnError(constant.ErrServerReturn.ErrCode, err.Error())
+		callback.OnError(sdkerrs.SdkInternalError, err.Error())
 		runtime.Goexit()
 	}
 }
@@ -59,14 +73,14 @@ func CheckErrAndRespCallbackPenetrate(callback open_im_sdk_callback.Base, err er
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
 	var penetrateErrCode int32
 	if err = CheckErrAndResp(err, resp, output, &penetrateErrCode); err != nil {
-		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
+		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp), penetrateErrCode)
 		callback.OnError(penetrateErrCode, utils.Unwrap(err).Error())
 		runtime.Goexit()
 	}
 }
 
 //
-//func CheckErrAndResp2(err error, resp []byte, output interface{}) error {
+//funcation CheckErrAndResp2(err error, resp []byte, output interface{}) error {
 //	if err != nil {
 //		return utils.Wrap(err, "api resp failed")
 //	}
@@ -174,7 +188,7 @@ func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback open_im_s
 	if err != nil {
 		if callback != nil {
 			log.NewError(operationID, "Unmarshal failed ", err.Error(), s)
-			callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+			callback.OnError(sdkerrs.ArgsError, err.Error())
 			runtime.Goexit()
 		} else {
 			return utils.Wrap(err, "json Unmarshal failed")
@@ -197,7 +211,7 @@ func JsonUnmarshalCallback(s string, args interface{}, callback open_im_sdk_call
 	if err != nil {
 		if callback != nil {
 			log.NewError(operationID, "Unmarshal failed ", err.Error(), s)
-			callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+			callback.OnError(sdkerrs.ArgsError, err.Error())
 			runtime.Goexit()
 		} else {
 			return utils.Wrap(err, "json Unmarshal failed")

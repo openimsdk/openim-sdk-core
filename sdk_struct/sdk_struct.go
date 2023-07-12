@@ -1,6 +1,22 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package sdk_struct
 
-import "open_im_sdk/pkg/server_api_params"
+import (
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+)
 
 ////////////////////////// message/////////////////////////
 
@@ -23,7 +39,7 @@ type MessageRevoked struct {
 	SourceMessageSendID         string `json:"sourceMessageSendID"`
 	SourceMessageSenderNickname string `json:"sourceMessageSenderNickname"`
 	SessionType                 int32  `json:"sessionType"`
-	Seq                         uint32 `json:"seq"`
+	Seq                         int64  `json:"seq"`
 	Ex                          string `json:"ex"`
 }
 type MessageReaction struct {
@@ -55,6 +71,7 @@ type SoundBaseInfo struct {
 	SourceURL string `json:"sourceUrl,omitempty"`
 	DataSize  int64  `json:"dataSize"`
 	Duration  int64  `json:"duration"`
+	SoundType string `json:"soundType,omitempty"`
 }
 type VideoBaseInfo struct {
 	VideoPath      string `json:"videoPath,omitempty"`
@@ -69,6 +86,7 @@ type VideoBaseInfo struct {
 	SnapshotURL    string `json:"snapshotUrl,omitempty"`
 	SnapshotWidth  int32  `json:"snapshotWidth"`
 	SnapshotHeight int32  `json:"snapshotHeight"`
+	SnapshotType   string `json:"snapshotType,omitempty"`
 }
 type FileBaseInfo struct {
 	FilePath  string `json:"filePath,omitempty"`
@@ -76,106 +94,151 @@ type FileBaseInfo struct {
 	SourceURL string `json:"sourceUrl,omitempty"`
 	FileName  string `json:"fileName,omitempty"`
 	FileSize  int64  `json:"fileSize"`
+	FileType  string `json:"fileType,omitempty"`
+}
+
+type TextElem struct {
+	Content string `json:"content"`
+}
+
+type CardElem struct {
+	UserID   string `json:"userID"`
+	Nickname string `json:"nickname"`
+	FaceURL  string `json:"faceURL"`
+	Ex       string `json:"ex"`
+}
+
+type PictureElem struct {
+	SourcePath      string           `json:"sourcePath,omitempty"`
+	SourcePicture   *PictureBaseInfo `json:"sourcePicture,omitempty"`
+	BigPicture      *PictureBaseInfo `json:"bigPicture,omitempty"`
+	SnapshotPicture *PictureBaseInfo `json:"snapshotPicture,omitempty"`
+}
+
+type SoundElem struct {
+	UUID      string `json:"uuid,omitempty"`
+	SoundPath string `json:"soundPath,omitempty"`
+	SourceURL string `json:"sourceUrl,omitempty"`
+	DataSize  int64  `json:"dataSize"`
+	Duration  int64  `json:"duration"`
+	SoundType string `json:"soundType,omitempty"`
+}
+
+type VideoElem struct {
+	VideoPath      string `json:"videoPath,omitempty"`
+	VideoUUID      string `json:"videoUUID,omitempty"`
+	VideoURL       string `json:"videoUrl,omitempty"`
+	VideoType      string `json:"videoType,omitempty"`
+	VideoSize      int64  `json:"videoSize"`
+	Duration       int64  `json:"duration"`
+	SnapshotPath   string `json:"snapshotPath,omitempty"`
+	SnapshotUUID   string `json:"snapshotUUID,omitempty"`
+	SnapshotSize   int64  `json:"snapshotSize"`
+	SnapshotURL    string `json:"snapshotUrl,omitempty"`
+	SnapshotWidth  int32  `json:"snapshotWidth"`
+	SnapshotHeight int32  `json:"snapshotHeight"`
+	SnapshotType   string `json:"snapshotType,omitempty"`
+}
+
+type FileElem struct {
+	FilePath  string `json:"filePath,omitempty"`
+	UUID      string `json:"uuid,omitempty"`
+	SourceURL string `json:"sourceUrl,omitempty"`
+	FileName  string `json:"fileName,omitempty"`
+	FileSize  int64  `json:"fileSize"`
+	FileType  string `json:"fileType,omitempty"`
+}
+
+type MergeElem struct {
+	Title             string           `json:"title,omitempty"`
+	AbstractList      []string         `json:"abstractList,omitempty"`
+	MultiMessage      []*MsgStruct     `json:"multiMessage,omitempty"`
+	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+
+type AtTextElem struct {
+	Text         string     `json:"text,omitempty"`
+	AtUserList   []string   `json:"atUserList,omitempty"`
+	AtUsersInfo  []*AtInfo  `json:"atUsersInfo,omitempty"`
+	QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
+	IsAtSelf     bool       `json:"isAtSelf"`
+}
+
+type FaceElem struct {
+	Index int    `json:"index"`
+	Data  string `json:"data,omitempty"`
+}
+
+type LocationElem struct {
+	Description string  `json:"description,omitempty"`
+	Longitude   float64 `json:"longitude"`
+	Latitude    float64 `json:"latitude"`
+}
+
+type CustomElem struct {
+	Data        string `json:"data,omitempty"`
+	Description string `json:"description,omitempty"`
+	Extension   string `json:"extension,omitempty"`
+}
+
+type QuoteElem struct {
+	Text              string           `json:"text,omitempty"`
+	QuoteMessage      *MsgStruct       `json:"quoteMessage,omitempty"`
+	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+
+type NotificationElem struct {
+	Detail string `json:"detail,omitempty"`
+}
+
+type AdvancedTextElem struct {
+	Text              string           `json:"text,omitempty"`
+	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+type TypingElem struct {
+	MsgTips string `json:"msgTips,omitempty"`
 }
 
 type MsgStruct struct {
-	ClientMsgID          string                            `json:"clientMsgID,omitempty"`
-	ServerMsgID          string                            `json:"serverMsgID,omitempty"`
-	CreateTime           int64                             `json:"createTime"`
-	SendTime             int64                             `json:"sendTime"`
-	SessionType          int32                             `json:"sessionType"`
-	SendID               string                            `json:"sendID,omitempty"`
-	RecvID               string                            `json:"recvID,omitempty"`
-	MsgFrom              int32                             `json:"msgFrom"`
-	ContentType          int32                             `json:"contentType"`
-	SenderPlatformID     int32                             `json:"platformID"`
-	SenderNickname       string                            `json:"senderNickname,omitempty"`
-	SenderFaceURL        string                            `json:"senderFaceUrl,omitempty"`
-	GroupID              string                            `json:"groupID,omitempty"`
-	Content              string                            `json:"content,omitempty"`
-	Seq                  uint32                            `json:"seq"`
-	IsRead               bool                              `json:"isRead"`
-	Status               int32                             `json:"status"`
-	IsReact              bool                              `json:"isReact,omitempty"`
-	IsExternalExtensions bool                              `json:"isExternalExtensions,omitempty"`
-	OfflinePush          server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
-	AttachedInfo         string                            `json:"attachedInfo,omitempty"`
-	Ex                   string                            `json:"ex,omitempty"`
-	PictureElem          struct {
-		SourcePath      string          `json:"sourcePath,omitempty"`
-		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
-		BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
-		SnapshotPicture PictureBaseInfo `json:"snapshotPicture,omitempty"`
-	} `json:"pictureElem,omitempty"`
-	SoundElem struct {
-		UUID      string `json:"uuid,omitempty"`
-		SoundPath string `json:"soundPath,omitempty"`
-		SourceURL string `json:"sourceUrl,omitempty"`
-		DataSize  int64  `json:"dataSize"`
-		Duration  int64  `json:"duration"`
-	} `json:"soundElem,omitempty"`
-	VideoElem struct {
-		VideoPath      string `json:"videoPath,omitempty"`
-		VideoUUID      string `json:"videoUUID,omitempty"`
-		VideoURL       string `json:"videoUrl,omitempty"`
-		VideoType      string `json:"videoType,omitempty"`
-		VideoSize      int64  `json:"videoSize"`
-		Duration       int64  `json:"duration"`
-		SnapshotPath   string `json:"snapshotPath,omitempty"`
-		SnapshotUUID   string `json:"snapshotUUID,omitempty"`
-		SnapshotSize   int64  `json:"snapshotSize"`
-		SnapshotURL    string `json:"snapshotUrl,omitempty"`
-		SnapshotWidth  int32  `json:"snapshotWidth"`
-		SnapshotHeight int32  `json:"snapshotHeight"`
-	} `json:"videoElem,omitempty"`
-	FileElem struct {
-		FilePath  string `json:"filePath,omitempty"`
-		UUID      string `json:"uuid,omitempty"`
-		SourceURL string `json:"sourceUrl,omitempty"`
-		FileName  string `json:"fileName,omitempty"`
-		FileSize  int64  `json:"fileSize"`
-	} `json:"fileElem,omitempty"`
-	MergeElem struct {
-		Title             string           `json:"title,omitempty"`
-		AbstractList      []string         `json:"abstractList,omitempty"`
-		MultiMessage      []*MsgStruct     `json:"multiMessage,omitempty"`
-		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
-	} `json:"mergeElem,omitempty"`
-	AtElem struct {
-		Text         string     `json:"text,omitempty"`
-		AtUserList   []string   `json:"atUserList,omitempty"`
-		AtUsersInfo  []*AtInfo  `json:"atUsersInfo,omitempty"`
-		QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
-		IsAtSelf     bool       `json:"isAtSelf"`
-	} `json:"atElem,omitempty"`
-	FaceElem struct {
-		Index int    `json:"index"`
-		Data  string `json:"data,omitempty"`
-	} `json:"faceElem,omitempty"`
-	LocationElem struct {
-		Description string  `json:"description,omitempty"`
-		Longitude   float64 `json:"longitude"`
-		Latitude    float64 `json:"latitude"`
-	} `json:"locationElem,omitempty"`
-	CustomElem struct {
-		Data        string `json:"data,omitempty"`
-		Description string `json:"description,omitempty"`
-		Extension   string `json:"extension,omitempty"`
-	} `json:"customElem,omitempty"`
-	QuoteElem struct {
-		Text              string           `json:"text,omitempty"`
-		QuoteMessage      *MsgStruct       `json:"quoteMessage,omitempty"`
-		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
-	} `json:"quoteElem,omitempty"`
-	NotificationElem struct {
-		Detail      string `json:"detail,omitempty"`
-		DefaultTips string `json:"defaultTips,omitempty"`
-	} `json:"notificationElem,omitempty"`
-	MessageEntityElem struct {
-		Text              string           `json:"text,omitempty"`
-		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
-	} `json:"messageEntityElem,omitempty"`
-	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
+	ClientMsgID          string                 `json:"clientMsgID,omitempty"`
+	ServerMsgID          string                 `json:"serverMsgID,omitempty"`
+	CreateTime           int64                  `json:"createTime"`
+	SendTime             int64                  `json:"sendTime"`
+	SessionType          int32                  `json:"sessionType"`
+	SendID               string                 `json:"sendID,omitempty"`
+	RecvID               string                 `json:"recvID,omitempty"`
+	MsgFrom              int32                  `json:"msgFrom"`
+	ContentType          int32                  `json:"contentType"`
+	SenderPlatformID     int32                  `json:"senderPlatformID"`
+	SenderNickname       string                 `json:"senderNickname,omitempty"`
+	SenderFaceURL        string                 `json:"senderFaceUrl,omitempty"`
+	GroupID              string                 `json:"groupID,omitempty"`
+	Content              string                 `json:"content,omitempty"`
+	Seq                  int64                  `json:"seq"`
+	IsRead               bool                   `json:"isRead"`
+	Status               int32                  `json:"status"`
+	IsReact              bool                   `json:"isReact,omitempty"`
+	IsExternalExtensions bool                   `json:"isExternalExtensions,omitempty"`
+	OfflinePush          *sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo         string                 `json:"attachedInfo,omitempty"`
+	Ex                   string                 `json:"ex,omitempty"`
+	LocalEx              string                 `json:"localEx,omitempty"`
+	TextElem             *TextElem              `json:"textElem,omitempty"`
+	CardElem             *CardElem              `json:"cardElem,omitempty"`
+	PictureElem          *PictureElem           `json:"pictureElem,omitempty"`
+	SoundElem            *SoundElem             `json:"soundElem,omitempty"`
+	VideoElem            *VideoElem             `json:"videoElem,omitempty"`
+	FileElem             *FileElem              `json:"fileElem,omitempty"`
+	MergeElem            *MergeElem             `json:"mergeElem,omitempty"`
+	AtTextElem           *AtTextElem            `json:"atTextElem,omitempty"`
+	FaceElem             *FaceElem              `json:"faceElem,omitempty"`
+	LocationElem         *LocationElem          `json:"locationElem,omitempty"`
+	CustomElem           *CustomElem            `json:"customElem,omitempty"`
+	QuoteElem            *QuoteElem             `json:"quoteElem,omitempty"`
+	NotificationElem     *NotificationElem      `json:"notificationElem,omitempty"`
+	AdvancedTextElem     *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
+	TypingElem           *TypingElem            `json:"typingElem,omitempty"`
+	AttachedInfoElem     *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
 }
 
 type AtInfo struct {
@@ -192,27 +255,34 @@ type AttachedInfoElem struct {
 	IsEncryption              bool             `json:"isEncryption"`
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
 	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
+	Progress *UploadProgress `json:"uploadProgress,omitempty"`
 }
 
-//type ReactionElem struct {
-//	Counter          int32               `json:"counter,omitempty"`
-//	Type             int                 `json:"type,omitempty"`
-//	UserReactionList []*UserReactionElem `json:"userReactionList,omitempty"`
-//	CanRepeat        bool                `json:"canRepeat,omitempty"`
-//	Info             string              `json:"info,omitempty"`
-//}
-//type UserReactionElem struct {
-//	UserID  string `json:"userID,omitempty"`
-//	Counter int32  `json:"counter,omitempty"`
-//	Info    string `json:"info,omitempty"`
-//}
+type UploadProgress struct {
+	Total    int64  `json:"total"`
+	Save     int64  `json:"save"`
+	Current  int64  `json:"current"`
+	UploadID string `json:"uploadID"`
+}
 
+type ReactionElem struct {
+	Counter          int32               `json:"counter,omitempty"`
+	Type             int                 `json:"type,omitempty"`
+	UserReactionList []*UserReactionElem `json:"userReactionList,omitempty"`
+	CanRepeat        bool                `json:"canRepeat,omitempty"`
+	Info             string              `json:"info,omitempty"`
+}
+type UserReactionElem struct {
+	UserID  string `json:"userID,omitempty"`
+	Counter int32  `json:"counter,omitempty"`
+	Info    string `json:"info,omitempty"`
+}
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`
 	Offset int32  `json:"offset"`
 	Length int32  `json:"length"`
 	Url    string `json:"url,omitempty"`
-	Info   string `json:"info,omitempty"`
+	Ex     string `json:"ex,omitempty"`
 }
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
@@ -226,50 +296,38 @@ func (n NewMsgList) Len() int {
 	return len(n)
 }
 
-//Implement the sort.Interface interface comparison element method
+// Implement the sort.Interface interface comparison element method
 func (n NewMsgList) Less(i, j int) bool {
 	return n[i].SendTime < n[j].SendTime
 }
 
-//Implement the sort.Interface interface exchange element method
+// Implement the sort.Interface interface exchange element method
 func (n NewMsgList) Swap(i, j int) {
 	n[i], n[j] = n[j], n[i]
 }
 
 type IMConfig struct {
-	Platform             int32  `json:"platform"`
-	ApiAddr              string `json:"api_addr"`
-	WsAddr               string `json:"ws_addr"`
-	DataDir              string `json:"data_dir"`
-	LogLevel             uint32 `json:"log_level"`
-	ObjectStorage        string `json:"object_storage"` //"cos"(default)  "oss"
-	EncryptionKey        string `json:"encryption_key"`
-	IsCompression        bool   `json:"is_compression"`
-	IsExternalExtensions bool   `json:"is_external_extensions"`
+	PlatformID           int32  `json:"platformID"`
+	ApiAddr              string `json:"apiAddr"`
+	WsAddr               string `json:"wsAddr"`
+	DataDir              string `json:"dataDir"`
+	LogLevel             uint32 `json:"logLevel"`
+	IsLogStandardOutput  bool   `json:"isLogStandardOutput"`
+	LogFilePath          string `json:"logFilePath"`
+	IsExternalExtensions bool   `json:"isExternalExtensions"`
 }
 
-var SvrConf IMConfig
-
 type CmdNewMsgComeToConversation struct {
-	MsgList       []*server_api_params.MsgData
-	OperationID   string
-	SyncFlag      int
-	MaxSeqOnSvr   uint32
-	MaxSeqOnLocal uint32
-	CurrentMaxSeq uint32
-	PullMsgOrder  int
+	Msgs     map[string]*sdkws.PullMsgs
+	SyncFlag int
 }
 
 type CmdPushMsgToMsgSync struct {
-	Msg         *server_api_params.MsgData
-	OperationID string
+	Msgs []*sdkws.PushMessages
 }
 
 type CmdMaxSeqToMsgSync struct {
-	MaxSeqOnSvr            uint32
-	OperationID            string
-	MinSeqOnSvr            uint32
-	GroupID2MinMaxSeqOnSvr map[string]*server_api_params.MaxAndMinSeq
+	ConversationMaxSeqOnSvr map[string]int64
 }
 
 type CmdJoinedSuperGroup struct {

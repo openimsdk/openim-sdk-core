@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
@@ -75,7 +89,7 @@ func gRunGetToken(strMyUid string) string {
 	return token
 }
 func main() {
-	uid := "7788"
+	uid := "7789"
 	//Gordon
 	//uid:="1554321956297519104"
 	//Gordon2
@@ -84,7 +98,10 @@ func main() {
 	tokenx := gRunGetToken(uid)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(uid, tokenx, WSADDR, APIADDR)
-	test.DoTestGetAdvancedHistoryMessageList()
+	time.Sleep(time.Second * 30)
+	// test.DoTestSendMsg2("7789", "7788")
+	//test.DoTestGetAdvancedHistoryMessageList()
+	//test.DoTestGetSelfUserInfo()
 	//test.DoTestSendMsg2GroupWithMessage(uid, "1623878302774460418", "2")
 	//test.DoTestAddMessageReactionExtensions(1,"special handle")
 	//time.Sleep(time.Second*5)
@@ -150,7 +167,7 @@ func main() {
 		//if i == 100 {
 		//	break
 		//}
-		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
+		//log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 	//
 	//log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
@@ -179,7 +196,7 @@ func main() {
 }
 
 //
-//func main() {
+//funcation main() {
 //	testClientNum := 100
 //	intervalSleep := 2
 //	imIP := "43.128.5.63"
@@ -205,7 +222,7 @@ func main() {
 //
 //}
 
-//func printCallerNameAndLine() string {
+//funcation printCallerNameAndLine() string {
 //	pc, _, line, _ := runtime.Caller(2)
 //	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
 //}

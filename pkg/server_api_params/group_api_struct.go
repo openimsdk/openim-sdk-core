@@ -1,8 +1,25 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server_api_params
+
+import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 type CommResp struct {
 	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
+	ErrDlt  string `json:"errDlt"`
 }
 type CommDataResp struct {
 	CommResp
@@ -31,8 +48,8 @@ type GetGroupMembersInfoReq struct {
 }
 type GetGroupMembersInfoResp struct {
 	CommResp
-	MemberList []*GroupMemberFullInfo   `json:"-"`
-	Data       []map[string]interface{} `json:"data"`
+	MemberList []*sdkws.GroupMemberFullInfo `json:"-"`
+	Data       []map[string]interface{}     `json:"data"`
 }
 
 type InviteUserToGroupReq struct {
@@ -52,7 +69,7 @@ type GetJoinedGroupListReq struct {
 }
 type GetJoinedGroupListResp struct {
 	CommResp
-	GroupInfoList []*GroupInfo
+	GroupInfoList []*sdkws.GroupInfo
 	Data          []map[string]interface{} `json:"data"`
 }
 
@@ -65,7 +82,7 @@ type GetGroupMemberListReq struct {
 type GetGroupMemberListResp struct {
 	CommResp
 	NextSeq    int32 `json:"nextSeq"`
-	MemberList []*GroupMemberFullInfo
+	MemberList []*sdkws.GroupMemberFullInfo
 	Data       []map[string]interface{} `json:"data"`
 }
 
@@ -77,8 +94,8 @@ type GetGroupAllMemberReq struct {
 }
 type GetGroupAllMemberResp struct {
 	CommResp
-	MemberList []*GroupMemberFullInfo   `json:"-"`
-	Data       []map[string]interface{} `json:"data"`
+	MemberList []*sdkws.GroupMemberFullInfo `json:"-"`
+	Data       []map[string]interface{}     `json:"data"`
 }
 
 type CreateGroupReq struct {
@@ -95,7 +112,7 @@ type CreateGroupReq struct {
 
 type CreateGroupResp struct {
 	CommResp
-	GroupInfo GroupInfo
+	GroupInfo sdkws.GroupInfo
 	Data      map[string]interface{} `json:"data"`
 }
 
@@ -105,7 +122,7 @@ type GetGroupApplicationListReq struct {
 }
 type GetGroupApplicationListResp struct {
 	CommResp
-	GroupRequestList []*GroupRequest
+	GroupRequestList []*sdkws.GroupRequest
 	Data             []map[string]interface{} `json:"data"`
 }
 
@@ -116,7 +133,7 @@ type GetUserReqGroupApplicationListReq struct {
 
 type GetUserRespGroupApplicationResp struct {
 	CommResp
-	GroupRequestList []*GroupRequest `json:"-"`
+	GroupRequestList []*sdkws.GroupRequest `json:"-"`
 }
 
 type GetGroupInfoReq struct {
@@ -125,14 +142,14 @@ type GetGroupInfoReq struct {
 }
 type GetGroupInfoResp struct {
 	CommResp
-	GroupInfoList []*GroupInfo             `json:"-"`
+	GroupInfoList []*sdkws.GroupInfo       `json:"-"`
 	Data          []map[string]interface{} `json:"data"`
 }
 
 //type GroupInfoAlias struct {
 //	GroupID          string `protobuf:"bytes,1,opt,name=groupID" json:"groupID,omitempty"`
 //	GroupName        string `protobuf:"bytes,2,opt,name=groupName" json:"groupName,omitempty"`
-//	Notification     string `protobuf:"bytes,3,opt,name=notification" json:"notification,omitempty"`
+//	NotificationCmd     string `protobuf:"bytes,3,opt,name=notification" json:"notification,omitempty"`
 //	Introduction     string `protobuf:"bytes,4,opt,name=introduction" json:"introduction,omitempty"`
 //	FaceURL          string `protobuf:"bytes,5,opt,name=faceURL" json:"faceURL,omitempty"`
 //	OwnerUserID      string `protobuf:"bytes,6,opt,name=ownerUserID" json:"ownerUserID,omitempty"`

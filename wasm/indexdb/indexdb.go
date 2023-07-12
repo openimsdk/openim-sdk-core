@@ -1,13 +1,28 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build js && wasm
+// +build js,wasm
+
 package indexdb
+
+import "context"
 
 import (
 	"errors"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
-	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"runtime"
 	"syscall/js"
 	"time"
@@ -36,57 +51,8 @@ type IndexDB struct {
 	*FriendRequest
 	*Black
 	*Friend
+	LocalChatLogReactionExtensions
 	loginUserID string
-}
-
-func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupSearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
-	default:
-		return i.SearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
-	}
-}
-
-func (i IndexDB) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupSearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
-	default:
-		return i.SearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
-	}
-}
-
-func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
-	list, err := i.SearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime)
-	if err != nil {
-		return nil, err
-	}
-	superGroupIDList, err := i.GetJoinedSuperGroupIDList()
-	if err != nil {
-		return nil, err
-	}
-	for _, v := range superGroupIDList {
-		sList, err := i.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
-		if err != nil {
-			log.Error(operationID, "search message in group err", err.Error(), v)
-			continue
-		}
-		list = append(list, sList...)
-	}
-	workingGroupIDList, err := i.GetJoinedWorkingGroupIDList()
-	if err != nil {
-		return nil, err
-	}
-	for _, v := range workingGroupIDList {
-		sList, err := i.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
-		if err != nil {
-			log.Error(operationID, "search message in group err", err.Error(), v)
-			continue
-		}
-		list = append(list, sList...)
-	}
-	return list, nil
 }
 
 type CallbackData struct {
@@ -133,7 +99,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 				}
 			}
 		}()
-		log.Debug("js then func", "=> (main go context) "+funcName+" with respone ", args[0].String())
+		log.Debug("js then funcation", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		thenChannel <- args
 		return nil
 	})
@@ -151,7 +117,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 				}
 			}
 		}()
-		log.Debug("js catch func", "=> (main go context) "+funcName+" with respone ", args[0].String())
+		log.Debug("js catch funcation", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		catchChannel <- args
 		return nil
 	})
@@ -178,443 +144,51 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	return data.Data, err
 }
 
-func (i IndexDB) GetMinSeq(ID string) (uint32, error) {
-	result, err := Exec(ID)
-	if err != nil {
-		return 0, err
-	}
-	if v, ok := result.(float64); ok {
-		return uint32(v), nil
-	} else {
-		return 0, ErrType
-	}
-}
-
-func (i IndexDB) SetMinSeq(ID string, minSeq uint32) error {
-	_, err := Exec(ID, minSeq)
-	return err
-}
-
-func (i IndexDB) GetUserMinSeq() (uint32, error) {
-	result, err := Exec()
-	if err != nil {
-		return 0, err
-	}
-	if v, ok := result.(float64); ok {
-		return uint32(v), nil
-	} else {
-		return 0, ErrType
-	}
-}
-
-func (i IndexDB) GetGroupMinSeq(groupID string) (uint32, error) {
-	result, err := Exec(groupID)
-	if err != nil {
-		return 0, err
-	}
-	if v, ok := result.(float64); ok {
-		return uint32(v), nil
-	} else {
-		return 0, ErrType
-	}
-}
-
-func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
-	if len(MessageList) == 0 {
-		return nil
-	}
-	switch MessageList[len(MessageList)-1].SessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupBatchInsertMessageList(MessageList, MessageList[len(MessageList)-1].RecvID)
-	default:
-		return i.BatchInsertMessageList(MessageList)
-	}
-}
-
-func (i IndexDB) InsertMessageController(message *model_struct.LocalChatLog) error {
-	switch message.SessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupInsertMessage(message, message.RecvID)
-	default:
-		return i.InsertMessage(message)
-	}
-}
-
-func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
-	if MessageList == nil {
-		return nil
-	}
-	for _, v := range MessageList {
-		v1 := new(model_struct.LocalChatLog)
-		v1.ClientMsgID = v.ClientMsgID
-		v1.Seq = v.Seq
-		v1.Status = v.Status
-		v1.RecvID = v.RecvID
-		v1.SessionType = v.SessionType
-		v1.ServerMsgID = v.ServerMsgID
-		err := i.UpdateMessageController(v1)
-		if err != nil {
-			return utils.Wrap(err, "BatchUpdateMessageList failed")
-		}
-
-	}
-	return nil
-}
-
-func (i IndexDB) BatchSpecialUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
-	if MessageList == nil {
-		return nil
-	}
-	for _, v := range MessageList {
-		v1 := new(model_struct.LocalChatLog)
-		v1.ClientMsgID = v.ClientMsgID
-		v1.ServerMsgID = v.ServerMsgID
-		v1.SendID = v.SendID
-		v1.RecvID = v.RecvID
-		v1.SenderPlatformID = v.SenderPlatformID
-		v1.SenderNickname = v.SenderNickname
-		v1.SenderFaceURL = v.SenderFaceURL
-		v1.SessionType = v.SessionType
-		v1.MsgFrom = v.MsgFrom
-		v1.ContentType = v.ContentType
-		v1.Content = v.Content
-		v1.Seq = v.Seq
-		v1.SendTime = v.SendTime
-		v1.CreateTime = v.CreateTime
-		v1.AttachedInfo = v.AttachedInfo
-		v1.Ex = v.Ex
-		err := i.UpdateMessageController(v1)
-		if err != nil {
-			log.Error("", "update single message failed", *v)
-			return utils.Wrap(err, "BatchUpdateMessageList failed")
-		}
-
-	}
-	return nil
-}
-
-func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
-	switch msg.SessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupGetMessage(msg)
-	default:
-		return i.GetMessage(msg.ClientMsgID)
-	}
-}
-func (i IndexDB) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return utils.Wrap(i.SuperGroupUpdateColumnsMessage(ClientMsgID, groupID, args), "")
-	default:
-		return utils.Wrap(i.UpdateColumnsMessage(ClientMsgID, args), "")
-	}
-}
-func (i IndexDB) UpdateMessageController(c *model_struct.LocalChatLog) error {
-	switch c.SessionType {
-	case constant.SuperGroupChatType:
-		return utils.Wrap(i.SuperGroupUpdateMessage(c), "")
-	default:
-		return utils.Wrap(i.UpdateMessage(c), "")
-	}
-}
-
-func (i IndexDB) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupUpdateMessageStatusBySourceID(sourceID, status, sessionType)
-	default:
-		return i.UpdateMessageStatusBySourceID(sourceID, status, sessionType)
-	}
-}
-func (i IndexDB) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
-	switch msg.SessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupUpdateMessageTimeAndStatus(msg)
-	default:
-		return i.UpdateMessageTimeAndStatus(msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
-	}
-}
-func (i IndexDB) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupGetMessageList(sourceID, sessionType, count, startTime, isReverse)
-	default:
-		return i.GetMessageList(sourceID, sessionType, count, startTime, isReverse)
-	}
-}
-func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupGetMessageListNoTime(sourceID, sessionType, count, isReverse)
-	default:
-		return i.GetMessageListNoTime(sourceID, sessionType, count, isReverse)
-	}
-}
-
-func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID string, sessionType int32) error {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupUpdateGroupMessageHasRead(msgIDList, groupID)
-	default:
-		return i.UpdateGroupMessageHasRead(msgIDList, sessionType)
-	}
-}
-
-func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupGetMultipleMessage(msgIDList, groupID)
-	default:
-		return i.GetMultipleMessage(msgIDList)
-	}
-}
-
-func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint32, error) {
-	switch m.SessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperGroupGetMsgSeqByClientMsgID(m.ClientMsgID, m.GroupID)
-	default:
-		return i.GetMsgSeqByClientMsgID(m.ClientMsgID)
-	}
-}
-
-func (i IndexDB) GetSubDepartmentList(departmentID string, args ...int) ([]*model_struct.LocalDepartment, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertDepartment(department *model_struct.LocalDepartment) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateDepartment(department *model_struct.LocalDepartment) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteDepartment(departmentID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetDepartmentInfo(departmentID string) (*model_struct.LocalDepartment, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetAllDepartmentList() ([]*model_struct.LocalDepartment, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetParentDepartmentList(departmentID string) ([]*model_struct.LocalDepartment, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetDepartmentList(departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetParentDepartment(departmentID string) (model_struct.LocalDepartment, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchDepartmentMember(keyWord string, isSearchUserName, isSearchEmail, isSearchMobile, isSearchPosition, isSearchTelephone, isSearchUserEnglishName, isSearchUserID bool, offset, count int) ([]*model_struct.SearchDepartmentMemberResult, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchDepartment(keyWord string, offset, count int) ([]*model_struct.LocalDepartment, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
-	groupIDList, err := Exec()
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := groupIDList.(string); ok {
-			var result []string
-			err := utils.JsonStringToStruct(v, &result)
-			if err != nil {
-				return nil, err
-			}
-			return result, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
-func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
-	g1, err1 := i.GetJoinedSuperGroupIDList()
-	g2, err2 := i.GetJoinedWorkingGroupIDList()
-	var groupIDList []string
-	if err1 == nil {
-		groupIDList = append(groupIDList, g1...)
-	}
-	if err2 == nil {
-		groupIDList = append(groupIDList, g2...)
-	}
-	var err error
-	if err1 != nil {
-		err = err1
-	}
-	if err2 != nil {
-		err = err2
-	}
-	return groupIDList, err
-}
-
-func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.LocalErrChatLog) error {
-	if len(MessageList) == 0 {
-		return nil
-	}
-	switch MessageList[len(MessageList)-1].SessionType {
-	case constant.SuperGroupChatType:
-		return i.SuperBatchInsertExceptionMsg(MessageList, MessageList[len(MessageList)-1].RecvID)
-	default:
-		return i.BatchInsertExceptionMsg(MessageList)
-	}
-}
-
-func (i IndexDB) GetDepartmentMemberListByDepartmentID(departmentID string, args ...int) ([]*model_struct.LocalDepartmentMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetAllDepartmentMemberList() ([]*model_struct.LocalDepartmentMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertDepartmentMember(departmentMember *model_struct.LocalDepartmentMember) error {
-	panic("implement me")
-}
-
-func (i IndexDB) BatchInsertDepartmentMember(departmentMemberList []*model_struct.LocalDepartmentMember) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateDepartmentMember(departmentMember *model_struct.LocalDepartmentMember) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteDepartmentMember(departmentID string, userID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetDepartmentMemberListByUserID(userID string) ([]*model_struct.LocalDepartmentMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InitWorkMomentsNotificationUnreadCount() error {
-	panic("implement me")
-}
-
-func (i IndexDB) IncrWorkMomentsNotificationUnreadCount() error {
-	panic("implement me")
-}
-
-func (i IndexDB) MarkAllWorkMomentsNotificationAsRead() (err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount db.LocalWorkMomentsNotificationUnreadCount, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) ClearWorkMomentsNotification() (err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) Close() error {
+func (i IndexDB) Close(ctx context.Context) error {
 	_, err := Exec()
 	return err
 }
 
-func (i IndexDB) InitDB(userID string, dataDir string) error {
+func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) error {
 	_, err := Exec(userID, dataDir)
 	return err
 }
 
-//func (i IndexDB) GetBlackList() ([]*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackListUserID() (blackListUid []string, err error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackInfoList(blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) InsertBlack(black *model_struct.LocalBlack) error {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) UpdateBlack(black *model_struct.LocalBlack) error {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) DeleteBlack(blockUserID string) error {
-//	panic("implement me")
-//}
-
-func NewIndexDB(loginUserID string) *IndexDB {
-	return &IndexDB{
-		LocalChatLogs: NewLocalChatLogs(loginUserID),
-		FriendRequest: NewFriendRequest(loginUserID),
-		Black:         NewBlack(loginUserID),
-		Friend:        NewFriend(loginUserID),
-		loginUserID:   loginUserID,
-	}
-}
-
-func (i IndexDB) SetChatLogFailedStatus() {
-	msgList, err := i.GetSendingMessageList()
-	if err != nil {
-		log.Error("", "GetSendingMessageList failed ", err.Error())
-		return
-	}
-	for _, v := range msgList {
-		v.Status = constant.MsgStatusSendFailed
-		err := i.UpdateMessage(v)
-		if err != nil {
-			log.Error("", "UpdateMessage failed ", err.Error(), v)
-			continue
-		}
-	}
-	groupIDList, err := i.GetReadDiffusionGroupIDList()
-	if err != nil {
-		log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
-		return
-	}
-	for _, v := range groupIDList {
-		msgList, err := i.SuperGroupGetSendingMessageList(v)
-		if err != nil {
-			log.Error("", "GetSendingMessageList failed ", err.Error())
-			return
-		}
-		if len(msgList) > 0 {
-			for _, v := range msgList {
-				v.Status = constant.MsgStatusSendFailed
-				err := i.SuperGroupUpdateMessage(v)
-				if err != nil {
-					log.Error("", "UpdateMessage failed ", err.Error(), v)
-					continue
-				}
-			}
-		}
-
-	}
+func (i IndexDB) SetChatLogFailedStatus(ctx context.Context) {
+	//msgList, err := i.GetSendingMessageList()
+	//if err != nil {
+	//	log.Error("", "GetSendingMessageList failed ", err.Error())
+	//	return
+	//}
+	//for _, v := range msgList {
+	//	v.Status = constant.MsgStatusSendFailed
+	//	err := i.UpdateMessage(v)
+	//	if err != nil {
+	//		log.Error("", "UpdateMessage failed ", err.Error(), v)
+	//		continue
+	//	}
+	//}
+	//groupIDList, err := i.GetReadDiffusionGroupIDList()
+	//if err != nil {
+	//	log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+	//	return
+	//}
+	//for _, v := range groupIDList {
+	//	msgList, err := i.SuperGroupGetSendingMessageList(v)
+	//	if err != nil {
+	//		log.Error("", "GetSendingMessageList failed ", err.Error())
+	//		return
+	//	}
+	//	if len(msgList) > 0 {
+	//		for _, v := range msgList {
+	//			v.Status = constant.MsgStatusSendFailed
+	//			err := i.SuperGroupUpdateMessage(v)
+	//			if err != nil {
+	//				log.Error("", "UpdateMessage failed ", err.Error(), v)
+	//				continue
+	//			}
+	//		}
+	//	}
+	//
+	//}
 }

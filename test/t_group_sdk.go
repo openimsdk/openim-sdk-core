@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package test
 
 import (
@@ -77,6 +91,11 @@ func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
 
 }
 
+func (testGroupListener) OnGroupDismissed(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
+}
+
 type testOrganizationListener struct {
 }
 
@@ -129,7 +148,7 @@ func DoTestCreateGroup() {
 	g2 := utils.StructToJsonString(memberlist)
 
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", g1, g2)
-	open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
+	// open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
 }
 
 type testSetGroupInfo struct {
@@ -155,7 +174,7 @@ func DoSetGroupInfo() {
 	n = 1
 	input.NeedVerification = &n
 	setInfo := utils.StructToJsonString(input)
-	open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
+	// open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", setInfo)
 
 }
@@ -208,7 +227,7 @@ func DoTestGetGroupsInfo() {
 	list := utils.StructToJsonString(groupIDList)
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, "test getGroupsInfo input", list)
-	open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
+	// open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
 }
 func DoTestSearchGroups() {
 	var test testGetGroupsInfo
@@ -304,12 +323,12 @@ func DotestGetGroupMemberList() {
 
 func DotestCos() {
 	//var callback baseCallback
-	//p := ws.NewPostApi(token, userForSDK.ImConfig().ApiAddr)
+	//p := ws.NewPostApi(token, UserForSDK.ImConfig().ApiAddr)
 	//var storage common.ObjectStorage = common.NewCOS(p)
 	//test(storage, callback)
 }
 
-//func DotestMinio() {
+//funcation DotestMinio() {
 //	var callback baseCallback
 //	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NzgyNDY0LCJuYmYiOjE2NDUxNzc2NjQsImlhdCI6MTY0NTE3NzY2NH0.T-SDoLxdlwRGOMZPIKriPtAlOGWCLodsGi1dWxN8kto"
 //	p := ws.NewPostApi(token, "https://storage.rentsoft.cn")
@@ -319,26 +338,26 @@ func DotestCos() {
 //	test(storage, callback)
 //}
 //
-//func test(storage common.ObjectStorage, callback baseCallback) {
-//	dir, newName, err := storage.UploadFile("./main/main.go", func(progress int) {
+//funcation test(storage common.ObjectStorage, callback baseCallback) {
+//	dir, newName, err := storage.UploadFile("./main/main.go", funcation(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err)
-//	dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
+//	dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", funcation(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err, err)
-//	dir, newName, err = storage.UploadSound("./main/main.go", func(progress int) {
+//	dir, newName, err = storage.UploadSound("./main/main.go", funcation(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err, err)
-//	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./main/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
+//	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./main/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", funcation(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
@@ -358,7 +377,7 @@ func (testGetGroupMembersInfo) OnSuccess(data string) {
 }
 
 //
-//func DotestGetGroupMembersInfo() {
+//funcation DotestGetGroupMembersInfo() {
 //	var test testGetGroupMembersInfo
 //	var memlist []string
 //	memlist = append(memlist, "307edc814bb0d04a")
@@ -431,11 +450,11 @@ func DotestGetRecvGroupApplicationList() string {
 	var test testGetGroupApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
+	// open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 	return ""
 }
 
-//	func DoGroupApplicationList() {
+//	funcation DoGroupApplicationList() {
 //		var test testGroupX
 //		fmt.Println("test DoGetGroupApplicationList....")
 //		sdk_interface.GetGroupApplicationList(test)
@@ -467,7 +486,7 @@ func DoTestGetUserReqGroupApplicationList() {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
+	// open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
 }
 
 // 提示
@@ -475,7 +494,7 @@ func DoTestGetUserReqGroupApplicationList() {
 func DoTestGetRecvGroupApplicationList() {
 	var test testProcessGroupApplication
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input:")
-	open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
+	// open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 }
 
 func DotestRefuseGroupApplication(uid string) {

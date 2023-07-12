@@ -1,23 +1,43 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build js && wasm
+// +build js,wasm
+
 package temp_struct
 
 type LocalChatLog struct {
-	ServerMsgID      string ` json:"serverMsgID,omitempty"`
-	SendID           string ` json:"sendID,omitempty"`
-	RecvID           string ` json:"recvID,omitempty"`
-	SenderPlatformID int32  ` json:"senderPlatformID,omitempty"`
-	SenderNickname   string ` json:"senderNickname,omitempty"`
-	SenderFaceURL    string ` json:"senderFaceURL,omitempty"`
-	SessionType      int32  ` json:"sessionType,omitempty"`
-	MsgFrom          int32  ` json:"msgFrom,omitempty"`
-	ContentType      int32  ` json:"contentType,omitempty"`
-	Content          string ` json:"content,omitempty"`
-	IsRead           bool   ` json:"isRead,omitempty"`
-	Status           int32  ` json:"status,omitempty"`
-	Seq              uint32 ` json:"seq,omitempty"`
-	SendTime         int64  ` json:"sendTime,omitempty"`
-	CreateTime       int64  ` json:"createTime,omitempty"`
-	AttachedInfo     string ` json:"attachedInfo,omitempty"`
-	Ex               string ` json:"ex,omitempty"`
+	ServerMsgID          string ` json:"serverMsgID,omitempty"`
+	SendID               string ` json:"sendID,omitempty"`
+	RecvID               string ` json:"recvID,omitempty"`
+	SenderPlatformID     int32  ` json:"senderPlatformID,omitempty"`
+	SenderNickname       string ` json:"senderNickname,omitempty"`
+	SenderFaceURL        string ` json:"senderFaceURL,omitempty"`
+	SessionType          int32  ` json:"sessionType,omitempty"`
+	MsgFrom              int32  ` json:"msgFrom,omitempty"`
+	ContentType          int32  ` json:"contentType,omitempty"`
+	Content              string ` json:"content,omitempty"`
+	IsRead               bool   ` json:"isRead,omitempty"`
+	Status               int32  ` json:"status,omitempty"`
+	Seq                  int64  ` json:"seq,omitempty"`
+	SendTime             int64  ` json:"sendTime,omitempty"`
+	CreateTime           int64  ` json:"createTime,omitempty"`
+	AttachedInfo         string ` json:"attachedInfo,omitempty"`
+	Ex                   string ` json:"ex,omitempty"`
+	IsReact              bool   ` json:"isReact,omitempty"`
+	IsExternalExtensions bool   ` json:"isExternalExtensions,omitempty"`
+	MsgFirstModifyTime   int64  ` json:"msgFirstModifyTime,omitempty"`
 }
 type LocalConversation struct {
 	ConversationID        string ` json:"conversationID,omitempty"`
@@ -35,6 +55,7 @@ type LocalConversation struct {
 	DraftTextTime         int64  ` json:"draftTextTime,omitempty"`
 	IsPinned              bool   ` json:"isPinned,omitempty"`
 	IsPrivateChat         bool   ` json:"isPrivateChat,omitempty"`
+	BurnDuration          int32  ` json:"burnDuration,omitempty"`
 	IsNotInGroup          bool   ` json:"isNotInGroup,omitempty"`
 	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime,omitempty"`
 	AttachedInfo          string ` json:"attachedInfo,omitempty"`
@@ -47,6 +68,7 @@ type LocalPartConversation struct {
 	IsPrivateChat         bool   ` json:"isPrivateChat"`
 	IsNotInGroup          bool   ` json:"isNotInGroup"`
 	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime"`
+	BurnDuration          int32  ` json:"burnDuration,omitempty"`
 	AttachedInfo          string ` json:"attachedInfo"`
 	Ex                    string ` json:"ex"`
 }
@@ -97,17 +119,15 @@ type LocalFriendRequest struct {
 	FromUserID    string `json:"fromUserID,omitempty"`
 	FromNickname  string `json:"fromNickname,omitempty"`
 	FromFaceURL   string `json:"fromFaceURL,omitempty"`
-	FromGender    int32  `json:"fromGender,omitempty"`
 	ToUserID      string `json:"toUserID,omitempty"`
 	ToNickname    string `json:"toNickname,omitempty"`
 	ToFaceURL     string `json:"toFaceURL,omitempty"`
-	ToGender      int32  `json:"toGender,omitempty"`
 	HandleResult  int32  `json:"handleResult,omitempty"`
 	ReqMsg        string `json:"reqMsg,omitempty"`
-	CreateTime    uint32 `json:"createTime,omitempty"`
+	CreateTime    int64  `json:"createTime,omitempty"`
 	HandlerUserID string `json:"handlerUserID,omitempty"`
 	HandleMsg     string `json:"handleMsg,omitempty"`
-	HandleTime    uint32 `json:"handleTime,omitempty"`
+	HandleTime    int64  `json:"handleTime,omitempty"`
 	Ex            string `json:"ex,omitempty"`
 	AttachedInfo  string `json:"attachedInfo,omitempty"`
 }
@@ -117,8 +137,7 @@ type LocalBlack struct {
 	BlockUserID    string `json:"blockUserID,omitempty"`
 	Nickname       string `json:"nickname,omitempty"`
 	FaceURL        string `json:"faceURL,omitempty"`
-	Gender         int32  `json:"gender,omitempty"`
-	CreateTime     uint32 `json:"createTime,omitempty"`
+	CreateTime     int64  `json:"createTime,omitempty"`
 	AddSource      int32  `json:"addSource,omitempty"`
 	OperatorUserID string `json:"operatorUserID,omitempty"`
 	Ex             string `json:"ex,omitempty"`
@@ -129,15 +148,22 @@ type LocalFriend struct {
 	OwnerUserID    string `json:"ownerUserID,omitempty"`
 	FriendUserID   string `json:"friendUserID,omitempty"`
 	Remark         string `json:"remark,omitempty"`
-	CreateTime     uint32 `json:"createTime,omitempty"`
+	CreateTime     int64  `json:"createTime,omitempty"`
 	AddSource      int32  `json:"addSource,omitempty"`
 	OperatorUserID string `json:"operatorUserID,omitempty"`
 	Nickname       string `json:"nickname,omitempty"`
 	FaceURL        string `json:"faceURL,omitempty"`
-	Gender         int32  `json:"gender,omitempty"`
-	PhoneNumber    string `json:"phoneNumber,omitempty"`
-	Birth          uint32 `json:"birth,omitempty"`
-	Email          string `json:"email,omitempty"`
 	Ex             string `json:"ex,omitempty"`
 	AttachedInfo   string `json:"attachedInfo,omitempty"`
+}
+
+type LocalUser struct {
+	UserID           string `json:"userID,omitempty"`
+	Nickname         string `json:"nickname,omitempty"`
+	FaceURL          string `json:"faceURL,omitempty"`
+	CreateTime       int64  `json:"createTime,omitempty"`
+	AppMangerLevel   int32  `json:"-"`
+	Ex               string `json:"ex,omitempty"`
+	AttachedInfo     string `json:"attachedInfo,omitempty"`
+	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt,omitempty"`
 }
