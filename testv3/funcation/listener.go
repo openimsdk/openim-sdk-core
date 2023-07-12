@@ -16,17 +16,11 @@ package funcation
 
 import (
 	"fmt"
-	"open_im_sdk/internal/login"
-	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"os"
 	"time"
 )
-
-type testInitLister struct {
-}
 
 func (t *testInitLister) OnUserTokenExpired() {
 	log.Info("", utils.GetSelfFuncName())
@@ -60,68 +54,6 @@ func (t *testInitLister) OnError(code int32, msg string) {
 	log.Info("", utils.GetSelfFuncName(), code, msg)
 }
 
-func ReliabilityInitAndLogin(index int, uid, token string) {
-	cf := sdk_struct.IMConfig{
-		ApiAddr:             APIADDR,
-		WsAddr:              WSADDR,
-		PlatformID:          PlatformID,
-		DataDir:             "./../",
-		LogLevel:            LogLevel,
-		IsLogStandardOutput: true,
-	}
-
-	log.Info("", "DoReliabilityTest", uid, token, WSADDR, APIADDR)
-
-	var testinit testInitLister
-
-	lg := new(login.LoginMgr)
-
-	lg.InitSDK(cf, &testinit)
-	log.Info(uid, "new login ", lg)
-	allLoginMgr[index].mgr = lg
-	log.Info(uid, "InitSDK ", cf, "index mgr", index, lg)
-
-	var testConversation conversationCallBack
-	lg.SetConversationListener(&testConversation)
-
-	var testUser userCallback
-	lg.SetUserListener(testUser)
-
-	var msgCallBack MsgListenerCallBak
-	lg.SetAdvancedMsgListener(&msgCallBack)
-
-	var friendListener testFriendListener
-	lg.SetFriendListener(friendListener)
-
-	var groupListener testGroupListener
-	lg.SetGroupListener(groupListener)
-
-	var callback BaseSuccessFailed
-	callback.funcName = utils.GetSelfFuncName()
-
-	operationID := utils.OperationIDGenerator()
-
-	//ctx := mcontext.NewCtx(operationID)
-	ctx := ccontext.WithOperationID(lg.Context(), operationID)
-
-	lg.Login(ctx, uid, token)
-	lg.User().GetSelfUserInfo(ctx)
-	for {
-		if testConversation.SyncFlag == 1 {
-			log.Info("", "testConversation.SyncFlag == 1")
-			return
-		}
-	}
-}
-
-type BaseSuccessFailed struct {
-	successData string
-	errCode     int
-	errMsg      string
-	funcName    string
-	time        time.Time
-}
-
 func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
@@ -135,31 +67,35 @@ func (b *BaseSuccessFailed) OnSuccess(data string) {
 	log.Info("login success", data, time.Since(b.time))
 }
 
-type conversationCallBack struct {
-	SyncFlag int
+func (c *conversationCallBack) OnError(errCode int32, errMsg string) {
+	// TODO implement me
+	panic("implement me")
 }
 
-type userCallback struct {
+func (c *conversationCallBack) OnSuccess(data string) {
+	// TODO implement me
+	panic("implement me")
 }
 
-type MsgListenerCallBak struct {
+func (c *conversationCallBack) OnNewConversation(conversationList string) {
+	log.Info("", "OnNewConversation returnList is ", conversationList)
+}
+
+func (c *conversationCallBack) OnConversationChanged(conversationList string) {
+	log.Info("", "OnConversationChanged returnList is", conversationList)
+}
+
+func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
+	// TODO implement me
+	panic("implement me")
 }
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
-	//TODO implement me
-	panic("implement me")
+	log.Info("", message)
 }
 
 func (m *MsgListenerCallBak) OnRecvC2CReadReceipt(msgReceiptList string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-type testFriendListener struct {
-	x int
-}
-
-type testGroupListener struct {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName())
 }
 
 func (testGroupListener) OnJoinedGroupAdded(callbackInfo string) {
@@ -257,7 +193,7 @@ func (testFriendListener) OnError(code int32, msg string) {
 func (m *MsgListenerCallBak) OnMsgDeleted(s string) {}
 
 func (m *MsgListenerCallBak) OnRecvOfflineNewMessages(messageList string) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -268,10 +204,10 @@ func (m *MsgListenerCallBak) OnRecvMessageExtensionsAdded(msgID string, reaction
 }
 
 func (m *MsgListenerCallBak) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
-	//fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
+	// fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
 }
 func (m *MsgListenerCallBak) OnNewRecvMessageRevoked(messageRevoked string) {
-	//fmt.Println("OnNewRecvMessageRevoked , ", messageRevoked)
+	// fmt.Println("OnNewRecvMessageRevoked , ", messageRevoked)
 }
 
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
@@ -312,14 +248,18 @@ func (c *conversationCallBack) OnSyncServerFailed() {
 	log.Info("", utils.GetSelfFuncName())
 }
 
-func (c *conversationCallBack) OnNewConversation(conversationList string) {
-	log.Info("", "OnNewConversation returnList is ", conversationList)
-}
-
-func (c *conversationCallBack) OnConversationChanged(conversationList string) {
-	log.Info("", "OnConversationChanged returnList is", conversationList)
-}
-
 func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
 	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
+}
+
+func (t TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
+	log.Info("", "OnError is ", errCode, errMsg)
+}
+
+func (t TestSendMsgCallBack) OnSuccess(data string) {
+	log.Info("", "OnSuccess is ", data)
+}
+
+func (t TestSendMsgCallBack) OnProgress(progress int) {
+	log.Info("", "OnProgress is ", progress)
 }

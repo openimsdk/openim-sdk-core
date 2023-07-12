@@ -60,7 +60,6 @@ func init() {
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
-	open_im_sdk.UserForSDK.SetSignalingListener(&OnSignalingListener{})
 	time.Sleep(time.Second * 10)
 }
 
@@ -68,7 +67,7 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	jsonReqData, err := json.Marshal(map[string]any{
 		"userID":     userID,
 		"platformID": 1,
-		"secret":     "tuoyun",
+		"secret":     "openIM123",
 		//"secret": "111111",
 	})
 	if err != nil {
@@ -213,6 +212,11 @@ type onAdvancedMsgListener struct {
 	ctx context.Context
 }
 
+func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 }
@@ -225,7 +229,7 @@ func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 //	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 //}
 
-func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(messageList string) {
+func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
 	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 }
 

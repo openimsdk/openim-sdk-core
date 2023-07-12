@@ -413,10 +413,11 @@ type LocalConversation struct {
 	UpdateUnreadCountTime int64  `gorm:"column:update_unread_count_time" json:"updateUnreadCountTime"`
 	AttachedInfo          string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                    string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-
-	MaxSeq     int64 `gorm:"column:max_seq" json:"maxSeq"`
-	MinSeq     int64 `gorm:"column:min_seq" json:"minSeq"`
-	HasReadSeq int64 `gorm:"column:has_read_seq" json:"hasReadSeq"`
+	MaxSeq                int64  `gorm:"column:max_seq" json:"maxSeq"`
+	MinSeq                int64  `gorm:"column:min_seq" json:"minSeq"`
+	HasReadSeq            int64  `gorm:"column:has_read_seq" json:"hasReadSeq"`
+	MsgDestructTime       int64  `gorm:"column:msg_destruct_time;default:604800" json:"msgDestructTime"`
+	IsMsgDestruct         bool   `gorm:"column:is_msg_destruct;default:false" json:"isMsgDestruct"`
 }
 type LocalConversationUnreadMessage struct {
 	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
@@ -482,4 +483,24 @@ type NotificationSeqs struct {
 
 func (NotificationSeqs) TableName() string {
 	return "local_notification_seqs"
+}
+
+type Upload struct {
+	PartHash   string `gorm:"column:part_hash;primary_key" json:"partHash"`
+	UploadID   string `gorm:"column:upload_id;type:varchar(1000)" json:"uploadID"`
+	ExpireTime int64  `gorm:"column:expire_time" json:"expireTime"`
+	CreateTime int64  `gorm:"column:create_time" json:"createTime"`
+}
+
+func (Upload) TableName() string {
+	return "local_upload"
+}
+
+type UploadPart struct {
+	PartHash string `gorm:"column:part_hash;index" json:"partHash"`
+	Index    int32  `gorm:"column:index" json:"index"`
+}
+
+func (UploadPart) TableName() string {
+	return "local_upload_part"
 }
