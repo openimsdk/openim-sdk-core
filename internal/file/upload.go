@@ -400,7 +400,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5v)
 		}
 		uploadSize += currentPartSize
-		cb.UploadComplete(size, uploadSize)
+		cb.UploadComplete(size, uploadSize, uploadSize)
 		cb.UploadPartComplete(int(item.PartNumber), partSize, partMd5s[i])
 	}
 	resp, err := f.completeMultipartUpload(ctx, &third.CompleteMultipartUploadReq{
