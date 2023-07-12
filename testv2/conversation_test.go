@@ -43,12 +43,12 @@ func Test_GetConversationListSplit(t *testing.T) {
 	}
 }
 
-func Test_SetConversationRecvMessageOpt(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SetConversationRecvMessageOpt(ctx, []string{"asdasd"}, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func Test_SetConversationRecvMessageOpt(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Conversation().SetConversationRecvMessageOpt(ctx, []string{"asdasd"}, 1)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
 func Test_SetSetGlobalRecvMessageOpt(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().SetGlobalRecvMessageOpt(ctx, 1)

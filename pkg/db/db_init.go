@@ -55,6 +55,11 @@ type DataBase struct {
 	superGroupMtx sync.RWMutex
 }
 
+func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (d *DataBase) InitSuperLocalErrChatLog(ctx context.Context, groupID string) {
 	panic("implement me")
 }
