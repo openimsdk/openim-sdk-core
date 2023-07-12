@@ -60,6 +60,7 @@ func init() {
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetSignalingListener(&OnSignalingListener{})
 	time.Sleep(time.Second * 10)
 }
 
