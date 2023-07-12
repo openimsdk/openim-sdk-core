@@ -203,6 +203,8 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
 		&model_struct.LocalChatLogReactionExtensions{},
+		&model_struct.Upload{},
+		&model_struct.UploadPart{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
 	conversationIDs, err := d.FindAllConversationConversationID(ctx)

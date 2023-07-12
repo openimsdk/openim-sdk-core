@@ -288,7 +288,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	if size%partSize != 0 {
 		partNum++
 	}
-	cb.PartSize(partSize, partNum)
+	cb.PartSize(partSize, int32(partNum))
 	partMd5s := make([]string, partNum)
 	buf := make([]byte, 1024)
 	fileMd5 := md5.New()
@@ -311,9 +311,9 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 		}
 		partMd5s[i] = hex.EncodeToString(h.Sum(nil))
 		if partNum == i+1 {
-			cb.HashPartProgress(i, size%partSize, partMd5s[i])
+			cb.HashPartProgress(int32(i), size%partSize, partMd5s[i])
 		} else {
-			cb.HashPartProgress(i, partSize, partMd5s[i])
+			cb.HashPartProgress(int32(i), partSize, partMd5s[i])
 		}
 	}
 	partMd5Val := f.partMD5(partMd5s)
@@ -401,7 +401,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 		}
 		uploadSize += currentPartSize
 		cb.UploadComplete(size, uploadSize, uploadSize)
-		cb.UploadPartComplete(int(item.PartNumber), partSize, partMd5s[i])
+		cb.UploadPartComplete(item.PartNumber, partSize, partMd5s[i])
 	}
 	resp, err := f.completeMultipartUpload(ctx, &third.CompleteMultipartUploadReq{
 		UploadID:    upload.Upload.UploadID,
