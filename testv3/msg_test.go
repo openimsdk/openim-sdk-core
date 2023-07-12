@@ -4,12 +4,18 @@ package testv3
 import (
 	"context"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"open_im_sdk/testv3/funcation"
 	"testing"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+)
+
+const (
+	ApiAddr = "http://203.56.175.233:10002"
 )
 
 // 定点发送消息（好友关系）
@@ -133,14 +139,15 @@ func Test_SendMsgNoFriendBatch2(t *testing.T) {
 func Test_SendMsgBatch(t *testing.T) {
 	// 用户A 向 用户B 发送多条消息
 	userA := "register_test_526"
-	userB := "2935954421"
+	userB := "8423809271"
 
 	funcation.LoginOne(userA)
 	// funcation.LoginOne(userB)
 	operationID := utils.OperationIDGenerator()
 	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID: userA,
-		Token:  funcation.AllLoginMgr[userA].Token,
+		UserID:   userA,
+		Token:    funcation.AllLoginMgr[userA].Token,
+		IMConfig: sdk_struct.IMConfig{ApiAddr: ApiAddr},
 	})
 	ctx = ccontext.WithOperationID(ctx, operationID)
 	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
