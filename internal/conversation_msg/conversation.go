@@ -286,16 +286,16 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 	rawMessageLength := len(list)
 	t = time.Now()
 	if rawMessageLength < req.Count {
-		maxSeq, minSeq, lostSeqListLength := c.messageBlocksInternalContinuityCheck(ctx, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
-		_ = c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
+		maxSeq, minSeq, lostSeqListLength := c.messageBlocksInternalContinuityCheck(ctx, conversationID, notStartTime, isReverse, req.Count, startTime, &list, &messageListCallback)
+		_ = c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID, notStartTime, isReverse, req.Count, startTime, &list, &messageListCallback)
 		if minSeq == 1 && lostSeqListLength == 0 {
 			messageListCallback.IsEnd = true
 		} else {
-			c.messageBlocksEndContinuityCheck(ctx, minSeq, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
+			c.messageBlocksEndContinuityCheck(ctx, minSeq, conversationID, notStartTime, isReverse, req.Count, startTime, &list, &messageListCallback)
 		}
 	} else {
-		maxSeq, _, _ := c.messageBlocksInternalContinuityCheck(ctx, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
-		c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
+		maxSeq, _, _ := c.messageBlocksInternalContinuityCheck(ctx, conversationID, notStartTime, isReverse, req.Count, startTime, &list, &messageListCallback)
+		c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID, notStartTime, isReverse, req.Count, startTime, &list, &messageListCallback)
 
 	}
 	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t))
