@@ -148,7 +148,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 	isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	existedSeqList, err := c.db.GetAlreadyExistSeqList(ctx, conversationID, seqList)
 	if err != nil {
-		log.ZError(ctx, "SuperGroupGetAlreadyExistSeqList err", err, "conversationID", conversationID, "seqList", seqList)
+		log.ZError(ctx, "GetAlreadyExistSeqList err", err, "conversationID", conversationID, "seqList", seqList)
 		return
 	}
 	if len(existedSeqList) == len(seqList) {
