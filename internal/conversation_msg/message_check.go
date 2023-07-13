@@ -64,7 +64,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(ctx context.Context, 
 		if maxSeq != 0 {
 			if maxSeq+1 != lastMinSeq {
 				startSeq := int64(lastMinSeq) - constant.PullMsgNumForReadDiffusion
-				if startSeq <= int64(maxSeq) {
+				if startSeq <= maxSeq {
 					startSeq = int64(maxSeq) + 1
 				}
 				successiveSeqList := func(max, min int64) (seqList []int64) {
@@ -152,7 +152,6 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 		return
 	}
 	if len(existedSeqList) == len(seqList) {
-		// log.Debug(operationID, "do not pull message")
 		log.ZDebug(ctx, "do not pull message", "seqList", seqList, "existedSeqList", existedSeqList)
 		return
 	}
