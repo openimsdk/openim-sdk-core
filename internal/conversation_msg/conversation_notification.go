@@ -621,7 +621,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		}
 
 		for _, syncFunc := range []func(c context.Context) error{
-			c.user.SyncLoginUserInfo, c.SyncConversations,
+			c.user.SyncLoginUserInfo,
 			c.friend.SyncBlackList, c.friend.SyncFriendList, c.friend.SyncFriendApplication, c.friend.SyncSelfFriendApplication,
 			c.group.SyncJoinedGroup, c.group.SyncAdminGroupApplication, c.group.SyncSelfGroupApplication, c.group.SyncJoinedGroupMember,
 		} {
@@ -633,6 +633,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		c.ConversationListener.OnSyncServerFailed()
 	case constant.MsgSyncEnd:
 		defer c.ConversationListener.OnSyncServerFinish()
+		go c.SyncConversations(ctx)
 	}
 
 	for conversationID, msgs := range allMsg {
