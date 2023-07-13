@@ -116,8 +116,8 @@ func CallApi[T any](ctx context.Context, api string, req any) (*T, error) {
 func GetPageAll[A interface {
 	GetPagination() *sdkws.RequestPagination
 }, B, C any](ctx context.Context, api string, req A, fn func(resp *B) []C) ([]C, error) {
-	if req.GetPagination().ShowNumber == 0 {
-		req.GetPagination().ShowNumber = 50 / 10
+	if req.GetPagination().ShowNumber <= 0 {
+		req.GetPagination().ShowNumber = 50
 	}
 	var res []C
 	for i := int32(0); ; i++ {
