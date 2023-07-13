@@ -17,7 +17,10 @@
 
 package indexdb
 
-import "context"
+import (
+	"context"
+	"open_im_sdk/wasm/exec"
+)
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
@@ -31,23 +34,23 @@ func NewLocalGroups() *LocalGroups {
 }
 
 func (i *LocalGroups) InsertGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
-	_, err := Exec(utils.StructToJsonString(groupInfo))
+	_, err := exec.Exec(utils.StructToJsonString(groupInfo))
 	return err
 }
 
 func (i *LocalGroups) DeleteGroup(ctx context.Context, groupID string) error {
-	_, err := Exec(groupID)
+	_, err := exec.Exec(groupID)
 	return err
 }
 
 // 该函数需要全更新
 func (i *LocalGroups) UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
-	_, err := Exec(groupInfo.GroupID, utils.StructToJsonString(groupInfo))
+	_, err := exec.Exec(groupInfo.GroupID, utils.StructToJsonString(groupInfo))
 	return err
 }
 
 func (i *LocalGroups) GetJoinedGroupListDB(ctx context.Context) (result []*model_struct.LocalGroup, err error) {
-	gList, err := Exec()
+	gList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
@@ -63,13 +66,13 @@ func (i *LocalGroups) GetJoinedGroupListDB(ctx context.Context) (result []*model
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i *LocalGroups) GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
-	c, err := Exec(groupID)
+	c, err := exec.Exec(groupID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -81,13 +84,13 @@ func (i *LocalGroups) GetGroupInfoByGroupID(ctx context.Context, groupID string)
 			}
 			return &result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) (result []*model_struct.LocalGroup, err error) {
-	gList, err := Exec(keyword, isSearchGroupID, isSearchGroupName)
+	gList, err := exec.Exec(keyword, isSearchGroupID, isSearchGroupName)
 	if err != nil {
 		return nil, err
 	} else {
@@ -103,22 +106,22 @@ func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, k
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i *LocalGroups) AddMemberCount(ctx context.Context, groupID string) error {
-	_, err := Exec(groupID)
+	_, err := exec.Exec(groupID)
 	return err
 }
 
 func (i *LocalGroups) SubtractMemberCount(ctx context.Context, groupID string) error {
-	_, err := Exec(groupID)
+	_, err := exec.Exec(groupID)
 	return err
 }
 func (i *LocalGroups) GetGroupMemberAllGroupIDs(ctx context.Context) (result []string, err error) {
-	groupIDList, err := Exec()
+	groupIDList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
@@ -129,7 +132,7 @@ func (i *LocalGroups) GetGroupMemberAllGroupIDs(ctx context.Context) (result []s
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
