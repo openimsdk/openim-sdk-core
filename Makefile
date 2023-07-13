@@ -69,7 +69,7 @@ else
 	BINARY_NAME=${NAME}
 endif
 
-BUILDFILE = "./main.go"
+BUILDFILE = "./cmd/main.go"
 BUILDAPP = "$(OUTPUT_DIR)/"
 
 .PHONY: ios build install android
