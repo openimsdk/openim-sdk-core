@@ -95,3 +95,10 @@ var sendMsgClient = 0
 var (
 	testConversation conversationCallBack
 )
+
+// route
+var (
+	RPC_USER_TOKEN = "/auth/user_token"
+	ACCOUNT_CHECK  = "/user/account_check"
+	USER_REGISTER  = "/user/user_register"
+)
