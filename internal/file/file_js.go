@@ -45,6 +45,7 @@ func (j *jsFile) Read(p []byte) (n int, err error) {
 	if len(data) > len(p) {
 		return 0, errors.New("js read data > length")
 	}
+	j.whence += len(data)
 	copy(p, data)
 	return len(data), nil
 }

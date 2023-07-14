@@ -349,6 +349,7 @@ func (f *File) doPut(ctx context.Context, client *http.Client, sign *third.AuthS
 		req.Header[v.Key] = v.Values
 	}
 	req.ContentLength = size
+	log.ZDebug(ctx, "do put req", "url", rawURL, "contentLength", size, "header", req.Header)
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -356,10 +357,12 @@ func (f *File) doPut(ctx context.Context, client *http.Client, sign *third.AuthS
 	defer func() {
 		_ = resp.Body.Close()
 	}()
+	log.ZDebug(ctx, "do put resp status", "url", rawURL, "status", resp.Status, "contentLength", resp.ContentLength, "header", resp.Header)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
+	log.ZDebug(ctx, "do put resp body", "url", rawURL, "body", string(body))
 	if resp.StatusCode/200 != 1 {
 		return fmt.Errorf("PUT %s part %d failed, status code %d, body %s", rawURL, part.PartNumber, resp.StatusCode, string(body))
 	}
