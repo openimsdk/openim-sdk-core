@@ -15,38 +15,30 @@
 package file
 
 import (
-	"context"
 	"io"
 )
 
-func NewReader(ctx context.Context, r io.Reader, fn func(v int64)) io.Reader {
+func NewProgressReader(r io.Reader, fn func(current int64)) io.Reader {
 	if r == nil || fn == nil {
 		return r
 	}
 	return &Reader{
-		done: ctx.Done(),
-		r:    r,
-		fn:   fn,
+		r:  r,
+		fn: fn,
 	}
 }
 
 type Reader struct {
-	done <-chan struct{}
 	r    io.Reader
 	read int64
-	fn   func(v int64)
+	fn   func(current int64)
 }
 
 func (r *Reader) Read(p []byte) (n int, err error) {
-	select {
-	case <-r.done:
-		return 0, context.Canceled
-	default:
-		n, err = r.r.Read(p)
-		if err == nil && n > 0 {
-			r.read += int64(n)
-			r.fn(r.read)
-		}
-		return n, err
+	n, err = r.r.Read(p)
+	if err == nil && n > 0 {
+		r.read += int64(n)
+		r.fn(r.read)
 	}
+	return n, err
 }

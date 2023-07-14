@@ -7,11 +7,6 @@ import (
 	"io"
 )
 
-func Md5Str(s string) string {
-	m := md5.Sum([]byte(s))
-	return hex.EncodeToString(m[:])
-}
-
 func NewMd5Reader(r io.Reader) *Md5Reader {
 	return &Md5Reader{h: md5.New(), r: r}
 }
