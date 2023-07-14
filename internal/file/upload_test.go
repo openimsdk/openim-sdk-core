@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"fmt"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/sdk_struct"
@@ -38,4 +39,15 @@ func TestName(t *testing.T) {
 		return
 	}
 	t.Logf("%+v\n", resp)
+}
+
+func TestName1(t *testing.T) {
+	p := make([]byte, 10)
+
+	a := []byte("12345")
+
+	copy(p, a)
+
+	fmt.Println(p)
+
 }

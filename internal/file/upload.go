@@ -16,7 +16,6 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -53,6 +52,119 @@ type File struct {
 	lock        sync.Locker
 	partLimit   *third.PartLimitResp
 	uploading   map[string]func()
+}
+
+func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFileCallback) (*UploadFileResp, error) {
+	if cb == nil {
+		cb = emptyUploadCallback{}
+	}
+	if req.Name == "" {
+		return nil, errors.New("name is empty")
+	}
+	if req.Name[0] == '/' {
+		req.Name = req.Name[1:]
+	}
+	if prefix := f.loginUserID + "/"; !strings.HasPrefix(req.Name, prefix) {
+		req.Name = prefix + req.Name
+	}
+	file, err := Open(req.Filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	fileSize := file.Size()
+	cb.Open(fileSize)
+	info, err := f.getPartInfo(ctx, file, fileSize, cb)
+	if err != nil {
+		return nil, err
+	}
+	partSize := info.PartSize
+	partSizes := info.PartSizes
+	partMd5s := info.PartMd5s
+	partMd5Val := info.PartMd5
+	if err := file.StartSeek(0); err != nil {
+		return nil, err
+	}
+	// 获取上传文件
+	bitmap, dbUpload, upload, err := f.getUpload(ctx, &third.InitiateMultipartUploadReq{
+		Hash:        partMd5Val,
+		Size:        fileSize,
+		PartSize:    partSize,
+		MaxParts:    -1,
+		Cause:       req.Cause,
+		Name:        req.Name,
+		ContentType: req.ContentType,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if upload.Upload == nil {
+		cb.Complete(fileSize, upload.Url, 0)
+		return &UploadFileResp{
+			URL: upload.Url,
+		}, nil
+	}
+	if upload.Upload.PartSize != partSize {
+		f.cleanPartLimit()
+		return nil, fmt.Errorf("part fileSize not match, expect %d, got %d", partSize, upload.Upload.PartSize)
+	}
+	cb.UploadID(upload.Upload.UploadID)
+	uploadedSize := fileSize
+	uploadParts := make([]*third.SignPart, info.PartNum)
+	for _, part := range upload.Upload.Sign.Parts {
+		uploadParts[part.PartNumber-1] = part
+		uploadedSize -= partSizes[part.PartNumber-1]
+	}
+	continueUpload := uploadedSize > 0
+	for i, currentPartSize := range partSizes {
+		md5Reader := NewMd5Reader(io.LimitReader(file, currentPartSize))
+		part := uploadParts[i]
+		if part == nil {
+			if _, err := io.Copy(io.Discard, md5Reader); err != nil {
+				return nil, err
+			}
+		} else {
+			reader := NewProgressReader(md5Reader, func(current int64) {
+				cb.UploadComplete(fileSize, uploadedSize+current, uploadedSize)
+			})
+			if err := f.doPut(ctx, http.DefaultClient, upload.Upload.Sign, part, reader, currentPartSize); err != nil {
+				return nil, err
+			}
+			uploadedSize += currentPartSize
+		}
+		if md5val := md5Reader.Md5(); md5val != partMd5s[i] {
+			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
+		}
+		if part != nil && dbUpload != nil && bitmap != nil {
+			bitmap.Set(int(part.PartNumber - 1))
+			dbUpload.UploadInfo = base64.StdEncoding.EncodeToString(bitmap.Serialize())
+			if err := f.database.UpdateUpload(ctx, dbUpload); err != nil {
+				log.ZError(ctx, "SetUploadPartPush", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", part.PartNumber)
+			}
+		}
+		cb.UploadPartComplete(i, currentPartSize, partMd5s[i])
+	}
+	resp, err := f.completeMultipartUpload(ctx, &third.CompleteMultipartUploadReq{
+		UploadID:    upload.Upload.UploadID,
+		Parts:       partMd5s,
+		Name:        req.Name,
+		ContentType: req.ContentType,
+		Cause:       req.Cause,
+	})
+	if err != nil {
+		return nil, err
+	}
+	typ := 1
+	if continueUpload {
+		typ++
+	}
+	cb.Complete(fileSize, resp.Url, typ)
+	if err := f.database.DeleteUpload(ctx, info.PartMd5); err != nil {
+		log.ZError(ctx, "DeleteUpload", err, "partMd5Val", info.PartMd5, "name", req.Name)
+	}
+	return &UploadFileResp{
+		URL: resp.Url,
+	}, nil
 }
 
 func (f *File) cleanPartLimit() {
@@ -128,11 +240,6 @@ func (f *File) partMD5(parts []string) string {
 	s := strings.Join(parts, ",")
 	md5Sum := md5.Sum([]byte(s))
 	return hex.EncodeToString(md5Sum[:])
-}
-
-func (f *File) getUploadInfo(ctx context.Context, fileMd5 string, partSize int64) error {
-
-	return nil
 }
 
 func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUploadReq) (*Bitmap, *model_struct.LocalUpload, *third.InitiateMultipartUploadResp, error) {
@@ -308,122 +415,5 @@ func (f *File) getPartInfo(ctx context.Context, r io.Reader, fileSize int64, cb 
 		PartMd5:     partMd5Val,
 		PartSizes:   partSizes,
 		PartMd5s:    partMd5s,
-	}, nil
-}
-
-func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFileCallback) (*UploadFileResp, error) {
-	if cb == nil {
-		cb = emptyUploadCallback{}
-	}
-	if req.Name == "" {
-		return nil, errors.New("name is empty")
-	}
-	if req.Name[0] == '/' {
-		req.Name = req.Name[1:]
-	}
-	if prefix := f.loginUserID + "/"; !strings.HasPrefix(req.Name, prefix) {
-		req.Name = prefix + req.Name
-	}
-	file, err := os.Open(req.Filepath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	t, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-	fileSize := t.Size()
-	cb.Open(fileSize)
-	info, err := f.getPartInfo(ctx, file, fileSize, cb)
-	if err != nil {
-		return nil, err
-	}
-	partSize := info.PartSize
-	partSizes := info.PartSizes
-	partMd5s := info.PartMd5s
-	partMd5Val := info.PartMd5
-	if _, err := file.Seek(io.SeekStart, 0); err != nil {
-		return nil, err
-	}
-	// 获取上传文件
-	bitmap, dbUpload, upload, err := f.getUpload(ctx, &third.InitiateMultipartUploadReq{
-		Hash:        partMd5Val,
-		Size:        fileSize,
-		PartSize:    partSize,
-		MaxParts:    -1,
-		Cause:       req.Cause,
-		Name:        req.Name,
-		ContentType: req.ContentType,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if upload.Upload == nil {
-		cb.Complete(fileSize, upload.Url, 0)
-		return &UploadFileResp{
-			URL: upload.Url,
-		}, nil
-	}
-	if upload.Upload.PartSize != partSize {
-		f.cleanPartLimit()
-		return nil, fmt.Errorf("part fileSize not match, expect %d, got %d", partSize, upload.Upload.PartSize)
-	}
-	cb.UploadID(upload.Upload.UploadID)
-	uploadedSize := fileSize
-	uploadParts := make([]*third.SignPart, info.PartNum)
-	for _, part := range upload.Upload.Sign.Parts {
-		uploadParts[part.PartNumber-1] = part
-		uploadedSize -= partSizes[part.PartNumber-1]
-	}
-	continueUpload := uploadedSize > 0
-	for i, currentPartSize := range partSizes {
-		md5Reader := NewMd5Reader(io.LimitReader(file, currentPartSize))
-		part := uploadParts[i]
-		if part == nil {
-			if _, err := io.Copy(io.Discard, md5Reader); err != nil {
-				return nil, err
-			}
-		} else {
-			reader := NewProgressReader(md5Reader, func(current int64) {
-				cb.UploadComplete(fileSize, uploadedSize+current, uploadedSize)
-			})
-			if err := f.doPut(ctx, http.DefaultClient, upload.Upload.Sign, part, reader, currentPartSize); err != nil {
-				return nil, err
-			}
-			uploadedSize += currentPartSize
-		}
-		if md5val := md5Reader.Md5(); md5val != partMd5s[i] {
-			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
-		}
-		if part != nil && dbUpload != nil && bitmap != nil {
-			bitmap.Set(int(part.PartNumber - 1))
-			dbUpload.UploadInfo = base64.StdEncoding.EncodeToString(bitmap.Serialize())
-			if err := f.database.UpdateUpload(ctx, dbUpload); err != nil {
-				log.ZError(ctx, "SetUploadPartPush", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", part.PartNumber)
-			}
-		}
-		cb.UploadPartComplete(i, currentPartSize, partMd5s[i])
-	}
-	resp, err := f.completeMultipartUpload(ctx, &third.CompleteMultipartUploadReq{
-		UploadID:    upload.Upload.UploadID,
-		Parts:       partMd5s,
-		Name:        req.Name,
-		ContentType: req.ContentType,
-		Cause:       req.Cause,
-	})
-	if err != nil {
-		return nil, err
-	}
-	typ := 1
-	if continueUpload {
-		typ++
-	}
-	cb.Complete(fileSize, resp.Url, typ)
-	if err := f.database.DeleteUpload(ctx, info.PartMd5); err != nil {
-		log.ZError(ctx, "DeleteUpload", err, "partMd5Val", info.PartMd5, "name", req.Name)
-	}
-	return &UploadFileResp{
-		URL: resp.Url,
 	}, nil
 }
