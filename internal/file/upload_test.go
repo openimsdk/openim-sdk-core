@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"open_im_sdk/pkg/ccontext"
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/sdk_struct"
 	"path/filepath"
 	"testing"
@@ -18,17 +19,15 @@ func TestName(t *testing.T) {
 		},
 	})
 	ctx = ccontext.WithOperationID(ctx, `test`)
-	f := NewFile(nil, userID)
 
-	//resp, err := f.accessURL(ctx, &third.AccessURLReq{
-	//	Name: `11111112/test.png`,
-	//})
-	//if err != nil {
-	//	panic(err)
-	//}
-	//fmt.Println(resp)
+	database, err := db.NewDataBase(ctx, userID, `C:\Users\Admin\Desktop\test`)
+	if err != nil {
+		panic(err)
+	}
+	f := NewFile(database, userID)
 
-	path := `C:\Users\Admin\Desktop\test.png`
+	path := `C:\Users\Admin\Desktop\test`
+	path = filepath.Join(path, `go1.19.10.linux-amd64.tar.gz`)
 	resp, err := f.UploadFile(ctx, &UploadFileReq{
 		Filepath: path,
 		Name:     filepath.Base(path),
