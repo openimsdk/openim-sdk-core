@@ -39,10 +39,10 @@ func main() {
 }
 
 func registerFunc() {
-	//register global listener funcation
+	//register global listener function
 	globalFuc := wasm_wrapper.NewWrapperCommon()
 	js.Global().Set(wasm_wrapper.COMMONEVENTFUNC, js.FuncOf(globalFuc.CommonEventFunc))
-	//register init login funcation
+	//register init login function
 	wrapperInitLogin := wasm_wrapper.NewWrapperInitLogin(globalFuc)
 	js.Global().Set("initSDK", js.FuncOf(wrapperInitLogin.InitSDK))
 	js.Global().Set("login", js.FuncOf(wrapperInitLogin.Login))
@@ -50,7 +50,7 @@ func registerFunc() {
 	js.Global().Set("getLoginStatus", js.FuncOf(wrapperInitLogin.GetLoginStatus))
 	js.Global().Set("setAppBackgroundStatus", js.FuncOf(wrapperInitLogin.SetAppBackgroundStatus))
 	js.Global().Set("networkStatusChanged", js.FuncOf(wrapperInitLogin.NetworkStatusChanged))
-	//register conversation and message funcation
+	//register conversation and message function
 	wrapperConMsg := wasm_wrapper.NewWrapperConMsg(globalFuc)
 	js.Global().Set("createTextMessage", js.FuncOf(wrapperConMsg.CreateTextMessage))
 	js.Global().Set("createImageMessage", js.FuncOf(wrapperConMsg.CreateImageMessage))

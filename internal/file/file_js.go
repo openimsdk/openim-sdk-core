@@ -10,8 +10,8 @@ import (
 	"syscall/js"
 )
 
-func Open(uuid string) (ReadFile, error) {
-	file := &jsCallFile{uuid: uuid}
+func Open(req *UploadFileReq) (ReadFile, error) {
+	file := &jsCallFile{uuid: req.Uuid}
 	size, err := file.Open()
 	if err != nil {
 		return nil, err
