@@ -36,3 +36,7 @@ func (w *WrapperThird) UpdateFcmToken(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.UpdateFcmToken, callback, &args).AsyncCallWithCallback()
 }
+func (w *WrapperThird) UploadFile(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.UploadFile, callback, &args).AsyncCallWithCallback()
+}

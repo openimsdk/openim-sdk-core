@@ -25,8 +25,8 @@ type UploadFileReq struct {
 	Filepath    string `json:"filepath"`
 	Name        string `json:"name"`
 	ContentType string `json:"contentType"`
-	Cause       string
-	Uuid        string
+	Cause       string `json:"cause"`
+	Uuid        string `json:"uuid"`
 }
 
 type UploadFileResp struct {
@@ -386,7 +386,7 @@ func (f *File) getPartInfo(ctx context.Context, r io.Reader, fileSize int64, cb 
 	}
 	partSizes[partNum-1] = fileSize - partSize*(int64(partNum)-1)
 	partMd5s := make([]string, partNum)
-	buf := make([]byte, 1024)
+	buf := make([]byte, 1024*8)
 	fileMd5 := md5.New()
 	var contentType string
 	for i := 0; i < partNum; i++ {
