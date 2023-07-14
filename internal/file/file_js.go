@@ -11,7 +11,7 @@ import (
 )
 
 func Open(req *UploadFileReq) (ReadFile, error) {
-	file := &jsCallFile{uuid: req.Uuid}
+	file := newJsCallFile(req.Uuid)
 	size, err := file.Open()
 	if err != nil {
 		return nil, err
@@ -69,6 +69,10 @@ func (j *jsFile) StartSeek(whence int) error {
 
 type jsCallFile struct {
 	uuid string
+}
+
+func newJsCallFile(uuid string) *jsCallFile {
+	return &jsCallFile{uuid: uuid}
 }
 
 func (j *jsCallFile) Open() (int64, error) {
