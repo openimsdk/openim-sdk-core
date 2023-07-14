@@ -16,6 +16,7 @@ package syncer
 
 import (
 	"context"
+	"github.com/google/go-cmp/cmp"
 	"reflect"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
@@ -62,7 +63,7 @@ func (s *Syncer[T, V]) eq(server T, local T) bool {
 	if s.equal != nil {
 		return s.equal(server, local)
 	}
-	return reflect.DeepEqual(server, local)
+	return cmp.Equal(server, local)
 }
 
 func (s *Syncer[T, V]) onNotice(ctx context.Context, state int, server, local T, fn func(ctx context.Context, state int, server, local T) error) error {
