@@ -20,6 +20,8 @@ package indexdb
 import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/utils"
+	"open_im_sdk/wasm/exec"
 )
 
 type LocalUpload struct{}
@@ -28,32 +30,39 @@ func NewLocalUpload() *LocalUpload {
 	return &LocalUpload{}
 }
 
-func (i *LocalUpload) GetUpload(ctx context.Context, partHash string) (*model_struct.Upload, error) {
-	//TODO implement me
-	panic("implement me")
+func (i *LocalUpload) GetUpload(ctx context.Context, partHash string) (*model_struct.LocalUpload, error) {
+	c, err := exec.Exec(partHash)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := c.(string); ok {
+			result := model_struct.LocalUpload{}
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return &result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
 }
 
-func (i *LocalUpload) InsertUpload(ctx context.Context, upload *model_struct.Upload) error {
-	//TODO implement me
-	panic("implement me")
+func (i *LocalUpload) InsertUpload(ctx context.Context, upload *model_struct.LocalUpload) error {
+	_, err := exec.Exec(utils.StructToJsonString(upload))
+	return err
 }
 
 func (i *LocalUpload) DeleteUpload(ctx context.Context, partHash string) error {
-	//TODO implement me
-	panic("implement me")
+	_, err := exec.Exec(partHash)
+	return err
+}
+func (i *LocalUpload) UpdateUpload(ctx context.Context, upload *model_struct.LocalUpload) error {
+	_, err := exec.Exec(utils.StructToJsonString(upload))
+	return err
 }
 
 func (i *LocalUpload) DeleteExpireUpload(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *LocalUpload) GetUploadPart(ctx context.Context, partHash string) ([]int32, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *LocalUpload) SetUploadPartPush(ctx context.Context, partHash string, index []int32) error {
 	//TODO implement me
 	panic("implement me")
 }
