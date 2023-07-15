@@ -184,4 +184,6 @@ func registerFunc() {
 
 	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
 	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))
+	js.Global().Set("uploadFile", js.FuncOf(wrapperThird.UploadFile))
+
 }
