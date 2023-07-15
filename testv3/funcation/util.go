@@ -24,7 +24,7 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-func getToken(uid string) (string, int64) {
+func GetToken(uid string) (string, int64) {
 	InitContext(uid)
 	config.Token = ""
 	req := authPB.UserTokenReq{

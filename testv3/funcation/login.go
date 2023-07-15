@@ -28,6 +28,11 @@ func LoginOne(uid string) bool {
 	return initAndLogin(uid, AllLoginMgr[uid].Token)
 }
 
+func CreateToken(uid string) string {
+	token, _ := GetToken(uid)
+	return token
+}
+
 // 批量登录
 // 返回值：成功登录和失败登录的 uidList
 func LoginBatch(uidList []string) ([]string, []string) {
@@ -43,7 +48,7 @@ func LoginBatch(uidList []string) ([]string, []string) {
 }
 
 func collectToken(uid string) {
-	token, _ := getToken(uid)
+	token, _ := GetToken(uid)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	AllLoginMgr[uid] = &CoreNode{Token: token, UserID: uid}

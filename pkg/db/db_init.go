@@ -187,7 +187,7 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	superGroup := &model_struct.LocalGroup{}
 	localGroup := &model_struct.LocalGroup{}
 
-	db.AutoMigrate(&model_struct.LocalFriend{},
+	err = db.AutoMigrate(&model_struct.LocalFriend{},
 		&model_struct.LocalFriendRequest{},
 		localGroup,
 		&model_struct.LocalGroupMember{},
@@ -203,10 +203,14 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
 		&model_struct.LocalChatLogReactionExtensions{},
-		&model_struct.Upload{},
-		&model_struct.UploadPart{},
+		&model_struct.LocalUpload{},
 	)
-	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
+	if err != nil {
+		return err
+	}
+	if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
+		return err
+	}
 	conversationIDs, err := d.FindAllConversationConversationID(ctx)
 	if err != nil {
 		log.ZError(ctx, "FindAllConversationConversationID err", err)

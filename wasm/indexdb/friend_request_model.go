@@ -17,7 +17,10 @@
 
 package indexdb
 
-import "context"
+import (
+	"context"
+	"open_im_sdk/wasm/exec"
+)
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
@@ -34,12 +37,12 @@ func NewFriendRequest(loginUserID string) *FriendRequest {
 }
 
 func (i FriendRequest) InsertFriendRequest(ctx context.Context, friendRequest *model_struct.LocalFriendRequest) error {
-	_, err := Exec(utils.StructToJsonString(friendRequest))
+	_, err := exec.Exec(utils.StructToJsonString(friendRequest))
 	return err
 }
 
 func (i FriendRequest) DeleteFriendRequestBothUserID(ctx context.Context, fromUserID, toUserID string) error {
-	_, err := Exec(fromUserID, toUserID)
+	_, err := exec.Exec(fromUserID, toUserID)
 	return err
 }
 
@@ -60,12 +63,12 @@ func (i FriendRequest) UpdateFriendRequest(ctx context.Context, friendRequest *m
 		Ex:            friendRequest.Ex,
 		AttachedInfo:  friendRequest.AttachedInfo,
 	}
-	_, err := Exec(utils.StructToJsonString(tempLocalFriendRequest))
+	_, err := exec.Exec(utils.StructToJsonString(tempLocalFriendRequest))
 	return err
 }
 
 func (i FriendRequest) GetRecvFriendApplication(ctx context.Context) (result []*model_struct.LocalFriendRequest, err error) {
-	gList, err := Exec(i.loginUserID)
+	gList, err := exec.Exec(i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -81,13 +84,13 @@ func (i FriendRequest) GetRecvFriendApplication(ctx context.Context) (result []*
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i FriendRequest) GetSendFriendApplication(ctx context.Context) (result []*model_struct.LocalFriendRequest, err error) {
-	gList, err := Exec(i.loginUserID)
+	gList, err := exec.Exec(i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -103,13 +106,13 @@ func (i FriendRequest) GetSendFriendApplication(ctx context.Context) (result []*
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i FriendRequest) GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
-	c, err := Exec(fromUserID, toUserID)
+	c, err := exec.Exec(fromUserID, toUserID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -121,7 +124,7 @@ func (i FriendRequest) GetFriendApplicationByBothID(ctx context.Context, fromUse
 			}
 			return &result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }

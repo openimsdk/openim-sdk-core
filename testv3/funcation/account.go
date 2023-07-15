@@ -25,6 +25,7 @@ import (
 
 func RegisterOne(uid, nickname, faceurl string) (bool, error) {
 	InitContext(uid)
+	// config.UserID = uid
 	res, err := checkUserAccount(uid)
 	if err != nil {
 		return false, err

@@ -251,12 +251,11 @@ type ReactionDatabase interface {
 }
 
 type S3Database interface {
-	GetUpload(ctx context.Context, partHash string) (*model_struct.Upload, error)
-	InsertUpload(ctx context.Context, upload *model_struct.Upload) error
+	GetUpload(ctx context.Context, partHash string) (*model_struct.LocalUpload, error)
+	InsertUpload(ctx context.Context, upload *model_struct.LocalUpload) error
 	DeleteUpload(ctx context.Context, partHash string) error
+	UpdateUpload(ctx context.Context, upload *model_struct.LocalUpload) error
 	DeleteExpireUpload(ctx context.Context) error
-	GetUploadPart(ctx context.Context, partHash string) ([]int32, error)
-	SetUploadPartPush(ctx context.Context, partHash string, index []int32) error
 }
 
 type DataBase interface {

@@ -17,6 +17,7 @@ package testv3
 
 import (
 	"fmt"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/testv3/funcation"
 	"testing"
 )
@@ -36,16 +37,22 @@ func Test_RegisterOne(t *testing.T) {
 }
 
 func Test_RegisterBatch(t *testing.T) {
-	count := 100
+	count := 100000
 	var users []funcation.Users
-	for i := 0; i < count; i++ {
+	for i := 1; i <= count; i++ {
 		users = append(users, funcation.Users{
 			Uid:      fmt.Sprintf("register_test_%d", i),
 			Nickname: fmt.Sprintf("register_test_%d", i),
 			FaceUrl:  "",
 		})
 	}
+	log.Info("users length", len(users))
 	success, fail := funcation.RegisterBatch(users)
 	t.Log(success)
 	t.Log(fail)
+}
+
+func Test_getToken(t *testing.T) {
+	token, _ := funcation.GetToken("123456")
+	t.Log(token)
 }

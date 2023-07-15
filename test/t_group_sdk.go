@@ -339,7 +339,7 @@ func DotestCos() {
 //}
 //
 //funcation test(storage common.ObjectStorage, callback baseCallback) {
-//	dir, newName, err := storage.UploadFile("./main/main.go", funcation(progress int) {
+//	dir, newName, err := storage.UploadFile("./cmd/main.go", funcation(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
@@ -351,13 +351,13 @@ func DotestCos() {
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err, err)
-//	dir, newName, err = storage.UploadSound("./main/main.go", funcation(progress int) {
+//	dir, newName, err = storage.UploadSound("./cmd/main.go", funcation(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err, err)
-//	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./main/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", funcation(progress int) {
+//	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./cmd/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", funcation(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
