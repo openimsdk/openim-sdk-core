@@ -48,7 +48,7 @@ func (b *BaseSuccessFailed) OnSuccess(data string) {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-	cf.PlatformID = 3
+	cf.PlatformID = 1
 	cf.WsAddr = ws
 	cf.DataDir = "./"
 	cf.LogLevel = LogLevel

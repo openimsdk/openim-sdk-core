@@ -23,6 +23,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func (c *Conversation) CreateTextMessage(ctx context.Context, text string) (*sdk_struct.MsgStruct, error) {
@@ -274,6 +276,7 @@ func (c *Conversation) CreateSoundMessageFromFullPath(ctx context.Context, sound
 		SoundPath: soundPath,
 		Duration:  duration,
 		DataSize:  fi.Size(),
+		SoundType: strings.Replace(filepath.Ext(fi.Name()), ".", "", 1),
 	}
 	return &s, nil
 }
@@ -346,6 +349,9 @@ func (c *Conversation) CreateSoundMessage(ctx context.Context, soundPath string,
 		SoundPath: path,
 		Duration:  duration,
 		DataSize:  fi.Size(),
+	}
+	if typ := strings.Replace(filepath.Ext(fi.Name()), ".", "", 1); typ != "" {
+		s.SoundElem.SoundType = "audio/" + strings.ToLower(typ)
 	}
 	return &s, nil
 }
@@ -460,8 +466,8 @@ func (c *Conversation) CreateFaceMessage(ctx context.Context, index int, data st
 	s.FaceElem.Index = index
 	s.Content = utils.StructToJsonString(s.FaceElem)
 	return &s, nil
-
 }
+
 func (c *Conversation) CreateForwardMessage(ctx context.Context, s *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if s.Status != constant.MsgStatusSendSuccess {
 		log.Error("internal", "only send success message can be Forward")

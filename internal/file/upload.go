@@ -26,6 +26,7 @@ type UploadFileReq struct {
 	Name        string `json:"name"`
 	ContentType string `json:"contentType"`
 	Cause       string `json:"cause"`
+	Uuid        string `json:"uuid"`
 }
 
 type UploadFileResp struct {
@@ -67,7 +68,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	if prefix := f.loginUserID + "/"; !strings.HasPrefix(req.Name, prefix) {
 		req.Name = prefix + req.Name
 	}
-	file, err := Open(req.Filepath)
+	file, err := Open(req)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +78,9 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	info, err := f.getPartInfo(ctx, file, fileSize, cb)
 	if err != nil {
 		return nil, err
+	}
+	if req.ContentType == "" {
+		req.ContentType = info.ContentType
 	}
 	partSize := info.PartSize
 	partSizes := info.PartSizes
@@ -385,7 +389,7 @@ func (f *File) getPartInfo(ctx context.Context, r io.Reader, fileSize int64, cb 
 	}
 	partSizes[partNum-1] = fileSize - partSize*(int64(partNum)-1)
 	partMd5s := make([]string, partNum)
-	buf := make([]byte, 1024)
+	buf := make([]byte, 1024*8)
 	fileMd5 := md5.New()
 	var contentType string
 	for i := 0; i < partNum; i++ {

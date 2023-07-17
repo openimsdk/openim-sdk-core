@@ -7,8 +7,8 @@ import (
 	"os"
 )
 
-func Open(path string) (ReadFile, error) {
-	file, err := os.Open(path)
+func Open(req *UploadFileReq) (ReadFile, error) {
+	file, err := os.Open(req.Filepath)
 	if err != nil {
 		return nil, err
 	}

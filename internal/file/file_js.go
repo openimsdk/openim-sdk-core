@@ -7,10 +7,11 @@ import (
 	"errors"
 	"io"
 	"open_im_sdk/wasm/exec"
+	"syscall/js"
 )
 
-func Open(uuid string) (ReadFile, error) {
-	file := &jsCallFile{uuid: uuid}
+func Open(req *UploadFileReq) (ReadFile, error) {
+	file := newJsCallFile(req.Uuid)
 	size, err := file.Open()
 	if err != nil {
 		return nil, err
@@ -18,7 +19,7 @@ func Open(uuid string) (ReadFile, error) {
 	return &jsFile{
 		size: size,
 		file: file,
-	}
+	}, nil
 }
 
 type jsFile struct {
@@ -32,13 +33,13 @@ func (j *jsFile) Read(p []byte) (n int, err error) {
 	if length == 0 {
 		return 0, errors.New("read buffer is empty")
 	}
-	if j.whence >= j.size {
+	if j.whence >= int(j.size) {
 		return 0, io.EOF
 	}
-	if j.whence+length > j.size {
-		length = int(j.size - j.whence)
+	if j.whence+length > int(j.size) {
+		length = int(j.size) - j.whence
 	}
-	data, err := j.file.Read(j.whence, length)
+	data, err := j.file.Read(int64(j.whence), int64(length))
 	if err != nil {
 		return 0, err
 	}
@@ -59,7 +60,7 @@ func (j *jsFile) Size() int64 {
 }
 
 func (j *jsFile) StartSeek(whence int) error {
-	if whence < 0 || whence > j.size {
+	if whence < 0 || whence > int(j.size) {
 		return errors.New("seek whence is out of range")
 	}
 	j.whence = whence
@@ -68,6 +69,10 @@ func (j *jsFile) StartSeek(whence int) error {
 
 type jsCallFile struct {
 	uuid string
+}
+
+func newJsCallFile(uuid string) *jsCallFile {
+	return &jsCallFile{uuid: uuid}
 }
 
 func (j *jsCallFile) Open() (int64, error) {

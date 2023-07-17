@@ -16,6 +16,7 @@ package syncer
 
 import (
 	"context"
+	"github.com/google/go-cmp/cmp"
 	"reflect"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
@@ -62,7 +63,7 @@ func (s *Syncer[T, V]) eq(server T, local T) bool {
 	if s.equal != nil {
 		return s.equal(server, local)
 	}
-	return reflect.DeepEqual(server, local)
+	return cmp.Equal(server, local)
 }
 
 func (s *Syncer[T, V]) onNotice(ctx context.Context, state int, server, local T, fn func(ctx context.Context, state int, server, local T) error) error {
@@ -111,6 +112,8 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 			continue
 		}
 		delete(localMap, id)
+		log.ZDebug(ctx, "syncer come", "type", s.ts, "server", server, "local", local, "isEq", s.eq(server, local))
+
 		if s.eq(server, local) {
 			if err := s.onNotice(ctx, Unchanged, local, server, notice); err != nil {
 				log.ZError(ctx, "sync notice unchanged failed", err, "type", s.ts, "server", server, "local", local)
@@ -121,9 +124,6 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 		if err := s.update(ctx, server, local); err != nil {
 			log.ZError(ctx, "sync update failed", err, "type", s.ts, "server", server, "local", local)
 			return err
-		}
-		if s.ts == "model_struct.LocalUser" {
-			log.ZDebug(ctx, "model_struct.LocalUser", "type", s.ts, "server", server, "local", local, "isEq", s.eq(server, local))
 		}
 		if err := s.onNotice(ctx, Update, server, local, notice); err != nil {
 			log.ZError(ctx, "sync notice update failed", err, "type", s.ts, "server", server, "local", local)
