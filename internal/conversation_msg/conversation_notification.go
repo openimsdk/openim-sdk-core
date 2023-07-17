@@ -637,6 +637,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	}
 
 	for conversationID, msgs := range allMsg {
+		log.ZDebug(ctx, "notification handling", "conversationID", conversationID, "msgs", msgs)
 		if len(msgs.Msgs) != 0 {
 			lastMsg := msgs.Msgs[len(msgs.Msgs)-1]
 			log.ZDebug(ctx, "SetNotificationSeq", "conversationID", conversationID, "seq", lastMsg.Seq)
