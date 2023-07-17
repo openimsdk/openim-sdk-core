@@ -37,13 +37,13 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 	case constant.CmdNewMsgCome:
 		c.doMsgNew(c2v)
 	case constant.CmdSuperGroupMsgCome:
-		//c.doSuperGroupMsgNew(c2v)
+		// c.doSuperGroupMsgNew(c2v)
 	case constant.CmdUpdateConversation:
 		c.doUpdateConversation(c2v)
 	case constant.CmdUpdateMessage:
 		c.doUpdateMessage(c2v)
 	case constant.CmSyncReactionExtensions:
-		//c.doSyncReactionExtensions(c2v)
+		// c.doSyncReactionExtensions(c2v)
 	case constant.CmdNotification:
 		c.doNotificationNew(c2v)
 	}
@@ -52,13 +52,13 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	node := c2v.Value.(common.DeleteConNode)
 	ctx := c2v.Ctx
-	//Mark messages related to this conversation for deletion
+	// Mark messages related to this conversation for deletion
 	err := c.db.UpdateMessageStatusBySourceID(context.Background(), node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
 	if err != nil {
 		log.ZError(ctx, "setMessageStatusBySourceID", err)
 		return
 	}
-	//Reset the session information, empty session
+	// Reset the session information, empty session
 	err = c.db.ResetConversation(ctx, node.ConversationID)
 	if err != nil {
 		log.ZError(ctx, "ResetConversation err:", err)
@@ -80,7 +80,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		oc, err := c.db.GetConversation(ctx, lc.ConversationID)
 		if err == nil {
 			// log.Info("this is old conversation", *oc)
-			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { // The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
 					// log.Error("internal", "updateConversationLatestMsgModel err: ", err)
@@ -114,7 +114,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			}
 
 		}
-	//case ConChange:
+	// case ConChange:
 	//	err, list := u.getAllConversationListModel()
 	//	if err != nil {
 	//		sdkLog("getAllConversationListModel database err:", err.Error())
@@ -323,7 +323,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 
 }
 
-//funcation (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
+// funcation (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 //	if c.ConversationListener == nil {
 //		// log.Error("internal", "not set conversationListener")
 //		return
@@ -583,7 +583,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 //
 //	}
 //
-//}
+// }
 
 func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
@@ -605,14 +605,14 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
-	//if c.msgListener == nil || c.ConversationListener == nil {
+	// if c.msgListener == nil || c.ConversationListener == nil {
 	//	for _, v := range allMsg {
 	//		if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 	//			c.signaling.DoNotification(ctx, v, c.GetCh())
 	//		}
 	//	}
 	//	return
-	//}
+	// }
 	switch syncFlag {
 	case constant.MsgSyncBegin:
 		c.ConversationListener.OnSyncServerStart()
