@@ -350,6 +350,9 @@ func (c *Conversation) CreateSoundMessage(ctx context.Context, soundPath string,
 		Duration:  duration,
 		DataSize:  fi.Size(),
 	}
+	if typ := strings.Replace(filepath.Ext(fi.Name()), ".", "", 1); typ != "" {
+		s.SoundElem.SoundType = "audio/" + strings.ToLower(typ)
+	}
 	return &s, nil
 }
 func (c *Conversation) CreateVideoMessageByURL(ctx context.Context, videoElem sdk_struct.VideoBaseInfo) (*sdk_struct.MsgStruct, error) {
@@ -463,8 +466,8 @@ func (c *Conversation) CreateFaceMessage(ctx context.Context, index int, data st
 	s.FaceElem.Index = index
 	s.Content = utils.StructToJsonString(s.FaceElem)
 	return &s, nil
-
 }
+
 func (c *Conversation) CreateForwardMessage(ctx context.Context, s *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if s.Status != constant.MsgStatusSendSuccess {
 		log.Error("internal", "only send success message can be Forward")
