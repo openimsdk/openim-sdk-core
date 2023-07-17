@@ -84,7 +84,7 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 		}
 		if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
-			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
+			log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 			continue
 		}
 		conversationIDs = append(conversationIDs, conversationID)
