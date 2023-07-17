@@ -424,7 +424,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
 			//PutID:    s.ClientMsgID,
-			ContentType: "image/jpeg",
+			ContentType: "image/" + s.PictureElem.SourcePicture.Type,
 			Filepath:    sourcePath,
 			Uuid:        s.PictureElem.SourcePicture.UUID,
 			Name:        c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
@@ -463,10 +463,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		// log.Info("", "file", sourcePath, delFile)
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-			Filepath: sourcePath,
-			Uuid:     s.SoundElem.UUID,
-			Name:     c.fileName("voice", s.ClientMsgID) + filepath.Ext(sourcePath),
-			Cause:    "msg-voice",
+			ContentType: "audio/" + s.SoundElem.SoundType,
+			Filepath:    sourcePath,
+			Uuid:        s.SoundElem.UUID,
+			Name:        c.fileName("voice", s.ClientMsgID) + filepath.Ext(sourcePath),
+			Cause:       "msg-voice",
 		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
@@ -501,10 +502,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			go func() {
 				defer wg.Done()
 				snapRes, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-					Filepath: snapPath,
-					Uuid:     s.VideoElem.SnapshotUUID,
-					Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
-					Cause:    "msg-video-snapshot",
+					ContentType: "image/" + s.VideoElem.SnapshotType,
+					Filepath:    snapPath,
+					Uuid:        s.VideoElem.SnapshotUUID,
+					Name:        c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
+					Cause:       "msg-video-snapshot",
 				}, nil)
 				if err != nil {
 					c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
@@ -518,10 +520,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		go func() {
 			defer wg.Done()
 			res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-				Filepath: videoPath,
-				Uuid:     s.VideoElem.VideoUUID,
-				Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
-				Cause:    "msg-video",
+				ContentType: "video/" + s.VideoElem.VideoType,
+				Filepath:    videoPath,
+				Uuid:        s.VideoElem.VideoUUID,
+				Name:        c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
+				Cause:       "msg-video",
 			}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 			if err != nil {
 				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)

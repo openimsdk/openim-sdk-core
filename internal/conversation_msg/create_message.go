@@ -23,6 +23,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func (c *Conversation) CreateTextMessage(ctx context.Context, text string) (*sdk_struct.MsgStruct, error) {
@@ -274,6 +276,7 @@ func (c *Conversation) CreateSoundMessageFromFullPath(ctx context.Context, sound
 		SoundPath: soundPath,
 		Duration:  duration,
 		DataSize:  fi.Size(),
+		SoundType: strings.Replace(filepath.Ext(fi.Name()), ".", "", 1),
 	}
 	return &s, nil
 }
