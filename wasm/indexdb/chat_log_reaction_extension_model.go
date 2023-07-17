@@ -21,13 +21,12 @@ import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"open_im_sdk/wasm/exec"
 )
 
 type LocalChatLogReactionExtensions struct {
-	ExtKey string `json:"ext_key"`
-	ExtVal string `json:"ext_val"`
+	ExtKey  string `json:"ext_key"`
+	ExtVal  string `json:"ext_val"`
 	ExtKey2 string `json:"ext_key2"`
 	ExtVal2 string `json:"ext_val2"`
 }
@@ -37,7 +36,7 @@ func NewLocalChatLogReactionExtensions() *LocalChatLogReactionExtensions {
 }
 
 func (i *LocalChatLogReactionExtensions) GetMessageReactionExtension(ctx context.Context, clientMsgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
-	msg, err := Exec(clientMsgID)
+	msg, err := exec.Exec(clientMsgID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -49,25 +48,27 @@ func (i *LocalChatLogReactionExtensions) GetMessageReactionExtension(ctx context
 			}
 			return &result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i *LocalChatLogReactionExtensions) InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
-	_, err := Exec(utils.StructToJsonString(messageReactionExtension))
+	_, err := exec.Exec(utils.StructToJsonString(messageReactionExtension))
 	return err
 }
-func (i *LocalChatLogReactionExtensions) GetAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*sdkws.KeyValue) error {
-	_, err := Exec(clientMsgID, utils.StructToJsonString(m))
-	return err
-}
-func (i *LocalChatLogReactionExtensions) DeleteAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*sdkws.KeyValue) error {
-	_, err := Exec(clientMsgID, utils.StructToJsonString(m))
-	return err
-}
+
+//	func (i *LocalChatLogReactionExtensions) GetAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*sdkws.KeyValue) error {
+//		_, err := exec.Exec(clientMsgID, utils.StructToJsonString(m))
+//		return err
+//	}
+//
+//	func (i *LocalChatLogReactionExtensions) DeleteAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*sdkws.KeyValue) error {
+//		_, err := exec.Exec(clientMsgID, utils.StructToJsonString(m))
+//		return err
+//	}
 func (i *LocalChatLogReactionExtensions) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
-	msgReactionExtensionList, err := Exec(utils.StructToJsonString(msgIDList))
+	msgReactionExtensionList, err := exec.Exec(utils.StructToJsonString(msgIDList))
 	if err != nil {
 		return nil, err
 	} else {
@@ -83,15 +84,15 @@ func (i *LocalChatLogReactionExtensions) GetMultipleMessageReactionExtension(ctx
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 func (i *LocalChatLogReactionExtensions) DeleteMessageReactionExtension(ctx context.Context, msgID string) error {
-	_, err := Exec(msgID)
+	_, err := exec.Exec(msgID)
 	return err
 }
 func (i *LocalChatLogReactionExtensions) UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error {
-	_, err := Exec(c.ClientMsgID, utils.StructToJsonString(c))
+	_, err := exec.Exec(c.ClientMsgID, utils.StructToJsonString(c))
 	return err
 }

@@ -18,8 +18,6 @@ import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/sdk_struct"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 type GroupDatabase interface {
@@ -246,10 +244,18 @@ type ReactionDatabase interface {
 	GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
 	UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error
-	GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
-	DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
+	// GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
+	// DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
 	GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error)
 	DeleteMessageReactionExtension(ctx context.Context, msgID string) error
+}
+
+type S3Database interface {
+	GetUpload(ctx context.Context, partHash string) (*model_struct.LocalUpload, error)
+	InsertUpload(ctx context.Context, upload *model_struct.LocalUpload) error
+	DeleteUpload(ctx context.Context, partHash string) error
+	UpdateUpload(ctx context.Context, upload *model_struct.LocalUpload) error
+	DeleteExpireUpload(ctx context.Context) error
 }
 
 type DataBase interface {
@@ -261,4 +267,5 @@ type DataBase interface {
 	UserDatabase
 	FriendDatabase
 	ReactionDatabase
+	S3Database
 }

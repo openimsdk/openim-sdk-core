@@ -21,6 +21,7 @@ import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/wasm/exec"
 )
 
 type LocalSuperGroup struct{}
@@ -30,7 +31,7 @@ func NewLocalSuperGroup() *LocalSuperGroup {
 }
 
 func (i *LocalSuperGroup) GetJoinedSuperGroupList(ctx context.Context) (result []*model_struct.LocalGroup, err error) {
-	groupList, err := Exec()
+	groupList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
@@ -46,32 +47,32 @@ func (i *LocalSuperGroup) GetJoinedSuperGroupList(ctx context.Context) (result [
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i *LocalSuperGroup) InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
-	_, err := Exec(utils.StructToJsonString(groupInfo))
+	_, err := exec.Exec(utils.StructToJsonString(groupInfo))
 	return err
 }
 func (i *LocalSuperGroup) UpdateSuperGroup(ctx context.Context, g *model_struct.LocalGroup) error {
-	_, err := Exec(g.GroupID, utils.StructToJsonString(g))
+	_, err := exec.Exec(g.GroupID, utils.StructToJsonString(g))
 	return err
 }
 
 func (i *LocalSuperGroup) DeleteSuperGroup(ctx context.Context, groupID string) error {
-	_, err := Exec(groupID)
+	_, err := exec.Exec(groupID)
 	return err
 }
 
 func (i *LocalSuperGroup) DeleteAllSuperGroup(ctx context.Context) error {
-	_, err := Exec()
+	_, err := exec.Exec()
 	return err
 }
 
 func (i *LocalSuperGroup) GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
-	groupInfo, err := Exec(groupID)
+	groupInfo, err := exec.Exec(groupID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -83,13 +84,13 @@ func (i *LocalSuperGroup) GetSuperGroupInfoByGroupID(ctx context.Context, groupI
 			}
 			return &result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 func (i *LocalSuperGroup) GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error) {
-	IDList, err := Exec()
+	IDList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	}
@@ -101,11 +102,11 @@ func (i *LocalSuperGroup) GetJoinedWorkingGroupIDList(ctx context.Context) ([]st
 		}
 		return temp, nil
 	}
-	return nil, ErrType
+	return nil, exec.ErrType
 }
 
 func (i *LocalSuperGroup) GetJoinedWorkingGroupList(ctx context.Context) (result []*model_struct.LocalGroup, err error) {
-	groupList, err := Exec()
+	groupList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
@@ -121,7 +122,7 @@ func (i *LocalSuperGroup) GetJoinedWorkingGroupList(ctx context.Context) (result
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }

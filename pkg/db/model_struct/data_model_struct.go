@@ -484,3 +484,15 @@ type NotificationSeqs struct {
 func (NotificationSeqs) TableName() string {
 	return "local_notification_seqs"
 }
+
+type LocalUpload struct {
+	PartHash   string `gorm:"column:part_hash;primary_key" json:"partHash"`
+	UploadID   string `gorm:"column:upload_id;type:varchar(1000)" json:"uploadID"`
+	UploadInfo string `gorm:"column:info;type:varchar(2000)" json:"info"`
+	ExpireTime int64  `gorm:"column:expire_time" json:"expireTime"`
+	CreateTime int64  `gorm:"column:create_time" json:"createTime"`
+}
+
+func (LocalUpload) TableName() string {
+	return "local_uploads"
+}

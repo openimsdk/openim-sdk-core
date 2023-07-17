@@ -17,7 +17,10 @@
 
 package indexdb
 
-import "context"
+import (
+	"context"
+	"open_im_sdk/wasm/exec"
+)
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
@@ -32,11 +35,11 @@ func NewLocalCacheMessage() *LocalCacheMessage {
 }
 
 func (i *LocalCacheMessage) BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error {
-	_, err := Exec(utils.StructToJsonString(MessageList))
+	_, err := exec.Exec(utils.StructToJsonString(MessageList))
 	return err
 }
 
 func (i *LocalCacheMessage) InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error {
-	_, err := Exec(utils.StructToJsonString(Message))
+	_, err := exec.Exec(utils.StructToJsonString(Message))
 	return err
 }

@@ -55,6 +55,11 @@ type DataBase struct {
 	superGroupMtx sync.RWMutex
 }
 
+func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (d *DataBase) InitSuperLocalErrChatLog(ctx context.Context, groupID string) {
 	panic("implement me")
 }
@@ -182,7 +187,7 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	superGroup := &model_struct.LocalGroup{}
 	localGroup := &model_struct.LocalGroup{}
 
-	db.AutoMigrate(&model_struct.LocalFriend{},
+	err = db.AutoMigrate(&model_struct.LocalFriend{},
 		&model_struct.LocalFriendRequest{},
 		localGroup,
 		&model_struct.LocalGroupMember{},
@@ -198,8 +203,14 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
 		&model_struct.LocalChatLogReactionExtensions{},
+		&model_struct.LocalUpload{},
 	)
-	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
+	if err != nil {
+		return err
+	}
+	if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
+		return err
+	}
 	conversationIDs, err := d.FindAllConversationConversationID(ctx)
 	if err != nil {
 		log.ZError(ctx, "FindAllConversationConversationID err", err)

@@ -14,10 +14,10 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
+	"open_im_sdk/wasm/exec"
 	"open_im_sdk/wasm/indexdb"
 )
 
@@ -47,7 +47,7 @@ func (i IndexDB) Close(ctx context.Context) error {
 }
 
 func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) error {
-	_, err := indexdb.Exec(userID, dataDir)
+	_, err := exec.Exec(userID, dataDir)
 	return err
 }
 

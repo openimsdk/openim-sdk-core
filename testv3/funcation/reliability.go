@@ -15,11 +15,11 @@ import (
 
 func RegisterReliabilityUser(id int, timeStamp string) {
 	userID := GenUid(id, "reliability_"+timeStamp)
-	//Register(userID)
+	// Register(userID)
 	token, _ := RunGetToken(userID)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
-	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
+	AllLoginMgr[strconv.Itoa(id)] = &CoreNode{Token: token, UserID: userID}
 }
 
 func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
@@ -66,14 +66,14 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	// 所有成员拉取自己的会话是否有更新
 	for i := 0; i < clientNum; i++ {
 		var params sdk_params_callback.GetAdvancedHistoryMessageListParams
-		params.UserID = allLoginMgr[i].userID
-		//params.ConversationID = "si_7788_7789"
-		//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
+		params.UserID = AllLoginMgr[strconv.Itoa(i)].UserID
+		// params.ConversationID = "si_7788_7789"
+		// params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
 		params.Count = 20
 		open_im_sdk.GetAdvancedHistoryMessageList(&testConversation, utils.OperationIDGenerator(), utils.StructToJsonString(params))
 	}
 
-	//for {
+	// for {
 	//	// 消息异步落库可能出现延迟，每隔五秒再检查一次
 	//	if CheckReliabilityResult(msgNumOneClient, clientNum) {
 	//		log.Warn("", "CheckReliabilityResult ok, exit")
@@ -83,19 +83,19 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	//		log.Warn("", "CheckReliabilityResult failed , wait.... ")
 	//	}
 	//	time.Sleep(time.Duration(5) * time.Second)
-	//}
+	// }
 }
 
 func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
 	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
-	strMyUid := allLoginMgr[index].userID
-	token := allLoginMgr[index].token
-	ReliabilityInitAndLogin(index, strMyUid, token)
-	log.Info("", "login ok client num: ", len(allLoginMgr))
+	strMyUid := AllLoginMgr[strconv.Itoa(index)].UserID
+	token := AllLoginMgr[strconv.Itoa(index)].Token
+	// ReliabilityInitAndLogin(index, strMyUid, token)
+	log.Info("", "login ok client num: ", len(AllLoginMgr))
 	log.Warn("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 
 	msgnum := msgNumInOneClient
-	uidNum := len(allLoginMgr)
+	uidNum := len(AllLoginMgr)
 	rand.Seed(time.Now().UnixNano())
 	if msgnum == 0 {
 		os.Exit(0)
@@ -105,7 +105,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 	} else {
 		for i := 0; i < msgnum; i++ {
 			var r int
-			//time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
+			// time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
 			// 互相发送消息，非自己
 			for {
 				r = rand.Intn(uidNum)
@@ -115,7 +115,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 					break
 				}
 			}
-			recvId := allLoginMgr[r].userID
+			recvId := AllLoginMgr[strconv.Itoa(r)].UserID
 			idx := strconv.FormatInt(int64(i), 10)
 			for {
 				if runtime.NumGoroutine() > MaxNumGoroutine {
@@ -128,7 +128,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 			}
 			DoTestSendMsg(index, strMyUid, recvId, "", idx)
 		}
-		//Msgwg.Done()
+		// Msgwg.Done()
 	}
 }
 
@@ -156,21 +156,6 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 		}
 	}
 	log.Info("", "check map send -> map recv ok ", sameNum)
-	//log.Info("", "start check map recv -> map send ")
-	//sameNum = 0
-
-	//for k1, _ := range RecvAllMsg {
-	//	_, ok := SendSuccAllMsg[k1]
-	//	if ok {
-	//		sameNum++
-	//		//x := v1 + v2
-	//		//x = x + x
-	//
-	//	} else {
-	//		log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
-	//		//	return false
-	//	}
-	//}
 	maxCostMsgID := ""
 	minCostTime := int64(1000000)
 	maxCostTime := int64(0)

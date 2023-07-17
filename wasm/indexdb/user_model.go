@@ -17,18 +17,17 @@
 
 package indexdb
 
-import "context"
+import (
+	"context"
+	"open_im_sdk/wasm/exec"
+)
 
 import (
-	"errors"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/indexdb/temp_struct"
 	"time"
 )
-
-var ErrType = errors.New("from javascript data type err")
-var PrimaryKeyNull = errors.New("primary key is null err")
 
 type LocalUsers struct {
 }
@@ -38,7 +37,7 @@ func NewLocalUsers() *LocalUsers {
 }
 
 func (l *LocalUsers) GetLoginUser(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
-	user, err := Exec(userID)
+	user, err := exec.Exec(userID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -59,14 +58,14 @@ func (l *LocalUsers) GetLoginUser(ctx context.Context, userID string) (*model_st
 			result.GlobalRecvMsgOpt = temp.GlobalRecvMsgOpt
 			return &result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 
 	}
 }
 
 func (l *LocalUsers) UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
-	_, err := Exec(utils.StructToJsonString(user))
+	_, err := exec.Exec(utils.StructToJsonString(user))
 	return err
 
 }
@@ -75,10 +74,10 @@ func (l *LocalUsers) UpdateLoginUserByMap(ctx context.Context, user *model_struc
 		if t, ok := v.(time.Time); ok {
 			args["birth_time"] = utils.TimeToString(t)
 		} else {
-			return ErrType
+			return exec.ErrType
 		}
 	}
-	_, err := Exec(user.UserID, args)
+	_, err := exec.Exec(user.UserID, args)
 	return err
 }
 
@@ -92,6 +91,6 @@ func (l *LocalUsers) InsertLoginUser(ctx context.Context, user *model_struct.Loc
 	temp.Ex = user.Ex
 	temp.AttachedInfo = user.Ex
 	temp.GlobalRecvMsgOpt = user.GlobalRecvMsgOpt
-	_, err := Exec(utils.StructToJsonString(temp))
+	_, err := exec.Exec(utils.StructToJsonString(temp))
 	return err
 }
