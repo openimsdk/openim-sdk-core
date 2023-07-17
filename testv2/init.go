@@ -38,6 +38,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
+	config.DataDir = ""
 	configData, err := json.Marshal(config)
 	if err != nil {
 		panic(err)
@@ -67,7 +68,7 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	jsonReqData, err := json.Marshal(map[string]any{
 		"userID":     userID,
 		"platformID": 1,
-		"secret":     "openIM123",
+		"secret":     "tuoyun",
 		//"secret": "111111",
 	})
 	if err != nil {
