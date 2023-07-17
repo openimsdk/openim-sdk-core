@@ -79,6 +79,9 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	if err != nil {
 		return nil, err
 	}
+	if req.ContentType == "" {
+		req.ContentType = info.ContentType
+	}
 	partSize := info.PartSize
 	partSizes := info.PartSizes
 	partMd5s := info.PartMd5s

@@ -112,6 +112,8 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 			continue
 		}
 		delete(localMap, id)
+		log.ZDebug(ctx, "syncer come", "type", s.ts, "server", server, "local", local, "isEq", s.eq(server, local))
+
 		if s.eq(server, local) {
 			if err := s.onNotice(ctx, Unchanged, local, server, notice); err != nil {
 				log.ZError(ctx, "sync notice unchanged failed", err, "type", s.ts, "server", server, "local", local)
@@ -122,9 +124,6 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 		if err := s.update(ctx, server, local); err != nil {
 			log.ZError(ctx, "sync update failed", err, "type", s.ts, "server", server, "local", local)
 			return err
-		}
-		if s.ts == "model_struct.LocalUser" {
-			log.ZDebug(ctx, "model_struct.LocalUser", "type", s.ts, "server", server, "local", local, "isEq", s.eq(server, local))
 		}
 		if err := s.onNotice(ctx, Update, server, local, notice); err != nil {
 			log.ZError(ctx, "sync notice update failed", err, "type", s.ts, "server", server, "local", local)

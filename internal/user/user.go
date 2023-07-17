@@ -98,6 +98,37 @@ func (u *User) initSyncer() {
 	)
 }
 
+//func (u *User) equal(a, b *model_struct.LocalUser) bool {
+//	if a.CreateTime != b.CreateTime {
+//		log.ZDebug(context.Background(), "user equal", "a", a.CreateTime, "b", b.CreateTime)
+//	}
+//	if a.UserID != b.UserID {
+//		log.ZDebug(context.Background(), "user equal", "a", a.UserID, "b", b.UserID)
+//	}
+//	if a.Ex != b.Ex {
+//		log.ZDebug(context.Background(), "user equal", "a", a.Ex, "b", b.Ex)
+//	}
+//
+//	if a.Nickname != b.Nickname {
+//		log.ZDebug(context.Background(), "user equal", "a", a.Nickname, "b", b.Nickname)
+//	}
+//	if a.FaceURL != b.FaceURL {
+//		log.ZDebug(context.Background(), "user equal", "a", a.FaceURL, "b", b.FaceURL)
+//	}
+//	if a.AttachedInfo != b.AttachedInfo {
+//		log.ZDebug(context.Background(), "user equal", "a", a.AttachedInfo, "b", b.AttachedInfo)
+//	}
+//	if a.GlobalRecvMsgOpt != b.GlobalRecvMsgOpt {
+//		log.ZDebug(context.Background(), "user equal", "a", a.GlobalRecvMsgOpt, "b", b.GlobalRecvMsgOpt)
+//	}
+//	if a.AppMangerLevel != b.AppMangerLevel {
+//		log.ZDebug(context.Background(), "user equal", "a", a.AppMangerLevel, "b", b.AppMangerLevel)
+//	}
+//	return a.UserID == b.UserID && a.Nickname == b.Nickname && a.FaceURL == b.FaceURL &&
+//		a.CreateTime == b.CreateTime && a.AttachedInfo == b.AttachedInfo &&
+//		a.Ex == b.Ex && a.GlobalRecvMsgOpt == b.GlobalRecvMsgOpt && a.AppMangerLevel == b.AppMangerLevel
+//}
+
 // DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)

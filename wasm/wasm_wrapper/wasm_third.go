@@ -25,7 +25,7 @@ import (
 	"syscall/js"
 )
 
-// ------------------------------------group---------------------------
+// ------------------------------------third---------------------------
 type WrapperThird struct {
 	*WrapperCommon
 }
@@ -53,7 +53,7 @@ func NewTempBase(u event_listener.UploadInterface) *TempBase {
 }
 
 func (t TempBase) OnError(errCode int32, errMsg string) {
-	t.u.OnError(errCode,errMsg)
+	t.u.OnError(errCode, errMsg)
 }
 
 func (t TempBase) OnSuccess(data string) {
@@ -64,7 +64,6 @@ var _ open_im_sdk_callback.UploadFileCallback = (*TempUploadFile)(nil)
 
 type TempUploadFile struct {
 	u event_listener.UploadInterface
-
 }
 
 func NewTempUploadFile(u event_listener.UploadInterface) *TempUploadFile {
@@ -76,15 +75,15 @@ func (t TempUploadFile) Open(size int64) {
 }
 
 func (t TempUploadFile) PartSize(partSize int64, num int) {
-	t.u.PartSize(partSize,num)
+	t.u.PartSize(partSize, num)
 }
 
 func (t TempUploadFile) HashPartProgress(index int, size int64, partHash string) {
-	t.u.HashPartProgress(index,size,partHash)
+	t.u.HashPartProgress(index, size, partHash)
 }
 
 func (t TempUploadFile) HashPartComplete(partsHash string, fileHash string) {
-	t.u.HashPartComplete(partsHash,fileHash)
+	t.u.HashPartComplete(partsHash, fileHash)
 }
 
 func (t TempUploadFile) UploadID(uploadID string) {
@@ -92,20 +91,19 @@ func (t TempUploadFile) UploadID(uploadID string) {
 }
 
 func (t TempUploadFile) UploadPartComplete(index int, partSize int64, partHash string) {
-	t.u.UploadPartComplete(index,partSize,partHash)
+	t.u.UploadPartComplete(index, partSize, partHash)
 }
 
 func (t TempUploadFile) UploadComplete(fileSize int64, streamSize int64, storageSize int64) {
-	t.u.UploadComplete(fileSize,streamSize,storageSize)
+	t.u.UploadComplete(fileSize, streamSize, storageSize)
 }
 
 func (t TempUploadFile) Complete(size int64, url string, typ int) {
-	t.u.Complete(size,url,typ)
+	t.u.Complete(size, url, typ)
 }
 
 func UploadFile(callback event_listener.UploadInterface, operationID string, req string) {
-	b:=NewTempBase(callback)
-	t:=NewTempUploadFile(callback)
-	open_im_sdk.UploadFile(b,operationID,req,t)
+	b := NewTempBase(callback)
+	t := NewTempUploadFile(callback)
+	open_im_sdk.UploadFile(b, operationID, req, t)
 }
-

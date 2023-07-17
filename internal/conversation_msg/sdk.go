@@ -424,10 +424,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
 			//PutID:    s.ClientMsgID,
-			Filepath: sourcePath,
-			Uuid:     s.PictureElem.SourcePicture.UUID,
-			Name:     c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
-			Cause:    "msg-picture",
+			ContentType: "image/jpeg",
+			Filepath:    sourcePath,
+			Uuid:        s.PictureElem.SourcePicture.UUID,
+			Name:        c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
+			Cause:       "msg-picture",
 		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
