@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/testv3/funcation"
+	"sync"
 	"testing"
 )
 
@@ -37,15 +38,21 @@ func Test_RegisterOne(t *testing.T) {
 }
 
 func Test_RegisterBatch(t *testing.T) {
-	count := 100000
+	count := 10000
 	var users []funcation.Users
+	var wg sync.WaitGroup
+	wg.Add(count)
 	for i := 1; i <= count; i++ {
-		users = append(users, funcation.Users{
-			Uid:      fmt.Sprintf("register_test_%d", i),
-			Nickname: fmt.Sprintf("register_test_%d", i),
-			FaceUrl:  "",
-		})
+		go func(i int) {
+			users = append(users, funcation.Users{
+				Uid:      fmt.Sprintf("register_%d", i),
+				Nickname: fmt.Sprintf("register_%d", i),
+				FaceUrl:  "",
+			})
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 	log.Info("users length", len(users))
 	success, fail := funcation.RegisterBatch(users)
 	t.Log(success)

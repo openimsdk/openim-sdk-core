@@ -28,20 +28,15 @@ func LoginOne(uid string) bool {
 	return initAndLogin(uid, AllLoginMgr[uid].Token)
 }
 
-func CreateToken(uid string) string {
-	token, _ := GetToken(uid)
-	return token
-}
-
 // 批量登录
 // 返回值：成功登录和失败登录的 uidList
 func LoginBatch(uidList []string) ([]string, []string) {
 	var successList, failList []string
-	for i, uid := range uidList {
+	for _, uid := range uidList {
 		if LoginOne(uid) == true {
-			successList[i] = uid
+			successList = append(successList, uid)
 		} else {
-			failList[i] = uid
+			failList = append(failList, uid)
 		}
 	}
 	return successList, failList

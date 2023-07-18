@@ -39,8 +39,8 @@ var (
 	rotateCount = uint(0)
 	LogLevel    = uint32(6)
 	PlatformID  = int32(1)
-	// Secret              = "tuoyun"
-	Secret              = "openIM123"
+	Secret      = "tuoyun"
+	// Secret              = "openIM123"
 	IsLogStandardOutput = true
 	isLogJson           = false
 	LogName             = ""
@@ -57,7 +57,10 @@ var (
 )
 
 func init() {
-	AdminToken, _ = GetToken("openIM123456")
+	AllLoginMgr = make(map[string]*CoreNode)
+
+	AdminUID := "openIM123456"
+	AdminToken, _ = GetToken(AdminUID)
 	// init log
 	if err := imLog.InitFromConfig(
 		"open-im-sdk-core", LogName, int(LogLevel), IsLogStandardOutput, isLogJson, LogFilePath, rotateCount); err != nil {
@@ -68,8 +71,8 @@ func init() {
 // system
 var (
 	// TESTIP       = "59.36.173.89"
-	// TESTIP       = "203.56.175.233"
-	TESTIP       = "43.154.157.177"
+	TESTIP = "203.56.175.233"
+	// TESTIP       = "43.154.157.177"
 	APIADDR      = "http://" + TESTIP + ":10002"
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/auth/user_register"

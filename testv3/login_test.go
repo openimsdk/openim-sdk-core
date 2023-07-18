@@ -16,7 +16,6 @@
 package testv3
 
 import (
-	"fmt"
 	"open_im_sdk/testv3/funcation"
 	"testing"
 	"time"
@@ -36,9 +35,4 @@ func Test_LoginBatch(t *testing.T) {
 	count := 100
 	userIDList := funcation.AllUserID
 	funcation.LoginBatch(userIDList[:count])
-}
-
-func Test_createToken(t *testing.T) {
-	token := funcation.CreateToken("1058027113")
-	fmt.Println(token)
 }
