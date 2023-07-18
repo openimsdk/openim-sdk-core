@@ -189,6 +189,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 func (c *Conversation) doDeleteMsgs(ctx context.Context, msg *sdkws.MsgData) {
 	tips := sdkws.DeleteMsgsTips{}
 	utils.UnmarshalNotificationElem(msg.Content, &tips)
+	log.ZDebug(ctx, "doDeleteMsgs", "seqs", tips.Seqs)
 	for _, v := range tips.Seqs {
 		msg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, v)
 		if err != nil {
