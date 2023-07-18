@@ -296,18 +296,15 @@ func Test_SendMsgByGroup_One(t *testing.T) {
 
 // 管理员邀请大量群成员进行群聊测试
 func Test_SendMsgByGroup_Batch(t *testing.T) {
-	count := 10
+	count := 1000
 
 	// groupID := "780048154"
-	groupID := "3159824577"
+	// groupID := "3159824577"
+	groupID := "4269768429"
 	var uidList []string
-	var ctxList []context.Context
 	for i := 0; i <= count; i++ {
 		uid := fmt.Sprintf("register_test_%v", i+1)
-		funcation.LoginOne(uid)
 		uidList = append(uidList, uid)
-		ctx := getCtx(uid)
-		ctxList = append(ctxList, ctx)
 	}
 	// 管理员批量邀请进群
 	adminUID := "openIM123456"
@@ -321,7 +318,8 @@ func Test_SendMsgByGroup_Batch(t *testing.T) {
 
 	for i := 0; i <= count; i++ {
 		uid := uidList[i]
-		ctx := ctxList[i]
+		funcation.LoginOne(uid)
+		ctx := getCtx(uid)
 		// time.Sleep(time.Duration(200) * time.Millisecond)
 
 		msg := fmt.Sprintf("%v send to %v message", uid, groupID)
