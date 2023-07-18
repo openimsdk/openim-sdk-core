@@ -97,12 +97,14 @@ func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.Sig
 					case *server_api_params.SignalReq_Invite:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
+								payload.Invite.UserID = invitee
 								listener.OnInvitationTimeout(utils.StructToJsonString(payload.Invite))
 							}
 						}
 					case *server_api_params.SignalReq_InviteInGroup:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
+								payload.InviteInGroup.UserID = invitee
 								listener.OnInvitationTimeout(utils.StructToJsonString(payload.InviteInGroup))
 							}
 						}
