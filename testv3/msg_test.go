@@ -312,7 +312,7 @@ func Test_SendMsgByGroup_Batch(t *testing.T) {
 	ctx := getCtx(adminUID)
 	err := funcation.AllLoginMgr[adminUID].Mgr.Group().InviteUserToGroup(ctx, groupID, "", uidList)
 	if err != nil {
-		t.Error("邀请群友失败")
+		t.Error("invite user fails")
 		return
 	}
 
