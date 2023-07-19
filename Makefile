@@ -45,7 +45,7 @@ XARGS := xargs -r
 LICENSE_TEMPLATE ?= $(ROOT_DIR)/LICENSE_TEMPLATE
 
 # The NAME of the binary to build
-NAME=ws_wrapper/cmd/open_im_sdk_server
+NAME=cmd/main
 
 # The directory to store the compiled binary
 BIN_DIR=../../bin/
