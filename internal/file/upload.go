@@ -18,6 +18,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -44,15 +45,47 @@ type partInfo struct {
 }
 
 func NewFile(database db_interface.DataBase, loginUserID string) *File {
-	return &File{database: database, loginUserID: loginUserID, lock: &sync.Mutex{}, uploading: make(map[string]func())}
+	return &File{database: database, loginUserID: loginUserID, confLock: &sync.Mutex{}, mapLocker: &sync.Mutex{}, uploading: make(map[string]*lockInfo)}
 }
 
 type File struct {
 	database    db_interface.DataBase
 	loginUserID string
-	lock        sync.Locker
+	confLock    sync.Locker
 	partLimit   *third.PartLimitResp
-	uploading   map[string]func()
+	mapLocker   sync.Locker
+	uploading   map[string]*lockInfo
+}
+
+type lockInfo struct {
+	count  int32
+	locker sync.Locker
+}
+
+func (f *File) lockHash(hash string) {
+	f.mapLocker.Lock()
+	locker, ok := f.uploading[hash]
+	if !ok {
+		locker = &lockInfo{count: 0, locker: &sync.Mutex{}}
+		f.uploading[hash] = locker
+	}
+	atomic.AddInt32(&locker.count, 1)
+	f.mapLocker.Unlock()
+	locker.locker.Lock()
+}
+
+func (f *File) unlockHash(hash string) {
+	f.mapLocker.Lock()
+	locker, ok := f.uploading[hash]
+	if !ok {
+		f.mapLocker.Unlock()
+		return
+	}
+	if atomic.AddInt32(&locker.count, -1) == 0 {
+		delete(f.uploading, hash)
+	}
+	f.mapLocker.Unlock()
+	locker.locker.Unlock()
 }
 
 func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFileCallback) (*UploadFileResp, error) {
@@ -89,6 +122,8 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	if err := file.StartSeek(0); err != nil {
 		return nil, err
 	}
+	f.lockHash(partMd5Val)
+	defer f.unlockHash(partMd5Val)
 	// 获取上传文件
 	bitmap, dbUpload, upload, err := f.getUpload(ctx, &third.InitiateMultipartUploadReq{
 		Hash:        partMd5Val,
@@ -172,8 +207,8 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 }
 
 func (f *File) cleanPartLimit() {
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.confLock.Lock()
+	defer f.confLock.Unlock()
 	f.partLimit = nil
 }
 
@@ -198,8 +233,8 @@ func (f *File) getPartNum(fileSize int64, partSize int64) int {
 }
 
 func (f *File) partSize(ctx context.Context, size int64) (int64, error) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.confLock.Lock()
+	defer f.confLock.Unlock()
 	if f.partLimit == nil {
 		resp, err := util.CallApi[third.PartLimitResp](ctx, constant.ObjectPartLimit, &third.PartLimitReq{})
 		if err != nil {
