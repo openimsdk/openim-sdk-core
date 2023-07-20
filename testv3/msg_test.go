@@ -16,21 +16,13 @@
 package testv3
 
 import (
-	"context"
 	"fmt"
-	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"open_im_sdk/testv3/funcation"
 	"testing"
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-)
-
-const (
-	ApiAddr = "http://203.56.175.233:10002"
 )
 
 // 定点发送消息（好友关系）
@@ -40,15 +32,7 @@ func Test_SendMsg(t *testing.T) {
 	userB := "4587931616"
 
 	funcation.LoginOne(userA)
-	operationID := utils.OperationIDGenerator()
-	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID: userA,
-		Token:  funcation.AllLoginMgr[userA].Token,
-	})
-	ctx = ccontext.WithOperationID(ctx, operationID)
-	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-		OperationID: operationID,
-	})
+	ctx := funcation.CreateCtx(userA)
 
 	msg := fmt.Sprintf("%v send to %v a message", userA, userB)
 	t.Log("prefix ", msg)
@@ -61,16 +45,7 @@ func Test_SendMsgNoFriend(t *testing.T) {
 	userA := "register_test_526"
 	userB := "2935954421"
 	funcation.LoginOne(userA)
-	operationID := utils.OperationIDGenerator()
-	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID:   userA,
-		Token:    funcation.AllLoginMgr[userA].Token,
-		IMConfig: funcation.Config,
-	})
-	ctx = ccontext.WithOperationID(ctx, operationID)
-	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-		OperationID: operationID,
-	})
+	ctx := funcation.CreateCtx(userA)
 
 	funcation.AllLoginMgr[userA].Mgr.Conversation().GetOneConversation(ctx, 1, userB)
 	msg := fmt.Sprintf("%v send to %v a message", userA, userB)
@@ -102,16 +77,7 @@ func Test_SendMsgNoFriendBatch(t *testing.T) {
 	// 用户A 向 大量用户 发送一条消息
 	userA := "6506148011"
 	funcation.LoginOne(userA)
-	operationID := utils.OperationIDGenerator()
-	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID:   userA,
-		Token:    funcation.AllLoginMgr[userA].Token,
-		IMConfig: funcation.Config,
-	})
-	ctx = ccontext.WithOperationID(ctx, operationID)
-	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-		OperationID: operationID,
-	})
+	ctx := funcation.CreateCtx(userA)
 
 	for i := range users {
 		msg := fmt.Sprintf("%v send to %v a message", userA, users[i].Uid)
@@ -126,16 +92,7 @@ func Test_SendMsgNoFriendBatch2(t *testing.T) {
 	// 用户A 向 大量用户 发送一条消息
 	userA := "bantanger"
 	funcation.LoginOne(userA)
-	operationID := utils.OperationIDGenerator()
-	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID:   userA,
-		Token:    funcation.AllLoginMgr[userA].Token,
-		IMConfig: funcation.Config,
-	})
-	ctx = ccontext.WithOperationID(ctx, operationID)
-	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-		OperationID: operationID,
-	})
+	ctx := funcation.CreateCtx(userA)
 
 	for i := range funcation.AllLoginMgr {
 		users := fmt.Sprintf("register_test_%v", i)
@@ -157,17 +114,7 @@ func Test_SendMsgBatch(t *testing.T) {
 	userB := "8423809271"
 
 	funcation.LoginOne(userA)
-	// funcation.LoginOne(userB)
-	operationID := utils.OperationIDGenerator()
-	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID:   userA,
-		Token:    funcation.AllLoginMgr[userA].Token,
-		IMConfig: sdk_struct.IMConfig{ApiAddr: ApiAddr},
-	})
-	ctx = ccontext.WithOperationID(ctx, operationID)
-	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-		OperationID: operationID,
-	})
+	ctx := funcation.CreateCtx(userA)
 	time.Sleep(10 * time.Millisecond)
 	log.ZInfo(ctx, "start send message")
 	funcation.AllLoginMgr[userA].Mgr.Conversation().GetOneConversation(ctx, 1, userB)
@@ -191,16 +138,7 @@ func Test_SendMsgByGroup(t *testing.T) {
 	msg := fmt.Sprintf("%v send to %v a message", userA, group)
 	t.Log("prefix ", msg)
 	funcation.LoginOne(userA)
-	// funcation.LoginOne(userB)
-	operationID := utils.OperationIDGenerator()
-	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID: userA,
-		Token:  funcation.AllLoginMgr[userA].Token,
-	})
-	ctx = ccontext.WithOperationID(ctx, operationID)
-	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-		OperationID: operationID,
-	})
+	ctx := funcation.CreateCtx(userA)
 
 	for i := 1; i <= 100000; i++ {
 		time.Sleep(time.Duration(200) * time.Millisecond)
@@ -228,15 +166,7 @@ func Test_SendMsgByGroup2(t *testing.T) {
 	funcation.LoginBatch(uid)
 	groupID := "3747979639"
 	for i := 1; i <= count; i++ {
-		operationID := utils.OperationIDGenerator()
-		ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-			UserID: uid[i],
-			Token:  funcation.AllLoginMgr[uid[i]].Token,
-		})
-		ctx = ccontext.WithOperationID(ctx, operationID)
-		ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-			OperationID: operationID,
-		})
+		ctx := funcation.CreateCtx(uid[i])
 
 		time.Sleep(time.Duration(200) * time.Millisecond)
 		msg := fmt.Sprintf("%v send to %v message by %d ", uid[i], groupID, i)
@@ -254,16 +184,7 @@ func Test_SendMsgByGroup3(t *testing.T) {
 	for i := 1; i <= count; i++ {
 		uid := fmt.Sprintf("register_test_%v", i)
 		funcation.LoginOne(uid)
-		operationID := utils.OperationIDGenerator()
-		ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-			UserID:   uid,
-			Token:    funcation.AllLoginMgr[uid].Token,
-			IMConfig: funcation.Config,
-		})
-		ctx = ccontext.WithOperationID(ctx, operationID)
-		ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-			OperationID: operationID,
-		})
+		ctx := funcation.CreateCtx(uid)
 
 		funcation.AllLoginMgr[uid].Mgr.Conversation().GetOneConversation(ctx, 2, uid)
 
@@ -283,7 +204,7 @@ func Test_SendMsgByGroup_One(t *testing.T) {
 	// groupID := "2592040611"
 	funcation.LoginOne(uid)
 
-	ctx := getCtx(uid)
+	ctx := funcation.CreateCtx(uid)
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
 	// 管理员邀请进群
@@ -300,7 +221,7 @@ func Test_SendMsgByGroup_Batch(t *testing.T) {
 
 	// groupID := "780048154"
 	// groupID := "3159824577"
-	groupID := "4269768429"
+	groupID := "1043882646"
 	var uidList []string
 	for i := 0; i <= count; i++ {
 		uid := fmt.Sprintf("register_test_%v", i+1)
@@ -309,7 +230,7 @@ func Test_SendMsgByGroup_Batch(t *testing.T) {
 	// 管理员批量邀请进群
 	adminUID := "openIM123456"
 	funcation.LoginOne(adminUID)
-	ctx := getCtx(adminUID)
+	ctx := funcation.CreateCtx(adminUID)
 	err := funcation.AllLoginMgr[adminUID].Mgr.Group().InviteUserToGroup(ctx, groupID, "", uidList)
 	if err != nil {
 		t.Error("invite user fails")
@@ -319,25 +240,11 @@ func Test_SendMsgByGroup_Batch(t *testing.T) {
 	for i := 0; i <= count; i++ {
 		uid := uidList[i]
 		funcation.LoginOne(uid)
-		ctx := getCtx(uid)
+		ctx := funcation.CreateCtx(uid)
 		// time.Sleep(time.Duration(200) * time.Millisecond)
 
 		msg := fmt.Sprintf("%v send to %v message", uid, groupID)
 		funcation.SendMsg(ctx, uid, "", groupID, msg)
 		log.ZDebug(ctx, "msg prefix", "msg", msg)
 	}
-}
-
-func getCtx(uid string) context.Context {
-	operationID := utils.OperationIDGenerator()
-	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID:   uid,
-		Token:    funcation.AllLoginMgr[uid].Token,
-		IMConfig: funcation.Config,
-	})
-	ctx = ccontext.WithOperationID(ctx, operationID)
-	ctx = ccontext.WithSendMessageCallback(ctx, funcation.TestSendMsgCallBack{
-		OperationID: operationID,
-	})
-	return ctx
 }

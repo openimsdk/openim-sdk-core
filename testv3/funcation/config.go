@@ -77,6 +77,7 @@ var (
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/auth/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
+	ApiAddr      = "http://203.56.175.233:10002"
 )
 
 var coreMgrLock sync.RWMutex

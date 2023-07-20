@@ -58,3 +58,17 @@ func InitContext(uid string) context.Context {
 	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 	return ctx
 }
+
+func CreateCtx(uid string) context.Context {
+	operationID := utils.OperationIDGenerator()
+	ctx := ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
+		UserID:   uid,
+		Token:    AllLoginMgr[uid].Token,
+		IMConfig: Config,
+	})
+	ctx = ccontext.WithOperationID(ctx, operationID)
+	ctx = ccontext.WithSendMessageCallback(ctx, TestSendMsgCallBack{
+		OperationID: operationID,
+	})
+	return ctx
+}
