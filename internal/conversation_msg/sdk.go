@@ -497,25 +497,22 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 
 		var wg sync.WaitGroup
 		wg.Add(2)
-		var putErrs [2]error
-		if s.VideoElem.SnapshotUUID != "" {
-			go func() {
-				defer wg.Done()
-				snapRes, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-					ContentType: s.VideoElem.SnapshotType,
-					Filepath:    snapPath,
-					Uuid:        s.VideoElem.SnapshotUUID,
-					Name:        c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
-					Cause:       "msg-video-snapshot",
-				}, nil)
-				if err != nil {
-					c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-					putErrs[0] = err
-					return
-				}
-				s.VideoElem.SnapshotURL = snapRes.URL
-			}()
-		}
+		var putErrs error
+		go func() {
+			defer wg.Done()
+			snapRes, err := c.file.UploadFile(ctx, &file.UploadFileReq{
+				ContentType: s.VideoElem.SnapshotType,
+				Filepath:    snapPath,
+				Uuid:        s.VideoElem.SnapshotUUID,
+				Name:        c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
+				Cause:       "msg-video-snapshot",
+			}, nil)
+			if err != nil {
+				log.ZWarn(ctx, "upload video snapshot failed", err)
+				return
+			}
+			s.VideoElem.SnapshotURL = snapRes.URL
+		}()
 
 		go func() {
 			defer wg.Done()
@@ -528,15 +525,12 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 			if err != nil {
 				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				putErrs[1] = err
+				putErrs = err
 			}
 			s.VideoElem.VideoURL = res.URL
 		}()
 		wg.Wait()
-		if err := putErrs[0]; err != nil {
-			return nil, err
-		}
-		if err := putErrs[1]; err != nil {
+		if err := putErrs; err != nil {
 			return nil, err
 		}
 		s.Content = utils.StructToJsonString(s.VideoElem)
