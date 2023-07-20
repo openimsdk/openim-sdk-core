@@ -1,3 +1,6 @@
+//go:build js && wasm
+// +build js,wasm
+
 // Copyright © 2023 OpenIM SDK. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build js && wasm
-// +build js,wasm
 
 package indexdb
 

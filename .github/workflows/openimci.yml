@@ -84,6 +84,11 @@ jobs:
           echo "Run unit test and get test coverage successfully" 
         continue-on-error: true
 
+      - name: Clean all build
+        run: |
+          sudo make clean
+          echo "Clean all build successfully" 
+
       - name: Build source code for host platform
         run: |
           sudo make build
@@ -95,11 +100,6 @@ jobs:
           sudo make add-copyright
           echo "OpenIM verify successfully" 
         continue-on-error: true
-
-      - name: Clean all build
-        run: |
-          sudo make clean
-          echo "Clean all build successfully" 
 
       - name: push OpenIM 
         uses: stefanzweifel/git-auto-commit-action@v4
