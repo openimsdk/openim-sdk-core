@@ -46,7 +46,10 @@ func (p *PressureTester) MsgReliabilityTest(sendUserID, recvUserID string, msgNu
 	wg.Add(1)
 	go func() {
 		for i := 0; i < msgNum; i++ {
-			sendCore.SendMsg(i)
+			ctx := context.Background()
+			if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
+				log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
+			}
 		}
 		wg.Done()
 	}()
