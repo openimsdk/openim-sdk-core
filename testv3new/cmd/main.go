@@ -22,4 +22,7 @@ func main() {
 	if err := baseCore.SendSingleMsg(ctx, recvID, 0); err != nil {
 		panic(err)
 	}
+	if err := baseCore.SendSingleMsg(ctx, recvID, 1); err != nil {
+		panic(err)
+	}
 }

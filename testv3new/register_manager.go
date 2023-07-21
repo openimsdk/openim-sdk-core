@@ -144,6 +144,10 @@ func (r *RegisterManager) GetTokens(userIDs ...string) []string {
 	return nil
 }
 
+func (r *RegisterManager) GetToken(userID string) (string, error) {
+	return "", nil
+}
+
 func (p *PressureTester) CreateGroup(groupID string, ownerUserID string, userIDs []string, groupName string) error {
 	ctx, _ := InitContext(ownerUserID)
 	req := &group.CreateGroupReq{
