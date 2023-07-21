@@ -354,15 +354,20 @@ func (u *LoginMgr) initResources() {
 }
 
 func (u *LoginMgr) logout(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
 	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
 	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdLogout server recycle resources failed...", err)
 		return err
+	} else {
+		log.ZDebug(ctx, "TriggerCmdLogout server recycle resources success...")
 	}
 	u.Exit()
 	_ = u.db.Close(u.ctx)
 	// user object must be rest  when user logout
 	u.initResources()
-	log.ZDebug(ctx, "TriggerCmdLogout success...")
+	log.ZDebug(ctx, "TriggerCmdLogout client success...")
 	return nil
 }
 
