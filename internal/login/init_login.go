@@ -359,7 +359,6 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
 	if err != nil {
 		log.ZWarn(ctx, "TriggerCmdLogout server recycle resources failed...", err)
-		return err
 	} else {
 		log.ZDebug(ctx, "TriggerCmdLogout server recycle resources success...")
 	}
