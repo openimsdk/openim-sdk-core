@@ -18,53 +18,47 @@ import (
 )
 
 type RegisterManager struct {
-	AllUserIDs   []string
-	Secret       string
-	IMConfig     sdk_struct.IMConfig
-	GlobalConfig ccontext.GlobalConfig
-	ctx          context.Context
+	AllUserIDs []string
+	Secret     string
+	IMConfig   sdk_struct.IMConfig
 }
 
 const (
 	UserRegistered   = "registered"
 	UserUnregistered = "unregistered"
+	AdminToken       = ""
 )
 
 func NewRegisterManager() *RegisterManager {
 	imConfig := sdk_struct.IMConfig{
-		ApiAddr:             testcore.APIADDR,
-		WsAddr:              testcore.WSADDR,
-		PlatformID:          int32(testcore.PLATFORMID),
-		DataDir:             "./../",
-		LogLevel:            uint32(1),
-		IsLogStandardOutput: true,
+		ApiAddr:    testcore.APIADDR,
+		PlatformID: int32(1),
+		WsAddr:     testcore.WSADDR,
+		DataDir:    "./../",
+		LogLevel:   uint32(0),
 	}
-	globalConfig := ccontext.GlobalConfig{
-		IMConfig: imConfig,
-	}
-	ctx := ccontext.WithInfo(context.Background(), &globalConfig)
-	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
-	return &RegisterManager{nil, testcore.SECRET, imConfig, globalConfig, ctx}
+	return &RegisterManager{nil, testcore.SECRET, imConfig}
 }
 
 func (r *RegisterManager) RegisterOne(userID string) error {
-	r.GlobalConfig.UserID = userID
+	ctx, config := InitContext(userID)
+	config.IMConfig = r.IMConfig
 	var getAccountCheckReq userPB.AccountCheckReq
 	var getAccountCheckResp userPB.AccountCheckResp
 	getAccountCheckReq.CheckUserIDs = []string{userID}
 	for {
-		err := util.ApiPost(r.ctx, constant.AccountCheck, &getAccountCheckReq, &getAccountCheckResp)
+		err := util.ApiPost(ctx, constant.AccountCheck, &getAccountCheckReq, &getAccountCheckResp)
 		if err != nil {
 			return err
 		}
 		if len(getAccountCheckResp.Results) == 1 && getAccountCheckResp.Results[0].AccountStatus == UserRegistered {
-			log.ZWarn(r.ctx, "Already registered", err, "userID", userID, "results", getAccountCheckResp.Results)
+			log.ZWarn(ctx, "Already registered", err, "userID", userID, "results", getAccountCheckResp.Results)
 			r.AllUserIDs = append(r.AllUserIDs, userID)
 		} else if len(getAccountCheckResp.Results) == 1 && getAccountCheckResp.Results[0].AccountStatus == UserUnregistered {
-			log.ZInfo(r.ctx, "not registered", "userID", userID, "results", getAccountCheckResp.Results)
+			log.ZInfo(ctx, "not registered", "userID", userID, "results", getAccountCheckResp.Results)
 			break
 		} else {
-			log.ZError(r.ctx, " failed, continue ", err, "checkUserIDs", getAccountCheckReq.CheckUserIDs)
+			log.ZError(ctx, " failed, continue ", err, "checkUserIDs", getAccountCheckReq.CheckUserIDs)
 			continue
 		}
 	}
@@ -72,13 +66,13 @@ func (r *RegisterManager) RegisterOne(userID string) error {
 	req.Users = []*sdkws.UserInfo{{UserID: userID}}
 	req.Secret = r.Secret
 	for {
-		err := util.ApiPost(r.ctx, constant.UserRegister, &req, nil)
+		err := util.ApiPost(ctx, constant.UserRegister, &req, nil)
 		if err != nil {
-			log.ZError(r.ctx, "post failed ,continue", err, testcore.REGISTERADDR)
+			log.ZError(ctx, "post failed ,continue", err, testcore.REGISTERADDR)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		} else {
-			log.ZInfo(r.ctx, "register ok", "addr", testcore.REGISTERADDR)
+			log.ZInfo(ctx, "register ok", "addr", testcore.REGISTERADDR)
 			r.AllUserIDs = append(r.AllUserIDs, userID)
 			return nil
 		}
@@ -86,23 +80,25 @@ func (r *RegisterManager) RegisterOne(userID string) error {
 }
 
 func (r *RegisterManager) RegisterBatch(userIDs []string) error {
-	r.GlobalConfig.UserID = userIDs[0]
+	ctx, config := InitContext(userIDs[0])
+	config.IMConfig = r.IMConfig
 	var getAccountCheckReq userPB.AccountCheckReq
 	var getAccountCheckResp userPB.AccountCheckResp
 	getAccountCheckReq.CheckUserIDs = userIDs
 	for {
-		err := util.ApiPost(r.ctx, constant.AccountCheck, &getAccountCheckReq, &getAccountCheckResp)
+		err := util.ApiPost(ctx, constant.AccountCheck, &getAccountCheckReq, &getAccountCheckResp)
 		if err != nil {
+			log.ZError(ctx, "ApiPost failed", err)
 			return err
 		}
 		if len(getAccountCheckResp.Results) == 1 && getAccountCheckResp.Results[0].AccountStatus == "registered" {
-			log.ZWarn(r.ctx, "Already registered", err, userIDs, getAccountCheckResp.Results)
+			log.ZWarn(ctx, "Already registered", err, "userIDs", userIDs, "resp", getAccountCheckResp.Results)
 			r.AllUserIDs = append(r.AllUserIDs, userIDs...)
 		} else if len(getAccountCheckResp.Results) == 1 && getAccountCheckResp.Results[0].AccountStatus == "unregistered" {
-			log.ZInfo(r.ctx, "not registered", userIDs, getAccountCheckResp.Results)
+			log.ZInfo(ctx, "not registered", "userIDs", userIDs, "resp", getAccountCheckResp.Results)
 			break
 		} else {
-			log.ZError(r.ctx, " failed, continue", err, getAccountCheckReq.CheckUserIDs)
+			log.ZError(ctx, " failed, continue", err, "resp checkUserIDs", getAccountCheckReq.CheckUserIDs)
 			continue
 		}
 	}
@@ -117,13 +113,13 @@ func (r *RegisterManager) RegisterBatch(userIDs []string) error {
 
 	req.Secret = r.Secret
 	for {
-		err := util.ApiPost(r.ctx, constant.UserRegister, &req, nil)
+		err := util.ApiPost(ctx, constant.UserRegister, &req, nil)
 		if err != nil {
-			log.ZError(r.ctx, "post failed ,continue", err, testcore.REGISTERADDR)
+			log.ZError(ctx, "post failed ,continue", err, testcore.REGISTERADDR)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		} else {
-			log.ZInfo(r.ctx, "register ok", "add", testcore.REGISTERADDR)
+			log.ZInfo(ctx, "register ok", "add", testcore.REGISTERADDR)
 			r.AllUserIDs = append(r.AllUserIDs, userIDs...)
 			return nil
 		}
@@ -133,25 +129,23 @@ func (r *RegisterManager) RegisterBatch(userIDs []string) error {
 func (r *RegisterManager) GetTokens(userIDs ...string) []string {
 	for i := 0; i < len(userIDs); i++ {
 		uid := userIDs[i]
-		r.GlobalConfig.Token = ""
+		ctx, config := InitContext(uid)
+		config.IMConfig = r.IMConfig
+		config.Token = ""
 		req := authPB.UserTokenReq{PlatformID: r.IMConfig.PlatformID, UserID: uid, Secret: r.Secret}
 		resp := authPB.UserTokenResp{}
-		err := util.ApiPost(r.ctx, constant.GetUsersToken, &req, &resp)
+		err := util.ApiPost(ctx, constant.GetUsersToken, &req, &resp)
 		if err != nil {
-			log.ZError(r.ctx, "ApiPost failed", err, "addr", testcore.TOKENADDR, "req", req)
+			log.ZError(ctx, "ApiPost failed", err, "addr", testcore.TOKENADDR, "req", req)
 		}
-		r.GlobalConfig.Token = resp.Token
-		log.ZInfo(r.ctx, "get token success", "token", resp.Token, "expireTimeSeconds", resp.ExpireTimeSeconds)
+		config.Token = resp.Token
+		log.ZInfo(ctx, "get token success", "token", resp.Token, "expireTimeSeconds", resp.ExpireTimeSeconds)
 	}
 	return nil
 }
 
-func (r *RegisterManager) GetToken(userID string) (string, error) {
-	return "", nil
-}
-
 func (p *PressureTester) CreateGroup(groupID string, ownerUserID string, userIDs []string, groupName string) error {
-	ctx := ccontext.WithOperationID(context.Background(), utils.OperationIDGenerator())
+	ctx, _ := InitContext(ownerUserID)
 	req := &group.CreateGroupReq{
 		MemberUserIDs: userIDs,
 		AdminUserIDs:  []string{},
@@ -169,4 +163,14 @@ func (p *PressureTester) CreateGroup(groupID string, ownerUserID string, userIDs
 	}
 	log.ZInfo(ctx, "create group success", "groupID", groupID, "ownerUserID", ownerUserID)
 	return nil
+}
+
+func InitContext(uid string) (context.Context, ccontext.GlobalConfig) {
+	config := ccontext.GlobalConfig{
+		UserID: uid,
+		Token:  AdminToken,
+	}
+	ctx := ccontext.WithInfo(context.Background(), &config)
+	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+	return ctx, config
 }
