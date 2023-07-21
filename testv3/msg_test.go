@@ -42,8 +42,8 @@ func Test_SendMsg(t *testing.T) {
 // 定点发送消息（非好友关系）
 func Test_SendMsgNoFriend(t *testing.T) {
 	// 用户A 向 用户B 发送一条消息
-	userA := "register_test_526"
-	userB := "2935954421"
+	userA := "bantanger"
+	userB := "9003169405"
 	funcation.LoginOne(userA)
 	ctx := funcation.CreateCtx(userA)
 
@@ -221,7 +221,7 @@ func Test_SendMsgByGroup_Batch(t *testing.T) {
 
 	// groupID := "780048154"
 	// groupID := "3159824577"
-	groupID := "1043882646"
+	groupID := "1938828611"
 	var uidList []string
 	for i := 0; i <= count; i++ {
 		uid := fmt.Sprintf("register_test_%v", i+1)
