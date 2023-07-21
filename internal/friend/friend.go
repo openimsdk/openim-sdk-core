@@ -193,9 +193,15 @@ func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 
 func (f *Friend) syncApplication(ctx context.Context, from *sdkws.FromToUserID) error {
 	if from.FromUserID == f.loginUserID {
+		if err := f.SyncFriendApplication(ctx); err != nil {
+			return err
+		}
 		return f.SyncSelfFriendApplication(ctx)
 		// send to me
 	} else if from.ToUserID == f.loginUserID {
+		if err := f.SyncSelfFriendApplication(ctx); err != nil {
+			return err
+		}
 		return f.SyncFriendApplication(ctx)
 	}
 	return fmt.Errorf("friend application notification error, fromUserID: %s, toUserID: %s", from.FromUserID, from.ToUserID)

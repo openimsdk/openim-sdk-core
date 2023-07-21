@@ -21,6 +21,7 @@ import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/wasm/exec"
 	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
@@ -34,7 +35,7 @@ func NewBlack(loginUserID string) *Black {
 
 // GetBlackListDB gets the blacklist list from the database
 func (i Black) GetBlackListDB(ctx context.Context) (result []*model_struct.LocalBlack, err error) {
-	gList, err := Exec()
+	gList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
@@ -50,14 +51,14 @@ func (i Black) GetBlackListDB(ctx context.Context) (result []*model_struct.Local
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 // GetBlackListUserID gets the list of blocked user IDs
 func (i Black) GetBlackListUserID(ctx context.Context) (result []string, err error) {
-	gList, err := Exec()
+	gList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
@@ -68,14 +69,14 @@ func (i Black) GetBlackListUserID(ctx context.Context) (result []string, err err
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 // GetBlackInfoByBlockUserID gets the information of a blocked user by their user ID
 func (i Black) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string) (result *model_struct.LocalBlack, err error) {
-	gList, err := Exec(blockUserID, i.loginUserID)
+	gList, err := exec.Exec(blockUserID, i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -87,14 +88,14 @@ func (i Black) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string
 			}
 			return &temp, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 // GetBlackInfoList gets the information of multiple blocked users by their user IDs
 func (i Black) GetBlackInfoList(ctx context.Context, blockUserIDList []string) (result []*model_struct.LocalBlack, err error) {
-	gList, err := Exec(utils.StructToJsonString(blockUserIDList))
+	gList, err := exec.Exec(utils.StructToJsonString(blockUserIDList))
 	if err != nil {
 		return nil, err
 	} else {
@@ -110,14 +111,14 @@ func (i Black) GetBlackInfoList(ctx context.Context, blockUserIDList []string) (
 			}
 			return result, err
 		} else {
-			return nil, ErrType
+			return nil, exec.ErrType
 		}
 	}
 }
 
 // InsertBlack inserts a new blocked user into the database
 func (i Black) InsertBlack(ctx context.Context, black *model_struct.LocalBlack) error {
-	_, err := Exec(utils.StructToJsonString(black))
+	_, err := exec.Exec(utils.StructToJsonString(black))
 	return err
 }
 
@@ -132,12 +133,12 @@ func (i Black) UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) 
 		Ex:             black.Ex,
 		AttachedInfo:   black.AttachedInfo,
 	}
-	_, err := Exec(black.OwnerUserID, black.BlockUserID, utils.StructToJsonString(tempLocalBlack))
+	_, err := exec.Exec(black.OwnerUserID, black.BlockUserID, utils.StructToJsonString(tempLocalBlack))
 	return err
 }
 
 // DeleteBlack removes a blocked user from the database
 func (i Black) DeleteBlack(ctx context.Context, blockUserID string) error {
-	_, err := Exec(blockUserID, i.loginUserID)
+	_, err := exec.Exec(blockUserID, i.loginUserID)
 	return err
 }

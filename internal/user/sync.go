@@ -29,7 +29,7 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
 	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
-		return err
+		log.ZError(ctx, "SyncLoginUserInfo", err)
 	}
 	var localUsers []*model_struct.LocalUser
 	if err == nil {

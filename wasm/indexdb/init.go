@@ -17,15 +17,9 @@
 
 package indexdb
 
-import "context"
-
 import (
-	"errors"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
-	"runtime"
-	"syscall/js"
-	"time"
+	"context"
+	"open_im_sdk/wasm/exec"
 )
 
 //1,使用wasm原生的方式，tinygo应用于go的嵌入式领域，支持的功能有限，支持go语言的子集,甚至json序列化都无法支持
@@ -55,102 +49,13 @@ type IndexDB struct {
 	loginUserID string
 }
 
-type CallbackData struct {
-	ErrCode int32       `json:"errCode"`
-	ErrMsg  string      `json:"errMsg"`
-	Data    interface{} `json:"data"`
-}
-
-const TIMEOUT = 5
-
-var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout，maybe should check  function from javascript")
-var jsErr = js.Global().Get("Error")
-
-func Exec(args ...interface{}) (output interface{}, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			switch x := r.(type) {
-			case string:
-				err = utils.Wrap(errors.New(x), "")
-			case error:
-				err = x
-			default:
-				err = utils.Wrap(errors.New("unknown panic"), "")
-			}
-		}
-	}()
-	thenChannel := make(chan []js.Value)
-	defer close(thenChannel)
-	catchChannel := make(chan []js.Value)
-	defer close(catchChannel)
-	pc, _, _, _ := runtime.Caller(1)
-	funcName := utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
-	data := CallbackData{}
-	thenFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		defer func() {
-			if r := recover(); r != nil {
-				switch x := r.(type) {
-				case string:
-					err = utils.Wrap(errors.New(x), "")
-				case error:
-					err = x
-				default:
-					err = utils.Wrap(errors.New("unknown panic"), "")
-				}
-			}
-		}()
-		log.Debug("js then funcation", "=> (main go context) "+funcName+" with respone ", args[0].String())
-		thenChannel <- args
-		return nil
-	})
-	defer thenFunc.Release()
-	catchFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		defer func() {
-			if r := recover(); r != nil {
-				switch x := r.(type) {
-				case string:
-					err = utils.Wrap(errors.New(x), "")
-				case error:
-					err = x
-				default:
-					err = utils.Wrap(errors.New("unknown panic"), "")
-				}
-			}
-		}()
-		log.Debug("js catch funcation", "=> (main go context) "+funcName+" with respone ", args[0].String())
-		catchChannel <- args
-		return nil
-	})
-	defer catchFunc.Release()
-	js.Global().Call(utils.FirstLower(funcName), args...).Call("then", thenFunc).Call("catch", catchFunc)
-	select {
-	case result := <-thenChannel:
-		interErr := utils.JsonStringToStruct(result[0].String(), &data)
-		if interErr != nil {
-			err = utils.Wrap(err, "return json unmarshal err from javascript")
-		}
-	case catch := <-catchChannel:
-		if catch[0].InstanceOf(jsErr) {
-			return nil, js.Error{Value: catch[0]}
-		} else {
-			panic("unknown javascript exception")
-		}
-	case <-time.After(TIMEOUT * time.Second):
-		panic(ErrTimoutFromJavaScript)
-	}
-	if data.ErrCode != 0 {
-		return "", errors.New(data.ErrMsg)
-	}
-	return data.Data, err
-}
-
 func (i IndexDB) Close(ctx context.Context) error {
-	_, err := Exec()
+	_, err := exec.Exec()
 	return err
 }
 
 func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) error {
-	_, err := Exec(userID, dataDir)
+	_, err := exec.Exec(userID, dataDir)
 	return err
 }
 
