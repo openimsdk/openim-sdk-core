@@ -1,0 +1,3 @@
+package testcore
+
+// config here
