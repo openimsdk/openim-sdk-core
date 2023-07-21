@@ -541,11 +541,18 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			s.Content = utils.StructToJsonString(s.FileElem)
 			break
 		}
+		name := s.FileElem.FileName
+		if name == "" {
+			name = s.FileElem.FilePath
+		}
+		if name == "" {
+			name = fmt.Sprintf("msg_file_%s.unknown", s.ClientMsgID)
+		}
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
 			ContentType: content_type.GetType(s.FileElem.FileType, filepath.Ext(s.FileElem.FilePath), filepath.Ext(s.FileElem.FileName)),
 			Filepath:    s.FileElem.FilePath,
 			Uuid:        s.FileElem.UUID,
-			Name:        c.fileName("file", s.ClientMsgID) + "/" + filepath.Base(s.FileElem.FileName),
+			Name:        c.fileName("file", s.ClientMsgID) + "/" + filepath.Base(name),
 			Cause:       "msg-file",
 		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
