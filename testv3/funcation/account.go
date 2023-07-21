@@ -25,6 +25,7 @@ import (
 
 func RegisterOne(uid, nickname, faceurl string) (bool, error) {
 	InitContext(uid)
+	// config.UserID = uid
 	res, err := checkUserAccount(uid)
 	if err != nil {
 		return false, err
@@ -63,7 +64,7 @@ func checkUserAccount(uid string) (bool, error) {
 	var getAccountCheckResp userPB.AccountCheckResp
 	getAccountCheckReq.CheckUserIDs = []string{uid}
 	for {
-		err := util.ApiPost(ctx, "/user/account_check", &getAccountCheckReq, &getAccountCheckResp)
+		err := util.ApiPost(ctx, ACCOUNT_CHECK, &getAccountCheckReq, &getAccountCheckResp)
 		if err != nil {
 			return false, err
 		}
@@ -89,7 +90,7 @@ func registerUserAccount(uid, nickname, faceurl string) bool {
 	req.Users = []*sdkws.UserInfo{{UserID: uid, Nickname: nickname, FaceURL: faceurl}}
 	req.Secret = Secret
 	for {
-		err := util.ApiPost(ctx, "/user/user_register", &req, nil)
+		err := util.ApiPost(ctx, USER_REGISTER, &req, nil)
 		if err != nil {
 			log.Error("post failed ,continue ", err.Error(), REGISTERADDR)
 			time.Sleep(100 * time.Millisecond)

@@ -22,35 +22,35 @@ import (
 	"time"
 )
 
-func (t *testInitLister) OnUserTokenExpired() {
+func (t *initLister) OnUserTokenExpired() {
 	log.Info("", utils.GetSelfFuncName())
 }
-func (t *testInitLister) OnConnecting() {
-	log.Info("", utils.GetSelfFuncName())
-}
-
-func (t *testInitLister) OnConnectSuccess() {
+func (t *initLister) OnConnecting() {
 	log.Info("", utils.GetSelfFuncName())
 }
 
-func (t *testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
+func (t *initLister) OnConnectSuccess() {
+	log.Info("", utils.GetSelfFuncName())
+}
+
+func (t *initLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
 	log.Info("", utils.GetSelfFuncName(), ErrCode, ErrMsg)
 }
 
-func (t *testInitLister) OnKickedOffline() {
+func (t *initLister) OnKickedOffline() {
 	log.Error("", utils.GetSelfFuncName(), "kick!!!!!!!!!!!!!!!!!!!!")
 	os.Exit(-1)
 }
 
-func (t *testInitLister) OnSelfInfoUpdated(info string) {
+func (t *initLister) OnSelfInfoUpdated(info string) {
 	log.Info("", utils.GetSelfFuncName())
 }
 
-func (t *testInitLister) OnSuccess() {
+func (t *initLister) OnSuccess() {
 	log.Info("", utils.GetSelfFuncName())
 }
 
-func (t *testInitLister) OnError(code int32, msg string) {
+func (t *initLister) OnError(code int32, msg string) {
 	log.Info("", utils.GetSelfFuncName(), code, msg)
 }
 
@@ -69,12 +69,12 @@ func (b *BaseSuccessFailed) OnSuccess(data string) {
 
 func (c *conversationCallBack) OnError(errCode int32, errMsg string) {
 	// TODO implement me
-	panic("implement me")
+	// panic("implement me")
 }
 
 func (c *conversationCallBack) OnSuccess(data string) {
 	// TODO implement me
-	panic("implement me")
+	// panic("implement me")
 }
 
 func (c *conversationCallBack) OnNewConversation(conversationList string) {
@@ -87,7 +87,7 @@ func (c *conversationCallBack) OnConversationChanged(conversationList string) {
 
 func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
 	// TODO implement me
-	panic("implement me")
+	// panic("implement me")
 }
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
@@ -113,7 +113,6 @@ func (testGroupListener) OnGroupMemberAdded(callbackInfo string) {
 }
 func (testGroupListener) OnGroupMemberDeleted(callbackInfo string) {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
 }
 
 func (testGroupListener) OnGroupApplicationAdded(callbackInfo string) {
@@ -194,7 +193,7 @@ func (m *MsgListenerCallBak) OnMsgDeleted(s string) {}
 
 func (m *MsgListenerCallBak) OnRecvOfflineNewMessages(messageList string) {
 	// TODO implement me
-	panic("implement me")
+	// panic("implement me")
 }
 
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
@@ -223,11 +222,11 @@ func (userCallback) OnSelfInfoUpdated(callbackData string) {
 }
 
 func (c *conversationCallBack) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
-	panic("implement me")
+	// panic("implement me")
 }
 
 func (c *conversationCallBack) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
-	panic("implement me")
+	// panic("implement me")
 }
 
 func (c *conversationCallBack) OnSyncServerProgress(progress int) {
