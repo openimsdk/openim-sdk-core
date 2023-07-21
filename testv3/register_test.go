@@ -24,8 +24,8 @@ import (
 )
 
 func Test_RegisterOne(t *testing.T) {
-	uid := "123456"
-	nickname := "123456"
+	uid := "bantanger"
+	nickname := "bantanger"
 	faceUrl := ""
 	register, err := funcation.RegisterOne(uid, nickname, faceUrl)
 	if err != nil {
@@ -60,6 +60,6 @@ func Test_RegisterBatch(t *testing.T) {
 }
 
 func Test_getToken(t *testing.T) {
-	token, _ := funcation.GetToken("123456")
+	token, _ := funcation.GetToken("9003169405")
 	t.Log(token)
 }
