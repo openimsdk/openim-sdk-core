@@ -16,23 +16,35 @@ import (
 )
 
 type BaseCore struct {
-	longConnMgr        *interaction.LongConnMgr
-	userID             string
-	recvMsgNum         int
-	platformID         int32
-	pushMsgAndMaxSeqCh chan common.Cmd2Value
+	longConnMgr         *interaction.LongConnMgr
+	userID              string
+	platformID          int32
+	pushMsgAndMaxSeqCh  chan common.Cmd2Value
+	recvPushMsgCallback func(msg *sdkws.MsgData)
+	wsUrl               string
 }
 
-func NewBaseCore(userID string) *BaseCore {
-	ctx := context.Background()
+func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *BaseCore) {
+	return func(core *BaseCore) {
+		core.recvPushMsgCallback = callback
+	}
+}
+
+func NewBaseCore(ctx context.Context, userID string, opts ...func(core *BaseCore)) *BaseCore {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListner{}, nil, pushMsgAndMaxSeqCh, nil)
-	return &BaseCore{
+	core := &BaseCore{
 		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		longConnMgr:        longConnMgr,
 		userID:             userID,
 		platformID:         constant.AndroidPlatformID,
 	}
+	for _, opt := range opts {
+		opt(core)
+	}
+	go core.recvPushMsg()
+	go core.longConnMgr.Run(ctx)
+	return core
 }
 
 func (b *BaseCore) SendSingleMsg(ctx context.Context, userID string, index int) error {
@@ -78,16 +90,24 @@ func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index in
 }
 
 func (b *BaseCore) recvPushMsg() {
-	// for {
-	// 	cmd := <-b.PushMsgAndMaxSeqCh
-
-	// }
+	for {
+		cmd := <-b.pushMsgAndMaxSeqCh
+		switch cmd.Cmd {
+		case constant.CmdPushMsg:
+			pushMsgs := cmd.Value.(*sdkws.PushMessages)
+			for _, push := range pushMsgs.Msgs {
+				for _, msg := range push.Msgs {
+					if b.recvPushMsgCallback == nil {
+						b.defaultRecvPushMsgCallback(msg)
+					} else {
+						b.recvPushMsgCallback(msg)
+					}
+				}
+			}
+		}
+	}
 }
 
-func (b *BaseCore) recvMsgCallback(msg *sdkws.MsgData) {
-	b.recvMsgNum++
-}
+func (b *BaseCore) defaultRecvPushMsgCallback(msg *sdkws.MsgData) {
 
-func (b *BaseCore) GetRecvMsgNum() int {
-	return b.recvMsgNum
 }
