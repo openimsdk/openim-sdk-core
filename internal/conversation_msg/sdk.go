@@ -24,6 +24,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/content_type"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
 	"path/filepath"
@@ -293,8 +294,9 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 }
 
 func (c *Conversation) fileName(ftype string, id string) string {
-	return fmt.Sprintf("%s_%s_%s", c.loginUserID, ftype, id)
+	return fmt.Sprintf("msg_%s_%s", ftype, id)
 }
+
 func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 	recvID, groupID string, options map[string]bool) (*model_struct.LocalConversation, error) {
 	if recvID == "" && groupID == "" {
@@ -517,7 +519,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		go func() {
 			defer wg.Done()
 			res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-				ContentType: s.VideoElem.VideoType,
+				ContentType: content_type.GetType(s.VideoElem.VideoType, filepath.Ext(s.VideoElem.VideoPath)),
 				Filepath:    videoPath,
 				Uuid:        s.VideoElem.VideoUUID,
 				Name:        c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
@@ -540,10 +542,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			break
 		}
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-			Filepath: s.FileElem.FilePath,
-			Uuid:     s.FileElem.UUID,
-			Name:     c.fileName("file", s.ClientMsgID) + filepath.Ext(s.FileElem.FilePath),
-			Cause:    "msg-file",
+			ContentType: content_type.GetType(s.FileElem.FileType, filepath.Ext(s.FileElem.FilePath), filepath.Ext(s.FileElem.FileName)),
+			Filepath:    s.FileElem.FilePath,
+			Uuid:        s.FileElem.UUID,
+			Name:        c.fileName("file", s.ClientMsgID) + "/" + filepath.Base(s.FileElem.FileName),
+			Cause:       "msg-file",
 		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
