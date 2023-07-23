@@ -113,7 +113,7 @@ const (
 	SetAppBadgeRouter    = RouterThird + "/set_app_badge"
 
 	// auth
-	GetUsersToken = RouterAuth + "/user/token"
+	GetUsersToken = RouterAuth + "/user_token"
 )
 const (
 	RouterGroup        = "/group"
