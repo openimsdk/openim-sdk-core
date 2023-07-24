@@ -25,6 +25,7 @@ type RegisterManager struct {
 const (
 	UserRegistered   = "registered"
 	UserUnregistered = "unregistered"
+	Admin            = "openIM123456"
 )
 
 func NewRegisterManager() *RegisterManager {
@@ -34,8 +35,7 @@ func NewRegisterManager() *RegisterManager {
 func (r *RegisterManager) RegisterOne(userID string) error {
 	ctx, config := InitContext(userID)
 	// checkAccount need admin token
-	admin := "openIM123456"
-	config.Token, _ = r.GetToken(admin)
+	config.Token, _ = r.GetToken(Admin)
 	var getAccountCheckReq userPB.AccountCheckReq
 	var getAccountCheckResp userPB.AccountCheckResp
 	getAccountCheckReq.CheckUserIDs = []string{userID}
