@@ -20,10 +20,14 @@ import (
 	"testing"
 )
 
-func Test_userRegister(t *testing.T) {
-	if err := log.InitFromConfig("sdk.log", "sdk", 3, true, false, "", 2); err != nil {
+func init() {
+	if err := log.InitFromConfig("sdk.log", "sdk", 3,
+		true, false, "", 2); err != nil {
 		panic(err)
 	}
+}
+
+func Test_userRegister(t *testing.T) {
 	userID := "bantanger123"
 	manager := NewRegisterManager()
 	_ = manager.RegisterOne(userID)
@@ -32,9 +36,6 @@ func Test_userRegister(t *testing.T) {
 }
 
 func Test_userRegisterBatch(t *testing.T) {
-	if err := log.InitFromConfig("sdk.log", "sdk", 3, true, false, "", 2); err != nil {
-		panic(err)
-	}
 	userID := "bantanger123"
 	manager := NewRegisterManager()
 	_ = manager.RegisterBatch([]string{userID})

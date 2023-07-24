@@ -129,7 +129,7 @@ func (p *PressureTester) CreateGroup(groupID string, ownerUserID string, userIDs
 
 func InitContext(uid string) (context.Context, *ccontext.GlobalConfig) {
 	config := ccontext.GlobalConfig{
-		UserID: uid, Token: "",
+		UserID: uid,
 		IMConfig: sdk_struct.IMConfig{
 			PlatformID:          constant.AndroidPlatformID,
 			ApiAddr:             testcore.APIADDR,

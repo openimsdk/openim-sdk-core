@@ -21,7 +21,13 @@ type PressureTester struct {
 }
 
 func NewPressureTester(apiAddr, wsAddr string) *PressureTester {
-	return &PressureTester{sendLightWeightSDKCores: map[string]*testcore.BaseCore{}, recvLightWeightSDKCores: map[string]*testcore.BaseCore{}}
+	return &PressureTester{
+		sendLightWeightSDKCores: map[string]*testcore.BaseCore{},
+		recvLightWeightSDKCores: map[string]*testcore.BaseCore{},
+		registerManager:         *NewRegisterManager(),
+		apiAddr:                 apiAddr,
+		wsAddr:                  wsAddr,
+	}
 }
 
 func NewCtx(apiAddr, wsAddr, userID, token string) context.Context {
@@ -58,8 +64,21 @@ func (p *PressureTester) InitRecvCores(userIDs []string) {
 }
 
 // user single chat send msg pressure test
-func (p *PressureTester) PressureSendMsgs(recvUserIDs []string, msgNumEveryUser int, duration time.Duration) {
+func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []string, msgNum int, duration time.Duration) {
+	// 每秒发送多少条消息
+	ctx, _ := InitContext(sendUserID)
+	p.InitSendCores([]string{sendUserID})
+	p.InitRecvCores(recvUserIDs)
+	sendCore := p.sendLightWeightSDKCores[sendUserID]
 
+	for _, recvUserID := range recvUserIDs {
+		for i := 0; i < msgNum; i++ {
+			time.Sleep(duration)
+			if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
+				log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
+			}
+		}
+	}
 }
 
 // group chat send msg pressure test
@@ -74,12 +93,14 @@ func (p *PressureTester) OrderingSendMsg(groupID string, msgNum int) {
 
 // reliability test
 func (p *PressureTester) MsgReliabilityTest(sendUserID, recvUserID string, msgNum int, duration time.Duration) {
+	ctx, _ := InitContext(sendUserID)
 	sendCore := p.sendLightWeightSDKCores[sendUserID]
-	ctx := context.Background()
 
-	if err := sendCore.SendSingleMsg(ctx, recvUserID, 1); err != nil {
-		log.ZError(ctx, "send msg error", err, "index", 1, "recvUserID", recvUserID, "sendUserID", sendUserID)
+	for i := 0; i < msgNum; i++ {
+		if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
+			log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
+		}
 	}
-
+	// recvCore := p.recvLightWeightSDKCores[recvUserID]
 	// log.ZInfo(context.Background(), "send msg done", "reliability", recvCore.GetRecvMsgNum() == msgNum)
 }
