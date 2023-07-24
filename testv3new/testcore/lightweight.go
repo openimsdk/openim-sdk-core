@@ -22,6 +22,14 @@ type BaseCore struct {
 	pushMsgAndMaxSeqCh  chan common.Cmd2Value
 	recvPushMsgCallback func(msg *sdkws.MsgData)
 	wsUrl               string
+	recvMap             map[string]int
+}
+
+func (b BaseCore) GetRecvMap() map[string]int {
+	if b.recvMap != nil {
+		return b.recvMap
+	}
+	return nil
 }
 
 func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *BaseCore) {
@@ -38,6 +46,7 @@ func NewBaseCore(ctx context.Context, userID string, opts ...func(core *BaseCore
 		longConnMgr:        longConnMgr,
 		userID:             userID,
 		platformID:         constant.AndroidPlatformID,
+		recvMap:            map[string]int{},
 	}
 	for _, opt := range opts {
 		opt(core)
@@ -109,5 +118,7 @@ func (b *BaseCore) recvPushMsg() {
 }
 
 func (b *BaseCore) defaultRecvPushMsgCallback(msg *sdkws.MsgData) {
-
+	if b.userID == msg.RecvID {
+		b.recvMap[msg.SendID+"_"+msg.RecvID]++
+	}
 }

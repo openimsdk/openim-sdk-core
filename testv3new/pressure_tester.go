@@ -2,6 +2,7 @@ package testv3new
 
 import (
 	"context"
+	"fmt"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
@@ -72,18 +73,52 @@ func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []strin
 	sendCore := p.sendLightWeightSDKCores[sendUserID]
 
 	for _, recvUserID := range recvUserIDs {
-		for i := 0; i < msgNum; i++ {
+		for i := 1; i <= msgNum; i++ {
 			time.Sleep(duration)
 			if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
 				log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
 			}
 		}
+		time.Sleep(100 * time.Millisecond)
+		recvCore := p.recvLightWeightSDKCores[recvUserID]
+		recvMap := recvCore.GetRecvMap()
+		count := recvMap[sendUserID+"_"+recvUserID]
+		fmt.Sprintf("recvUserID: %v ==> %v", recvUserID, count == msgNum)
+		log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
 	}
 }
 
 // group chat send msg pressure test
-func (p *PressureTester) PressureSendGroupMsgs(groupID string, msgNum int, duration time.Duration) {
+func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID string, msgNum int, duration time.Duration) {
+	if resp, err := p.GetGroupMembersInfo(groupID, sendUserIDs); err != nil {
+		log.ZError(context.Background(), "get group members info failed", err)
+		return
+	} else if resp.Members != nil {
+		log.ZError(context.Background(), "get group members info failed", err, "userIDs", sendUserIDs)
+		return
+	}
 
+	startTime := time.Now().UnixNano()
+	p.InitSendCores(sendUserIDs)
+	endTime := time.Now().UnixNano()
+	fmt.Println("bantanger init send cores time:", float64(endTime-startTime))
+	// p.InitRecvCores([]string{groupID})
+	// 管理员邀请进群
+	err := p.InviteUserToGroup(groupID, sendUserIDs)
+	if err != nil {
+		return
+	}
+
+	for _, sendUserID := range sendUserIDs {
+		ctx, _ := InitContext(sendUserID)
+		sendCore := p.sendLightWeightSDKCores[sendUserID]
+		for i := 1; i <= msgNum; i++ {
+			time.Sleep(duration)
+			if err := sendCore.SendGroupMsg(ctx, groupID, i); err != nil {
+				log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", groupID, "sendUserID", sendUserID)
+			}
+		}
+	}
 }
 
 // msg ordering test

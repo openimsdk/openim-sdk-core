@@ -36,7 +36,7 @@ func Test_userRegister(t *testing.T) {
 }
 
 func Test_userRegisterBatch(t *testing.T) {
-	userID := "bantanger123"
+	userID := "register_test_1"
 	manager := NewRegisterManager()
 	_ = manager.RegisterBatch([]string{userID})
 	token, _ := manager.GetToken(userID)

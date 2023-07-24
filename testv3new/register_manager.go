@@ -127,9 +127,44 @@ func (p *PressureTester) CreateGroup(groupID string, ownerUserID string, userIDs
 	return nil
 }
 
+func (p *PressureTester) InviteUserToGroup(groupID string, invitedUserIDs []string) error {
+	ctx, config := InitContext(groupID)
+	config.Token, _ = p.registerManager.GetToken(Admin)
+	req := &group.InviteUserToGroupReq{
+		GroupID:        groupID,
+		Reason:         "",
+		InvitedUserIDs: invitedUserIDs,
+	}
+	resp := &group.InviteUserToGroupResp{}
+	err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &req, &resp)
+	if err != nil {
+		log.ZError(ctx, "ApiPost failed ", err, "addr", testcore.TOKENADDR, "req", req)
+		return err
+	}
+	log.ZInfo(ctx, "create group success", "groupID", groupID, "invitedUserIDs", invitedUserIDs)
+	return nil
+}
+
+func (p *PressureTester) GetGroupMembersInfo(groupID string, userIDs []string) (*group.GetGroupMembersInfoResp, error) {
+	ctx, config := InitContext(groupID)
+	config.Token, _ = p.registerManager.GetToken(Admin)
+	req := &group.GetGroupMembersInfoReq{
+		GroupID: groupID,
+		UserIDs: userIDs,
+	}
+	resp := &group.GetGroupMembersInfoResp{}
+	err := util.ApiPost(ctx, constant.GetGroupMembersInfoRouter, &req, &resp)
+	if err != nil {
+		log.ZError(ctx, "ApiPost failed ", err, "addr", testcore.TOKENADDR, "req", req)
+		return nil, err
+	}
+	log.ZInfo(ctx, "create group success", "groupID", groupID, "userIDs", userIDs)
+	return resp, nil
+}
+
 func InitContext(uid string) (context.Context, *ccontext.GlobalConfig) {
 	config := ccontext.GlobalConfig{
-		UserID: uid,
+		UserID: uid, Token: "",
 		IMConfig: sdk_struct.IMConfig{
 			PlatformID:          constant.AndroidPlatformID,
 			ApiAddr:             testcore.APIADDR,
