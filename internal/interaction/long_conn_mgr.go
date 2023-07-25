@@ -504,7 +504,20 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return err
 			}
-			c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
+			switch apiResp.ErrCode {
+			case
+				errs.TokenExpiredError,
+				errs.TokenInvalidError,
+				errs.TokenMalformedError,
+				errs.TokenNotValidYetError,
+				errs.TokenUnknownError,
+				errs.TokenKickedError,
+				errs.TokenNotExistError:
+				c.listener.OnUserTokenExpired()
+				_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
+			default:
+				c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
+			}
 			log.ZWarn(ctx, "long conn establish failed", sdkerrs.New(apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt))
 			return errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 		}
