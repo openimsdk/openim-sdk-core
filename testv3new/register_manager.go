@@ -137,6 +137,7 @@ func (p *PressureTester) InviteUserToGroup(groupID string, invitedUserIDs []stri
 	}
 	resp := &group.InviteUserToGroupResp{}
 	err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &req, &resp)
+	log.ZInfo(ctx, "bantanger invite user to group router", "req", req)
 	if err != nil {
 		log.ZError(ctx, "ApiPost failed ", err, "addr", testcore.TOKENADDR, "req", req)
 		return err

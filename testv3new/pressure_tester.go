@@ -7,6 +7,9 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/testv3new/testcore"
+	"reflect"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
@@ -68,24 +71,37 @@ func (p *PressureTester) InitRecvCores(userIDs []string) {
 func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []string, msgNum int, duration time.Duration) {
 	// 每秒发送多少条消息
 	ctx, _ := InitContext(sendUserID)
-	p.InitSendCores([]string{sendUserID})
-	p.InitRecvCores(recvUserIDs)
+	p.WithTimer(p.InitSendCores)([]string{sendUserID})
+	p.WithTimer(p.InitRecvCores)(recvUserIDs)
+
 	sendCore := p.sendLightWeightSDKCores[sendUserID]
 
-	for _, recvUserID := range recvUserIDs {
-		for i := 1; i <= msgNum; i++ {
-			time.Sleep(duration)
-			if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
-				log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
+	fmt.Println("\nmsgNum ==> ", msgNum)
+	var wg sync.WaitGroup
+	wg.Add(len(recvUserIDs))
+	for idx, recvUserID := range recvUserIDs {
+		go func(idx int) {
+			for i := 1; i <= msgNum; i++ {
+				p.WithTimer(sendCore.SendSingleMsg)(ctx, recvUserID, i)
+				// if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
+				// 	log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
+				// }
+				time.Sleep(duration)
 			}
-		}
-		time.Sleep(100 * time.Millisecond)
-		recvCore := p.recvLightWeightSDKCores[recvUserID]
-		recvMap := recvCore.GetRecvMap()
-		count := recvMap[sendUserID+"_"+recvUserID]
-		fmt.Sprintf("recvUserID: %v ==> %v", recvUserID, count == msgNum)
-		log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
+			recvCore := p.recvLightWeightSDKCores[recvUserID]
+			if recvCore != nil {
+				time.Sleep(100 * time.Millisecond)
+				recvMap := recvCore.GetRecvMap()
+				if recvMap != nil {
+					count := recvMap[sendUserID+"_"+recvUserID]
+					fmt.Println(fmt.Sprintf("recvUserID: %v ==> recv msg num: %d %v", recvUserID, count, count == msgNum))
+					log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
+				}
+			}
+			wg.Done()
+		}(idx)
 	}
+	wg.Wait()
 }
 
 // group chat send msg pressure test
@@ -138,4 +154,25 @@ func (p *PressureTester) MsgReliabilityTest(sendUserID, recvUserID string, msgNu
 	}
 	// recvCore := p.recvLightWeightSDKCores[recvUserID]
 	// log.ZInfo(context.Background(), "send msg done", "reliability", recvCore.GetRecvMsgNum() == msgNum)
+}
+
+// WithTimer Decorative function, accept a function as a parameter, and return a packaging function
+func (p *PressureTester) WithTimer(f interface{}) func(...interface{}) {
+	return func(args ...interface{}) {
+		start := time.Now()
+		v := reflect.ValueOf(f)
+		if v.Kind() != reflect.Func {
+			log.ZError(context.Background(), "pass parameter is not a function", nil,
+				"actual", v.Kind(), "expected", reflect.Func)
+			return
+		}
+		funcName := runtime.FuncForPC(v.Pointer()).Name()
+		var in []reflect.Value
+		for _, arg := range args {
+			in = append(in, reflect.ValueOf(arg))
+		}
+		v.Call(in) // 执行原始函数
+		duration := time.Since(start)
+		fmt.Printf("Run Funcation: %s\nRun Funcation spent time: %s\n", funcName, duration)
+	}
 }
