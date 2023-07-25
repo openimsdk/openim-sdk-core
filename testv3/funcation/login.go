@@ -32,29 +32,29 @@ func LoginOne(uid string) bool {
 // 返回值：成功登录和失败登录的 uidList
 func LoginBatch(uidList []string) ([]string, []string) {
 	var successList, failList []string
-	for i, uid := range uidList {
+	for _, uid := range uidList {
 		if LoginOne(uid) == true {
-			successList[i] = uid
+			successList = append(successList, uid)
 		} else {
-			failList[i] = uid
+			failList = append(failList, uid)
 		}
 	}
 	return successList, failList
 }
 
 func collectToken(uid string) {
-	token, _ := getToken(uid)
+	token, _ := GetToken(uid)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	AllLoginMgr[uid] = &CoreNode{Token: token, UserID: uid}
 }
 
 func initAndLogin(uid, token string) bool {
-	var testinit testInitLister
+	var init initLister
 
 	lg := new(login.LoginMgr)
 
-	lg.InitSDK(Config, &testinit)
+	lg.InitSDK(Config, &init)
 	log.Info(uid, "new login ", lg)
 	AllLoginMgr[uid].Mgr = lg
 	log.Info(uid, "InitSDK ", Config, "index mgr", uid, lg)
