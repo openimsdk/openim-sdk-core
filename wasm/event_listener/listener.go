@@ -190,21 +190,24 @@ func (s *SendMessageCallback) OnProgress(progress int) {
 	mReply["clientMsgID"] = s.clientMsgID
 	s.globalEvent.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(mReply)).SendMessage()
 }
+
 type UploadInterface interface {
 	open_im_sdk_callback.Base
 	open_im_sdk_callback.UploadFileCallback
 }
+
 var _ UploadInterface = (*UploadFileCallback)(nil)
+
 type UploadFileCallback struct {
 	BaseCallback
 	globalEvent CallbackWriter
-	Uuid string
+	Uuid        string
 }
 
 func NewUploadFileCallback(funcName string, callback *js.Value) *UploadFileCallback {
 	return &UploadFileCallback{BaseCallback: BaseCallback{CallbackWriter: NewPromiseHandler().SetEvent(funcName)}, globalEvent: NewEventData(callback).SetEvent(funcName)}
 }
-func (u *UploadFileCallback) SetUuid(args *[]js.Value)*UploadFileCallback{
+func (u *UploadFileCallback) SetUuid(args *[]js.Value) *UploadFileCallback {
 	f := file.UploadFileReq{}
 	utils.JsonStringToStruct((*args)[1].String(), &f)
 	u.Uuid = f.Uuid
@@ -275,9 +278,6 @@ func (u *UploadFileCallback) Complete(size int64, url string, typ int) {
 	mReply["uuid"] = u.Uuid
 	u.globalEvent.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(mReply)).SendMessage()
 }
-
-
-
 
 type BatchMessageCallback struct {
 	CallbackWriter
@@ -393,6 +393,10 @@ type SignalingCallback struct {
 	CallbackWriter
 }
 
+func NewSignalingCallback(callback *js.Value) *SignalingCallback {
+	return &SignalingCallback{CallbackWriter: NewEventData(callback)}
+}
+
 func (s SignalingCallback) OnRoomParticipantConnected(onRoomParticipantConnectedCallback string) {
 	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(onRoomParticipantConnectedCallback).SendMessage()
 }
@@ -433,6 +437,11 @@ func (s SignalingCallback) OnHangUp(hangUpCallback string) {
 	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(hangUpCallback).SendMessage()
 }
 
-func NewSignalingCallback(callback *js.Value) *SignalingCallback {
-	return &SignalingCallback{CallbackWriter: NewEventData(callback)}
+func (s SignalingCallback) OnStreamChange(OnStreamChangeCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(OnStreamChangeCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnReceiveCustomSignal(CustomSignalCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(CustomSignalCallback).SendMessage()
+
 }
