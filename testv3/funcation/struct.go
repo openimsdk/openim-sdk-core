@@ -34,7 +34,7 @@ type BaseSuccessFailed struct {
 	time        time.Time
 }
 
-type testInitLister struct {
+type initLister struct {
 }
 
 type conversationCallBack struct {
