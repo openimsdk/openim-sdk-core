@@ -12,7 +12,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
-	github.com/shamsher31/goimgtype v1.0.0
 	github.com/sirupsen/logrus v1.9.2
 	github.com/tencentyun/qcloud-cos-sts-sdk v0.0.0-20220106031843-2efeb10ca2f6
 	google.golang.org/protobuf v1.31.0 // indirect
@@ -26,6 +25,7 @@ require golang.org/x/net v0.11.0
 require (
 	github.com/OpenIMSDK/Open-IM-Server v0.0.0-20230712062720-2e6ea7b193c3
 	github.com/google/go-cmp v0.5.9
+	golang.org/x/image v0.3.0
 )
 
 require (
@@ -39,7 +39,6 @@ require (
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/mattn/go-sqlite3 v1.14.12 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
-	github.com/shamsher31/goimgext v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
@@ -49,7 +48,6 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.10.0 // indirect
-	golang.org/x/image v0.3.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
