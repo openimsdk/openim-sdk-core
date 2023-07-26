@@ -15,7 +15,7 @@ require (
 	github.com/shamsher31/goimgtype v1.0.0
 	github.com/sirupsen/logrus v1.9.2
 	github.com/tencentyun/qcloud-cos-sts-sdk v0.0.0-20220106031843-2efeb10ca2f6
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.31.0
 	gorm.io/driver/sqlite v1.3.6
 	nhooyr.io/websocket v1.8.7
 )
@@ -26,6 +26,7 @@ require (
 	github.com/OpenIMSDK/protocol v0.0.1
 	github.com/OpenIMSDK/tools v0.0.4
 	github.com/google/go-cmp v0.5.9
+	google.golang.org/grpc v1.56.2
 	gorm.io/gorm v1.23.8
 )
 
@@ -45,5 +46,4 @@ require (
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect
-	google.golang.org/grpc v1.56.2 // indirect
 )

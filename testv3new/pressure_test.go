@@ -2,10 +2,11 @@ package testv3new
 
 import (
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/testv3new/testcore"
 	"testing"
 	"time"
+
+	"github.com/OpenIMSDK/tools/log"
 )
 
 func init() {

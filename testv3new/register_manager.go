@@ -10,11 +10,11 @@ import (
 	"open_im_sdk/testv3new/testcore"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	userPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
+	authPB "github.com/OpenIMSDK/protocol/auth"
+	"github.com/OpenIMSDK/protocol/group"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	userPB "github.com/OpenIMSDK/protocol/user"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 type RegisterManager struct {

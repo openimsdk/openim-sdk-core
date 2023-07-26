@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/testv3new"
 	"open_im_sdk/testv3new/testcore"
+
+	"github.com/OpenIMSDK/tools/log"
+	"github.com/OpenIMSDK/tools/mcontext"
 )
 
 func main() {

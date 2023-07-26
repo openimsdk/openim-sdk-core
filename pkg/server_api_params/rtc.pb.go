@@ -8,8 +8,8 @@ package server_api_params
 
 import (
 	context "context"
-	sdkws "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	wrapperspb "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
+	sdkws "github.com/OpenIMSDK/protocol/sdkws"
+	wrapperspb "github.com/OpenIMSDK/protocol/wrapperspb"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"

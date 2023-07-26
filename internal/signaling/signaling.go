@@ -24,9 +24,9 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/errs"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 )
