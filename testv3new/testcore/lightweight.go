@@ -89,7 +89,6 @@ func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index in
 		ClientMsgID:      utils.GetMsgID(b.userID),
 	}
 	now := time.Now().UnixMilli()
-	// time.Sleep(60 * time.Second)
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
 		return err
 	}
