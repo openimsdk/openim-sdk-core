@@ -125,18 +125,15 @@ changelog:
 nfpms:
   - id: packages
     builds:
-      - admin_api
-      - chat_api
-      - chat_rpc
-      - admin_rpc
+      - openim-sdk-core
     # Your app's vendor.
     vendor: OpenIMSDK
-    homepage: https://github.com/OpenIMSDK/chat
+    homepage: https://github.com/OpenIMSDK/openim-sdk-core
     maintainer: kubbot <https://github.com/kubbot>
     description: |-
       Auto sync github labels
       kubbot && openimbot
-    license: MIT
+    license: Apache-2.0
     formats:
       - apk
       - deb

@@ -48,7 +48,7 @@ func Test_JoinGroup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("JoinGroup success")
+	t.Log("InviteUserToGroup success")
 }
 
 func Test_QuitGroup(t *testing.T) {
@@ -258,7 +258,7 @@ func Test_GetGroup(t *testing.T) {
 	for i, info := range infos {
 		t.Logf("%d: %#v", i, info)
 	}
-	//time.Sleep(time.Second * 100000)
+	// time.Sleep(time.Second * 100000)
 }
 
 func Test_IsJoinGroup(t *testing.T) {
