@@ -16,16 +16,8 @@
 package testv3new
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"testing"
 )
-
-func init() {
-	if err := log.InitFromConfig("sdk.log", "sdk", 3,
-		true, false, "", 2); err != nil {
-		panic(err)
-	}
-}
 
 func Test_userRegister(t *testing.T) {
 	userID := "bantanger123"
