@@ -20,14 +20,19 @@ const (
 	UpdateSelfUserInfoRouter      = "/user/update_user_info"
 	SetGlobalRecvMessageOptRouter = "/user/set_global_msg_recv_opt"
 	GetUsersInfoFromCacheRouter   = "/user/get_users_info_from_cache"
+	AccountCheck                  = "/user/account_check"
+	UserRegister                  = "/user/user_register"
 
 	AddFriendRouter                    = "/friend/add_friend"
 	DeleteFriendRouter                 = "/friend/delete_friend"
 	GetFriendApplicationListRouter     = "/friend/get_friend_apply_list"      //recv
 	GetSelfFriendApplicationListRouter = "/friend/get_self_friend_apply_list" //send
-	GetFriendListRouter                = "/friend/get_friend_list"
-	AddFriendResponse                  = "/friend/add_friend_response"
-	SetFriendRemark                    = "/friend/set_friend_remark"
+
+	GetDesignatedFriendsApplyRouter = "/friend/get_designated_friend_apply"
+	GetFriendListRouter             = "/friend/get_friend_list"
+	GetDesignatedFriendsRouter      = "/friend/get_designated_friends"
+	AddFriendResponse               = "/friend/add_friend_response"
+	SetFriendRemark                 = "/friend/set_friend_remark"
 
 	AddBlackRouter     = "/friend/add_black"
 	RemoveBlackRouter  = "/friend/remove_black"
@@ -38,7 +43,7 @@ const (
 	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
 	NewestSeqRouter        = "/chat/newest_seq"
 
-	//msg
+	// msg
 	ClearConversationMsgRouter             = RouterMsg + "/clear_conversation_msg" // Clear the message of the specified conversation
 	ClearAllMsgRouter                      = RouterMsg + "/user_clear_all_msg"     // Clear all messages of the current user
 	DeleteMsgsRouter                       = RouterMsg + "/delete_msgs"            // Delete the specified message
@@ -60,7 +65,7 @@ const (
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
 	AwsStorageCredentialRouter          = "/third/aws_storage_credential"
 
-	//group
+	// group
 	CreateGroupRouter                 = RouterGroup + "/create_group"
 	SetGroupInfoRouter                = RouterGroup + "/set_group_info"
 	JoinGroupRouter                   = RouterGroup + "/join_group"
@@ -97,18 +102,21 @@ const (
 	ModifyConversationFieldRouter      = ConversationGroup + "/modify_conversation_field"
 	SetConversationsRouter             = ConversationGroup + "/set_conversations"
 
-	//organization
+	// organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
 	GetDepartmentMemberRouter = RouterOrganization + "/get_department_member"
 	ParseTokenRouter          = RouterAuth + "/parse_token"
 
-	//super_group
+	// super_group
 	GetJoinedSuperGroupListRouter = RouterSuperGroup + "/get_joined_group_list"
 	GetSuperGroupsInfoRouter      = RouterSuperGroup + "/get_groups_info"
 
-	//third
+	// third
 	FcmUpdateTokenRouter = RouterThird + "/fcm_update_token"
 	SetAppBadgeRouter    = RouterThird + "/set_app_badge"
+
+	// auth
+	GetUsersToken = RouterAuth + "/user_token"
 )
 const (
 	RouterGroup        = "/group"

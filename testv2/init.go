@@ -26,7 +26,7 @@ import (
 	"open_im_sdk/pkg/ccontext"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 var (

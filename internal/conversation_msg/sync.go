@@ -22,21 +22,14 @@ import (
 	"open_im_sdk/pkg/syncer"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/tools/log"
 )
 
-func (c *Conversation) SyncConversations(ctx context.Context) error {
-	ccTime := time.Now()
-	conversationsOnServer, err := c.getServerConversationList(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
+func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, conversationsOnServer []*model_struct.LocalConversation) error {
 	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
 	if err != nil {
 		return err
 	}
-	log.ZDebug(ctx, "get local cost time", "cost time", time.Since(ccTime), "conversation on local", conversationsOnLocal)
 	for _, v := range conversationsOnServer {
 		c.addFaceURLAndName(ctx, v)
 	}
@@ -54,6 +47,24 @@ func (c *Conversation) SyncConversations(ctx context.Context) error {
 	}
 	c.cache.UpdateConversations(conversationsOnLocal)
 	return nil
+}
+
+func (c *Conversation) SyncConversations(ctx context.Context, conversationIDs []string) error {
+	conversationsOnServer, err := c.getServerConversationsByIDs(ctx, conversationIDs)
+	if err != nil {
+		return err
+	}
+	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
+}
+
+func (c *Conversation) SyncAllConversations(ctx context.Context) error {
+	ccTime := time.Now()
+	conversationsOnServer, err := c.getServerConversationList(ctx)
+	if err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
+	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
 }
 
 func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {

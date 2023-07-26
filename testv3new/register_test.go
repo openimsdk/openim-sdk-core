@@ -12,20 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// @Author BanTanger 2023/7/11 10:27
-package funcation
+// @Author BanTanger 2023/7/23 15:02
+package testv3new
 
 import (
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/utils"
+	"testing"
 )
 
-func GetConversation(uid, conversationID, startMsgID string, count int) {
-	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
-	params.UserID = AllLoginMgr[uid].UserID
-	params.ConversationID = conversationID
-	params.StartClientMsgID = startMsgID
-	params.Count = count
-	open_im_sdk.GetAdvancedHistoryMessageList(&testConversation, utils.OperationIDGenerator(), utils.StructToJsonString(params))
+func Test_userRegister(t *testing.T) {
+	userID := "bantanger123"
+	manager := NewRegisterManager()
+	_ = manager.RegisterOne(userID)
+	token, _ := manager.GetToken(userID)
+	t.Log(token)
+}
+
+func Test_userRegisterBatch(t *testing.T) {
+	userID := "register_test_1"
+	manager := NewRegisterManager()
+	_ = manager.RegisterBatch([]string{userID})
+	token, _ := manager.GetToken(userID)
+	t.Log(token)
 }

@@ -23,10 +23,10 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/syncer"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	authPb "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	userPb "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
+	authPb "github.com/OpenIMSDK/protocol/auth"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	userPb "github.com/OpenIMSDK/protocol/user"
+	"github.com/OpenIMSDK/tools/log"
 
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"

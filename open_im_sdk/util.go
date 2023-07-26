@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/sdkerrs"
@@ -27,7 +26,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/tools/log"
+
+	"github.com/OpenIMSDK/tools/errs"
 )
 
 func isNumeric(kind reflect.Kind) bool {

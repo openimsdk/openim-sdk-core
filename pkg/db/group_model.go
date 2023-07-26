@@ -21,9 +21,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+
+	"gorm.io/gorm"
 )
 
 func (d *DataBase) InsertGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
@@ -60,6 +61,20 @@ func (d *DataBase) GetJoinedGroupListDB(ctx context.Context) ([]*model_struct.Lo
 	}
 	return transfer, utils.Wrap(err, "GetJoinedGroupList failed ")
 }
+
+func (d *DataBase) GetGroups(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
+	var groupList []model_struct.LocalGroup
+	err := d.conn.WithContext(ctx).Where("group_id in (?)", groupIDs).Find(&groupList).Error
+	var transfer []*model_struct.LocalGroup
+	for _, v := range groupList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, utils.Wrap(err, "GetGroups failed ")
+}
+
 func (d *DataBase) GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()

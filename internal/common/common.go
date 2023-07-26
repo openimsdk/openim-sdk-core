@@ -17,7 +17,7 @@ package common
 import (
 	"open_im_sdk/pkg/utils"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/golang/protobuf/proto"
 )
 
