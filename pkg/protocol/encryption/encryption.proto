@@ -1,0 +1,86 @@
+syntax = "proto3";
+package OpenIMServer.encryption;
+option go_package = "github.com/OpenIMSDK/protocol/encryption";
+
+message CommonResp{
+  int32  errCode = 1;
+  string errMsg = 2;
+}
+
+
+
+message MsgContent {
+  string  sendID = 1;
+  string  recvID = 2;
+  string groupID = 3;
+  int32  sessionType = 4;
+  int32 msgFrom = 5;
+  int32 contentType = 6;
+  bytes content = 7;
+  int32 keyVersion = 8;
+}
+
+message EncryptContentReq {
+    MsgContent msgContent = 1;
+    repeated  string recvIDList = 2;
+  string operationID = 3;
+}
+
+message EncryptContentResp{
+  CommonResp  CommonResp = 1;
+  repeated MsgContent msgContentList = 2;
+}
+
+
+message GetEncryptionKeyReq{
+  string conversationID = 1;
+  int32 keyVersion = 2;
+}
+
+message VersionKey {
+  int32 version = 1;
+  string key = 2;
+}
+message GetEncryptionKeyResp{
+  repeated VersionKey versionKeyList = 2;
+}
+
+
+message GenEncryptionKeyReq{
+  string conversationID = 1;
+
+}
+
+message GenEncryptionKeyResp{
+}
+
+
+message GroupVersionKey  {
+  int32 version = 1;
+  string key     =2;
+  string groupID =3;
+}
+
+
+
+
+
+message DecryptContentReq{
+  MsgContent msgContent = 1;
+  string operationID = 2;
+}
+
+message DecryptContentResp{
+  CommonResp  CommonResp = 1;
+  MsgContent msgContent = 2;
+}
+
+
+
+service encryption {
+//  rpc EncryptContent(EncryptContentReq)returns(EncryptContentResp);
+  rpc GetEncryptionKey(GetEncryptionKeyReq) returns (GetEncryptionKeyResp);
+  rpc GenEncryptionKey(GenEncryptionKeyReq) returns (GenEncryptionKeyResp);
+//  rpc DecryptContent(DecryptContentReq) returns (DecryptContentResp);
+}
+

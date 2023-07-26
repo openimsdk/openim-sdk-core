@@ -153,3 +153,6 @@ const (
 	SignalOperateStreamRouter     = signalGroup + "/signal_operate_stream"
 	SignalSendCustomSignalRouter  = signalGroup + "/signal_send_custom_signal"
 )
+const (
+	GetEncryptionKeyRouter = "/encryption" + "/get_encryption_key"
+)

@@ -20,6 +20,7 @@ import (
 	"errors"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
+	"open_im_sdk/internal/encryption"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/full"
@@ -73,6 +74,7 @@ type Conversation struct {
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	loginTime            int64
+	messageEncryptor     encryption.MessageEncryptor
 }
 
 func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
@@ -125,6 +127,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 		signal:               signal,
+		messageEncryptor:     encryption.NewConversationEncryptor(info.UserID()),
 	}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)

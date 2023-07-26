@@ -201,6 +201,7 @@ message MsgData {
   repeated string atUserIDList = 21;
   string attachedInfo = 22;
   string ex = 23;
+  int32 keyVersion = 40;
 }
 message PushMessages{
   map<string, PullMsgs> msgs = 1;

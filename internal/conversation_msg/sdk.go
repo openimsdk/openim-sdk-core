@@ -757,10 +757,14 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 		wsMsgData.AtUserIDList = s.AtTextElem.AtUserList
 	}
 	wsMsgData.OfflinePushInfo = offlinePushInfo
+	err := c.messageEncryptor.Encryption(ctx, &wsMsgData, lc.ConversationID)
+	if err != nil {
+		log.ZWarn(ctx, "encrypt message failed", err, "message", s)
+	}
 	s.Content = ""
 	var sendMsgResp sdkws.UserSendMsgResp
 
-	err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	err = c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
 	if err != nil {
 		log.ZError(ctx, "send msg to server failed", err, "message", s)
 		c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
