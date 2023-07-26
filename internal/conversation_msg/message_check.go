@@ -179,6 +179,10 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 		errHandle(newSeqList, list, err, messageListCallback)
 		log.ZDebug(ctx, "pullmsg SendReqWaitResp failed", err, "req")
 	} else {
+		err := c.messageEncryptor.Decryption(ctx, pullMsgResp.Msgs[conversationID].Msgs, conversationID)
+		if err != nil {
+			log.ZWarn(ctx, "encrypt message failed", err, "messages", pullMsgResp.Msgs[conversationID].Msgs)
+		}
 		log.ZDebug(ctx, "syncMsgFromServerSplit pull msg", "resp", pullMsgResp)
 		if v, ok := pullMsgResp.Msgs[conversationID]; ok {
 			c.pullMessageIntoTable(ctx, pullMsgResp.Msgs, conversationID)

@@ -204,6 +204,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.ZDebug(ctx, "message come here conversation ch", "conversation length", len(allMsg))
 	b := time.Now()
 	for conversationID, msgs := range allMsg {
+		err := c.messageEncryptor.Decryption(ctx, msgs.Msgs, conversationID)
+		if err != nil {
+			log.ZWarn(ctx, "encrypt message failed", err, "messages", msgs.Msgs)
+		}
+
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
 			conversationID, "message length", len(msgs.Msgs))
 		var insertMessage []*model_struct.LocalChatLog
