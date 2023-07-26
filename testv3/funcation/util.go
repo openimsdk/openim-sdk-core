@@ -16,7 +16,6 @@ package funcation
 
 import (
 	"context"
-	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
 	"net"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/ccontext"
@@ -26,6 +25,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	authPB "github.com/OpenIMSDK/protocol/auth"
 )
 
 func GenUid(uid int, prefix string) string {

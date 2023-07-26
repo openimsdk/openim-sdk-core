@@ -18,14 +18,27 @@ import (
 	"context"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/sdkerrs"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/friend"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
 )
 
+func (f *Friend) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID string) error {
+	var resp friend.GetDesignatedFriendsApplyResp
+	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsApply, &friend.GetDesignatedFriendsApplyReq{FromUserID: fromUserID, ToUserID: toUserID}, &resp); err != nil {
+		return nil
+	}
+	localData, err := f.db.GetBothFriendReq(ctx, fromUserID, toUserID)
+	if err != nil {
+		return err
+	}
+	return f.requestSendSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
+}
+
 // send
-func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
+func (f *Friend) SyncAllSelfFriendApplication(ctx context.Context) error {
 	req := &friend.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
 		return resp.FriendRequests
@@ -42,7 +55,7 @@ func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
 }
 
 // recv
-func (f *Friend) SyncFriendApplication(ctx context.Context) error {
+func (f *Friend) SyncAllFriendApplication(ctx context.Context) error {
 	req := &friend.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest { return resp.FriendRequests }
 	requests, err := util.GetPageAll(ctx, constant.GetFriendApplicationListRouter, req, fn)
@@ -56,7 +69,7 @@ func (f *Friend) SyncFriendApplication(ctx context.Context) error {
 	return f.requestRecvSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 
-func (f *Friend) SyncFriendList(ctx context.Context) error {
+func (f *Friend) SyncAllFriendList(ctx context.Context) error {
 	req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
 	friends, err := util.GetPageAll(ctx, constant.GetFriendListRouter, req, fn)
@@ -71,7 +84,35 @@ func (f *Friend) SyncFriendList(ctx context.Context) error {
 	return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, friends), localData, nil)
 }
 
-func (f *Friend) SyncBlackList(ctx context.Context) error {
+func (f *Friend) deleteFriend(ctx context.Context, friendUserID string) error {
+	friends, err := f.db.GetFriendInfoList(ctx, []string{friendUserID})
+	if err != nil {
+		return err
+	}
+	if len(friends) == 0 {
+		return sdkerrs.ErrUserIDNotFound.Wrap("friendUserID not found")
+	}
+	if err := f.db.DeleteFriendDB(ctx, friendUserID); err != nil {
+		return err
+	}
+	f.friendListener.OnFriendDeleted(*friends[0])
+	return nil
+}
+
+func (f *Friend) SyncFriends(ctx context.Context, friendIDs []string) error {
+	var resp friend.GetDesignatedFriendsResp
+	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsRouter, &friend.GetDesignatedFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs}, &resp); err != nil {
+		return err
+	}
+	localData, err := f.db.GetFriendInfoList(ctx, friendIDs)
+	if err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "sync friend", "data from server", resp.FriendsInfo, "data from local", localData)
+	return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo), localData, nil)
+}
+
+func (f *Friend) SyncAllBlackList(ctx context.Context) error {
 	req := &friend.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
 	serverData, err := util.GetPageAll(ctx, constant.GetBlackListRouter, req, fn)

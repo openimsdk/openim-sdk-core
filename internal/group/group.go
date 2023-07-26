@@ -27,9 +27,9 @@ import (
 	"open_im_sdk/pkg/utils"
 	"sync"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/group"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
@@ -254,8 +254,8 @@ func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]str
 	return groupIDs, nil
 }
 
-func (g *Group) SyncJoinedGroupMember(ctx context.Context) error {
-	groups, err := g.syncJoinedGroup(ctx)
+func (g *Group) SyncAllJoinedGroupMembers(ctx context.Context) error {
+	groups, err := g.syncAllJoinedGroups(ctx)
 	if err != nil {
 		return err
 	}
@@ -264,7 +264,7 @@ func (g *Group) SyncJoinedGroupMember(ctx context.Context) error {
 		wg.Add(1)
 		go func(groupID string) {
 			defer wg.Done()
-			if err := g.SyncGroupMember(ctx, groupID); err != nil {
+			if err := g.SyncAllGroupMember(ctx, groupID); err != nil {
 				log.ZError(ctx, "SyncGroupMember failed", err)
 			}
 		}(group.GroupID)

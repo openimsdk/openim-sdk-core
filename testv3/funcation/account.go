@@ -15,12 +15,13 @@
 package funcation
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	userPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"time"
+
+	"github.com/OpenIMSDK/protocol/sdkws"
+	userPB "github.com/OpenIMSDK/protocol/user"
 )
 
 func RegisterOne(uid, nickname, faceurl string) (bool, error) {

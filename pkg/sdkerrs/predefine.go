@@ -14,7 +14,7 @@
 
 package sdkerrs
 
-import "github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+import "github.com/OpenIMSDK/tools/errs"
 
 var (
 	ErrArgs           = errs.NewCodeError(ArgsError, "ArgsError")

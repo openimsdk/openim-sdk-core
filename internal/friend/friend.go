@@ -27,8 +27,8 @@ import (
 	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Friend {
@@ -191,22 +191,6 @@ func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	}()
 }
 
-func (f *Friend) syncApplication(ctx context.Context, from *sdkws.FromToUserID) error {
-	if from.FromUserID == f.loginUserID {
-		if err := f.SyncFriendApplication(ctx); err != nil {
-			return err
-		}
-		return f.SyncSelfFriendApplication(ctx)
-		// send to me
-	} else if from.ToUserID == f.loginUserID {
-		if err := f.SyncSelfFriendApplication(ctx); err != nil {
-			return err
-		}
-		return f.SyncFriendApplication(ctx)
-	}
-	return fmt.Errorf("friend application notification error, fromUserID: %s, toUserID: %s", from.FromUserID, from.ToUserID)
-}
-
 func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	if f.friendListener == nil {
 		return errors.New("f.friendListener == nil")
@@ -220,63 +204,82 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		return f.syncApplication(ctx, tips.FromToUserID)
+		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
 	case constant.FriendApplicationApprovedNotification:
 		var tips sdkws.FriendApplicationApprovedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		if err := f.SyncFriendList(ctx); err != nil {
-			return err
+		if tips.FromToUserID.FromUserID == f.loginUserID {
+			return f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
+		} else if tips.FromToUserID.ToUserID == f.loginUserID {
+			return f.SyncFriends(ctx, []string{tips.FromToUserID.FromUserID})
 		}
-		return f.syncApplication(ctx, tips.FromToUserID)
+		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
 	case constant.FriendApplicationRejectedNotification:
 		var tips sdkws.FriendApplicationRejectedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		return f.syncApplication(ctx, tips.FromToUserID)
+		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
 	case constant.FriendAddedNotification:
-		return f.SyncFriendList(ctx)
+		var tips sdkws.FriendAddedTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+			return err
+		}
+		if tips.Friend != nil && tips.Friend.FriendUser != nil {
+			if tips.Friend.FriendUser.UserID == f.loginUserID {
+				return f.SyncFriends(ctx, []string{tips.Friend.OwnerUserID})
+			} else if tips.Friend.OwnerUserID == f.loginUserID {
+				return f.SyncFriends(ctx, []string{tips.Friend.FriendUser.UserID})
+			}
+		}
 	case constant.FriendDeletedNotification:
 		var tips sdkws.FriendDeletedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		if tips.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncFriendList(ctx)
+		if tips.FromToUserID != nil {
+			if tips.FromToUserID.FromUserID == f.loginUserID {
+				return f.deleteFriend(ctx, tips.FromToUserID.ToUserID)
+			}
 		}
-		return nil
 	case constant.FriendRemarkSetNotification:
 		var tips sdkws.FriendInfoChangedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		if tips.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncFriendList(ctx)
+		if tips.FromToUserID != nil {
+			if tips.FromToUserID.FromUserID == f.loginUserID {
+				return f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
+			}
 		}
-		return nil
 	case constant.FriendInfoUpdatedNotification:
-		return f.SyncFriendList(ctx)
+		var tips sdkws.UserInfoUpdatedTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+			return err
+		}
+		if tips.UserID != f.loginUserID {
+			return f.SyncFriends(ctx, []string{tips.UserID})
+		}
 	case constant.BlackAddedNotification:
 		var tips sdkws.BlackAddedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncBlackList(ctx)
+			return f.SyncAllBlackList(ctx)
 		}
-		return nil
 	case constant.BlackDeletedNotification:
 		var tips sdkws.BlackDeletedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncBlackList(ctx)
+			return f.SyncAllBlackList(ctx)
 		}
-		return nil
 	default:
 		return fmt.Errorf("type failed %d", msg.ContentType)
 	}
+	return nil
 }

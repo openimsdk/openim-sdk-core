@@ -17,10 +17,11 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/tools/log"
 )
 
 func NewUploadFileCallback(ctx context.Context, progress func(progress int), msg *sdk_struct.MsgStruct, conversationID string, db db_interface.DataBase) file.UploadFileCallback {

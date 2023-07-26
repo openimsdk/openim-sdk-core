@@ -22,7 +22,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"sync"
 
-	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	imLog "github.com/OpenIMSDK/tools/log"
 )
 
 var Config = sdk_struct.IMConfig{

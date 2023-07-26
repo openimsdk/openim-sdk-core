@@ -15,10 +15,11 @@
 package funcation
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"strconv"
+
+	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 func init() {

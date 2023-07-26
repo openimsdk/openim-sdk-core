@@ -14,7 +14,7 @@
 
 package server_api_params
 
-import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+import "github.com/OpenIMSDK/protocol/sdkws"
 
 //UserID               string   `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
 //	Nickname             string   `protobuf:"bytes,2,opt,name=Nickname" json:"Nickname,omitempty"`
