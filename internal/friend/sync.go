@@ -27,7 +27,7 @@ import (
 
 func (f *Friend) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID string) error {
 	var resp friend.GetDesignatedFriendsApplyResp
-	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsApply, &friend.GetDesignatedFriendsApplyReq{FromUserID: fromUserID, ToUserID: toUserID}, &resp); err != nil {
+	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsApplyRouter, &friend.GetDesignatedFriendsApplyReq{FromUserID: fromUserID, ToUserID: toUserID}, &resp); err != nil {
 		return nil
 	}
 	localData, err := f.db.GetBothFriendReq(ctx, fromUserID, toUserID)

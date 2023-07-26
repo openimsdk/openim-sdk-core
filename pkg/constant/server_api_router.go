@@ -26,11 +26,11 @@ const (
 	GetFriendApplicationListRouter     = "/friend/get_friend_apply_list"      //recv
 	GetSelfFriendApplicationListRouter = "/friend/get_self_friend_apply_list" //send
 
-	GetDesignatedFriendsApply  = "/friend/get_designated_friend_apply"
-	GetFriendListRouter        = "/friend/get_friend_list"
-	GetDesignatedFriendsRouter = "friend/get_designated_friends"
-	AddFriendResponse          = "/friend/add_friend_response"
-	SetFriendRemark            = "/friend/set_friend_remark"
+	GetDesignatedFriendsApplyRouter = "/friend/get_designated_friend_apply"
+	GetFriendListRouter             = "/friend/get_friend_list"
+	GetDesignatedFriendsRouter      = "/friend/get_designated_friends"
+	AddFriendResponse               = "/friend/add_friend_response"
+	SetFriendRemark                 = "/friend/set_friend_remark"
 
 	AddBlackRouter     = "/friend/add_black"
 	RemoveBlackRouter  = "/friend/remove_black"

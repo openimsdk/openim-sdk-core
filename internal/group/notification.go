@@ -247,7 +247,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
 			return err
 		}
-		if err := g.SyncGroups(ctx, detail.Group.GroupID); err != nil {
+		if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
 			return err
 		}
 		return g.SyncAllGroupMember(ctx, detail.Group.GroupID)
