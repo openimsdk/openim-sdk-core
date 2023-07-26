@@ -31,10 +31,10 @@ import (
 	"sync"
 	"time"
 
-	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	userPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
+	authPB "github.com/OpenIMSDK/protocol/auth"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	userPB "github.com/OpenIMSDK/protocol/user"
+	imLog "github.com/OpenIMSDK/tools/log"
 )
 
 func GenUid(uid int, prefix string) string {
@@ -89,7 +89,7 @@ var AdminToken = ""
 
 func init() {
 	AdminToken = getToken("openIM123456")
-	if err := imLog.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0); err != nil {
+	if err := imLog.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0, 24); err != nil {
 		fmt.Println("123456", "log init failed ", err.Error())
 	}
 }

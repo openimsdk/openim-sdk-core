@@ -77,9 +77,14 @@ func (d *DataBase) GetSendFriendApplication(ctx context.Context) ([]*model_struc
 func (d *DataBase) GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-
 	var friendRequest model_struct.LocalFriendRequest
 	err := utils.Wrap(d.conn.WithContext(ctx).Where("from_user_id = ? AND to_user_id = ?", fromUserID, toUserID).Take(&friendRequest).Error, "GetFriendApplicationByBothID failed")
-
 	return &friendRequest, utils.Wrap(err, "GetFriendApplicationByBothID failed")
+}
+
+func (d *DataBase) GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) (friendRequests []*model_struct.LocalFriendRequest, err error) {
+	d.friendMtx.Lock()
+	defer d.friendMtx.Unlock()
+	err = utils.Wrap(d.conn.WithContext(ctx).Where("(from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?)", fromUserID, toUserID, toUserID, fromUserID).Find(&friendRequests).Error, "GetFriendApplicationByBothID failed")
+	return friendRequests, utils.Wrap(err, "GetFriendApplicationByBothID failed")
 }

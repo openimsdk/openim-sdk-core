@@ -33,12 +33,12 @@ import (
 
 	"github.com/jinzhu/copier"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/tools/log"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/msg"
+	"github.com/OpenIMSDK/protocol/sdkws"
 
-	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
+	pbConversation "github.com/OpenIMSDK/protocol/conversation"
 )
 
 func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq, localConversation *model_struct.LocalConversation) error {
@@ -55,6 +55,14 @@ func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversati
 
 func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
 	resp, err := util.CallApi[pbConversation.GetAllConversationsResp](ctx, constant.GetAllConversationsRouter, pbConversation.GetAllConversationsReq{OwnerUserID: c.loginUserID})
+	if err != nil {
+		return nil, err
+	}
+	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
+}
+
+func (c *Conversation) getServerConversationsByIDs(ctx context.Context, conversations []string) ([]*model_struct.LocalConversation, error) {
+	resp, err := util.CallApi[pbConversation.GetConversationsResp](ctx, constant.GetConversationsRouter, pbConversation.GetConversationsReq{OwnerUserID: c.loginUserID, ConversationIDs: conversations})
 	if err != nil {
 		return nil, err
 	}

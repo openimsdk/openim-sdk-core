@@ -16,7 +16,6 @@ package group
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
@@ -24,14 +23,16 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
+	"github.com/OpenIMSDK/tools/log"
+
+	"github.com/OpenIMSDK/protocol/group"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/protocol/wrapperspb"
+	"github.com/OpenIMSDK/tools/utils"
 )
 
-//// deprecated use CreateGroup
-//funcation (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
+// // deprecated use CreateGroup
+// funcation (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
 //	req := &group.CreateGroupReq{
 //		GroupInfo: &sdkws.GroupInfo{
 //			GroupName:    groupBaseInfo.GroupName,
@@ -58,7 +59,7 @@ import (
 //		}
 //	}
 //	return g.CreateGroup(ctx, req)
-//}
+// }
 
 func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
 	if req.OwnerUserID == "" {
@@ -72,10 +73,10 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 	if err != nil {
 		return nil, err
 	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
+	if err := g.SyncGroups(ctx, resp.GroupInfo.GroupID); err != nil {
 		return nil, err
 	}
-	if err := g.SyncGroupMember(ctx, resp.GroupInfo.GroupID); err != nil {
+	if err := g.SyncAllGroupMember(ctx, resp.GroupInfo.GroupID); err != nil {
 		return nil, err
 	}
 	return resp.GroupInfo, nil
@@ -85,15 +86,15 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource, InviterUserID: g.loginUserID}, nil); err != nil {
 		return err
 	}
-	if err := g.SyncSelfGroupApplication(ctx); err != nil {
+	if err := g.SyncSelfGroupApplications(ctx, groupID); err != nil {
 		return err
 	}
-	//if err := g.SyncJoinedGroup(ctx); err != nil {
+	// if err := g.SyncJoinedGroup(ctx); err != nil {
 	//	return err
-	//}
-	//if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	// }
+	// if err := g.SyncGroupMember(ctx, groupID); err != nil {
 	//	return err
-	//}
+	// }
 	return nil
 }
 
@@ -104,12 +105,12 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
 		return err
 	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
+	if err := g.deleteGroup(ctx, groupID); err != nil {
 		return err
 	}
-	//if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	// if err := g.SyncGroupMember(ctx, groupID); err != nil {
 	//	return err
-	//}
+	// }
 	return nil
 }
 
@@ -117,10 +118,10 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
+	if err := g.deleteGroup(ctx, groupID); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
 		return err
 	}
 	return nil
@@ -135,7 +136,7 @@ func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool
 	if err != nil {
 		return err
 	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
+	if err := g.SyncGroups(ctx, groupID); err != nil {
 		return err
 	}
 	return nil
@@ -150,10 +151,10 @@ func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID strin
 	if err != nil {
 		return err
 	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
+	if err := g.SyncGroups(ctx, groupID); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	if err := g.SyncGroupMembers(ctx, groupID, userID); err != nil {
 		return err
 	}
 	return nil
@@ -171,7 +172,7 @@ func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.S
 	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
 		return err
 	}
-	return g.SyncGroupMember(ctx, groupMemberInfo.GroupID)
+	return g.SyncGroupMembers(ctx, groupMemberInfo.GroupID, groupMemberInfo.UserID)
 }
 
 func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
@@ -222,7 +223,7 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 	return groups, nil
 }
 
-//funcation (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
+// funcation (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
 //	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
 //		GroupID:          groupID,
 //		GroupName:        groupInfo.GroupName,
@@ -232,7 +233,7 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 //		Ex:               groupInfo.Ex,
 //		NeedVerification: wrapperspb.Int32Ptr(groupInfo.NeedVerification),
 //	})
-//}
+// }
 
 func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
 	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
@@ -250,7 +251,7 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
 		return err
 	}
-	return g.SyncJoinedGroup(ctx)
+	return g.SyncGroups(ctx, groupInfo.GroupID)
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
@@ -276,17 +277,21 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	if err := util.ApiPost(ctx, constant.KickGroupMemberRouter, &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}, nil); err != nil {
 		return err
 	}
-	return g.SyncGroupMember(ctx, groupID)
+	return g.SyncGroupMembers(ctx, groupID, userIDList...)
 }
 
 func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID string) error {
+	oldOwner, err := g.db.GetGroupMemberOwner(ctx, groupID)
+	if err != nil {
+		return err
+	}
 	if err := util.ApiPost(ctx, constant.TransferGroupRouter, &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}, nil); err != nil {
 		return err
 	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
+	if err := g.SyncGroups(ctx, groupID); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	if err := g.SyncGroupMembers(ctx, groupID, newOwnerUserID, oldOwner.UserID); err != nil {
 		return err
 	}
 	return nil
@@ -294,12 +299,12 @@ func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID 
 
 func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, userIDList []string) error {
 	if err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}, nil); err != nil {
-		return nil
-	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	if err := g.SyncGroups(ctx, groupID); err != nil {
+		return err
+	}
+	if err := g.SyncGroupMembers(ctx, groupID, userIDList...); err != nil {
 		return err
 	}
 	return nil

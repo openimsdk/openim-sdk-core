@@ -19,12 +19,9 @@ package indexdb
 
 import (
 	"context"
-	"open_im_sdk/wasm/exec"
-)
-
-import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/wasm/exec"
 	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
@@ -123,6 +120,28 @@ func (i FriendRequest) GetFriendApplicationByBothID(ctx context.Context, fromUse
 				return nil, err
 			}
 			return &result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
+func (i FriendRequest) GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) (result []*model_struct.LocalFriendRequest, err error) {
+	gList, err := exec.Exec(i.loginUserID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var temp []model_struct.LocalFriendRequest
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
 		} else {
 			return nil, exec.ErrType
 		}

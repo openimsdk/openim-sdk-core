@@ -16,7 +16,6 @@ package test
 
 import (
 	"encoding/json"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
@@ -24,6 +23,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
+
+	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 var (

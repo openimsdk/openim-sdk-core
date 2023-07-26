@@ -23,8 +23,8 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
+	"github.com/OpenIMSDK/protocol/friend"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 func (f *Friend) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
@@ -60,7 +60,7 @@ func (f *Friend) AddFriend(ctx context.Context, userIDReqMsg *friend.ApplyToAddF
 	if err := util.ApiPost(ctx, constant.AddFriendRouter, userIDReqMsg, nil); err != nil {
 		return err
 	}
-	return f.SyncFriendApplication(ctx)
+	return f.SyncAllFriendApplication(ctx)
 }
 
 func (f *Friend) GetFriendApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
@@ -87,9 +87,9 @@ func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFrie
 		return err
 	}
 	if req.HandleResult == constant.FriendResponseAgree {
-		_ = f.SyncFriendList(ctx)
+		_ = f.SyncFriends(ctx, []string{req.FromUserID})
 	}
-	_ = f.SyncFriendApplication(ctx)
+	_ = f.SyncAllFriendApplication(ctx)
 	return nil
 	//return f.SyncFriendApplication(ctx)
 }
@@ -135,7 +135,7 @@ func (f *Friend) DeleteFriend(ctx context.Context, friendUserID string) error {
 	if err := util.ApiPost(ctx, constant.DeleteFriendRouter, &friend.DeleteFriendReq{OwnerUserID: f.loginUserID, FriendUserID: friendUserID}, nil); err != nil {
 		return err
 	}
-	return f.SyncFriendList(ctx)
+	return f.deleteFriend(ctx, friendUserID)
 }
 
 func (f *Friend) GetFriendList(ctx context.Context) ([]*server_api_params.FullUserInfo, error) {
@@ -222,21 +222,21 @@ func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFrien
 	if err := util.ApiPost(ctx, constant.SetFriendRemark, &friend.SetFriendRemarkReq{OwnerUserID: f.loginUserID, FriendUserID: userIDRemark.ToUserID, Remark: userIDRemark.Remark}, nil); err != nil {
 		return err
 	}
-	return f.SyncFriendList(ctx)
+	return f.SyncFriends(ctx, []string{userIDRemark.ToUserID})
 }
 
 func (f *Friend) AddBlack(ctx context.Context, blackUserID string) error {
 	if err := util.ApiPost(ctx, constant.AddBlackRouter, &friend.AddBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID}, nil); err != nil {
 		return err
 	}
-	return f.SyncBlackList(ctx)
+	return f.SyncAllBlackList(ctx)
 }
 
 func (f *Friend) RemoveBlack(ctx context.Context, blackUserID string) error {
 	if err := util.ApiPost(ctx, constant.RemoveBlackRouter, &friend.RemoveBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID}, nil); err != nil {
 		return err
 	}
-	return f.SyncBlackList(ctx)
+	return f.SyncAllBlackList(ctx)
 }
 
 func (f *Friend) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack, error) {

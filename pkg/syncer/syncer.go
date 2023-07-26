@@ -16,10 +16,11 @@ package syncer
 
 import (
 	"context"
-	"github.com/google/go-cmp/cmp"
 	"reflect"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/google/go-cmp/cmp"
+
+	"github.com/OpenIMSDK/tools/log"
 )
 
 func New[T any, V comparable](

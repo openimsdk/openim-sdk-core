@@ -25,13 +25,18 @@ import (
 	"open_im_sdk/sdk_struct"
 	"strings"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/tools/log"
+	"github.com/OpenIMSDK/tools/mcontext"
 )
 
 func GetSdkVersion() string {
 	return constant.GetSdkVersion()
 }
+
+const (
+	rotateCount  uint = 0
+	rotationTime uint = 24
+)
 
 func SetHeartbeatInterval(heartbeatInterval int) {
 	constant.HeartbeatInterval = heartbeatInterval
@@ -50,7 +55,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	if configArgs.PlatformID == 0 {
 		return false
 	}
-	if err := log.InitFromConfig("open-im-sdk-core", "", int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, 0); err != nil {
+	if err := log.InitFromConfig("open-im-sdk-core", "", int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 	}
 	fmt.Println("init log success")

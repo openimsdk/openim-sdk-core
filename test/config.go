@@ -20,7 +20,7 @@ import (
 )
 
 var LogLevel uint32 = 6
-var PlatformID = int32(3)
+var PlatformID = int32(1)
 var LogName = ""
 var IsLogStandardOutput = true
 var LogFilePath = ""

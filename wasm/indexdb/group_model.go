@@ -19,12 +19,9 @@ package indexdb
 
 import (
 	"context"
-	"open_im_sdk/wasm/exec"
-)
-
-import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/wasm/exec"
 )
 
 type LocalGroups struct{}
@@ -51,6 +48,28 @@ func (i *LocalGroups) UpdateGroup(ctx context.Context, groupInfo *model_struct.L
 
 func (i *LocalGroups) GetJoinedGroupListDB(ctx context.Context) (result []*model_struct.LocalGroup, err error) {
 	gList, err := exec.Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var temp []model_struct.LocalGroup
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
+func (i *LocalGroups) GetGroups(ctx context.Context, groupIDs []string) (result []*model_struct.LocalGroup, err error) {
+	gList, err := exec.Exec(utils.StructToJsonString(groupIDs))
 	if err != nil {
 		return nil, err
 	} else {

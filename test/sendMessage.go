@@ -15,10 +15,12 @@
 package test
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/protocol/sdkws"
+
 	//	"open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
 )

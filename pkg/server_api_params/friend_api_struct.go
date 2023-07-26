@@ -14,7 +14,7 @@
 
 package server_api_params
 
-import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+import "github.com/OpenIMSDK/protocol/sdkws"
 
 type ParamsCommFriend struct {
 	OperationID string `json:"operationID" binding:"required"`

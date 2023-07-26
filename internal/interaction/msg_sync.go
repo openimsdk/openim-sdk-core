@@ -21,8 +21,8 @@ import (
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/sdk_struct"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 const (
@@ -179,7 +179,7 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 			log.ZDebug(ctx, "trigger msgs", "msgs", storageMsgs)
 			_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: storageMsgs}})
 			m.syncedMaxSeqs[conversationID] = lastSeq
-		} else if lastSeq != 0 { //为0就是全是通知
+		} else if lastSeq != 0 && lastSeq > m.syncedMaxSeqs[conversationID] {
 			needSyncSeqMap[conversationID] = [2]int64{m.syncedMaxSeqs[conversationID], lastSeq}
 		}
 	}

@@ -16,9 +16,10 @@ package ccontext
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/tools/mcontext"
 )
 
 const (
