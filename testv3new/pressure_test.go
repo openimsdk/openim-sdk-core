@@ -16,11 +16,14 @@ func init() {
 }
 
 func TestPressureTester_PressureSendMsgs(t *testing.T) {
-	sendUserID := "5338610321"
-	recvUserID := []string{"bantanger"}
+	sendUserID := []string{"register_test_493"}
+	recvUserID := []string{"5338610321"}
 
-	pressureTester := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
-	pressureTester.PressureSendMsgs(sendUserID, recvUserID, 3, 100)
+	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
+	for i := 0; i < 10; i++ {
+		p.WithTimer(p.PressureSendMsgs2)(sendUserID, recvUserID, 1000, 100*time.Millisecond)
+		time.Sleep(time.Second)
+	}
 	// time.Sleep(1000 * time.Second)
 }
 
@@ -63,4 +66,14 @@ func TestPressureTester_Conversation(t *testing.T) {
 	}
 	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
 	p.WithTimer(p.PressureSendMsgs)(sendUserID, recvUserIDs, 1, 100*time.Millisecond)
+}
+
+func TestPressureTester_PressureSendMsgs2(t *testing.T) {
+	recvUserID := "5338610321"
+	var sendUserIDs []string
+	for i := 1; i <= 1000; i++ {
+		sendUserIDs = append(sendUserIDs, fmt.Sprintf("register_test_%v", i))
+	}
+	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
+	p.WithTimer(p.PressureSendMsgs2)(sendUserIDs, []string{recvUserID}, 1, 100*time.Millisecond)
 }

@@ -67,30 +67,43 @@ func (p *PressureTester) InitRecvCores(userIDs []string) {
 	p.initCores(&p.recvLightWeightSDKCores, userIDs)
 }
 
-// user single chat send msg pressure test
+// PressureSendMsgs user single chat send msg pressure test
 func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []string, msgNum int, duration time.Duration) {
-	// 每秒发送多少条消息
-	ctx, _ := InitContext(sendUserID)
 	p.WithTimer(p.InitSendCores)([]string{sendUserID})
 	p.WithTimer(p.InitRecvCores)(recvUserIDs)
 
 	sendCore := p.sendLightWeightSDKCores[sendUserID]
 
-	fmt.Println("\nmsgNum ==> ", msgNum)
+	// fmt.Println("\nmsgNum ==> ", msgNum)
 	var wg sync.WaitGroup
 	wg.Add(len(recvUserIDs))
 	for idx, recvUserID := range recvUserIDs {
 		go func(idx int) {
+			defer wg.Done() // Mark this goroutine as done when finished
+
+			// Create a new context for each goroutine to avoid shared state
+			ctx, _ := InitContext(sendUserID)
+
+			// Send messages concurrently
+			var sendWG sync.WaitGroup
+			sendWG.Add(msgNum)
 			for i := 1; i <= msgNum; i++ {
-				p.WithTimer(sendCore.SendSingleMsg)(ctx, recvUserID, i)
-				// if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
-				// 	log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
-				// }
-				time.Sleep(duration)
+				go func(i int) {
+					defer sendWG.Done()
+					p.WithTimer(sendCore.SendSingleMsg)(ctx, recvUserID, i)
+					// if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
+					// 	log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
+					// }
+				}(i)
 			}
+			sendWG.Wait()
+
+			// Delay before querying the received messages
+			time.Sleep(100 * time.Millisecond)
+
+			// Query the received messages
 			recvCore := p.recvLightWeightSDKCores[recvUserID]
 			if recvCore != nil {
-				time.Sleep(100 * time.Millisecond)
 				recvMap := recvCore.GetRecvMap()
 				if recvMap != nil {
 					count := recvMap[sendUserID+"_"+recvUserID]
@@ -98,13 +111,70 @@ func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []strin
 					log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
 				}
 			}
-			wg.Done()
 		}(idx)
 	}
 	wg.Wait()
 }
 
-// group chat send msg pressure test
+// PressureSendMsgs2 user single chat send msg pressure test
+func (p *PressureTester) PressureSendMsgs2(sendUserIDs []string, recvUserIDs []string, msgNum int, duration time.Duration) {
+	p.WithTimer(p.InitSendCores)(sendUserIDs)
+	// p.WithTimer(p.InitRecvCores)(recvUserIDs)
+
+	var wg sync.WaitGroup
+	msgChan := make(chan struct{})
+
+	for _, sendUserID := range sendUserIDs {
+		ctx, _ := InitContext(sendUserID)
+		sendCore := p.sendLightWeightSDKCores[sendUserID]
+
+		// fmt.Println("\nmsgNum ==> ", msgNum)
+		for _, recvUserID := range recvUserIDs {
+			wg.Add(1)
+			go func(sendUserID, recvUserID string) {
+				defer wg.Done()
+				sendUserMsgChan := make(chan int)
+
+				// Send messages concurrently
+				var sendWG sync.WaitGroup
+				sendWG.Add(msgNum)
+				for i := 1; i <= msgNum; i++ {
+					go func(i int) {
+						defer sendWG.Done()
+						p.WithTimer(sendCore.SendSingleMsg)(ctx, recvUserID, i)
+						// if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
+						// 	log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
+						// }
+					}(i)
+				}
+				sendWG.Wait()
+
+				// Goroutine for receiving messages
+				go func() {
+					recvCore := p.recvLightWeightSDKCores[recvUserID]
+					if recvCore != nil {
+						time.Sleep(100 * time.Millisecond)
+						recvMap := recvCore.GetRecvMap()
+						if recvMap != nil {
+							count := 0
+							for range sendUserMsgChan {
+								count++
+							}
+							recvMap[sendUserID+"_"+recvUserID] = count
+							fmt.Println(fmt.Sprintf("recvUserID: %v ==> recv msg num: %d %v", recvUserID, count, count == msgNum))
+							log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
+						}
+					}
+				}()
+			}(sendUserID, recvUserID)
+		}
+	}
+
+	wg.Wait()
+	close(msgChan)
+}
+
+// PressureSendGroupMsgs group chat send msg pressure test
 func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID string, msgNum int, duration time.Duration) {
 	if resp, err := p.GetGroupMembersInfo(groupID, sendUserIDs); err != nil {
 		log.ZError(context.Background(), "get group members info failed", err)
@@ -137,12 +207,12 @@ func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID str
 	}
 }
 
-// msg ordering test
+// OrderingSendMsg msg ordering test
 func (p *PressureTester) OrderingSendMsg(groupID string, msgNum int) {
 
 }
 
-// reliability test
+// MsgReliabilityTest reliability test
 func (p *PressureTester) MsgReliabilityTest(sendUserID, recvUserID string, msgNum int, duration time.Duration) {
 	ctx, _ := InitContext(sendUserID)
 	sendCore := p.sendLightWeightSDKCores[sendUserID]
@@ -159,11 +229,11 @@ func (p *PressureTester) MsgReliabilityTest(sendUserID, recvUserID string, msgNu
 // WithTimer Decorative function, accept a function as a parameter, and return a packaging function
 func (p *PressureTester) WithTimer(f interface{}) func(...interface{}) {
 	return func(args ...interface{}) {
-		start := time.Now()
+		start := time.Now().UnixNano()
 		v := reflect.ValueOf(f)
 		if v.Kind() != reflect.Func {
 			log.ZError(context.Background(), "pass parameter is not a function", nil,
-				"actual", v.Kind(), "expected", reflect.Func)
+				"actual parameter", v.Kind(), "expected parameter", reflect.Func)
 			return
 		}
 		funcName := runtime.FuncForPC(v.Pointer()).Name()
@@ -171,8 +241,8 @@ func (p *PressureTester) WithTimer(f interface{}) func(...interface{}) {
 		for _, arg := range args {
 			in = append(in, reflect.ValueOf(arg))
 		}
-		v.Call(in) // 执行原始函数
-		duration := time.Since(start)
-		fmt.Printf("Run Funcation: %s\nRun Funcation spent time: %s\n", funcName, duration)
+		v.Call(in) // Execute the original function
+		end := time.Now().UnixNano()
+		fmt.Printf("Execute Funcation: %s\nExecute Funcation spent time: %v\n", funcName, float64(end-start))
 	}
 }
