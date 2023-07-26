@@ -17,8 +17,9 @@ package sdk_params_callback
 import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/protocol/extendmsg"
 )
 
 // type GetAllConversationListParam null
@@ -131,7 +132,7 @@ type SearchByConversationResult struct {
 	MessageCount     int                     `json:"messageCount"`
 	MessageList      []*sdk_struct.MsgStruct `json:"messageList"`
 }
-type SetMessageReactionExtensionsParams []*server_api_params.KeyValue
+type SetMessageReactionExtensionsParams []*extendmsg.KeyValue
 
 type SetMessageReactionExtensionsCallback struct {
 	Key     string `json:"key" validate:"required"`
@@ -140,7 +141,7 @@ type SetMessageReactionExtensionsCallback struct {
 	ErrMsg  string `json:"errMsg"`
 }
 
-type AddMessageReactionExtensionsParams []*server_api_params.KeyValue
+type AddMessageReactionExtensionsParams []*extendmsg.KeyValue
 
 type AddMessageReactionExtensionsCallback struct {
 	Key     string `json:"key" validate:"required"`

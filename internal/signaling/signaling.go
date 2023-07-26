@@ -21,9 +21,9 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/sdkerrs"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 
+	"github.com/OpenIMSDK/protocol/rtc"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/errs"
 	"github.com/OpenIMSDK/tools/log"
@@ -46,7 +46,7 @@ func NewLiveSignaling(longConnMgr *interaction.LongConnMgr, loginUserID string, 
 	return &LiveSignaling{LongConnMgr: longConnMgr, loginUserID: loginUserID, platformID: platformID, DataBase: db}
 }
 
-func (s *LiveSignaling) setDefaultReq(req *server_api_params.InvitationInfo) {
+func (s *LiveSignaling) setDefaultReq(req *rtc.InvitationInfo) {
 	if req.RoomID == "" {
 		req.RoomID = utils.OperationIDGenerator()
 	}
@@ -55,19 +55,19 @@ func (s *LiveSignaling) setDefaultReq(req *server_api_params.InvitationInfo) {
 	}
 }
 
-func (s *LiveSignaling) checkInvitation(invitation *server_api_params.InvitationInfo) error {
+func (s *LiveSignaling) checkInvitation(invitation *rtc.InvitationInfo) error {
 	if invitation == nil {
 		return sdkerrs.ErrArgs.Wrap("invitation is nil")
 	}
 	return nil
 }
 
-func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.SignalReq, busyLineUserList []string) {
-	var invt *server_api_params.InvitationInfo
+func (s *LiveSignaling) waitPush(ctx context.Context, req *rtc.SignalReq, busyLineUserList []string) {
+	var invt *rtc.InvitationInfo
 	switch payload := req.Payload.(type) {
-	case *server_api_params.SignalReq_Invite:
+	case *rtc.SignalReq_Invite:
 		invt = payload.Invite.Invitation
-	case *server_api_params.SignalReq_InviteInGroup:
+	case *rtc.SignalReq_InviteInGroup:
 		invt = payload.InviteInGroup.Invitation
 	}
 	var listenerList []open_im_sdk_callback.OnSignalingListener
@@ -94,14 +94,14 @@ func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.Sig
 				if errs.Unwrap(err) == sdkerrs.ErrNetworkTimeOut {
 					log.ZWarn(ctx, "timeout", err, "invitee", invitee, "roomID", invt.RoomID, "timeout", invt.Timeout)
 					switch payload := req.Payload.(type) {
-					case *server_api_params.SignalReq_Invite:
+					case *rtc.SignalReq_Invite:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
 								payload.Invite.UserID = invitee
 								listener.OnInvitationTimeout(utils.StructToJsonString(payload.Invite))
 							}
 						}
-					case *server_api_params.SignalReq_InviteInGroup:
+					case *rtc.SignalReq_InviteInGroup:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
 								payload.InviteInGroup.UserID = invitee
@@ -119,7 +119,7 @@ func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.Sig
 		}(v)
 	}
 }
-func (s *LiveSignaling) doSignalPush(ctx context.Context, req *server_api_params.SignalReq) {
+func (s *LiveSignaling) doSignalPush(ctx context.Context, req *rtc.SignalReq) {
 	var listenerList []open_im_sdk_callback.OnSignalingListener
 	if s.listener != nil {
 		listenerList = append(listenerList, s.listener)
@@ -133,12 +133,12 @@ func (s *LiveSignaling) doSignalPush(ctx context.Context, req *server_api_params
 	}
 	log.ZDebug(ctx, "doSignalPush", "req", req)
 	switch payload := req.Payload.(type) {
-	case *server_api_params.SignalReq_Accept:
+	case *rtc.SignalReq_Accept:
 		for _, listener := range listenerList {
 			listener.OnInviteeAccepted(utils.StructToJsonString(payload.Accept))
 		}
 
-	case *server_api_params.SignalReq_Reject:
+	case *rtc.SignalReq_Reject:
 		for _, listener := range listenerList {
 			listener.OnInviteeRejected(utils.StructToJsonString(payload.Reject))
 		}
@@ -155,8 +155,8 @@ func (s *LiveSignaling) SetListenerForService(listener open_im_sdk_callback.OnSi
 	s.listenerForService = listener
 }
 
-func (s *LiveSignaling) getSelfParticipant(ctx context.Context, groupID string) (*server_api_params.ParticipantMetaData, error) {
-	p := server_api_params.ParticipantMetaData{GroupInfo: &sdkws.GroupInfo{}, GroupMemberInfo: &sdkws.GroupMemberFullInfo{}, UserInfo: &sdkws.PublicUserInfo{}}
+func (s *LiveSignaling) getSelfParticipant(ctx context.Context, groupID string) (*rtc.ParticipantMetaData, error) {
+	p := rtc.ParticipantMetaData{GroupInfo: &sdkws.GroupInfo{}, GroupMemberInfo: &sdkws.GroupMemberFullInfo{}, UserInfo: &sdkws.PublicUserInfo{}}
 	if groupID != "" {
 		group, err := s.GetGroupInfoByGroupID(ctx, groupID)
 		if err != nil {
@@ -192,14 +192,14 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 	switch msg.ContentType {
 	case constant.SignalingNotification:
 		log.ZInfo(ctx, utils.GetSelfFuncName(), "args ", msg.String())
-		var resp server_api_params.SignalReq
+		var resp rtc.SignalReq
 		err := proto.Unmarshal(msg.Content, &resp)
 		if err != nil {
 			log.ZError(ctx, "Unmarshal failed", err, "msg", msg)
 			return
 		}
 		switch payload := resp.Payload.(type) {
-		case *server_api_params.SignalReq_Accept:
+		case *rtc.SignalReq_Accept:
 			if payload.Accept.Invitation.InviterUserID == s.loginUserID && payload.Accept.Invitation.PlatformID == s.platformID {
 				var wsResp interaction.GeneralWsResp
 				wsResp.ReqIdentifier = constant.SendSignalMsg
@@ -218,7 +218,7 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 				}
 				return
 			}
-		case *server_api_params.SignalReq_Reject:
+		case *rtc.SignalReq_Reject:
 			if payload.Reject.Invitation.InviterUserID == s.loginUserID && payload.Reject.Invitation.PlatformID == s.platformID {
 				var wsResp interaction.GeneralWsResp
 				wsResp.ReqIdentifier = constant.SendSignalMsg
@@ -238,21 +238,21 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 				return
 			}
 
-		case *server_api_params.SignalReq_HungUp:
+		case *rtc.SignalReq_HungUp:
 			if s.loginUserID != payload.HungUp.UserID {
 				for _, listener := range listenerList {
 					listener.OnHangUp(utils.StructToJsonString(payload.HungUp))
 					log.ZDebug(ctx, "OnHangUp", "hungUp", utils.StructToJsonString(payload.HungUp))
 				}
 			}
-		case *server_api_params.SignalReq_Cancel:
+		case *rtc.SignalReq_Cancel:
 			if utils.IsContain(s.loginUserID, payload.Cancel.Invitation.InviteeUserIDList) {
 				for _, listener := range listenerList {
 					listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
 					log.ZDebug(ctx, "OnInvitationCancelled", "cancel", utils.StructToJsonString(payload.Cancel))
 				}
 			}
-		case *server_api_params.SignalReq_Invite:
+		case *rtc.SignalReq_Invite:
 			if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
 				for _, listener := range listenerList {
 					if !utils.IsContain(s.loginUserID, payload.Invite.Invitation.BusyLineUserIDList) {
@@ -262,7 +262,7 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 				}
 			}
 
-		case *server_api_params.SignalReq_InviteInGroup:
+		case *rtc.SignalReq_InviteInGroup:
 			if utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.InviteeUserIDList) {
 				for _, listener := range listenerList {
 					if !utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.BusyLineUserIDList) {
@@ -275,7 +275,7 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 			log.ZError(ctx, "resp payload type failed", nil, "msg", msg)
 		}
 	case constant.CustomSignalNotification:
-		var callback server_api_params.SignalSendCustomSignalReq
+		var callback rtc.SignalSendCustomSignalReq
 		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
 			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
 			return
@@ -285,7 +285,7 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 			log.ZDebug(ctx, "SignalSendCustomSignalReq", "onReceiveCustomSignal", &callback)
 		}
 	case constant.StreamChangedNotification:
-		var callback server_api_params.SignalOnStreamChangeReq
+		var callback rtc.SignalOnStreamChangeReq
 		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
 			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
 			return
@@ -296,7 +296,7 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 		}
 
 	case constant.RoomParticipantsConnectedNotification:
-		var callback server_api_params.SignalOnRoomParticipantConnectedReq
+		var callback rtc.SignalOnRoomParticipantConnectedReq
 		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
 			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
 			return
@@ -306,7 +306,7 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 			log.ZDebug(ctx, "SignalOnRoomParticipantConnectedReq", "onRoomParticipantConnectedReq", &callback)
 		}
 	case constant.RoomParticipantsDisconnectedNotification:
-		var callback server_api_params.SignalOnRoomParticipantDisconnectedReq
+		var callback rtc.SignalOnRoomParticipantDisconnectedReq
 		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
 			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
 			return
@@ -318,15 +318,15 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 	}
 
 }
-func (s *LiveSignaling) SendSignalingReqWaitResp(ctx context.Context, req *server_api_params.SignalReq) (*server_api_params.SignalResp, error) {
-	var signalMessageAssembleResp server_api_params.SignalMessageAssembleResp
+func (s *LiveSignaling) SendSignalingReqWaitResp(ctx context.Context, req *rtc.SignalReq) (*rtc.SignalResp, error) {
+	var signalMessageAssembleResp rtc.SignalMessageAssembleResp
 	err := s.LongConnMgr.SendReqWaitResp(ctx, req, constant.SendSignalMsg, &signalMessageAssembleResp)
 	if err != nil {
 		return nil, err
 	}
 	return signalMessageAssembleResp.SignalResp, nil
 }
-func (s *LiveSignaling) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*server_api_params.SignalReq, error) {
+func (s *LiveSignaling) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*rtc.SignalReq, error) {
 	msgIncr := inviterUserID + inviteeUserID + roomID
 	ch := s.LongConnMgr.Syncer.AddChByIncr(msgIncr)
 	defer s.LongConnMgr.Syncer.DelCh(msgIncr)
@@ -335,7 +335,7 @@ func (s *LiveSignaling) SignalingWaitPush(ctx context.Context, inviterUserID, in
 		return nil, utils.Wrap(err, "")
 	}
 	if resp != nil {
-		var signalReq server_api_params.SignalReq
+		var signalReq rtc.SignalReq
 		err = proto.Unmarshal(resp.Data, &signalReq)
 		if err != nil {
 			return nil, utils.Wrap(err, "")

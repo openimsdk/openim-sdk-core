@@ -4,7 +4,7 @@
 // 	protoc        v4.22.0
 // source: rtc/rtc.proto
 
-package server_api_params
+package rtc
 
 import (
 	context "context"

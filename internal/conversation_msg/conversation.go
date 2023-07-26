@@ -35,6 +35,7 @@ import (
 
 	"github.com/OpenIMSDK/tools/log"
 
+	"github.com/OpenIMSDK/protocol/extendmsg"
 	"github.com/OpenIMSDK/protocol/msg"
 	"github.com/OpenIMSDK/protocol/sdkws"
 
@@ -915,7 +916,7 @@ type syncReactionExtensionParams struct {
 	TypeKeyList         []string
 }
 
-func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, conversationID string, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
+func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, conversationID string, messageList []*sdk_struct.MsgStruct) ([]*extendmsg.SingleMessageExtensionResult, error) {
 	if len(messageList) == 0 {
 		return nil, errors.New("message list is null")
 	}
@@ -952,7 +953,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 	var result server_api_params.GetMessageListReactionExtensionsResp
 	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(ctx, msgIDs)
 	for _, v := range extendMessage {
-		var singleResult server_api_params.SingleMessageExtensionResult
+		var singleResult extendmsg.SingleMessageExtensionResult
 		// temp := make(map[string]*sdkws.KeyValue)
 		// _ = json.Unmarshal(v.LocalReactionExtensions, &temp)
 		singleResult.ClientMsgID = v.ClientMsgID

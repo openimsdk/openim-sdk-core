@@ -16,7 +16,8 @@ package sdk_params_callback
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/server_api_params"
+
+	"github.com/OpenIMSDK/protocol/rtc"
 )
 
 // //////////////////////////////friend////////////////////////////////////
@@ -58,12 +59,12 @@ type InvitationInfo struct {
 	GroupID           string
 }
 
-type ReceiveNewInvitationCallback server_api_params.SignalInviteReq
+type ReceiveNewInvitationCallback rtc.SignalInviteReq
 
-type InviteeAcceptedCallback server_api_params.SignalAcceptReq
+type InviteeAcceptedCallback rtc.SignalAcceptReq
 
-type InviteeRejectedCallback server_api_params.SignalRejectReq
+type InviteeRejectedCallback rtc.SignalRejectReq
 
-type InvitationCancelledCallback server_api_params.SignalCancelReq
+type InvitationCancelledCallback rtc.SignalCancelReq
 
-type InvitationTimeoutCallback server_api_params.SignalInviteReq
+type InvitationTimeoutCallback rtc.SignalInviteReq

@@ -21,11 +21,11 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
 
+	"github.com/OpenIMSDK/protocol/extendmsg"
 	"github.com/OpenIMSDK/protocol/sdkws"
 
 	"github.com/OpenIMSDK/tools/mcontext"
@@ -108,7 +108,7 @@ func DoTestSetMessageReactionExtensions() {
 	var testSetMessageReactionExtensionsCallBack SetMessageReactionExtensionsCallBack
 	testSetMessageReactionExtensionsCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.SetMessageReactionExtensionsParams
-	var data server_api_params.KeyValue
+	var data extendmsg.KeyValue
 	data.TypeKey = "x"
 	m := make(map[string]interface{})
 	m["operation"] = "1"
@@ -128,7 +128,7 @@ func DoTestAddMessageReactionExtensions(index int, operationID string) {
 	testAddMessageReactionExtensionsCallBack.OperationID = operationID
 	fmt.Printf("DoTestAddMessageReactionExtensions opid:", testAddMessageReactionExtensionsCallBack.OperationID, index)
 	var params sdk_params_callback.AddMessageReactionExtensionsParams
-	var data server_api_params.KeyValue
+	var data extendmsg.KeyValue
 	data.TypeKey = "x"
 	m := make(map[string]interface{})
 	m["operation"] = index
