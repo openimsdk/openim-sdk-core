@@ -14,10 +14,10 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
+	"open_im_sdk/wasm/exec"
 	"open_im_sdk/wasm/indexdb"
 )
 
@@ -39,6 +39,7 @@ type IndexDB struct {
 	*indexdb.LocalGroupRequest
 	*indexdb.LocalChatLogReactionExtensions
 	*indexdb.NotificationSeqs
+	*indexdb.LocalUpload
 	loginUserID string
 }
 
@@ -47,7 +48,7 @@ func (i IndexDB) Close(ctx context.Context) error {
 }
 
 func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) error {
-	_, err := indexdb.Exec(userID, dataDir)
+	_, err := exec.Exec(userID, dataDir)
 	return err
 }
 
@@ -68,6 +69,7 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*IndexD
 		LocalGroupRequest:               indexdb.NewLocalGroupRequest(),
 		LocalChatLogReactionExtensions:  indexdb.NewLocalChatLogReactionExtensions(),
 		NotificationSeqs:                indexdb.NewNotificationSeqs(),
+		LocalUpload:                     indexdb.NewLocalUpload(),
 		loginUserID:                     loginUserID,
 	}
 	err := i.InitDB(ctx, loginUserID, dbDir)

@@ -17,7 +17,10 @@
 
 package indexdb
 
-import "context"
+import (
+	"context"
+	"open_im_sdk/wasm/exec"
+)
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
@@ -35,12 +38,12 @@ func (i *LocalConversationUnreadMessages) BatchInsertConversationUnreadMessageLi
 	if messageList == nil {
 		return nil
 	}
-	_, err := Exec(utils.StructToJsonString(messageList))
+	_, err := exec.Exec(utils.StructToJsonString(messageList))
 	return err
 }
 
 func (i *LocalConversationUnreadMessages) DeleteConversationUnreadMessageList(ctx context.Context, conversationID string, sendTime int64) int64 {
-	deleteRows, err := Exec(conversationID, sendTime)
+	deleteRows, err := exec.Exec(conversationID, sendTime)
 	if err != nil {
 		return 0
 	} else {

@@ -130,11 +130,11 @@ type OnSignalingListener interface {
 
 type UploadFileCallback interface {
 	Open(size int64)                                                    // 文件打开的大小
-	PartSize(partSize int64, num int32)                                 // 分片大小,数量
-	HashPartProgress(index int32, size int64, partHash string)          // 每块分片的hash值
+	PartSize(partSize int64, num int)                                   // 分片大小,数量
+	HashPartProgress(index int, size int64, partHash string)            // 每块分片的hash值
 	HashPartComplete(partsHash string, fileHash string)                 // 分块完成，服务端标记hash和文件最终hash
 	UploadID(uploadID string)                                           // 上传ID
-	UploadPartComplete(index int32, partSize int64, partHash string)    // 上传分片进度
+	UploadPartComplete(index int, partSize int64, partHash string)      // 上传分片进度
 	UploadComplete(fileSize int64, streamSize int64, storageSize int64) // 整体进度
-	Complete(size int64, url string, typ int32)                         // 上传完成
+	Complete(size int64, url string, typ int)                           // 上传完成
 }

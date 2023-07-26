@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package conversation_msg
 
 import (
@@ -31,10 +45,10 @@ type msgUploadFileCallback struct {
 func (c *msgUploadFileCallback) Open(size int64) {
 }
 
-func (c *msgUploadFileCallback) PartSize(partSize int64, num int32) {
+func (c *msgUploadFileCallback) PartSize(partSize int64, num int) {
 }
 
-func (c *msgUploadFileCallback) HashPartProgress(index int32, size int64, partHash string) {
+func (c *msgUploadFileCallback) HashPartProgress(index int, size int64, partHash string) {
 }
 
 func (c *msgUploadFileCallback) HashPartComplete(partsHash string, fileHash string) {
@@ -51,7 +65,7 @@ func (c *msgUploadFileCallback) UploadID(uploadID string) {
 	}
 }
 
-func (c *msgUploadFileCallback) UploadPartComplete(index int32, partSize int64, partHash string) {
+func (c *msgUploadFileCallback) UploadPartComplete(index int, partSize int64, partHash string) {
 
 }
 
@@ -73,7 +87,7 @@ func (c *msgUploadFileCallback) UploadComplete(fileSize int64, streamSize int64,
 	}
 }
 
-func (c *msgUploadFileCallback) Complete(size int64, url string, typ int32) {
+func (c *msgUploadFileCallback) Complete(size int64, url string, typ int) {
 	c.msg.AttachedInfoElem.Progress = nil
 	data, err := json.Marshal(c.msg.AttachedInfoElem)
 	if err != nil {
