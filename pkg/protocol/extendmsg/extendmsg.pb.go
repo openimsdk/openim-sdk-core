@@ -4,7 +4,7 @@
 // 	protoc        v4.22.0
 // source: extendmsg/extendmsg.proto
 
-package server_api_params
+package extendmsg
 
 import (
 	context "context"

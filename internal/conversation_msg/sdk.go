@@ -46,6 +46,7 @@ import (
 	"github.com/OpenIMSDK/tools/log"
 
 	pbConversation "github.com/OpenIMSDK/protocol/conversation"
+	"github.com/OpenIMSDK/protocol/extendmsg"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	pbUser "github.com/OpenIMSDK/protocol/user"
 	"github.com/OpenIMSDK/protocol/wrapperspb"
@@ -1132,7 +1133,7 @@ func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID
 	}
 }
 
-func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req []*server_api_params.KeyValue) (*server_api_params.SetMessageReactionExtensionsResp, error) {
+func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req []*extendmsg.KeyValue) (*extendmsg.SetMessageReactionExtensionsResp, error) {
 	conversationID := utils.GetConversationIDByMsg(s)
 	message, err := c.db.GetMessage(ctx, conversationID, s.ClientMsgID)
 	if err != nil {
@@ -1144,12 +1145,12 @@ func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_
 	if message.SessionType != constant.SuperGroupChatType {
 		return nil, errs.NewCodeError(202, "currently only support super group message").Wrap()
 	}
-	reqTemp := make(map[string]*server_api_params.KeyValue)
+	reqTemp := make(map[string]*extendmsg.KeyValue)
 	for _, value := range req {
 		reqTemp[value.TypeKey] = value
 	}
 	if extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID); extendMsg != nil && len(extendMsg.LocalReactionExtensions) > 0 {
-		temp := make(map[string]*server_api_params.KeyValue)
+		temp := make(map[string]*extendmsg.KeyValue)
 		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
 		for _, v := range temp {
 			if value, ok := reqTemp[v.TypeKey]; ok {
@@ -1157,7 +1158,7 @@ func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_
 			}
 		}
 	}
-	apiReq := server_api_params.SetMessageReactionExtensionsReq{
+	apiReq := extendmsg.SetMessageReactionExtensionsReq{
 		ConversationID:       conversationID,
 		UserID:               c.loginUserID,
 		ReactionExtensions:   reqTemp,
@@ -1168,17 +1169,17 @@ func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_
 		IsExternalExtensions: false,
 		MsgFirstModifyTime:   message.MsgFirstModifyTime,
 	}
-	apiResp, err := util.CallApi[server_api_params.SetMessageReactionExtensionsResp](ctx, constant.SetMessageReactionExtensionsRouter, &apiReq)
+	apiResp, err := util.CallApi[extendmsg.SetMessageReactionExtensionsResp](ctx, constant.SetMessageReactionExtensionsRouter, &apiReq)
 	if err != nil {
 		return nil, err
 	}
 	msg := model_struct.LocalChatLogReactionExtensions{
 		ClientMsgID: message.ClientMsgID,
 	}
-	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	resultKeyMap := make(map[string]*extendmsg.KeyValue)
 	for _, v := range apiResp.Result {
 		if v.ErrCode == 0 {
-			resultKeyMap[v.KeyValue.TypeKey] = &server_api_params.KeyValue{
+			resultKeyMap[v.KeyValue.TypeKey] = &extendmsg.KeyValue{
 				TypeKey:          v.KeyValue.TypeKey,
 				Value:            v.KeyValue.Value,
 				LatestUpdateTime: v.KeyValue.LatestUpdateTime,
@@ -1195,7 +1196,7 @@ func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_
 	return apiResp, nil
 }
 
-func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req []*server_api_params.KeyValue) (*server_api_params.AddMessageReactionExtensionsResp, error) {
+func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req []*extendmsg.KeyValue) (*server_api_params.AddMessageReactionExtensionsResp, error) {
 	conversationID := utils.GetConversationIDByMsg(s)
 	message, err := c.db.GetMessage(ctx, conversationID, s.ClientMsgID)
 	if err != nil {
@@ -1207,12 +1208,12 @@ func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_
 	if message.SessionType != constant.SuperGroupChatType {
 		return nil, errs.NewCodeError(202, "currently only support super group message").Wrap()
 	}
-	reqTemp := make(map[string]*server_api_params.KeyValue)
+	reqTemp := make(map[string]*extendmsg.KeyValue)
 	for _, value := range req {
 		reqTemp[value.TypeKey] = value
 	}
 	if extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID); extendMsg != nil && len(extendMsg.LocalReactionExtensions) > 0 {
-		temp := make(map[string]*server_api_params.KeyValue)
+		temp := make(map[string]*extendmsg.KeyValue)
 		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
 		for _, v := range temp {
 			if value, ok := reqTemp[v.TypeKey]; ok {
@@ -1238,7 +1239,7 @@ func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_
 	msg := model_struct.LocalChatLogReactionExtensions{
 		ClientMsgID: message.ClientMsgID,
 	}
-	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	resultKeyMap := make(map[string]*extendmsg.KeyValue)
 	//for _, v := range apiResp.Result {
 	//	if v.ErrCode == 0 {
 	//		resultKeyMap[v.KeyValue.TypeKey] = &server_api_params.KeyValue{
@@ -1258,7 +1259,7 @@ func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_
 	return apiResp, nil
 }
 
-func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionKeys []string) (*server_api_params.DeleteMessagesReactionExtensionsResp, error) {
+func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionKeys []string) (*extendmsg.DeleteMessagesReactionExtensionsResp, error) {
 	conversationID := utils.GetConversationIDByMsg(s)
 	message, err := c.db.GetMessage(ctx, conversationID, s.ClientMsgID)
 	if err != nil {
@@ -1270,9 +1271,9 @@ func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *s
 	if message.SessionType != constant.SuperGroupChatType {
 		return nil, errs.NewCodeError(202, "currently only support super group message").Wrap()
 	}
-	reqTemp := make(map[string]*server_api_params.KeyValue)
+	reqTemp := make(map[string]*extendmsg.KeyValue)
 	if extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID); extendMsg != nil && len(extendMsg.LocalReactionExtensions) > 0 {
-		temp := make(map[string]*server_api_params.KeyValue)
+		temp := make(map[string]*extendmsg.KeyValue)
 		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
 		for _, key := range reactionExtensionKeys {
 			if value, ok := temp[key]; ok {
@@ -1284,14 +1285,14 @@ func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *s
 		return nil, errors.New("no reaction extensions to delete")
 	}
 	apiReq := server_api_params.DeleteMessageReactionExtensionsReq{}
-	apiResp, err := util.CallApi[server_api_params.DeleteMessagesReactionExtensionsResp](ctx, constant.DeleteMessageReactionExtensionsRouter, &apiReq)
+	apiResp, err := util.CallApi[extendmsg.DeleteMessagesReactionExtensionsResp](ctx, constant.DeleteMessageReactionExtensionsRouter, &apiReq)
 	if err != nil {
 		return nil, err
 	}
-	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	resultKeyMap := make(map[string]*extendmsg.KeyValue)
 	for _, resp := range apiResp.Result {
 		if resp.ErrCode == 0 {
-			resultKeyMap[resp.KeyValue.TypeKey] = &server_api_params.KeyValue{
+			resultKeyMap[resp.KeyValue.TypeKey] = &extendmsg.KeyValue{
 				TypeKey:          resp.KeyValue.TypeKey,
 				Value:            resp.KeyValue.Value,
 				LatestUpdateTime: resp.KeyValue.LatestUpdateTime,
@@ -1307,7 +1308,7 @@ func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *s
 	return apiResp, nil
 }
 
-func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, conversationID string, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
+func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, conversationID string, messageList []*sdk_struct.MsgStruct) ([]*extendmsg.SingleMessageExtensionResult, error) {
 	if len(messageList) == 0 {
 		return nil, errors.New("message list is null")
 	}
@@ -1344,7 +1345,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 	var result server_api_params.GetMessageListReactionExtensionsResp
 	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(ctx, msgIDs)
 	for _, v := range extendMessage {
-		var singleResult server_api_params.SingleMessageExtensionResult
+		var singleResult extendmsg.SingleMessageExtensionResult
 		// temp := make(map[string]*sdkws.KeyValue)
 		// _ = json.Unmarshal(v.LocalReactionExtensions, &temp)
 		singleResult.ClientMsgID = v.ClientMsgID

@@ -14,6 +14,8 @@
 
 package server_api_params
 
+import "github.com/OpenIMSDK/protocol/extendmsg"
+
 type DeleteMsgReq struct {
 	OpUserID    string  `json:"opUserID"`
 	UserID      string  `json:"userID"`
@@ -59,24 +61,24 @@ type MsgDeleteNotificationElem struct {
 //		MsgFirstModifyTime    int64                `json:"msgFirstModifyTime,omitempty"`
 //	}
 type AddMessageReactionExtensionsReq struct {
-	OperationID           string               `json:"operationID" validate:"required"`
-	ClientMsgID           string               `json:"clientMsgID" validate:"required"`
-	SourceID              string               `json:"sourceID" validate:"required"`
-	SessionType           int32                `json:"sessionType" validate:"required"`
-	ReactionExtensionList map[string]*KeyValue `json:"reactionExtensionList"`
-	IsReact               bool                 `json:"isReact,omitempty"`
-	IsExternalExtensions  bool                 `json:"isExternalExtensions,omitempty"`
-	MsgFirstModifyTime    int64                `json:"msgFirstModifyTime,omitempty"`
-	Seq                   int64                `json:"seq"`
+	OperationID           string                         `json:"operationID" validate:"required"`
+	ClientMsgID           string                         `json:"clientMsgID" validate:"required"`
+	SourceID              string                         `json:"sourceID" validate:"required"`
+	SessionType           int32                          `json:"sessionType" validate:"required"`
+	ReactionExtensionList map[string]*extendmsg.KeyValue `json:"reactionExtensionList"`
+	IsReact               bool                           `json:"isReact,omitempty"`
+	IsExternalExtensions  bool                           `json:"isExternalExtensions,omitempty"`
+	MsgFirstModifyTime    int64                          `json:"msgFirstModifyTime,omitempty"`
+	Seq                   int64                          `json:"seq"`
 }
 type DeleteMessageReactionExtensionsReq struct {
-	OperationID           string      `json:"operationID" binding:"required"`
-	SourceID              string      `json:"sourceID" binding:"required"`
-	SessionType           int32       `json:"sessionType" binding:"required"`
-	ClientMsgID           string      `json:"clientMsgID" binding:"required"`
-	IsExternalExtensions  bool        `json:"isExternalExtensions"`
-	MsgFirstModifyTime    int64       `json:"msgFirstModifyTime" binding:"required"`
-	ReactionExtensionList []*KeyValue `json:"reactionExtensionList" binding:"required"`
+	OperationID           string                `json:"operationID" binding:"required"`
+	SourceID              string                `json:"sourceID" binding:"required"`
+	SessionType           int32                 `json:"sessionType" binding:"required"`
+	ClientMsgID           string                `json:"clientMsgID" binding:"required"`
+	IsExternalExtensions  bool                  `json:"isExternalExtensions"`
+	MsgFirstModifyTime    int64                 `json:"msgFirstModifyTime" binding:"required"`
+	ReactionExtensionList []*extendmsg.KeyValue `json:"reactionExtensionList" binding:"required"`
 }
 type DeleteMessageReactionExtensionsResp struct {
 	CommResp
@@ -115,7 +117,7 @@ type AddMessageReactionExtensionsResp struct {
 }
 type ExtensionResult struct {
 	CommResp
-	KeyValue
+	extendmsg.KeyValue
 }
 
 type GetMessageListReactionExtensionsReq struct {
@@ -150,7 +152,7 @@ type GetMessageListReactionExtensionsReq struct {
 //	ErrMsg    string     `protobuf:"bytes,3,opt,name=errMsg" json:"errMsg,omitempty"`
 //}
 
-type GetMessageListReactionExtensionsResp []*SingleMessageExtensionResult
+type GetMessageListReactionExtensionsResp []*extendmsg.SingleMessageExtensionResult
 
 type OperateMessageListReactionExtensionsReq struct {
 	ClientMsgID        string `json:"clientMsgID"`

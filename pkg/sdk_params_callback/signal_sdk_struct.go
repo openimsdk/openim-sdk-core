@@ -14,22 +14,20 @@
 
 package sdk_params_callback
 
-import (
-	"open_im_sdk/pkg/server_api_params"
-)
+import "github.com/OpenIMSDK/protocol/rtc"
 
-type InviteCallback *server_api_params.SignalInviteResp
+type InviteCallback *rtc.SignalInviteResp
 
-type InviteInGroupCallback *server_api_params.SignalInviteInGroupResp
+type InviteInGroupCallback *rtc.SignalInviteInGroupResp
 
-type CancelCallback *server_api_params.SignalCancelResp
+type CancelCallback *rtc.SignalCancelResp
 
-type RejectCallback *server_api_params.SignalRejectResp
+type RejectCallback *rtc.SignalRejectResp
 
-type AcceptCallback *server_api_params.SignalAcceptResp
+type AcceptCallback *rtc.SignalAcceptResp
 
-type HungUpCallback *server_api_params.SignalHungUpResp
+type HungUpCallback *rtc.SignalHungUpResp
 
-type GetRoomByGroupIDCallback *server_api_params.SignalGetRoomByGroupIDResp
+type GetRoomByGroupIDCallback *rtc.SignalGetRoomByGroupIDResp
 
-type GetTokenByRoomID *server_api_params.SignalGetTokenByRoomIDResp
+type GetTokenByRoomID *rtc.SignalGetTokenByRoomIDResp

@@ -21,12 +21,13 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdkerrs"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"time"
+
+	"github.com/OpenIMSDK/protocol/rtc"
 )
 
-func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInviteInGroupReq *server_api_params.SignalInviteInGroupReq) (*server_api_params.SignalInviteInGroupResp, error) {
+func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInviteInGroupReq *rtc.SignalInviteInGroupReq) (*rtc.SignalInviteInGroupResp, error) {
 	if err := s.checkInvitation(signalInviteInGroupReq.Invitation); err != nil {
 		return nil, err
 	}
@@ -39,18 +40,18 @@ func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInvite
 		return nil, err
 	}
 	signalInviteInGroupReq.Participant = participants
-	req := &server_api_params.SignalReq{Payload: &server_api_params.SignalReq_InviteInGroup{InviteInGroup: signalInviteInGroupReq}}
+	req := &rtc.SignalReq{Payload: &rtc.SignalReq_InviteInGroup{InviteInGroup: signalInviteInGroupReq}}
 	resp, err := s.SendSignalingReqWaitResp(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	s.isCanceled = false
-	reply := resp.Payload.(*server_api_params.SignalResp_InviteInGroup).InviteInGroup
+	reply := resp.Payload.(*rtc.SignalResp_InviteInGroup).InviteInGroup
 	go s.waitPush(ctx, req, reply.BusyLineUserIDList)
 	return reply, nil
 }
 
-func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *server_api_params.SignalInviteReq) (*server_api_params.SignalInviteResp, error) {
+func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *rtc.SignalInviteReq) (*rtc.SignalInviteResp, error) {
 	if err := s.checkInvitation(signalInviteReq.Invitation); err != nil {
 		return nil, err
 	}
@@ -63,18 +64,18 @@ func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *se
 		return nil, err
 	}
 	signalInviteReq.Participant = participants
-	req := &server_api_params.SignalReq{Payload: &server_api_params.SignalReq_Invite{Invite: signalInviteReq}}
+	req := &rtc.SignalReq{Payload: &rtc.SignalReq_Invite{Invite: signalInviteReq}}
 	resp, err := s.SendSignalingReqWaitResp(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	s.isCanceled = false
-	reply := resp.Payload.(*server_api_params.SignalResp_Invite).Invite
+	reply := resp.Payload.(*rtc.SignalResp_Invite).Invite
 	go s.waitPush(ctx, req, reply.BusyLineUserIDList)
 	return reply, nil
 }
 
-func (s *LiveSignaling) SignalingAccept(ctx context.Context, signalAcceptReq *server_api_params.SignalAcceptReq) (*server_api_params.SignalAcceptResp, error) {
+func (s *LiveSignaling) SignalingAccept(ctx context.Context, signalAcceptReq *rtc.SignalAcceptReq) (*rtc.SignalAcceptResp, error) {
 	if err := s.checkInvitation(signalAcceptReq.Invitation); err != nil {
 		return nil, err
 	}
@@ -87,16 +88,16 @@ func (s *LiveSignaling) SignalingAccept(ctx context.Context, signalAcceptReq *se
 		return nil, err
 	}
 	signalAcceptReq.Participant = participants
-	req := &server_api_params.SignalReq{Payload: &server_api_params.SignalReq_Accept{Accept: signalAcceptReq}}
+	req := &rtc.SignalReq{Payload: &rtc.SignalReq_Accept{Accept: signalAcceptReq}}
 	resp, err := s.SendSignalingReqWaitResp(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	reply := resp.Payload.(*server_api_params.SignalResp_Accept).Accept
+	reply := resp.Payload.(*rtc.SignalResp_Accept).Accept
 	return reply, nil
 }
 
-func (s *LiveSignaling) SignalingReject(ctx context.Context, signalRejectReq *server_api_params.SignalRejectReq) error {
+func (s *LiveSignaling) SignalingReject(ctx context.Context, signalRejectReq *rtc.SignalRejectReq) error {
 	if err := s.checkInvitation(signalRejectReq.Invitation); err != nil {
 		return err
 	}
@@ -109,12 +110,12 @@ func (s *LiveSignaling) SignalingReject(ctx context.Context, signalRejectReq *se
 		return err
 	}
 	signalRejectReq.Participant = participant
-	req := &server_api_params.SignalReq{Payload: &server_api_params.SignalReq_Reject{Reject: signalRejectReq}}
+	req := &rtc.SignalReq{Payload: &rtc.SignalReq_Reject{Reject: signalRejectReq}}
 	_, err = s.SendSignalingReqWaitResp(ctx, req)
 	return err
 }
 
-func (s *LiveSignaling) SignalingCancel(ctx context.Context, signalCancelReq *server_api_params.SignalCancelReq) error {
+func (s *LiveSignaling) SignalingCancel(ctx context.Context, signalCancelReq *rtc.SignalCancelReq) error {
 	if err := s.checkInvitation(signalCancelReq.Invitation); err != nil {
 		return err
 	}
@@ -126,7 +127,7 @@ func (s *LiveSignaling) SignalingCancel(ctx context.Context, signalCancelReq *se
 		return err
 	}
 	signalCancelReq.Participant = participant
-	req := &server_api_params.SignalReq{Payload: &server_api_params.SignalReq_Cancel{Cancel: signalCancelReq}}
+	req := &rtc.SignalReq{Payload: &rtc.SignalReq_Cancel{Cancel: signalCancelReq}}
 	_, err = s.SendSignalingReqWaitResp(ctx, req)
 	if err != nil {
 		return err
@@ -135,44 +136,44 @@ func (s *LiveSignaling) SignalingCancel(ctx context.Context, signalCancelReq *se
 	return nil
 }
 
-func (s *LiveSignaling) SignalingHungUp(ctx context.Context, signalHungUpReq *server_api_params.SignalHungUpReq) error {
+func (s *LiveSignaling) SignalingHungUp(ctx context.Context, signalHungUpReq *rtc.SignalHungUpReq) error {
 	if err := s.checkInvitation(signalHungUpReq.Invitation); err != nil {
 		return err
 	}
 	s.setDefaultReq(signalHungUpReq.Invitation)
 	signalHungUpReq.UserID = s.loginUserID
 	signalHungUpReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()
-	req := &server_api_params.SignalReq{Payload: &server_api_params.SignalReq_HungUp{HungUp: signalHungUpReq}}
+	req := &rtc.SignalReq{Payload: &rtc.SignalReq_HungUp{HungUp: signalHungUpReq}}
 	_, err := s.SendSignalingReqWaitResp(ctx, req)
 	return err
 }
 
-func (s *LiveSignaling) SignalingGetTokenByRoomID(ctx context.Context, groupID string) (*server_api_params.SignalGetTokenByRoomIDResp, error) {
+func (s *LiveSignaling) SignalingGetTokenByRoomID(ctx context.Context, groupID string) (*rtc.SignalGetTokenByRoomIDResp, error) {
 	participant, err := s.getSelfParticipant(ctx, groupID)
 	if err != nil {
 		return nil, err
 	}
-	signalReq := &server_api_params.SignalReq{Payload: &server_api_params.SignalReq_GetTokenByRoomID{GetTokenByRoomID: &server_api_params.SignalGetTokenByRoomIDReq{
+	signalReq := &rtc.SignalReq{Payload: &rtc.SignalReq_GetTokenByRoomID{GetTokenByRoomID: &rtc.SignalGetTokenByRoomIDReq{
 		RoomID: groupID, UserID: s.loginUserID, Participant: participant,
 	}}}
 	resp, err := s.SendSignalingReqWaitResp(ctx, signalReq)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Payload.(*server_api_params.SignalResp_GetTokenByRoomID).GetTokenByRoomID, nil
+	return resp.Payload.(*rtc.SignalResp_GetTokenByRoomID).GetTokenByRoomID, nil
 }
 
-func (s *LiveSignaling) SignalingGetRoomByGroupID(ctx context.Context, groupID string) (*server_api_params.SignalGetRoomByGroupIDResp, error) {
-	req := &server_api_params.SignalGetRoomByGroupIDReq{GroupID: groupID}
-	return util.CallApi[server_api_params.SignalGetRoomByGroupIDResp](ctx, constant.SignalGetRoomByGroupIDRouter, req)
+func (s *LiveSignaling) SignalingGetRoomByGroupID(ctx context.Context, groupID string) (*rtc.SignalGetRoomByGroupIDResp, error) {
+	req := &rtc.SignalGetRoomByGroupIDReq{GroupID: groupID}
+	return util.CallApi[rtc.SignalGetRoomByGroupIDResp](ctx, constant.SignalGetRoomByGroupIDRouter, req)
 }
 
-func (s *LiveSignaling) GetSignalingInvitationInfoStartApp(ctx context.Context) (*server_api_params.GetSignalInvitationInfoStartAppResp, error) {
-	req := &server_api_params.GetSignalInvitationInfoStartAppReq{UserID: s.loginUserID}
-	return util.CallApi[server_api_params.GetSignalInvitationInfoStartAppResp](ctx, constant.GetSignalInvitationInfoStartAppRouter, req)
+func (s *LiveSignaling) GetSignalingInvitationInfoStartApp(ctx context.Context) (*rtc.GetSignalInvitationInfoStartAppResp, error) {
+	req := &rtc.GetSignalInvitationInfoStartAppReq{UserID: s.loginUserID}
+	return util.CallApi[rtc.GetSignalInvitationInfoStartAppResp](ctx, constant.GetSignalInvitationInfoStartAppRouter, req)
 }
 
-func (s *LiveSignaling) SignalingCreateMeeting(ctx context.Context, req *server_api_params.SignalCreateMeetingReq) (*server_api_params.SignalCreateMeetingResp, error) {
+func (s *LiveSignaling) SignalingCreateMeeting(ctx context.Context, req *rtc.SignalCreateMeetingReq) (*rtc.SignalCreateMeetingResp, error) {
 	participant, err := s.getSelfParticipant(ctx, "")
 	if err != nil {
 		return nil, err
@@ -182,20 +183,20 @@ func (s *LiveSignaling) SignalingCreateMeeting(ctx context.Context, req *server_
 	bi := big.NewInt(0)
 	bi.SetString(utils.Md5(s.loginUserID + utils.Int64ToString(rand.Int63n(time.Now().UnixNano())))[0:8], 16)
 	req.RoomID = bi.String()
-	return util.CallApi[server_api_params.SignalCreateMeetingResp](ctx, constant.SignalCreateMeetingRouter, req)
+	return util.CallApi[rtc.SignalCreateMeetingResp](ctx, constant.SignalCreateMeetingRouter, req)
 }
 
-func (s *LiveSignaling) SignalingJoinMeeting(ctx context.Context, req *server_api_params.SignalJoinMeetingReq) (*server_api_params.SignalJoinMeetingResp, error) {
+func (s *LiveSignaling) SignalingJoinMeeting(ctx context.Context, req *rtc.SignalJoinMeetingReq) (*rtc.SignalJoinMeetingResp, error) {
 	participant, err := s.getSelfParticipant(ctx, "")
 	if err != nil {
 		return nil, err
 	}
 	req.Participant = participant
 	req.UserID = s.loginUserID
-	return util.CallApi[server_api_params.SignalJoinMeetingResp](ctx, constant.SignalJoinMeetingRouter, req)
+	return util.CallApi[rtc.SignalJoinMeetingResp](ctx, constant.SignalJoinMeetingRouter, req)
 }
 
-func (s *LiveSignaling) SignalingUpdateMeetingInfo(ctx context.Context, req *server_api_params.SignalUpdateMeetingInfoReq) error {
+func (s *LiveSignaling) SignalingUpdateMeetingInfo(ctx context.Context, req *rtc.SignalUpdateMeetingInfoReq) error {
 	if req.RoomID == "" {
 		return sdkerrs.ErrArgs.Wrap("roomID is empty")
 	}
@@ -203,21 +204,21 @@ func (s *LiveSignaling) SignalingUpdateMeetingInfo(ctx context.Context, req *ser
 }
 
 func (s *LiveSignaling) SignalingCloseRoom(ctx context.Context, roomID string) error {
-	req := &server_api_params.SignalCloseRoomReq{RoomID: roomID}
+	req := &rtc.SignalCloseRoomReq{RoomID: roomID}
 	return util.ApiPost(ctx, constant.SignalCloseRoomRouter, req, nil)
 }
 
-func (s *LiveSignaling) SignalingGetMeetings(ctx context.Context) (resp *server_api_params.SignalGetMeetingsResp, err error) {
-	req := &server_api_params.SignalGetMeetingsReq{UserID: s.loginUserID}
-	return util.CallApi[server_api_params.SignalGetMeetingsResp](ctx, constant.SignalGetMeetingsRouter, req)
+func (s *LiveSignaling) SignalingGetMeetings(ctx context.Context) (resp *rtc.SignalGetMeetingsResp, err error) {
+	req := &rtc.SignalGetMeetingsReq{UserID: s.loginUserID}
+	return util.CallApi[rtc.SignalGetMeetingsResp](ctx, constant.SignalGetMeetingsRouter, req)
 }
 
 func (s *LiveSignaling) SignalingOperateStream(ctx context.Context, streamType, roomID, userID string, mute, muteAll bool) error {
-	req := &server_api_params.SignalOperateStreamReq{RoomID: roomID, UserID: userID, StreamType: streamType, Mute: mute, MuteAll: muteAll}
+	req := &rtc.SignalOperateStreamReq{RoomID: roomID, UserID: userID, StreamType: streamType, Mute: mute, MuteAll: muteAll}
 	return util.ApiPost(ctx, constant.SignalOperateStreamRouter, req, nil)
 }
 
 func (s *LiveSignaling) SignalingSendCustomSignal(ctx context.Context, customInfo, roomID string) error {
-	req := &server_api_params.SignalSendCustomSignalReq{RoomID: roomID, CustomInfo: customInfo}
+	req := &rtc.SignalSendCustomSignalReq{RoomID: roomID, CustomInfo: customInfo}
 	return util.ApiPost(ctx, constant.SignalSendCustomSignalRouter, req, nil)
 }
