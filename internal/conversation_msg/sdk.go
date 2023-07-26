@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"image"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -47,7 +46,6 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
 
 	"github.com/jinzhu/copier"
-	imgtype "github.com/shamsher31/goimgtype"
 )
 
 func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
@@ -1047,36 +1045,6 @@ func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk
 }
 func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID string, clientMsgID string, localEx string) error {
 	return c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"local_ex": localEx})
-}
-func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "open file err")
-	}
-	defer func() {
-		if file != nil {
-			file.Close()
-		}
-	}()
-
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  Decode err")
-	}
-
-	datatype, err := imgtype.Get(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  get type err")
-	}
-	fi, err := os.Stat(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  Stat err")
-	}
-
-	b := img.Bounds()
-
-	return &sdk_struct.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
-
 }
 
 func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
