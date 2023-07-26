@@ -16,13 +16,14 @@ package conversation_msg
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 type MessageController struct {

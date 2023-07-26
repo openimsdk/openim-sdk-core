@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 // 定点发送消息（好友关系）

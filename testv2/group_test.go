@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
+	"github.com/OpenIMSDK/protocol/group"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/protocol/wrapperspb"
 )
 
 func Test_CreateGroupV2(t *testing.T) {

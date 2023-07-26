@@ -23,9 +23,9 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 )
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
@@ -258,9 +258,8 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
 		}
 	case constant.SyncConversation:
-		// operationID := node.Args.(string)
-		// log.Debug(operationID, "reconn sync conversation start")
-		c.SyncConversations(ctx)
+
+		c.SyncAllConversations(ctx)
 		err := c.SyncConversationUnreadCount(ctx)
 		if err != nil {
 			// log.Error(operationID, "reconn sync conversation unread count err", err.Error())
@@ -585,7 +584,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 //
 // }
 
-func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
+func (c *Conversation) DoConversationChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
 	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
 		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID",
 			msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType,
@@ -596,8 +595,35 @@ func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		log.ZError(ctx, "msgListner is nil", nil)
 		return
 	}
+	//var notification sdkws.ConversationChangedNotification
+	tips := &sdkws.ConversationUpdateTips{}
+	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
+		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
+		return
+	}
 	go func() {
-		c.SyncConversations(ctx)
+		c.SyncConversations(ctx, tips.ConversationIDList)
+	}()
+}
+
+func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
+	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
+		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID",
+			msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType,
+			"sendTime", msg.SendTime, "loginTime", c.full.Group().LoginTime())
+		return
+	}
+	if c.msgListener == nil {
+		log.ZError(ctx, "msgListner is nil", nil)
+		return
+	}
+	tips := &sdkws.ConversationSetPrivateTips{}
+	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
+		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
+		return
+	}
+	go func() {
+		c.SyncConversations(ctx, []string{tips.ConversationID})
 	}()
 }
 
@@ -622,8 +648,8 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 
 		for _, syncFunc := range []func(c context.Context) error{
 			c.user.SyncLoginUserInfo,
-			c.friend.SyncBlackList, c.friend.SyncFriendList, c.friend.SyncFriendApplication, c.friend.SyncSelfFriendApplication,
-			c.group.SyncJoinedGroup, c.group.SyncAdminGroupApplication, c.group.SyncSelfGroupApplication, c.group.SyncJoinedGroupMember,
+			c.friend.SyncAllBlackList, c.friend.SyncAllFriendList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
+			c.group.SyncAllJoinedGroups, c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication, c.group.SyncAllJoinedGroupMembers,
 		} {
 			go func(syncFunc func(c context.Context) error) {
 				_ = syncFunc(ctx)
@@ -633,7 +659,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		c.ConversationListener.OnSyncServerFailed()
 	case constant.MsgSyncEnd:
 		defer c.ConversationListener.OnSyncServerFinish()
-		go c.SyncConversations(ctx)
+		go c.SyncAllConversations(ctx)
 	}
 
 	for conversationID, msgs := range allMsg {
@@ -649,8 +675,10 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		}
 		for _, v := range msgs.Msgs {
 			switch {
-			case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
-				c.DoNotification(ctx, v)
+			case v.ContentType == constant.ConversationChangeNotification:
+				c.DoConversationChangedNotification(ctx, v)
+			case v.ContentType == constant.ConversationPrivateChatNotification:
+				c.DoConversationIsPrivateChangedNotification(ctx, v)
 			case v.ContentType == constant.ConversationUnreadNotification:
 				var tips sdkws.ConversationHasReadTips
 				_ = json.Unmarshal(v.Content, &tips)

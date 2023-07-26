@@ -15,7 +15,7 @@
 package sdk_struct
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 ////////////////////////// message/////////////////////////

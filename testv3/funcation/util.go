@@ -16,12 +16,13 @@ package funcation
 
 import (
 	"context"
-	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
 )
 
 func GetToken(uid string) (string, int64) {

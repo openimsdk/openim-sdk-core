@@ -24,10 +24,10 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
+	pbMsg "github.com/OpenIMSDK/protocol/msg"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/jinzhu/copier"
 )
 

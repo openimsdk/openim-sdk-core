@@ -39,12 +39,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/tools/log"
 
-	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
+	pbConversation "github.com/OpenIMSDK/protocol/conversation"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	pbUser "github.com/OpenIMSDK/protocol/user"
+	"github.com/OpenIMSDK/protocol/wrapperspb"
 
 	"github.com/jinzhu/copier"
 	imgtype "github.com/shamsher31/goimgtype"
@@ -75,8 +75,8 @@ func (c *Conversation) GetAtAllTag(_ context.Context) string {
 }
 
 // deprecated
-func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
-	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)
+func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDs []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
+	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (c *Conversation) setConversationAndSync(ctx context.Context, conversationI
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx)
+	c.SyncConversations(ctx, []string{conversationID})
 	return nil
 }
 
