@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"image"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/util"
@@ -34,6 +33,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/OpenIMSDK/tools/errs"
 
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"

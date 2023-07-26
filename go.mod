@@ -23,7 +23,7 @@ require (
 require golang.org/x/net v0.11.0
 
 require (
-	github.com/OpenIMSDK/protocol v0.0.1
+	github.com/OpenIMSDK/protocol v0.0.4
 	github.com/OpenIMSDK/tools v0.0.4
 	github.com/google/go-cmp v0.5.9
 	google.golang.org/grpc v1.56.2
@@ -47,3 +47,5 @@ require (
 	golang.org/x/text v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect
 )
+
+replace github.com/OpenIMSDK/protocol => ./pkg/protocol
