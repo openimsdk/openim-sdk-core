@@ -1,6 +1,5 @@
 package encryption
 
-import "C"
 import (
 	"context"
 	"errors"
@@ -44,7 +43,7 @@ func (c *ConversationEncryptor) Decryption(ctx context.Context, messageList []*s
 	for _, message := range messageList {
 		log.ZDebug(ctx, "decryption", "message", message, "conversation_id", conversationID)
 		if message.KeyVersion != 0 {
-			if message.RecvID != C.LoginUserID && message.SendID != C.LoginUserID {
+			if message.RecvID != c.LoginUserID && message.SendID != c.LoginUserID {
 				log.ZWarn(ctx, "maybe message come from app manager", errors.New("manager message"), "message", message)
 				continue
 			}
