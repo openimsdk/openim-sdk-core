@@ -168,7 +168,11 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 	//c.conn.SetPongHandler(funcation(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
-		err := c.reConn(ctx, &connNum)
+		needRecon, err := c.reConn(ctx, &connNum)
+		if !needRecon {
+			c.closedErr = err
+			return
+		}
 		if err != nil {
 			log.ZWarn(c.ctx, "reConn", err)
 			time.Sleep(time.Second * 1)
@@ -266,7 +270,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat done sdk logout.....")
+		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat", "heartbeat done sdk logout.....")
 	}()
 	for {
 		select {
@@ -469,9 +473,9 @@ func (c *LongConnMgr) GetConnectionStatus() int {
 	defer c.w.Unlock()
 	return c.connStatus
 }
-func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
+func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err error) {
 	if c.IsConnected() {
-		return nil
+		return true, nil
 	}
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
@@ -493,7 +497,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 		if resp != nil {
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return err
+				return true, err
 			}
 			log.ZInfo(ctx, "reConn resp", "body", string(body))
 			var apiResp struct {
@@ -502,7 +506,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 				ErrDlt  string `json:"errDlt"`
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
-				return err
+				return true, err
 			}
 			switch apiResp.ErrCode {
 			case
@@ -519,10 +523,10 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 				c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
 			}
 			log.ZWarn(ctx, "long conn establish failed", sdkerrs.New(apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt))
-			return errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
+			return false, errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 		}
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
-		return err
+		return true, err
 	}
 	c.listener.OnConnectSuccess()
 	c.ctx = newContext(c.conn.LocalAddr())
@@ -533,7 +537,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
-	return nil
+	return true, nil
 }
 
 func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
