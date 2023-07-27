@@ -90,10 +90,10 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 		return err
 	}
 	// if err := g.SyncJoinedGroup(ctx); err != nil {
-	//	return err
+	// 	return err
 	// }
 	// if err := g.SyncGroupMember(ctx, groupID); err != nil {
-	//	return err
+	// 	return err
 	// }
 	return nil
 }

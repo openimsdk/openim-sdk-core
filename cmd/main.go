@@ -34,7 +34,7 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "5345125128"
+	strMyUidx := "5508847187"
 
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
