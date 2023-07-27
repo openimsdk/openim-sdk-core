@@ -8,7 +8,12 @@ import (
 	"time"
 )
 
+var (
+	pressureTestAttribute PressureTestAttribute
+)
+
 func init() {
+	pressureTestAttribute.InitWithFlag()
 	if err := log.InitFromConfig("sdk.log", "sdk", 3,
 		true, false, "", 2); err != nil {
 		panic(err)
@@ -16,24 +21,20 @@ func init() {
 }
 
 func TestPressureTester_PressureSendMsgs(t *testing.T) {
-	sendUserID := []string{"register_test_493"}
-	recvUserID := []string{"5338610321"}
-
+	ParseFlag()
 	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
 	for i := 0; i < 10; i++ {
-		p.WithTimer(p.PressureSendMsgs2)(sendUserID, recvUserID, 1000, 100*time.Millisecond)
+		p.WithTimer(p.PressureSendMsgs2)(pressureTestAttribute.sendUserIDs, pressureTestAttribute.recvUserIDs, pressureTestAttribute.messageNumber, time.Duration(pressureTestAttribute.timeInterval)*time.Millisecond)
 		time.Sleep(time.Second)
 	}
 	// time.Sleep(1000 * time.Second)
 }
 
 func TestPressureTester_PressureSendGroupMsgs(t *testing.T) {
-	sendUserID := "register_test_4334"
-	groupID := "3411007805"
-
+	ParseFlag()
 	pressureTester := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
 	pressureSendGroupMsgsWithTime := pressureTester.WithTimer(pressureTester.PressureSendGroupMsgs)
-	pressureSendGroupMsgsWithTime([]string{sendUserID}, groupID, 100, time.Duration(100))
+	pressureSendGroupMsgsWithTime(pressureTestAttribute.sendUserIDs, pressureTestAttribute.groupIDs, pressureTestAttribute.groupIDs, time.Duration(pressureTestAttribute.timeInterval)*time.Millisecond)
 }
 
 func TestPressureTester_PressureSendGroupMsgs2(t *testing.T) {
