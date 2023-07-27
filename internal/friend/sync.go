@@ -34,7 +34,12 @@ func (f *Friend) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID
 	if err != nil {
 		return err
 	}
-	return f.requestSendSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
+	if toUserID == f.loginUserID {
+		return f.requestRecvSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
+	} else if fromUserID == f.loginUserID {
+		return f.requestSendSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
+	}
+	return nil
 }
 
 // send
