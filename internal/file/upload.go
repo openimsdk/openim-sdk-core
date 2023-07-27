@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package file
 
 import (
@@ -7,8 +21,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/third"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,7 +30,11 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/OpenIMSDK/protocol/third"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 type UploadFileReq struct {
@@ -44,15 +60,47 @@ type partInfo struct {
 }
 
 func NewFile(database db_interface.DataBase, loginUserID string) *File {
-	return &File{database: database, loginUserID: loginUserID, lock: &sync.Mutex{}, uploading: make(map[string]func())}
+	return &File{database: database, loginUserID: loginUserID, confLock: &sync.Mutex{}, mapLocker: &sync.Mutex{}, uploading: make(map[string]*lockInfo)}
 }
 
 type File struct {
 	database    db_interface.DataBase
 	loginUserID string
-	lock        sync.Locker
+	confLock    sync.Locker
 	partLimit   *third.PartLimitResp
-	uploading   map[string]func()
+	mapLocker   sync.Locker
+	uploading   map[string]*lockInfo
+}
+
+type lockInfo struct {
+	count  int32
+	locker sync.Locker
+}
+
+func (f *File) lockHash(hash string) {
+	f.mapLocker.Lock()
+	locker, ok := f.uploading[hash]
+	if !ok {
+		locker = &lockInfo{count: 0, locker: &sync.Mutex{}}
+		f.uploading[hash] = locker
+	}
+	atomic.AddInt32(&locker.count, 1)
+	f.mapLocker.Unlock()
+	locker.locker.Lock()
+}
+
+func (f *File) unlockHash(hash string) {
+	f.mapLocker.Lock()
+	locker, ok := f.uploading[hash]
+	if !ok {
+		f.mapLocker.Unlock()
+		return
+	}
+	if atomic.AddInt32(&locker.count, -1) == 0 {
+		delete(f.uploading, hash)
+	}
+	f.mapLocker.Unlock()
+	locker.locker.Unlock()
 }
 
 func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFileCallback) (*UploadFileResp, error) {
@@ -89,6 +137,8 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	if err := file.StartSeek(0); err != nil {
 		return nil, err
 	}
+	f.lockHash(partMd5Val)
+	defer f.unlockHash(partMd5Val)
 	// 获取上传文件
 	bitmap, dbUpload, upload, err := f.getUpload(ctx, &third.InitiateMultipartUploadReq{
 		Hash:        partMd5Val,
@@ -172,8 +222,8 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 }
 
 func (f *File) cleanPartLimit() {
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.confLock.Lock()
+	defer f.confLock.Unlock()
 	f.partLimit = nil
 }
 
@@ -198,8 +248,8 @@ func (f *File) getPartNum(fileSize int64, partSize int64) int {
 }
 
 func (f *File) partSize(ctx context.Context, size int64) (int64, error) {
-	f.lock.Lock()
-	defer f.lock.Unlock()
+	f.confLock.Lock()
+	defer f.confLock.Unlock()
 	if f.partLimit == nil {
 		resp, err := util.CallApi[third.PartLimitResp](ctx, constant.ObjectPartLimit, &third.PartLimitReq{})
 		if err != nil {

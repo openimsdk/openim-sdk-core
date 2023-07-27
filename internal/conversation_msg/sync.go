@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package conversation_msg
 
 import (
@@ -8,21 +22,14 @@ import (
 	"open_im_sdk/pkg/syncer"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/tools/log"
 )
 
-func (c *Conversation) SyncConversations(ctx context.Context) error {
-	ccTime := time.Now()
-	conversationsOnServer, err := c.getServerConversationList(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
+func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, conversationsOnServer []*model_struct.LocalConversation) error {
 	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
 	if err != nil {
 		return err
 	}
-	log.ZDebug(ctx, "get local cost time", "cost time", time.Since(ccTime), "conversation on local", conversationsOnLocal)
 	for _, v := range conversationsOnServer {
 		c.addFaceURLAndName(ctx, v)
 	}
@@ -40,6 +47,24 @@ func (c *Conversation) SyncConversations(ctx context.Context) error {
 	}
 	c.cache.UpdateConversations(conversationsOnLocal)
 	return nil
+}
+
+func (c *Conversation) SyncConversations(ctx context.Context, conversationIDs []string) error {
+	conversationsOnServer, err := c.getServerConversationsByIDs(ctx, conversationIDs)
+	if err != nil {
+		return err
+	}
+	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
+}
+
+func (c *Conversation) SyncAllConversations(ctx context.Context) error {
+	ccTime := time.Now()
+	conversationsOnServer, err := c.getServerConversationList(ctx)
+	if err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
+	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
 }
 
 func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {

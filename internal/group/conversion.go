@@ -15,8 +15,9 @@
 package group
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/db/model_struct"
+
+	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 func ServerGroupToLocalGroup(info *sdkws.GroupInfo) *model_struct.LocalGroup {

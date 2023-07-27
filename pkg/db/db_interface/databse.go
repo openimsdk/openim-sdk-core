@@ -25,6 +25,7 @@ type GroupDatabase interface {
 	DeleteGroup(ctx context.Context, groupID string) error
 	UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	GetJoinedGroupListDB(ctx context.Context) ([]*model_struct.LocalGroup, error)
+	GetGroups(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroup, error)
 	GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
 	GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error)
 	AddMemberCount(ctx context.Context, groupID string) error
@@ -231,6 +232,8 @@ type FriendDatabase interface {
 	GetRecvFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error)
 	GetSendFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error)
 	GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error)
+	GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) ([]*model_struct.LocalFriendRequest, error)
+
 	GetBlackListDB(ctx context.Context) ([]*model_struct.LocalBlack, error)
 	GetBlackListUserID(ctx context.Context) (blackListUid []string, err error)
 	GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string) (*model_struct.LocalBlack, error)
