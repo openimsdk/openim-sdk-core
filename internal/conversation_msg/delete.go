@@ -23,9 +23,9 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	pbMsg "github.com/OpenIMSDK/protocol/msg"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/jinzhu/copier"
 )
 
@@ -203,6 +203,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 func (c *Conversation) doDeleteMsgs(ctx context.Context, msg *sdkws.MsgData) {
 	tips := sdkws.DeleteMsgsTips{}
 	utils.UnmarshalNotificationElem(msg.Content, &tips)
+	log.ZDebug(ctx, "doDeleteMsgs", "seqs", tips.Seqs)
 	for _, v := range tips.Seqs {
 		msg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, v)
 		if err != nil {

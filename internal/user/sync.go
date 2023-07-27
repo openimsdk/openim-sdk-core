@@ -16,10 +16,11 @@ package user
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"gorm.io/gorm"
 	"open_im_sdk/pkg/db/model_struct"
+
+	"github.com/OpenIMSDK/tools/errs"
+	"github.com/OpenIMSDK/tools/log"
+	"gorm.io/gorm"
 )
 
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {

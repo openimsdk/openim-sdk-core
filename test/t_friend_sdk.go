@@ -17,7 +17,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	X "log"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
@@ -30,7 +29,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/protocol/sdkws"
+
+	"github.com/OpenIMSDK/tools/mcontext"
 )
 
 var loggerf *X.Logger
