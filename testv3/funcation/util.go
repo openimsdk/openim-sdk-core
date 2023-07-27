@@ -22,7 +22,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 
-	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
+	authPB "github.com/OpenIMSDK/protocol/auth"
 )
 
 func GetToken(uid string) (string, int64) {
