@@ -2,7 +2,7 @@ package testv3new
 
 import (
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/tools/log"
 	"open_im_sdk/testv3new/testcore"
 	"testing"
 	"time"
@@ -10,7 +10,7 @@ import (
 
 func init() {
 	if err := log.InitFromConfig("sdk.log", "sdk", 3,
-		true, false, "", 2); err != nil {
+		true, false, "", 2, 24); err != nil {
 		panic(err)
 	}
 }
