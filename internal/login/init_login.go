@@ -225,7 +225,7 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 	for {
 		select {
 		case <-u.loginMgrCh:
-			err := u.logout(ctx)
+			err := u.logout(ctx, true)
 			if err != nil {
 				log.ZError(ctx, "logout error", err)
 			}
@@ -355,16 +355,22 @@ func (u *LoginMgr) initResources() {
 }
 
 // token error recycle recourse, kicked not recycle
-func (u *LoginMgr) logout(ctx context.Context) error {
-	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
-	if err != nil {
-		return err
+func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
+	if !isTokenValid {
+		ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cancel()
+		err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
+		if err != nil {
+			log.ZWarn(ctx, "TriggerCmdLogout server recycle resources failed...", err)
+		} else {
+			log.ZDebug(ctx, "TriggerCmdLogout server recycle resources success...")
+		}
 	}
 	u.Exit()
 	_ = u.db.Close(u.ctx)
 	// user object must be rest  when user logout
 	u.initResources()
-	log.ZDebug(ctx, "TriggerCmdLogout success...")
+	log.ZDebug(ctx, "TriggerCmdLogout client success...", "isTokenValid", isTokenValid)
 	return nil
 }
 

@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"image"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -47,7 +46,6 @@ import (
 	"github.com/OpenIMSDK/protocol/wrapperspb"
 
 	"github.com/jinzhu/copier"
-	imgtype "github.com/shamsher31/goimgtype"
 )
 
 func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
@@ -622,6 +620,36 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
 	//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 	var delFile []string
+	switch s.ContentType {
+	case constant.Picture:
+		s.Content = utils.StructToJsonString(s.PictureElem)
+	case constant.Sound:
+		s.Content = utils.StructToJsonString(s.SoundElem)
+	case constant.Video:
+		s.Content = utils.StructToJsonString(s.VideoElem)
+	case constant.File:
+		s.Content = utils.StructToJsonString(s.FileElem)
+	case constant.Text:
+		s.Content = utils.StructToJsonString(s.TextElem)
+	case constant.AtText:
+		s.Content = utils.StructToJsonString(s.AtTextElem)
+	case constant.Location:
+		s.Content = utils.StructToJsonString(s.LocationElem)
+	case constant.Custom:
+		s.Content = utils.StructToJsonString(s.CustomElem)
+	case constant.Merger:
+		s.Content = utils.StructToJsonString(s.MergeElem)
+	case constant.Quote:
+		s.Content = utils.StructToJsonString(s.QuoteElem)
+	case constant.Card:
+		s.Content = utils.StructToJsonString(s.CardElem)
+	case constant.Face:
+		s.Content = utils.StructToJsonString(s.FaceElem)
+	case constant.AdvancedText:
+		s.Content = utils.StructToJsonString(s.AdvancedTextElem)
+	default:
+		return nil, sdkerrs.ErrMsgContentTypeNotSupport
+	}
 	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 		localMessage := c.msgStructToLocalChatLog(s)
 		err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
@@ -1047,36 +1075,6 @@ func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk
 }
 func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID string, clientMsgID string, localEx string) error {
 	return c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"local_ex": localEx})
-}
-func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "open file err")
-	}
-	defer func() {
-		if file != nil {
-			file.Close()
-		}
-	}()
-
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  Decode err")
-	}
-
-	datatype, err := imgtype.Get(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  get type err")
-	}
-	fi, err := os.Stat(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  Stat err")
-	}
-
-	b := img.Bounds()
-
-	return &sdk_struct.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
-
 }
 
 func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
