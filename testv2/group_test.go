@@ -15,15 +15,13 @@
 package testv2
 
 import (
+	"github.com/OpenIMSDK/protocol/group"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/protocol/wrapperspb"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"testing"
-	"time"
-
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/protocol/wrapperspb"
 )
 
 func Test_CreateGroupV2(t *testing.T) {
@@ -241,13 +239,13 @@ func Test_InviteUserToGroup(t *testing.T) {
 	t.Log("InviteUserToGroup success", ctx.Value("operationID"))
 }
 
-func Test_SyncGroup(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SyncGroupMember(ctx, "3179997540")
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second * 100000)
-}
+//func Test_SyncGroup(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Group().SyncGroupMember(ctx, "3179997540")
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	time.Sleep(time.Second * 100000)
+//}
 
 func Test_GetGroup(t *testing.T) {
 	t.Log("--------------------------")
