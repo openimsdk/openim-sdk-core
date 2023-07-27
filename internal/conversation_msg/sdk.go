@@ -622,6 +622,36 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
 	//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 	var delFile []string
+	switch s.ContentType {
+	case constant.Picture:
+		s.Content = utils.StructToJsonString(s.PictureElem)
+	case constant.Sound:
+		s.Content = utils.StructToJsonString(s.SoundElem)
+	case constant.Video:
+		s.Content = utils.StructToJsonString(s.VideoElem)
+	case constant.File:
+		s.Content = utils.StructToJsonString(s.FileElem)
+	case constant.Text:
+		s.Content = utils.StructToJsonString(s.TextElem)
+	case constant.AtText:
+		s.Content = utils.StructToJsonString(s.AtTextElem)
+	case constant.Location:
+		s.Content = utils.StructToJsonString(s.LocationElem)
+	case constant.Custom:
+		s.Content = utils.StructToJsonString(s.CustomElem)
+	case constant.Merger:
+		s.Content = utils.StructToJsonString(s.MergeElem)
+	case constant.Quote:
+		s.Content = utils.StructToJsonString(s.QuoteElem)
+	case constant.Card:
+		s.Content = utils.StructToJsonString(s.CardElem)
+	case constant.Face:
+		s.Content = utils.StructToJsonString(s.FaceElem)
+	case constant.AdvancedText:
+		s.Content = utils.StructToJsonString(s.AdvancedTextElem)
+	default:
+		return nil, sdkerrs.ErrMsgContentTypeNotSupport
+	}
 	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 		localMessage := c.msgStructToLocalChatLog(s)
 		err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
