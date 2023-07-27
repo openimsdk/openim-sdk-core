@@ -68,7 +68,7 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	jsonReqData, err := json.Marshal(map[string]any{
 		"userID":     userID,
 		"platformID": 1,
-		"secret":     "tuoyun",
+		"secret":     "openIM123",
 		//"secret": "111111",
 	})
 	if err != nil {
@@ -106,7 +106,7 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	if result.ErrCode != 0 {
 		return "", fmt.Errorf("errCode:%d, errMsg:%s, errDlt:%s", result.ErrCode, result.ErrMsg, result.ErrDlt)
 	}
-	return result.Data.Token, nil
+	return result.Data.Token + "12321", nil
 }
 
 type onListenerForService struct {
