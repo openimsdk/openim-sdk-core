@@ -302,3 +302,9 @@ func (d *DataBase) GetGroupMemberAllGroupIDs(ctx context.Context) ([]string, err
 	}
 	return groupIDs, nil
 }
+
+func (d *DataBase) GetUserJoinedGroupIDs(ctx context.Context, userID string) (groupIDs []string, err error) {
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
+	return groupIDs, d.conn.WithContext(ctx).Model(&model_struct.LocalGroupMember{}).Where("user_id = ?", userID).Pluck("group_id", &groupIDs).Error
+}

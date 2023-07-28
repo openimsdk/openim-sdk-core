@@ -344,6 +344,11 @@ func GetConversationIDByMsg(msg *sdk_struct.MsgStruct) string {
 	}
 	return ""
 }
+
+func GetConversationIDByGroupID(groupID string) string {
+	return "sg_" + groupID
+}
+
 func GetConversationTableName(conversationID string) string {
 	return constant.ChatLogsTableNamePre + conversationID
 }
