@@ -25,13 +25,14 @@ type GroupDatabase interface {
 	DeleteGroup(ctx context.Context, groupID string) error
 	UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	GetJoinedGroupListDB(ctx context.Context) ([]*model_struct.LocalGroup, error)
-	GetGroups(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroup, error)
+	GetGroups(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error)
 	GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
 	GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error)
 	AddMemberCount(ctx context.Context, groupID string) error
 	SubtractMemberCount(ctx context.Context, groupID string) error
 	GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error)
 	GetJoinedWorkingGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error)
+	GetUserJoinedGroupIDs(ctx context.Context, userID string) ([]string, error)
 
 	InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error
 	DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error

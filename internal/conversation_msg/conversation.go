@@ -564,6 +564,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
 		temp.AttachedInfoElem = &attachedInfo
 		temp.Ex = v.Ex
+		temp.LocalEx = v.LocalEx
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
 			// log.Error("", "Parsing data error:", err.Error(), temp)
