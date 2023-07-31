@@ -127,7 +127,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 		signal:               signal,
-		messageEncryptor:     encryption.NewConversationEncryptor(info.UserID()),
+		messageEncryptor:     encryption.NewConversationEncryptor(info.UserID(), longConnMgr),
 	}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)

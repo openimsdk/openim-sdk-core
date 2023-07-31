@@ -1162,7 +1162,6 @@ func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_
 	}
 	apiReq := extendmsg.SetMessageReactionExtensionsReq{
 		ConversationID:       conversationID,
-		UserID:               c.loginUserID,
 		ReactionExtensions:   reqTemp,
 		ClientMsgID:          s.ClientMsgID,
 		Ex:                   nil,

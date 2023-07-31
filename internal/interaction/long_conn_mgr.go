@@ -94,6 +94,7 @@ type LongConnMgr struct {
 	encoder            Encoder
 	compressor         Compressor
 	IsBackground       bool
+	IsEncryption       bool
 	// write conn lock
 	connWrite *sync.Mutex
 }
@@ -455,6 +456,10 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		if err := c.Syncer.NotifyResp(ctx, wsResp); err != nil {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 		}
+	case constant.WSServerConfigMsg:
+		if err = c.doServerConfigMsg(ctx, wsResp); err != nil {
+			log.ZError(ctx, "doWSServerConfigMsg failed", err, "wsResp", wsResp)
+		}
 	default:
 		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return sdkerrs.ErrMsgBinaryTypeNotSupport
@@ -549,6 +554,15 @@ func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error
 		return err
 	}
 	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
+}
+func (c *LongConnMgr) doServerConfigMsg(_ context.Context, wsResp GeneralWsResp) error {
+	var msg sdkws.ServerConfig
+	err := proto.Unmarshal(wsResp.Data, &msg)
+	if err != nil {
+		return err
+	}
+	c.IsEncryption = msg.IsEncryption
+	return nil
 }
 func (c *LongConnMgr) Close(ctx context.Context) {
 	if c.GetConnectionStatus() == Connected {

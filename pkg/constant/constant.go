@@ -299,6 +299,7 @@ const (
 	PushMsg             = 2001
 	KickOnlineMsg       = 2002
 	LogoutMsg           = 2003
+	WSServerConfigMsg   = 2100
 	SetBackgroundStatus = 2004
 
 	WSDataError = 3001

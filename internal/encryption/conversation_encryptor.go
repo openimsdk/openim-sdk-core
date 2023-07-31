@@ -6,6 +6,7 @@ import (
 	"github.com/OpenIMSDK/protocol/encryption"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
+	"open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdkerrs"
@@ -15,16 +16,20 @@ import (
 )
 
 type ConversationEncryptor struct {
+	*interaction.LongConnMgr
 	LoginUserID string
 	m           sync.Map
 	a           Encryptor
 }
 
-func NewConversationEncryptor(loginUserID string) MessageEncryptor {
-	return &ConversationEncryptor{LoginUserID: loginUserID, a: NewAESEncryptor()}
+func NewConversationEncryptor(loginUserID string, longConn *interaction.LongConnMgr) MessageEncryptor {
+	return &ConversationEncryptor{LoginUserID: loginUserID, a: NewAESEncryptor(), LongConnMgr: longConn}
 }
 
 func (c *ConversationEncryptor) Encryption(ctx context.Context, message *sdkws.MsgData, conversationID string) error {
+	if !c.LongConnMgr.IsEncryption {
+		return nil
+	}
 	key, err := c.GetMaxVersionKey(ctx, conversationID)
 	if err != nil {
 		return err
