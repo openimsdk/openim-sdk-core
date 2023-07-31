@@ -151,6 +151,9 @@ const (
 	Registered    = "registered"
 	UnRegistered  = "unregistered"
 
+	Online  = 1
+	Offline = 0
+
 	// MsgReceiveOpt.
 	ReceiveMessage          = 0
 	NotReceiveMessage       = 1
@@ -361,3 +364,9 @@ const OpenIMCommonConfigKey = "OpenIMServerConfig"
 const CallbackCommand = "command"
 
 const BatchNum = 100
+
+// Subscribe to user constants
+const (
+	SubscriberUser = 1
+	Unsubscribe    = 2
+)

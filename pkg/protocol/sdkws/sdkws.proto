@@ -215,6 +215,9 @@ message OfflinePushInfo{
   bool iOSBadgeCount = 5;
   string signalInfo = 6;
 }
+message ServerConfig{
+  bool isEncryption = 1;
+}
 
 
 

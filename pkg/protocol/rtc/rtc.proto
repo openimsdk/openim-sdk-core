@@ -1,0 +1,364 @@
+syntax = "proto3";
+package OpenIMServer.rtc;
+//import "pub/group.proto";
+//import "pub/msg.proto";
+//import "pub/user.proto";
+import "sdkws/sdkws.proto";
+import "wrapperspb/wrapperspb.proto";
+option go_package = "github.com/OpenIMSDK/protocol/rtc";
+
+message ParticipantMetaData{
+  OpenIMServer.sdkws.GroupInfo groupInfo = 1;
+  OpenIMServer.sdkws.GroupMemberFullInfo groupMemberInfo = 2;
+  OpenIMServer.sdkws.PublicUserInfo userInfo = 3;
+}
+
+message GetJoinTokenReq{
+  string room = 1;
+  string identity = 2;
+  ParticipantMetaData metaData = 3;
+}
+
+message GetJoinTokenResp{
+  string jwt = 1;
+  string liveURL = 2;
+}
+
+
+message SignalReq {
+  oneof payload {
+    SignalInviteReq invite = 1;
+    SignalInviteInGroupReq inviteInGroup= 2;
+    SignalCancelReq cancel = 3;
+    SignalAcceptReq accept = 4;
+    SignalHungUpReq hungUp = 5;
+    SignalRejectReq reject = 6;
+    SignalGetTokenByRoomIDReq getTokenByRoomID = 7;
+  }
+}
+
+message SignalSendCustomSignalReq {
+  string roomID = 1;
+  string customInfo = 2;
+}
+
+message SignalSendCustomSignalResp {
+}
+
+
+message SignalGetMeetingsReq {
+  string userID = 1;
+}
+
+message SignalGetMeetingsResp {
+  repeated MeetingInfo meetingInfoList = 1;
+}
+
+message SignalOperateStreamReq {
+  string streamType = 1;
+  string roomID = 2;
+  string userID = 3;
+  bool mute = 4;
+  bool muteAll = 5;
+}
+
+
+message SignalOperateStreamResp {
+}
+
+message SignalOnStreamChangeReq {
+  string roomID = 1;
+  string streamType = 2;
+  bool mute = 3;
+}
+
+message  SignalCreateMeetingReq{
+  int64 meetingDuration = 1;
+  string roomID = 2;
+  string meetingName = 3;
+  string meetingHostUserID = 4;
+  ParticipantMetaData participant = 5;
+  repeated string inviteeUserIDList = 6;
+  int64 startTime = 7;
+  string ex = 8;
+}
+
+message  SignalCreateMeetingResp{
+  string token = 1;
+  string roomID = 2;
+  string liveURL = 3;
+}
+
+message  SignalJoinMeetingReq{
+  string roomID = 1;
+  string userID = 2;
+  ParticipantMetaData participant = 3;
+}
+
+message SignalJoinMeetingResp{
+  string token = 1;
+  string roomID = 2;
+  string liveURL = 3;
+}
+
+message SignalResp {
+  oneof payload {
+    SignalInviteResp invite = 1;
+    SignalInviteInGroupResp inviteInGroup= 2;
+    SignalCancelResp cancel = 3;
+    SignalAcceptResp accept = 4;
+    SignalHungUpResp hungUp = 5;
+    SignalRejectResp reject = 6;
+    SignalGetTokenByRoomIDResp getTokenByRoomID = 7;
+  }
+}
+
+message InvitationInfo  {
+  string inviterUserID = 1;
+  repeated string inviteeUserIDList = 2;
+  string customData = 3;
+  string  groupID = 4;
+  string roomID = 5;
+  int32 timeout = 6;
+  string mediaType = 7;
+  int32 platformID = 8;
+  int32 sessionType = 9;
+  int64 initiateTime = 10;
+  repeated string busyLineUserIDList = 11;
+}
+
+message MeetingInfo {
+  string roomID = 1;
+  string meetingName = 2;
+  string ex = 3;
+  string hostUserID = 4;
+  repeated string inviteeUserIDList = 5; //邀请列表
+  int64 createTime = 6;
+  int64 startTime = 7;
+  int64 endTime = 8;
+  bool participantCanUnmuteSelf = 9; //成员是否能自己解除禁言
+  bool participantCanEnableVideo = 10; //成员是否能开启视频
+  bool onlyHostInviteUser = 11; //仅主持人可邀请用户
+  bool onlyHostShareScreen = 12; //仅主持人可共享屏幕
+  bool joinDisableMicrophone = 13; //加入是否默认关麦克风
+  bool joinDisableVideo = 14; //加入是否默认关视频
+  bool isMuteAllVideo = 15; // 是否全员禁用视频
+  bool isMuteAllMicrophone = 16; // 是否全员禁用麦克风
+  repeated string canScreenUserIDList = 17; // 可共享屏幕的ID列表
+  repeated string disableMicrophoneUserIDList = 18; // 当前被禁言麦克风的id列表
+  repeated string disableVideoUserIDList = 19; // 当前禁用视频流的ID列表
+  repeated string pinedUserIDList = 20; // 置顶ID列表
+  repeated string beWatchedUserIDList = 21; // 正在被观看用户列表
+}
+
+message SignalInviteReq {
+  InvitationInfo invitation = 1;
+  sdkws.OfflinePushInfo offlinePushInfo  = 2;
+  ParticipantMetaData participant = 3;
+  string userID = 4;
+}
+
+message SignalInviteResp {
+  string token = 1;
+  string roomID = 2;
+  string liveURL = 3;
+  repeated string busyLineUserIDList = 4;
+}
+
+message SignalInviteInGroupReq {
+  InvitationInfo invitation = 1;
+  sdkws.OfflinePushInfo offlinePushInfo  = 2;
+  ParticipantMetaData participant = 3;
+  string userID = 4;
+}
+
+message SignalInviteInGroupResp {
+  string token = 1;
+  string roomID = 2;
+  string liveURL = 3;
+  repeated string busyLineUserIDList = 4;
+}
+
+message SignalCancelReq {
+  InvitationInfo invitation = 1;
+  sdkws.OfflinePushInfo offlinePushInfo  = 2;
+  ParticipantMetaData participant = 3;
+  string userID = 4;
+}
+
+message SignalCancelResp {
+
+}
+
+message SignalAcceptReq {
+  InvitationInfo invitation = 1;
+  sdkws.OfflinePushInfo offlinePushInfo  = 2;
+  ParticipantMetaData participant = 3;
+  int32 opUserPlatformID = 4;
+  string userID = 5;
+}
+
+message SignalAcceptResp {
+  string token = 1;
+  string roomID = 2;
+  string liveURL = 3;
+}
+
+message SignalHungUpReq {
+  InvitationInfo invitation = 1;
+  sdkws.OfflinePushInfo offlinePushInfo  = 2;
+  string userID = 3;
+}
+
+message SignalHungUpResp {
+
+}
+
+
+message SignalRejectReq {
+  InvitationInfo invitation = 1;
+  sdkws.OfflinePushInfo offlinePushInfo  = 2;
+  ParticipantMetaData participant = 3;
+  int32 opUserPlatformID = 4;
+  string userID = 5;
+}
+
+message SignalRejectResp {
+
+}
+
+message SignalGetRoomByGroupIDReq {
+  string groupID = 1;
+}
+
+message SignalGetRoomByGroupIDResp {
+  InvitationInfo invitation = 1;
+  repeated ParticipantMetaData participant = 2;
+  string roomID = 3;
+}
+
+message SignalOnRoomParticipantConnectedReq {
+  InvitationInfo invitation = 1;
+  repeated ParticipantMetaData participant = 2;
+  string groupID = 3;
+}
+
+message SignalOnRoomParticipantDisconnectedReq {
+  InvitationInfo invitation = 1;
+  repeated ParticipantMetaData participant = 2;
+  string groupID = 3;
+}
+
+message SignalGetTokenByRoomIDReq {
+  string roomID = 1;
+  ParticipantMetaData participant = 2;
+  string userID = 3;
+}
+
+message SignalGetTokenByRoomIDResp {
+  string token = 1;
+  string liveURL = 2;
+}
+
+message SignalUpdateMeetingInfoReq {
+  string roomID = 1;
+  OpenIMServer.protobuf.StringValue meetingName = 2;
+  OpenIMServer.protobuf.StringValue ex = 3;
+  repeated string inviteeUserIDList = 4;
+  OpenIMServer.protobuf.Int64Value startTime = 5;
+  OpenIMServer.protobuf.Int64Value endTime = 6;
+  OpenIMServer.protobuf.BoolValue participantCanUnmuteSelf = 7;
+  OpenIMServer.protobuf.BoolValue participantCanEnableVideo = 8;
+  OpenIMServer.protobuf.BoolValue onlyHostInviteUser = 9;
+  OpenIMServer.protobuf.BoolValue onlyHostShareScreen = 10;
+  OpenIMServer.protobuf.BoolValue joinDisableMicrophone = 11;
+  OpenIMServer.protobuf.BoolValue joinDisableVideo = 12;
+  OpenIMServer.protobuf.BoolValue isMuteAllVideo = 13;
+  OpenIMServer.protobuf.BoolValue isMuteAllMicrophone = 14;
+
+  repeated string addCanScreenUserIDList = 15;
+  repeated string reduceCanScreenUserIDList = 16;
+  repeated string canScreenUserIDList = 17;
+
+  repeated string addDisableMicrophoneUserIDList = 18;
+  repeated string reduceDisableMicrophoneUserIDList = 19;
+  repeated string disableMicrophoneUserIDList = 20;
+
+  repeated string addDisableVideoUserIDList = 21;
+  repeated string reduceDisableVideoUserIDList = 22;
+  repeated string disableVideoUserIDList = 23;
+
+  repeated string addPinedUserIDList = 24;
+  repeated string reducePinedUserIDList = 25;
+  repeated string pinedUserIDList = 26;
+
+  repeated string addBeWatchedUserIDList = 27;
+  repeated string reduceBeWatchedUserIDList = 28; 
+  repeated string beWatchedUserIDList = 29;
+}
+
+message SignalUpdateMeetingInfoResp {
+}
+
+message SignalCloseRoomReq {
+  string roomID = 1;
+}
+
+message SignalCloseRoomResp {
+}
+
+
+message SignalMessageAssembleReq {
+  SignalReq signalReq = 1;
+}
+
+message SignalMessageAssembleResp {
+  SignalResp signalResp = 1;
+}
+
+message SignalGetRoomsReq {
+  repeated string roomIDs = 1;
+}
+
+message SignalGetRoomsResp {
+  repeated SignalGetRoomByGroupIDResp roomList = 1;
+}
+
+
+message GetSignalInvitationInfoReq {
+  string roomID = 1;
+}
+
+message GetSignalInvitationInfoResp {
+  InvitationInfo invitationInfo = 1;
+  sdkws.OfflinePushInfo offlinePushInfo = 2;
+}
+
+message GetSignalInvitationInfoStartAppReq {
+  string userID = 1;
+}
+
+message GetSignalInvitationInfoStartAppResp {
+  InvitationInfo invitation = 1;
+  sdkws.OfflinePushInfo offlinePushInfo = 2;
+}
+
+service RtcService {
+  rpc SignalMessageAssemble(SignalMessageAssembleReq) returns(SignalMessageAssembleResp);
+  rpc SignalGetRoomByGroupID(SignalGetRoomByGroupIDReq) returns(SignalGetRoomByGroupIDResp);
+  rpc SignalGetTokenByRoomID(SignalGetTokenByRoomIDReq) returns(SignalGetTokenByRoomIDResp);
+  rpc SignalGetRooms(SignalGetRoomsReq) returns(SignalGetRoomsResp);
+
+  rpc GetSignalInvitationInfo(GetSignalInvitationInfoReq) returns(GetSignalInvitationInfoResp);
+  rpc GetSignalInvitationInfoStartApp(GetSignalInvitationInfoStartAppReq) returns(GetSignalInvitationInfoStartAppResp);
+  // meeting
+  rpc SignalCreateMeeting(SignalCreateMeetingReq) returns(SignalCreateMeetingResp);
+  rpc SignalJoinMeeting(SignalJoinMeetingReq) returns(SignalJoinMeetingResp);
+  rpc SignalUpdateMeetingInfo(SignalUpdateMeetingInfoReq) returns(SignalUpdateMeetingInfoResp);
+  rpc SignalCloseRoom(SignalCloseRoomReq) returns(SignalCloseRoomResp);
+  rpc SignalGetMeetings(SignalGetMeetingsReq) returns(SignalGetMeetingsResp);
+  rpc SignalOperateStream(SignalOperateStreamReq) returns(SignalOperateStreamResp);
+
+  // custom signal
+  rpc SignalSendCustomSignal(SignalSendCustomSignalReq) returns(SignalSendCustomSignalResp);
+}
