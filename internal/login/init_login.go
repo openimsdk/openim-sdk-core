@@ -246,7 +246,7 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 	for {
 		select {
 		case <-u.loginMgrCh:
-			err := u.logout(ctx)
+			err := u.logout(ctx, true)
 			if err != nil {
 				log.ZError(ctx, "logout error", err)
 			}
@@ -298,7 +298,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
 	u.cache = cache.NewCache(u.user, u.friend)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.conversationListener)
 	u.business = business.NewBusiness(u.db)
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
@@ -380,16 +380,22 @@ func (u *LoginMgr) initResources() {
 }
 
 // token error recycle recourse, kicked not recycle
-func (u *LoginMgr) logout(ctx context.Context) error {
-	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
-	if err != nil {
-		return err
+func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
+	if !isTokenValid {
+		ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cancel()
+		err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
+		if err != nil {
+			log.ZWarn(ctx, "TriggerCmdLogout server recycle resources failed...", err)
+		} else {
+			log.ZDebug(ctx, "TriggerCmdLogout server recycle resources success...")
+		}
 	}
 	u.Exit()
 	_ = u.db.Close(u.ctx)
 	// user object must be rest  when user logout
 	u.initResources()
-	log.ZDebug(ctx, "TriggerCmdLogout success...")
+	log.ZDebug(ctx, "TriggerCmdLogout client success...", "isTokenValid", isTokenValid)
 	return nil
 }
 

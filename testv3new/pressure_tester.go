@@ -3,6 +3,7 @@ package testv3new
 import (
 	"context"
 	"fmt"
+	"github.com/OpenIMSDK/tools/log"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
@@ -11,8 +12,6 @@ import (
 	"runtime"
 	"sync"
 	"time"
-
-	"github.com/OpenIMSDK/tools/log"
 )
 
 type PressureTester struct {
@@ -45,6 +44,10 @@ func NewCtx(apiAddr, wsAddr, userID, token string) context.Context {
 			IsLogStandardOutput: true,
 			LogFilePath:         "./",
 		}})
+}
+
+func (p *PressureTester) add(a, b int) int {
+	return a + b
 }
 
 func (p *PressureTester) initCores(m *map[string]*testcore.BaseCore, userIDs []string) {
@@ -119,7 +122,7 @@ func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []strin
 // PressureSendMsgs2 user single chat send msg pressure test
 func (p *PressureTester) PressureSendMsgs2(sendUserIDs []string, recvUserIDs []string, msgNum int, duration time.Duration) {
 	p.WithTimer(p.InitSendCores)(sendUserIDs)
-	// p.WithTimer(p.InitRecvCores)(recvUserIDs)
+	p.WithTimer(p.InitRecvCores)(recvUserIDs)
 
 	var wg sync.WaitGroup
 	msgChan := make(chan struct{})
@@ -142,9 +145,6 @@ func (p *PressureTester) PressureSendMsgs2(sendUserIDs []string, recvUserIDs []s
 					go func(i int) {
 						defer sendWG.Done()
 						p.WithTimer(sendCore.SendSingleMsg)(ctx, recvUserID, i)
-						// if err := sendCore.SendSingleMsg(ctx, recvUserID, i); err != nil {
-						// 	log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
-						// }
 					}(i)
 				}
 				sendWG.Wait()
@@ -188,7 +188,6 @@ func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID str
 	p.InitSendCores(sendUserIDs)
 	endTime := time.Now().UnixNano()
 	fmt.Println("bantanger init send cores time:", float64(endTime-startTime))
-	// p.InitRecvCores([]string{groupID})
 	// 管理员邀请进群
 	err := p.InviteUserToGroup(groupID, sendUserIDs)
 	if err != nil {
@@ -202,6 +201,41 @@ func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID str
 			time.Sleep(duration)
 			if err := sendCore.SendGroupMsg(ctx, groupID, i); err != nil {
 				log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", groupID, "sendUserID", sendUserID)
+			}
+		}
+	}
+}
+
+// PressureSendGroupMsgs group chat send msg pressure test
+func (p *PressureTester) PressureSendGroupMsgs2(sendUserIDs []string, groupIDs []string, msgNum int, duration time.Duration) {
+	for _, groupID := range groupIDs {
+		if resp, err := p.GetGroupMembersInfo(groupID, sendUserIDs); err != nil {
+			log.ZError(context.Background(), "get group members info failed", err)
+			return
+		} else if resp.Members != nil {
+			log.ZError(context.Background(), "get group members info failed", err, "userIDs", sendUserIDs)
+			return
+		}
+
+		startTime := time.Now().UnixNano()
+		p.InitSendCores(sendUserIDs)
+		endTime := time.Now().UnixNano()
+		fmt.Println("bantanger init send cores time:", float64(endTime-startTime))
+
+		// 管理员邀请进群
+		err := p.InviteUserToGroup(groupID, sendUserIDs)
+		if err != nil {
+			return
+		}
+
+		for _, sendUserID := range sendUserIDs {
+			ctx, _ := InitContext(sendUserID)
+			sendCore := p.sendLightWeightSDKCores[sendUserID]
+			for i := 1; i <= msgNum; i++ {
+				time.Sleep(duration)
+				if err := sendCore.SendGroupMsg(ctx, groupID, i); err != nil {
+					log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", groupID, "sendUserID", sendUserID)
+				}
 			}
 		}
 	}
@@ -227,22 +261,52 @@ func (p *PressureTester) MsgReliabilityTest(sendUserID, recvUserID string, msgNu
 }
 
 // WithTimer Decorative function, accept a function as a parameter, and return a packaging function
-func (p *PressureTester) WithTimer(f interface{}) func(...interface{}) {
-	return func(args ...interface{}) {
+func (p *PressureTester) WithTimer(f interface{}) func(...interface{}) interface{} {
+	return func(args ...interface{}) interface{} {
 		start := time.Now().UnixNano()
 		v := reflect.ValueOf(f)
 		if v.Kind() != reflect.Func {
 			log.ZError(context.Background(), "pass parameter is not a function", nil,
 				"actual parameter", v.Kind(), "expected parameter", reflect.Func)
-			return
+			return nil
 		}
 		funcName := runtime.FuncForPC(v.Pointer()).Name()
 		var in []reflect.Value
 		for _, arg := range args {
 			in = append(in, reflect.ValueOf(arg))
 		}
-		v.Call(in) // Execute the original function
+		call := v.Call(in) // Execute the original function
 		end := time.Now().UnixNano()
-		fmt.Printf("Execute Funcation: %s\nExecute Funcation spent time: %v\n", funcName, float64(end-start))
+		fmt.Printf("Execute Function: %s\nExecute Function spent time: %v\n", funcName, float64(end-start))
+
+		// Get and return the first return value from the original function
+		if len(call) > 0 {
+			return call[0].Interface()
+		}
+		return nil
+	}
+}
+
+// WithTimer Decorative function, accept a function as a parameter, and return a packaging function
+func WithTimer(f interface{}) func(...interface{}) []reflect.Value {
+	return func(args ...interface{}) []reflect.Value {
+		start := time.Now().UnixNano()
+		v := reflect.ValueOf(f)
+		if v.Kind() != reflect.Func {
+			log.ZError(context.Background(), "pass parameter is not a function", nil,
+				"actual parameter", v.Kind(), "expected parameter", reflect.Func)
+			return nil
+		}
+		funcName := runtime.FuncForPC(v.Pointer()).Name()
+		var in []reflect.Value
+		for _, arg := range args {
+			in = append(in, reflect.ValueOf(arg))
+		}
+		call := v.Call(in) // Execute the original function
+		end := time.Now().UnixNano()
+		fmt.Printf("Execute Function: %s\nExecute Function spent time: %v\n", funcName, float64(end-start))
+
+		// Return the call result directly
+		return call
 	}
 }

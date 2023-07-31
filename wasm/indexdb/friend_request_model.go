@@ -127,7 +127,7 @@ func (i FriendRequest) GetFriendApplicationByBothID(ctx context.Context, fromUse
 }
 
 func (i FriendRequest) GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) (result []*model_struct.LocalFriendRequest, err error) {
-	gList, err := exec.Exec(i.loginUserID)
+	gList, err := exec.Exec(fromUserID, toUserID)
 	if err != nil {
 		return nil, err
 	} else {

@@ -44,7 +44,8 @@ type IndexDB struct {
 }
 
 func (i IndexDB) Close(ctx context.Context) error {
-	return nil
+	_, err := exec.Exec()
+	return err
 }
 
 func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) error {

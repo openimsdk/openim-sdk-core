@@ -21,6 +21,7 @@ import (
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/user"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
@@ -28,20 +29,22 @@ import (
 )
 
 type Full struct {
-	user      *user.User
-	friend    *friend.Friend
-	group     *group.Group
-	ch        chan common.Cmd2Value
-	userCache *cache.Cache
-	db        db_interface.DataBase
+	user                *user.User
+	friend              *friend.Friend
+	group               *group.Group
+	ch                  chan common.Cmd2Value
+	userCache           *cache.Cache
+	db                  db_interface.DataBase
+	conversationListner open_im_sdk_callback.OnConversationListener
 }
 
 func (u *Full) Group() *group.Group {
 	return u.group
 }
 
-func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db db_interface.DataBase) *Full {
-	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db}
+func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value,
+	userCache *cache.Cache, db db_interface.DataBase, conversationListner open_im_sdk_callback.OnConversationListener) *Full {
+	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, conversationListner: conversationListner}
 }
 
 func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, sessionType int32) (*model_struct.LocalGroup, error) {

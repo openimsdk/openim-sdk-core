@@ -1,16 +1,15 @@
 package main
 
 import (
+	"github.com/OpenIMSDK/tools/log"
+	"github.com/OpenIMSDK/tools/mcontext"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/testv3new"
 	"open_im_sdk/testv3new/testcore"
-
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/OpenIMSDK/tools/mcontext"
 )
 
 func main() {
-	if err := log.InitFromConfig("sdk.log", "sdk", 3, true, false, "", 2); err != nil {
+	if err := log.InitFromConfig("sdk.log", "sdk", 3, true, false, "", 2, 24); err != nil {
 		panic(err)
 	}
 	userID := "4844258055"

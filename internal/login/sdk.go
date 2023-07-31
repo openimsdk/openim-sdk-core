@@ -23,7 +23,7 @@ func (u *LoginMgr) Login(ctx context.Context, userID, token string) error {
 }
 
 func (u *LoginMgr) Logout(ctx context.Context) error {
-	return u.logout(ctx)
+	return u.logout(ctx, false)
 }
 
 func (u *LoginMgr) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {

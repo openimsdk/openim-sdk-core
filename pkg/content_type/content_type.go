@@ -16,6 +16,8 @@ var ext = map[string]string{
 	"jpeg": "image/jpeg",
 	"gif":  "image/gif",
 	"bmp":  "image/bmp",
+	"tif":  "image/tiff",
+	"tiff": "image/tiff",
 	"ico":  "image/x-icon",
 	"svg":  "image/svg+xml",
 	"webp": "image/webp",

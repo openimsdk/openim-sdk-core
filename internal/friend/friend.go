@@ -207,13 +207,18 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
 	case constant.FriendApplicationApprovedNotification:
 		var tips sdkws.FriendApplicationApprovedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+		err := utils.UnmarshalNotificationElem(msg.Content, &tips)
+		if err != nil {
 			return err
 		}
+
 		if tips.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
+			err = f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
 		} else if tips.FromToUserID.ToUserID == f.loginUserID {
-			return f.SyncFriends(ctx, []string{tips.FromToUserID.FromUserID})
+			err = f.SyncFriends(ctx, []string{tips.FromToUserID.FromUserID})
+		}
+		if err != nil {
+			return err
 		}
 		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
 	case constant.FriendApplicationRejectedNotification:

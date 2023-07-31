@@ -318,3 +318,18 @@ func (i *LocalGroupMember) SearchGroupMembersDB(ctx context.Context, keyword str
 		}
 	}
 }
+
+func (i *LocalGroupMember) GetUserJoinedGroupIDs(ctx context.Context, userID string) (result []string, err error) {
+	IDList, err := exec.Exec(userID)
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := IDList.(string); ok {
+		err := utils.JsonStringToStruct(v, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	}
+	return nil, exec.ErrType
+}
