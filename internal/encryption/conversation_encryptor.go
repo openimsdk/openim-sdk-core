@@ -21,7 +21,7 @@ type ConversationEncryptor struct {
 }
 
 func NewConversationEncryptor(loginUserID string) MessageEncryptor {
-	return &ConversationEncryptor{LoginUserID: loginUserID}
+	return &ConversationEncryptor{LoginUserID: loginUserID, a: NewAESEncryptor()}
 }
 
 func (c *ConversationEncryptor) Encryption(ctx context.Context, message *sdkws.MsgData, conversationID string) error {
