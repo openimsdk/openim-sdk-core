@@ -105,7 +105,7 @@ type testGetUsersInfo struct {
 func DoTestGetUsersInfo() {
 	var test testGetUsersInfo
 	test.OperationID = utils.OperationIDGenerator()
-	userIDList := []string{"openIM2222"}
+	userIDList := []string{"4950399653"}
 	list := utils.StructToJsonStringDefault(userIDList)
 	fmt.Println("testGetUsersInfo, input: ", list)
 	open_im_sdk.GetUsersInfo(test, test.OperationID, list)

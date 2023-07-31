@@ -32,6 +32,7 @@ type GroupDatabase interface {
 	SubtractMemberCount(ctx context.Context, groupID string) error
 	GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error)
 	GetJoinedWorkingGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error)
+	GetUserJoinedGroupIDs(ctx context.Context, userID string) ([]string, error)
 
 	InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error
 	DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error
