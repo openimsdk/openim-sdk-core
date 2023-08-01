@@ -16,21 +16,23 @@
 package testv3new
 
 import (
+	"context"
 	"testing"
 )
 
 func Test_userRegister(t *testing.T) {
 	userID := "bantanger123"
 	manager := NewRegisterManager()
-	_ = manager.RegisterOne(userID)
-	token, _ := manager.GetToken(userID)
+	ctx := context.Background()
+	_ = manager.RegisterOne(ctx, userID)
+	token, _ := manager.GetToken(ctx, userID)
 	t.Log(token)
 }
 
 func Test_userRegisterBatch(t *testing.T) {
 	userID := "register_test_1"
 	manager := NewRegisterManager()
-	_ = manager.RegisterBatch([]string{userID})
-	token, _ := manager.GetToken(userID)
+	_ = manager.RegisterBatch(ctx, []string{userID})
+	token, _ := manager.GetToken(ctx, userID)
 	t.Log(token)
 }

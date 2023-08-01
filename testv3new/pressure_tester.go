@@ -3,7 +3,6 @@ package testv3new
 import (
 	"context"
 	"fmt"
-	"github.com/OpenIMSDK/tools/log"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
@@ -11,14 +10,17 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/OpenIMSDK/tools/log"
 )
 
 type PressureTester struct {
 	sendLightWeightSDKCores map[string]*testcore.BaseCore
 	recvLightWeightSDKCores map[string]*testcore.BaseCore
 
-	registerManager RegisterManager
+	registerManager TestUserManager
 	apiAddr         string
 	wsAddr          string
 }
@@ -46,28 +48,48 @@ func NewCtx(apiAddr, wsAddr, userID, token string) context.Context {
 		}})
 }
 
-func (p *PressureTester) add(a, b int) int {
-	return a + b
-}
-
-func (p *PressureTester) initCores(m *map[string]*testcore.BaseCore, userIDs []string) {
-	for _, userID := range userIDs {
-		token, err := p.registerManager.GetToken(userID)
-		if err != nil {
-			log.ZError(context.Background(), "get token error", err, "userID", userID)
-			continue
-		}
-		mV := *m
-		mV[userID] = testcore.NewBaseCore(NewCtx(p.apiAddr, p.wsAddr, userID, token), userID)
+func (p *PressureTester) initCores(m map[string]*testcore.BaseCore, userIDs []string) {
+	var wg sync.WaitGroup
+	var index int64
+	var mutex sync.Mutex
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				idx := int(atomic.AddInt64(&index, 1) - 1)
+				if idx >= len(userIDs) {
+					return
+				}
+				userID := userIDs[idx]
+				token, err := p.registerManager.GetToken(ctx, userID)
+				if err != nil {
+					log.ZError(context.Background(), "get token error", err, "userID", userID)
+					continue
+				}
+				mutex.Lock()
+				m[userID] = testcore.NewBaseCore(NewCtx(p.apiAddr, p.wsAddr, userID, token), userID)
+				mutex.Unlock()
+			}
+		}()
 	}
+	wg.Wait()
+	//for _, userID := range userIDs {
+	//	token, err := p.registerManager.GetToken(userID)
+	//	if err != nil {
+	//		log.ZError(context.Background(), "get token error", err, "userID", userID)
+	//		continue
+	//	}
+	//	m[userID] = testcore.NewBaseCore(NewCtx(p.apiAddr, p.wsAddr, userID, token), userID)
+	//}
 }
 
 func (p *PressureTester) InitSendCores(userIDs []string) {
-	p.initCores(&p.sendLightWeightSDKCores, userIDs)
+	p.initCores(p.sendLightWeightSDKCores, userIDs)
 }
 
 func (p *PressureTester) InitRecvCores(userIDs []string) {
-	p.initCores(&p.recvLightWeightSDKCores, userIDs)
+	p.initCores(p.recvLightWeightSDKCores, userIDs)
 }
 
 // PressureSendMsgs user single chat send msg pressure test
@@ -77,11 +99,10 @@ func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []strin
 
 	sendCore := p.sendLightWeightSDKCores[sendUserID]
 
-	// fmt.Println("\nmsgNum ==> ", msgNum)
 	var wg sync.WaitGroup
 	wg.Add(len(recvUserIDs))
-	for idx, recvUserID := range recvUserIDs {
-		go func(idx int) {
+	for _, recvUserID := range recvUserIDs {
+		go func(recvUserID string) {
 			defer wg.Done() // Mark this goroutine as done when finished
 
 			// Create a new context for each goroutine to avoid shared state
@@ -114,64 +135,61 @@ func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []strin
 					log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
 				}
 			}
-		}(idx)
+		}(recvUserID)
 	}
 	wg.Wait()
 }
 
 // PressureSendMsgs2 user single chat send msg pressure test
-func (p *PressureTester) PressureSendMsgs2(sendUserIDs []string, recvUserIDs []string, msgNum int, duration time.Duration) {
+func (p *PressureTester) PressureSendMsgs2(ctx context.Context, sendUserIDs []string, recvUserIDs []string, msgNum int, duration time.Duration) {
 	p.WithTimer(p.InitSendCores)(sendUserIDs)
 	p.WithTimer(p.InitRecvCores)(recvUserIDs)
 
+	//msgChan := make(chan struct{})
+
+	//for _, recvUserID := range recvUserIDs {
+	//	recvCore := p.recvLightWeightSDKCores[recvUserID]
+	//	if recvCore == nil {
+	//		continue
+	//	}
+	//	go func(baseCode *testcore.BaseCore) {
+	//		if recvCore != nil {
+	//			time.Sleep(duration)
+	//			recvMap := recvCore.GetRecvMap()
+	//			if recvMap != nil {
+	//				count := 0
+	//				for range sendUserMsgChan {
+	//					count++
+	//				}
+	//				recvMap[sendUserID+"_"+recvUserID] = count
+	//				fmt.Println(fmt.Sprintf("recvUserID: %v ==> recv msg num: %d %v", recvUserID, count, count == msgNum))
+	//				log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
+	//			}
+	//		}
+	//	}(recvCore)
+	//}
 	var wg sync.WaitGroup
-	msgChan := make(chan struct{})
 
 	for _, sendUserID := range sendUserIDs {
-		ctx, _ := InitContext(sendUserID)
+		// ctx, _ := InitContext(sendUserID)
 		sendCore := p.sendLightWeightSDKCores[sendUserID]
-
-		// fmt.Println("\nmsgNum ==> ", msgNum)
-		for _, recvUserID := range recvUserIDs {
-			wg.Add(1)
-			go func(sendUserID, recvUserID string) {
-				defer wg.Done()
-				sendUserMsgChan := make(chan int)
-
-				// Send messages concurrently
-				var sendWG sync.WaitGroup
-				sendWG.Add(msgNum)
-				for i := 1; i <= msgNum; i++ {
-					go func(i int) {
-						defer sendWG.Done()
-						p.WithTimer(sendCore.SendSingleMsg)(ctx, recvUserID, i)
-					}(i)
-				}
-				sendWG.Wait()
-
-				// Goroutine for receiving messages
-				go func() {
-					recvCore := p.recvLightWeightSDKCores[recvUserID]
-					if recvCore != nil {
-						time.Sleep(100 * time.Millisecond)
-						recvMap := recvCore.GetRecvMap()
-						if recvMap != nil {
-							count := 0
-							for range sendUserMsgChan {
-								count++
-							}
-							recvMap[sendUserID+"_"+recvUserID] = count
-							fmt.Println(fmt.Sprintf("recvUserID: %v ==> recv msg num: %d %v", recvUserID, count, count == msgNum))
-							log.ZInfo(ctx, "recv msg", "recv num", count, "recvUserID", recvUserID, "recv status", count == msgNum)
-						}
-					}
-				}()
-			}(sendUserID, recvUserID)
+		if sendCore == nil {
+			log.ZInfo(ctx, "sendCore is nil", "sendUserID", sendUserID)
+			continue
 		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for _, recvUserID := range recvUserIDs {
+				for i := 1; i <= msgNum; i++ {
+					p.WithTimer(sendCore.SendSingleMsg)(ctx, recvUserID, i)
+					time.Sleep(duration)
+				}
+			}
+		}()
 	}
-
 	wg.Wait()
-	close(msgChan)
+	//close(msgChan)
 }
 
 // PressureSendGroupMsgs group chat send msg pressure test
@@ -183,7 +201,6 @@ func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID str
 		log.ZError(context.Background(), "get group members info failed", err, "userIDs", sendUserIDs)
 		return
 	}
-
 	startTime := time.Now().UnixNano()
 	p.InitSendCores(sendUserIDs)
 	endTime := time.Now().UnixNano()
