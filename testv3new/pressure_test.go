@@ -52,10 +52,15 @@ func TestPressureTester_Conversation(t *testing.T) {
 func TestPressureTester_PressureSendMsgs2(t *testing.T) {
 	recvUserID := "register_test_0"
 	count := 1001
+	messageNum := 1
+	LoopNumber := 10
 	var sendUserIDs []string
 	for i := 1; i <= count; i++ {
 		sendUserIDs = append(sendUserIDs, fmt.Sprintf("register_test_%v", i))
 	}
 	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
-	p.WithTimer(p.PressureSendMsgs2)(sendUserIDs, []string{recvUserID}, 1, 100*time.Millisecond)
+	for i := 0; i < LoopNumber; i++ {
+		p.WithTimer(p.PressureSendMsgs2)(sendUserIDs, []string{recvUserID}, messageNum, 100*time.Millisecond)
+		time.Sleep(time.Second)
+	}
 }
