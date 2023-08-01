@@ -50,9 +50,10 @@ func TestPressureTester_Conversation(t *testing.T) {
 }
 
 func TestPressureTester_PressureSendMsgs2(t *testing.T) {
-	recvUserID := "5338610321"
+	recvUserID := "register_test_0"
+	count := 1001
 	var sendUserIDs []string
-	for i := 1; i <= 1000; i++ {
+	for i := 1; i <= count; i++ {
 		sendUserIDs = append(sendUserIDs, fmt.Sprintf("register_test_%v", i))
 	}
 	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
