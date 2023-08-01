@@ -54,6 +54,7 @@ func TestPressureTester_PressureSendMsgs2(t *testing.T) {
 	count := 1001
 	messageNum := 1
 	LoopNumber := 10
+
 	var sendUserIDs []string
 	for i := 1; i <= count; i++ {
 		sendUserIDs = append(sendUserIDs, fmt.Sprintf("register_test_%v", i))
