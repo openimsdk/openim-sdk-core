@@ -3,6 +3,7 @@ package testv3new
 import (
 	"fmt"
 	"github.com/OpenIMSDK/tools/log"
+	"open_im_sdk/testv3new/constant"
 	"open_im_sdk/testv3new/testcore"
 	"testing"
 	"time"
@@ -22,20 +23,36 @@ func init() {
 
 func TestPressureTester_PressureSendMsgs(t *testing.T) {
 	ParseFlag()
+	var sendUserIDs []string
+	var recvUserIDs []string
+	for i := 0; i < pressureTestAttribute.sendNums; i++ {
+		sendUserIDs = append(sendUserIDs, fmt.Sprintf("register_test_%v", i))
+	}
+	for i := 0; i < pressureTestAttribute.recvNums; i++ {
+		recvUserIDs = append(recvUserIDs, fmt.Sprintf("register_test_%v", i+pressureTestAttribute.sendNums))
+	}
 	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
 	for i := 0; i < 10; i++ {
-		p.WithTimer(p.PressureSendMsgs2)(pressureTestAttribute.sendUserIDs, pressureTestAttribute.recvUserIDs, pressureTestAttribute.messageNumber, time.Duration(pressureTestAttribute.timeInterval)*time.Millisecond)
-		time.Sleep(time.Second)
+		p.WithTimer(p.PressureSendMsgs2)(sendUserIDs, recvUserIDs, pressureTestAttribute.messageNumber, time.Duration(pressureTestAttribute.timeInterval)*time.Millisecond)
+		time.Sleep(time.Duration(pressureTestAttribute.timeInterval) * time.Second)
 	}
 	// time.Sleep(1000 * time.Second)
 }
 
 func TestPressureTester_PressureSendGroupMsgs(t *testing.T) {
 	ParseFlag()
+	var sendUserIDs []string
+	var groupIDs []string
+	for i := 0; i < pressureTestAttribute.sendNums; i++ {
+		sendUserIDs = append(sendUserIDs, fmt.Sprintf("register_test_%v", i))
+	}
+	for i := 0; i < pressureTestAttribute.groupNums; i++ {
+		sendUserIDs = append(sendUserIDs, fmt.Sprintf("group_test_%v", i))
+	}
 	p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
 	for i := 0; i < 10; i++ {
-		p.WithTimer(p.PressureSendGroupMsgs2)(pressureTestAttribute.sendUserIDs, pressureTestAttribute.groupIDs, pressureTestAttribute.messageNumber, time.Duration(pressureTestAttribute.timeInterval)*time.Millisecond)
-		time.Sleep(time.Second)
+		p.WithTimer(p.PressureSendGroupMsgs2)(sendUserIDs, groupIDs, pressureTestAttribute.messageNumber, time.Duration(pressureTestAttribute.timeInterval)*time.Millisecond)
+		time.Sleep(time.Duration(pressureTestAttribute.timeInterval) * time.Second)
 	}
 }
 
@@ -62,5 +79,17 @@ func TestPressureTester_PressureSendMsgs2(t *testing.T) {
 	for i := 0; i < LoopNumber; i++ {
 		p.WithTimer(p.PressureSendMsgs2)(sendUserIDs, []string{recvUserID}, messageNum, 100*time.Millisecond)
 		time.Sleep(time.Second)
+	}
+}
+
+func Test_CreateGroup(t *testing.T) {
+	count := 1000
+	ownerUserID := "register_test_0"
+	for i := 0; i < count; i++ {
+		p := NewPressureTester(testcore.APIADDR, testcore.WSADDR)
+		err := p.CreateGroup(fmt.Sprintf("group_test_%v", i), ownerUserID, []string{constant.DefaultGroupMember}, fmt.Sprintf("group_test_%v", i))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }

@@ -52,6 +52,7 @@ func (p *PressureTester) add(a, b int) int {
 
 func (p *PressureTester) initCores(m *map[string]*testcore.BaseCore, userIDs []string) {
 	for _, userID := range userIDs {
+
 		token, err := p.registerManager.GetToken(userID)
 		if err != nil {
 			log.ZError(context.Background(), "get token error", err, "userID", userID)

@@ -9,10 +9,10 @@ import (
 
 // system
 var (
-	TESTIP  = "203.56.175.233"
+	TESTIP  = "43.128.72.19"
 	APIADDR = fmt.Sprintf("http://%v:10002", TESTIP)
 	WSADDR  = fmt.Sprintf("ws://%v:10001", TESTIP)
-	SECRET  = "tuoyun"
+	SECRET  = "openIM123"
 
 	REGISTERADDR = APIADDR + constant.UserRegister
 	TOKENADDR    = APIADDR + constant.GetUsersToken

@@ -107,7 +107,12 @@ func (r *RegisterManager) GetToken(userID string) (string, error) {
 }
 
 func (p *PressureTester) CreateGroup(groupID string, ownerUserID string, userIDs []string, groupName string) error {
-	ctx, _ := InitContext(ownerUserID)
+	token, err := p.registerManager.GetToken(ownerUserID)
+	if err != nil {
+		log.ZError(context.Background(), "get token error", err, "userID", ownerUserID)
+		return err
+	}
+	ctx, _ := InitContextWithToken(ownerUserID, token)
 	req := &group.CreateGroupReq{
 		MemberUserIDs: userIDs,
 		AdminUserIDs:  []string{},
@@ -118,7 +123,7 @@ func (p *PressureTester) CreateGroup(groupID string, ownerUserID string, userIDs
 		},
 	}
 	resp := &group.CreateGroupResp{}
-	err := util.ApiPost(ctx, constant.CreateGroupRouter, &req, &resp)
+	err = util.ApiPost(ctx, constant.CreateGroupRouter, &req, &resp)
 	if err != nil {
 		log.ZError(ctx, "ApiPost failed ", err, "addr", testcore.TOKENADDR, "req", req)
 		return err
@@ -165,6 +170,22 @@ func (p *PressureTester) GetGroupMembersInfo(groupID string, userIDs []string) (
 func InitContext(uid string) (context.Context, *ccontext.GlobalConfig) {
 	config := ccontext.GlobalConfig{
 		UserID: uid, Token: "",
+		IMConfig: sdk_struct.IMConfig{
+			PlatformID:          constant.AndroidPlatformID,
+			ApiAddr:             testcore.APIADDR,
+			WsAddr:              testcore.WSADDR,
+			LogLevel:            2,
+			IsLogStandardOutput: true,
+			LogFilePath:         "./",
+		}}
+	ctx := ccontext.WithInfo(context.Background(), &config)
+	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+	return ctx, &config
+}
+
+func InitContextWithToken(uid string, token string) (context.Context, *ccontext.GlobalConfig) {
+	config := ccontext.GlobalConfig{
+		UserID: uid, Token: token,
 		IMConfig: sdk_struct.IMConfig{
 			PlatformID:          constant.AndroidPlatformID,
 			ApiAddr:             testcore.APIADDR,
