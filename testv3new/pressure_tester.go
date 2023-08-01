@@ -48,7 +48,7 @@ func NewCtx(apiAddr, wsAddr, userID, token string) context.Context {
 		}})
 }
 
-func (p *PressureTester) initCores(m map[string]*testcore.BaseCore, userIDs []string) {
+func (p *PressureTester) initCores(ctx context.Context, m map[string]*testcore.BaseCore, userIDs []string) {
 	var wg sync.WaitGroup
 	var index int64
 	var mutex sync.Mutex
@@ -62,7 +62,7 @@ func (p *PressureTester) initCores(m map[string]*testcore.BaseCore, userIDs []st
 					return
 				}
 				userID := userIDs[idx]
-				token, err := p.registerManager.GetToken(ctx, userID)
+				token, err := p.registerManager.GetToken(ctx, userID, constant.WindowsPlatformID)
 				if err != nil {
 					log.ZError(context.Background(), "get token error", err, "userID", userID)
 					continue
@@ -85,15 +85,15 @@ func (p *PressureTester) initCores(m map[string]*testcore.BaseCore, userIDs []st
 }
 
 func (p *PressureTester) InitSendCores(userIDs []string) {
-	p.initCores(p.sendLightWeightSDKCores, userIDs)
+	p.initCores(context.Background(), p.sendLightWeightSDKCores, userIDs)
 }
 
 func (p *PressureTester) InitRecvCores(userIDs []string) {
-	p.initCores(p.recvLightWeightSDKCores, userIDs)
+	p.initCores(context.Background(), p.recvLightWeightSDKCores, userIDs)
 }
 
 // PressureSendMsgs user single chat send msg pressure test
-func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []string, msgNum int, duration time.Duration) {
+func (p *PressureTester) PressureSendMsgs(ctx context.Context, sendUserID string, recvUserIDs []string, msgNum int, duration time.Duration) {
 	p.WithTimer(p.InitSendCores)([]string{sendUserID})
 	p.WithTimer(p.InitRecvCores)(recvUserIDs)
 
@@ -106,7 +106,7 @@ func (p *PressureTester) PressureSendMsgs(sendUserID string, recvUserIDs []strin
 			defer wg.Done() // Mark this goroutine as done when finished
 
 			// Create a new context for each goroutine to avoid shared state
-			ctx, _ := InitContext(sendUserID)
+			// ctx, _ := InitContext(sendUserID)
 
 			// Send messages concurrently
 			var sendWG sync.WaitGroup
@@ -193,8 +193,8 @@ func (p *PressureTester) PressureSendMsgs2(ctx context.Context, sendUserIDs []st
 }
 
 // PressureSendGroupMsgs group chat send msg pressure test
-func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID string, msgNum int, duration time.Duration) {
-	if resp, err := p.GetGroupMembersInfo(groupID, sendUserIDs); err != nil {
+func (p *PressureTester) PressureSendGroupMsgs(ctx context.Context, sendUserIDs []string, groupID string, msgNum int, duration time.Duration) {
+	if resp, err := p.registerManager.GetGroupMembersInfo(ctx, groupID, sendUserIDs); err != nil {
 		log.ZError(context.Background(), "get group members info failed", err)
 		return
 	} else if resp.Members != nil {
@@ -206,13 +206,13 @@ func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID str
 	endTime := time.Now().UnixNano()
 	fmt.Println("bantanger init send cores time:", float64(endTime-startTime))
 	// 管理员邀请进群
-	err := p.InviteUserToGroup(groupID, sendUserIDs)
+	err := p.registerManager.InviteUserToGroup(ctx, groupID, sendUserIDs)
 	if err != nil {
 		return
 	}
 
 	for _, sendUserID := range sendUserIDs {
-		ctx, _ := InitContext(sendUserID)
+		// ctx, _ := InitContext(sendUserID)
 		sendCore := p.sendLightWeightSDKCores[sendUserID]
 		for i := 1; i <= msgNum; i++ {
 			time.Sleep(duration)
@@ -224,9 +224,9 @@ func (p *PressureTester) PressureSendGroupMsgs(sendUserIDs []string, groupID str
 }
 
 // PressureSendGroupMsgs group chat send msg pressure test
-func (p *PressureTester) PressureSendGroupMsgs2(sendUserIDs []string, groupIDs []string, msgNum int, duration time.Duration) {
+func (p *PressureTester) PressureSendGroupMsgs2(ctx context.Context, sendUserIDs []string, groupIDs []string, msgNum int, duration time.Duration) {
 	for _, groupID := range groupIDs {
-		if resp, err := p.GetGroupMembersInfo(groupID, sendUserIDs); err != nil {
+		if resp, err := p.registerManager.GetGroupMembersInfo(ctx, groupID, sendUserIDs); err != nil {
 			log.ZError(context.Background(), "get group members info failed", err)
 			return
 		} else if resp.Members != nil {
@@ -240,13 +240,13 @@ func (p *PressureTester) PressureSendGroupMsgs2(sendUserIDs []string, groupIDs [
 		fmt.Println("bantanger init send cores time:", float64(endTime-startTime))
 
 		// 管理员邀请进群
-		err := p.InviteUserToGroup(groupID, sendUserIDs)
+		err := p.registerManager.InviteUserToGroup(ctx, groupID, sendUserIDs)
 		if err != nil {
 			return
 		}
 
 		for _, sendUserID := range sendUserIDs {
-			ctx, _ := InitContext(sendUserID)
+			// ctx, _ := InitContext(sendUserID)
 			sendCore := p.sendLightWeightSDKCores[sendUserID]
 			for i := 1; i <= msgNum; i++ {
 				time.Sleep(duration)
@@ -264,8 +264,8 @@ func (p *PressureTester) OrderingSendMsg(groupID string, msgNum int) {
 }
 
 // MsgReliabilityTest reliability test
-func (p *PressureTester) MsgReliabilityTest(sendUserID, recvUserID string, msgNum int, duration time.Duration) {
-	ctx, _ := InitContext(sendUserID)
+func (p *PressureTester) MsgReliabilityTest(ctx context.Context, recvUserID, sendUserID string, msgNum int, duration time.Duration) {
+	// ctx, _ := InitContext(sendUserID)
 	sendCore := p.sendLightWeightSDKCores[sendUserID]
 
 	for i := 0; i < msgNum; i++ {

@@ -17,6 +17,7 @@ package testv3new
 
 import (
 	"context"
+	"open_im_sdk/pkg/constant"
 	"testing"
 )
 
@@ -25,14 +26,15 @@ func Test_userRegister(t *testing.T) {
 	manager := NewRegisterManager()
 	ctx := context.Background()
 	_ = manager.RegisterOne(ctx, userID)
-	token, _ := manager.GetToken(ctx, userID)
+	token, _ := manager.GetToken(ctx, userID, constant.WindowsPlatformID)
 	t.Log(token)
 }
 
 func Test_userRegisterBatch(t *testing.T) {
 	userID := "register_test_1"
 	manager := NewRegisterManager()
+	ctx := context.Background()
 	_ = manager.RegisterBatch(ctx, []string{userID})
-	token, _ := manager.GetToken(ctx, userID)
+	token, _ := manager.GetToken(ctx, userID, constant.WindowsPlatformID)
 	t.Log(token)
 }
