@@ -16,6 +16,7 @@
 package testv3new
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -28,9 +29,13 @@ func Test_userRegister(t *testing.T) {
 }
 
 func Test_userRegisterBatch(t *testing.T) {
-	userID := "register_test_1"
+	count := 1001
+	var users []string
+	for i := 0; i <= count; i++ {
+		users = append(users, fmt.Sprintf("register_test_%v", i))
+	}
 	manager := NewRegisterManager()
-	_ = manager.RegisterBatch([]string{userID})
-	token, _ := manager.GetToken(userID)
+	_ = manager.RegisterBatch(users)
+	token, _ := manager.GetToken(users[0])
 	t.Log(token)
 }
