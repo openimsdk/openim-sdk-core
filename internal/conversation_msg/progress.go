@@ -45,10 +45,10 @@ type msgUploadFileCallback struct {
 func (c *msgUploadFileCallback) Open(size int64) {
 }
 
-func (c *msgUploadFileCallback) PartSize(partSize int64, num int32) {
+func (c *msgUploadFileCallback) PartSize(partSize int64, num int) {
 }
 
-func (c *msgUploadFileCallback) HashPartProgress(index int32, size int64, partHash string) {
+func (c *msgUploadFileCallback) HashPartProgress(index int, size int64, partHash string) {
 }
 
 func (c *msgUploadFileCallback) HashPartComplete(partsHash string, fileHash string) {
@@ -65,7 +65,7 @@ func (c *msgUploadFileCallback) UploadID(uploadID string) {
 	}
 }
 
-func (c *msgUploadFileCallback) UploadPartComplete(index int32, partSize int64, partHash string) {
+func (c *msgUploadFileCallback) UploadPartComplete(index int, partSize int64, partHash string) {
 
 }
 
@@ -87,7 +87,7 @@ func (c *msgUploadFileCallback) UploadComplete(fileSize int64, streamSize int64,
 	}
 }
 
-func (c *msgUploadFileCallback) Complete(size int64, url string, typ int32) {
+func (c *msgUploadFileCallback) Complete(size int64, url string, typ int) {
 	c.msg.AttachedInfoElem.Progress = nil
 	data, err := json.Marshal(c.msg.AttachedInfoElem)
 	if err != nil {
