@@ -21,15 +21,10 @@ type BaseCore struct {
 	platformID          int32
 	pushMsgAndMaxSeqCh  chan common.Cmd2Value
 	recvPushMsgCallback func(msg *sdkws.MsgData)
-	wsUrl               string
-	recvMap             map[string]int
 }
 
-func (b BaseCore) GetRecvMap() map[string]int {
-	if b.recvMap != nil {
-		return b.recvMap
-	}
-	return nil
+func (b BaseCore) GetUserID() string {
+	return b.userID
 }
 
 func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *BaseCore) {
@@ -38,15 +33,14 @@ func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *BaseC
 	}
 }
 
-func NewBaseCore(ctx context.Context, userID string, opts ...func(core *BaseCore)) *BaseCore {
+func NewBaseCore(ctx context.Context, userID string, platformID int32, opts ...func(core *BaseCore)) *BaseCore {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListner{}, nil, pushMsgAndMaxSeqCh, nil)
 	core := &BaseCore{
 		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		longConnMgr:        longConnMgr,
 		userID:             userID,
-		platformID:         constant.AndroidPlatformID,
-		recvMap:            map[string]int{},
+		platformID:         platformID,
 	}
 	for _, opt := range opts {
 		opt(core)
@@ -56,25 +50,20 @@ func NewBaseCore(ctx context.Context, userID string, opts ...func(core *BaseCore
 	return core
 }
 
+func (b *BaseCore) Close(ctx context.Context) {
+	b.longConnMgr.Close(ctx)
+}
+
 func (b *BaseCore) SendSingleMsg(ctx context.Context, userID string, index int) error {
-	return b.sendMsg(ctx, userID, "", index)
+	return b.sendMsg(ctx, userID, "", index, constant.SingleChatType, fmt.Sprintf("this is test msg user %s to user %s, index: %d", b.userID, userID, index))
 }
 
 func (b *BaseCore) SendGroupMsg(ctx context.Context, groupID string, index int) error {
-	return b.sendMsg(ctx, "", groupID, index)
+	return b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
 }
 
-func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index int) error {
+func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index int, sesstionType int32, content string) error {
 	var resp sdkws.UserSendMsgResp
-	var sesstionType int32
-	var content string
-	if userID != "" {
-		sesstionType = constant.SingleChatType
-		content = fmt.Sprintf("this is test msg user %s to user %s, index: %d", b.userID, userID, index)
-	} else {
-		sesstionType = constant.SuperGroupChatType
-		content = fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index)
-	}
 	text := sdk_struct.TextElem{Content: content}
 	msg := &sdkws.MsgData{
 		SendID:           b.userID,
@@ -118,7 +107,4 @@ func (b *BaseCore) recvPushMsg() {
 }
 
 func (b *BaseCore) defaultRecvPushMsgCallback(msg *sdkws.MsgData) {
-	if b.userID == msg.RecvID {
-		b.recvMap[msg.SendID+"_"+msg.RecvID]++
-	}
 }
