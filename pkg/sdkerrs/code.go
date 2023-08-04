@@ -25,6 +25,8 @@ const (
 	UnknownCode                  = 10005 //没有解析到code
 	SdkInternalError             = 10006 //SDK内部错误
 
+	NoUpdateError = 10007 //没有更新
+
 	UserIDNotFoundError = 10100 //UserID不存在 或未注册
 	LoginOutError       = 10101 //用户已经退出登录
 	LoginRepeatError    = 10102 //用户重复登录

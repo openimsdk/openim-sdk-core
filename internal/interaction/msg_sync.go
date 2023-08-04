@@ -192,6 +192,7 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 	var resp sdkws.GetMaxSeqResp
 	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(m.ctx, "get max seq error", err)
+		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncFailed}, m.conversationCh)
 		return
 	} else {
 		log.ZDebug(m.ctx, "get max seq success", "resp", resp)

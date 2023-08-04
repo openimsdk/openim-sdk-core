@@ -22,6 +22,7 @@ import (
 	"open_im_sdk/pkg/syncer"
 	"time"
 
+	"github.com/OpenIMSDK/tools/errs"
 	"github.com/OpenIMSDK/tools/log"
 )
 
@@ -100,6 +101,7 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 	}
 	var conversations []*model_struct.LocalConversation
 	var conversationIDs []string
+	var conversationIDsNeedSync []string
 	for conversationID, v := range seqs {
 		var unreadCount int32
 		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
@@ -109,11 +111,23 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 		}
 		if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
-			log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
+			if errs.Unwrap(err) == errs.ErrRecordNotFound {
+				conversationIDsNeedSync = append(conversationIDsNeedSync, conversationID)
+			} else {
+				log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
+			}
 			continue
 		}
 		conversationIDs = append(conversationIDs, conversationID)
 	}
+	if len(conversationIDsNeedSync) > 0 {
+		if err := c.SyncConversations(ctx, conversationIDsNeedSync); err != nil {
+			log.ZWarn(ctx, "sync new conversations failed", nil, "conversationIDs", conversationIDsNeedSync)
+		} else {
+			conversationIDs = append(conversationIDs, conversationIDsNeedSync...)
+		}
+	}
+
 	log.ZDebug(ctx, "update conversations", "conversations", conversations)
 	if len(conversationIDs) > 0 {
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationIDs}, c.GetCh())
