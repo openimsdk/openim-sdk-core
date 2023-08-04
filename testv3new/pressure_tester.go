@@ -86,6 +86,7 @@ func (p *PressureTester) InitCores(userIDs []string) {
 		go func(userID string) {
 			defer wg.Done()
 			ctx := p.NewAdminCtx()
+
 			token, err := p.testUserMananger.GetToken(ctx, userID, p.platformID)
 			if err != nil {
 				log.ZError(context.Background(), "get token error", err, "userID", userID)
