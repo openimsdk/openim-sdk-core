@@ -406,7 +406,6 @@ func (c *LongConnMgr) close() error {
 	c.connStatus = Closed
 	log.ZWarn(c.ctx, "conn closed", c.closedErr)
 	return c.conn.Close()
-
 }
 
 func (c *LongConnMgr) handleMessage(message []byte) error {
