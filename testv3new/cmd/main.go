@@ -12,7 +12,7 @@ func main() {
 	if err := log.InitFromConfig("sdk.log", "sdk", 6, true, false, "", 2, 24); err != nil {
 		panic(err)
 	}
-	recvID := "5345125128"
+	recvID := "9799811842"
 	conversationNum := 10
 	pressureTester := testv3new.NewPressureTester(testv3new.APIADDR, testv3new.WSADDR, testv3new.SECRET, testv3new.Admin)
 	ctx := pressureTester.NewAdminCtx()

@@ -151,7 +151,6 @@ func (p *PressureTester) CreateConversations(ctx context.Context, conversationNu
 	for _, userID := range userIDs {
 		time.Sleep(time.Millisecond * 100)
 		token, _ := p.testUserMananger.GetToken(ctx, userID, p.platformID)
-
 		ctx2 := NewUserCtx(userID, token)
 		baseCore := testcore.NewBaseCore(ctx2, userID, p.platformID)
 		ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())

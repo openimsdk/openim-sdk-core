@@ -631,14 +631,6 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
-	// if c.msgListener == nil || c.ConversationListener == nil {
-	//	for _, v := range allMsg {
-	//		if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-	//			c.signaling.DoNotification(ctx, v, c.GetCh())
-	//		}
-	//	}
-	//	return
-	// }
 	switch syncFlag {
 	case constant.MsgSyncBegin:
 		c.ConversationListener.OnSyncServerStart()

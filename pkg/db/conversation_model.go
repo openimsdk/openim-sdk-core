@@ -24,6 +24,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 
+	"github.com/OpenIMSDK/tools/errs"
 	"github.com/OpenIMSDK/tools/log"
 	"gorm.io/gorm"
 )
@@ -280,7 +281,7 @@ func (d *DataBase) UpdateColumnsConversation(ctx context.Context, conversationID
 	defer d.mRWMutex.Unlock()
 	t := d.conn.WithContext(ctx).Model(model_struct.LocalConversation{ConversationID: conversationID}).Updates(args)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return utils.Wrap(errs.ErrRecordNotFound, "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
 }
