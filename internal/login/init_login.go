@@ -16,6 +16,7 @@ package login
 
 import (
 	"context"
+	"fmt"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -352,6 +353,15 @@ func (u *LoginMgr) initResources() {
 	u.loginMgrCh = make(chan common.Cmd2Value)
 	u.setLoginStatus(Logout)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+}
+
+func (u *LoginMgr) UnInitSDK() {
+	if u.getLoginStatus(context.Background()) == Logged {
+		fmt.Println("sdk not logout, please logout first")
+		return
+	}
+	u.info = nil
+	u.setLoginStatus(0)
 }
 
 // token error recycle recourse, kicked not recycle
