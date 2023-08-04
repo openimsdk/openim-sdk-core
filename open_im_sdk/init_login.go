@@ -78,6 +78,15 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	UserForSDK = new(login.LoginMgr)
 	return UserForSDK.InitSDK(configArgs, listener)
 }
+func UnInitSDK(operationID string) {
+	if UserForSDK == nil {
+		fmt.Println(operationID, "UserForSDK is nil,")
+		return
+	}
+	UserForSDK.UnInitSDK()
+	UserForSDK = nil
+
+}
 
 func Login(callback open_im_sdk_callback.Base, operationID string, userID, token string) {
 	call(callback, operationID, UserForSDK.Login, userID, token)
