@@ -8,6 +8,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/testv3new/testcore"
+	"reflect"
+	"runtime"
 	"sync"
 	"time"
 
@@ -270,6 +272,30 @@ func (p *PressureTester) MsgReliabilityTest(ctx context.Context, recvUserID, sen
 			log.ZError(ctx, "send msg error", err, "index", i, "recvUserID", recvUserID, "sendUserID", sendUserID)
 		}
 	}
-	// recvCore := p.recvLightWeightSDKCores[recvUserID]
-	// log.ZInfo(context.Background(), "send msg done", "reliability", recvCore.GetRecvMsgNum() == msgNum)
+}
+
+func (p *PressureTester) WithTimer(f interface{}) func(...interface{}) interface{} {
+	return func(args ...interface{}) interface{} {
+		start := time.Now().UnixNano()
+		v := reflect.ValueOf(f)
+		if v.Kind() != reflect.Func {
+			log.ZError(context.Background(), "pass parameter is not a function", nil,
+				"actual parameter", v.Kind(), "expected parameter", reflect.Func)
+			return nil
+		}
+		funcName := runtime.FuncForPC(v.Pointer()).Name()
+		var in []reflect.Value
+		for _, arg := range args {
+			in = append(in, reflect.ValueOf(arg))
+		}
+		call := v.Call(in) // Execute the original function
+		end := time.Now().UnixNano()
+		fmt.Printf("Execute Function: %s\nExecute Function spent time: %v\n", funcName, float64(end-start))
+
+		// Get and return the first return value from the original function
+		if len(call) > 0 {
+			return call[0].Interface()
+		}
+		return nil
+	}
 }
