@@ -1500,8 +1500,9 @@ func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, o
 	for _, v := range groupIDList {
 		superGroupApiReq.GroupID = v
 		superGroupApiReq.OperationID = operationID
-		c.p.PostFatalCallback(callback, constant.DeleteSuperGroupMsgRouter, apiReq, nil, apiReq.OperationID)
-		return
+		if err := c.p.PostReturn(constant.DeleteSuperGroupMsgRouter, superGroupApiReq, nil); err != nil {
+			log.Error(operationID, "clearMessageFromSvr err", err.Error(), "groupID", v)
+		}
 	}
 }
 
