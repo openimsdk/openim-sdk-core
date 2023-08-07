@@ -507,13 +507,12 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			return nil, err
 		}
 		s.VideoElem.VideoURL = res.URL
-
 		u, err := url.Parse(res.URL)
 		if err == nil {
 			snapshot := u.Query()
 			snapshot.Set("type", "video")
-			snapshot.Set("width", "320")
-			snapshot.Set("height", "320")
+			//snapshot.Set("width", "320")
+			//snapshot.Set("height", "320")
 			u.RawQuery = snapshot.Encode()
 			s.VideoElem.SnapshotURL = u.String()
 		} else {
