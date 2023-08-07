@@ -3,8 +3,6 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -18,6 +16,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -1553,7 +1554,10 @@ func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, o
 	for _, v := range groupIDList {
 		superGroupApiReq.GroupID = v
 		superGroupApiReq.OperationID = operationID
-		c.p.PostFatalCallback(callback, constant.DeleteSuperGroupMsgRouter, superGroupApiReq, nil, apiReq.OperationID)
+		err := c.p.PostReturn(constant.DeleteSuperGroupMsgRouter, superGroupApiReq, nil)
+		if err != nil {
+			log.Error(operationID, "delete super group msg err:", err.Error(), "groupID:", v)
+		}
 	}
 }
 
