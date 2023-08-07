@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -25,17 +26,15 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/content_type"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/sdkerrs"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
-
 	"open_im_sdk/pkg/sdk_params_callback"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/OpenIMSDK/tools/log"
@@ -423,7 +422,6 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		log.ZDebug(ctx, "send picture", "path", sourcePath)
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-			//PutID:    s.ClientMsgID,
 			ContentType: s.PictureElem.SourcePicture.Type,
 			Filepath:    sourcePath,
 			Uuid:        s.PictureElem.SourcePicture.UUID,
@@ -435,18 +433,24 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			return nil, err
 		}
 		s.PictureElem.SourcePicture.Url = res.URL
-		//s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
-		//	Width:  int32(utils.StringToInt(constant.ZoomScale)),
-		//	Height: int32(utils.StringToInt(constant.ZoomScale)),
-		//	Url:    res.URL + "/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale,
-		//}
-		s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
-			Width:  s.PictureElem.SourcePicture.Width,
-			Height: s.PictureElem.SourcePicture.Height,
-			Url:    res.URL,
+		s.PictureElem.BigPicture = s.PictureElem.SourcePicture
+		u, err := url.Parse(res.URL)
+		if err == nil {
+			snapshot := u.Query()
+			snapshot.Set("type", "image")
+			snapshot.Set("width", "320")
+			snapshot.Set("height", "320")
+			u.RawQuery = snapshot.Encode()
+			s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
+				Width:  320,
+				Height: 320,
+				Url:    u.String(),
+			}
+		} else {
+			log.ZError(ctx, "parse url failed", err, "url", res.URL, "err", err)
+			s.PictureElem.SnapshotPicture = s.PictureElem.SourcePicture
 		}
 		s.Content = utils.StructToJsonString(s.PictureElem)
-
 	case constant.Sound:
 		if s.Status == constant.MsgStatusSendSuccess {
 			s.Content = utils.StructToJsonString(s.SoundElem)
@@ -481,57 +485,39 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			break
 		}
 		var videoPath string
-		var snapPath string
 		if utils.FileExist(s.VideoElem.VideoPath) {
 			videoPath = s.VideoElem.VideoPath
-			snapPath = s.VideoElem.SnapshotPath
 			delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
 			delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
 		} else {
 			videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
-			snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
 			delFile = append(delFile, videoPath)
-			delFile = append(delFile, snapPath)
 		}
-		log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
+		log.ZDebug(ctx, "file", "videoPath", videoPath, "delFile", delFile)
 
-		var wg sync.WaitGroup
-		wg.Add(2)
-		var putErrs error
-		go func() {
-			defer wg.Done()
-			snapRes, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-				ContentType: s.VideoElem.SnapshotType,
-				Filepath:    snapPath,
-				Uuid:        s.VideoElem.SnapshotUUID,
-				Name:        c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
-				Cause:       "msg-video-snapshot",
-			}, nil)
-			if err != nil {
-				log.ZWarn(ctx, "upload video snapshot failed", err)
-				return
-			}
-			s.VideoElem.SnapshotURL = snapRes.URL
-		}()
-
-		go func() {
-			defer wg.Done()
-			res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-				ContentType: content_type.GetType(s.VideoElem.VideoType, filepath.Ext(s.VideoElem.VideoPath)),
-				Filepath:    videoPath,
-				Uuid:        s.VideoElem.VideoUUID,
-				Name:        c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
-				Cause:       "msg-video",
-			}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				putErrs = err
-			}
-			s.VideoElem.VideoURL = res.URL
-		}()
-		wg.Wait()
-		if err := putErrs; err != nil {
+		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
+			ContentType: content_type.GetType(s.VideoElem.VideoType, filepath.Ext(s.VideoElem.VideoPath)),
+			Filepath:    videoPath,
+			Uuid:        s.VideoElem.VideoUUID,
+			Name:        c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
+			Cause:       "msg-video",
+		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
+		if err != nil {
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
+		}
+		s.VideoElem.VideoURL = res.URL
+
+		u, err := url.Parse(res.URL)
+		if err == nil {
+			snapshot := u.Query()
+			snapshot.Set("type", "video")
+			snapshot.Set("width", "320")
+			snapshot.Set("height", "320")
+			u.RawQuery = snapshot.Encode()
+			s.VideoElem.SnapshotURL = u.String()
+		} else {
+			log.ZError(ctx, "parse url failed", err, "url", res.URL, "err", err)
 		}
 		s.Content = utils.StructToJsonString(s.VideoElem)
 	case constant.File:
