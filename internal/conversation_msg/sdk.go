@@ -531,6 +531,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			if err != nil {
 				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 				putErrs = err
+				return
 			}
 			s.VideoElem.VideoURL = res.URL
 		}()
