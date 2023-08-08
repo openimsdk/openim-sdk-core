@@ -35,6 +35,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/OpenIMSDK/tools/log"
@@ -485,38 +486,57 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			break
 		}
 		var videoPath string
+		var snapPath string
 		if utils.FileExist(s.VideoElem.VideoPath) {
 			videoPath = s.VideoElem.VideoPath
+			snapPath = s.VideoElem.SnapshotPath
 			delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
 			delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
 		} else {
 			videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
+			snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
 			delFile = append(delFile, videoPath)
+			delFile = append(delFile, snapPath)
 		}
-		log.ZDebug(ctx, "file", "videoPath", videoPath, "delFile", delFile)
+		log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
 
-		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-			ContentType: content_type.GetType(s.VideoElem.VideoType, filepath.Ext(s.VideoElem.VideoPath)),
-			Filepath:    videoPath,
-			Uuid:        s.VideoElem.VideoUUID,
-			Name:        c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
-			Cause:       "msg-video",
-		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
-		if err != nil {
-			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+		var wg sync.WaitGroup
+		wg.Add(2)
+		var putErrs error
+		go func() {
+			defer wg.Done()
+			snapRes, err := c.file.UploadFile(ctx, &file.UploadFileReq{
+				ContentType: s.VideoElem.SnapshotType,
+				Filepath:    snapPath,
+				Uuid:        s.VideoElem.SnapshotUUID,
+				Name:        c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
+				Cause:       "msg-video-snapshot",
+			}, nil)
+			if err != nil {
+				log.ZWarn(ctx, "upload video snapshot failed", err)
+				return
+			}
+			s.VideoElem.SnapshotURL = snapRes.URL
+		}()
+
+		go func() {
+			defer wg.Done()
+			res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
+				ContentType: content_type.GetType(s.VideoElem.VideoType, filepath.Ext(s.VideoElem.VideoPath)),
+				Filepath:    videoPath,
+				Uuid:        s.VideoElem.VideoUUID,
+				Name:        c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
+				Cause:       "msg-video",
+			}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
+			if err != nil {
+				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+				putErrs = err
+			}
+			s.VideoElem.VideoURL = res.URL
+		}()
+		wg.Wait()
+		if err := putErrs; err != nil {
 			return nil, err
-		}
-		s.VideoElem.VideoURL = res.URL
-		u, err := url.Parse(res.URL)
-		if err == nil {
-			snapshot := u.Query()
-			snapshot.Set("type", "video")
-			//snapshot.Set("width", "320")
-			//snapshot.Set("height", "320")
-			u.RawQuery = snapshot.Encode()
-			s.VideoElem.SnapshotURL = u.String()
-		} else {
-			log.ZError(ctx, "parse url failed", err, "url", res.URL, "err", err)
 		}
 		s.Content = utils.StructToJsonString(s.VideoElem)
 	case constant.File:
