@@ -35,6 +35,7 @@ var (
 	ErrMsgBinaryTypeNotSupport  = errs.NewCodeError(MsgBinaryTypeNotSupportError, "MsgTypeNotSupportError")
 	ErrMsgRepeated              = errs.NewCodeError(MsgRepeatError, "only failed message can be repeatedly send")
 	ErrMsgContentTypeNotSupport = errs.NewCodeError(MsgContentTypeNotSupportError, "contentType not support currently") // msg 	// msg
+	ErrMsgHasNoSeq              = errs.NewCodeError(MsgHasNoSeqError, "msg has no seq")                                 // msg 	// msg
 
 	//会话相关
 	ErrNotSupportOpt = errs.NewCodeError(NotSupportOptError, "super group not support this opt")
