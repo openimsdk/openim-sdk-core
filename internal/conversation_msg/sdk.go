@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -25,17 +26,16 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/content_type"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/sdkerrs"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
-
 	"open_im_sdk/pkg/sdk_params_callback"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/OpenIMSDK/tools/log"
@@ -423,7 +423,6 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		log.ZDebug(ctx, "send picture", "path", sourcePath)
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
-			//PutID:    s.ClientMsgID,
 			ContentType: s.PictureElem.SourcePicture.Type,
 			Filepath:    sourcePath,
 			Uuid:        s.PictureElem.SourcePicture.UUID,
@@ -435,18 +434,24 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			return nil, err
 		}
 		s.PictureElem.SourcePicture.Url = res.URL
-		//s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
-		//	Width:  int32(utils.StringToInt(constant.ZoomScale)),
-		//	Height: int32(utils.StringToInt(constant.ZoomScale)),
-		//	Url:    res.URL + "/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale,
-		//}
-		s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
-			Width:  s.PictureElem.SourcePicture.Width,
-			Height: s.PictureElem.SourcePicture.Height,
-			Url:    res.URL,
+		s.PictureElem.BigPicture = s.PictureElem.SourcePicture
+		u, err := url.Parse(res.URL)
+		if err == nil {
+			snapshot := u.Query()
+			snapshot.Set("type", "image")
+			snapshot.Set("width", "320")
+			snapshot.Set("height", "320")
+			u.RawQuery = snapshot.Encode()
+			s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
+				Width:  320,
+				Height: 320,
+				Url:    u.String(),
+			}
+		} else {
+			log.ZError(ctx, "parse url failed", err, "url", res.URL, "err", err)
+			s.PictureElem.SnapshotPicture = s.PictureElem.SourcePicture
 		}
 		s.Content = utils.StructToJsonString(s.PictureElem)
-
 	case constant.Sound:
 		if s.Status == constant.MsgStatusSendSuccess {
 			s.Content = utils.StructToJsonString(s.SoundElem)
