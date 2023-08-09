@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/protocol/constant"
 	"io"
 	"math/rand"
 	"net/http"
@@ -68,9 +69,8 @@ func init() {
 func GetUserToken(ctx context.Context, userID string) (string, error) {
 	jsonReqData, err := json.Marshal(map[string]any{
 		"userID":     userID,
-		"platformID": 1,
+		"platformID": constant.LinuxPlatformID,
 		"secret":     "openIM123",
-		//"secret": "111111",
 	})
 	if err != nil {
 		return "", err
@@ -107,7 +107,7 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	if result.ErrCode != 0 {
 		return "", fmt.Errorf("errCode:%d, errMsg:%s, errDlt:%s", result.ErrCode, result.ErrMsg, result.ErrDlt)
 	}
-	return result.Data.Token + "12321", nil
+	return result.Data.Token, nil
 }
 
 type onListenerForService struct {

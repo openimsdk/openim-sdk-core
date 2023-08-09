@@ -56,7 +56,8 @@ const (
 )
 
 const (
-	Closed = iota + 1
+	DefaultNotConnect = iota
+	Closed            = iota + 1
 	Connecting
 	Connected
 )
@@ -385,7 +386,7 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 	if err != nil {
 		return err
 	}
-	if c.GetConnectionStatus() == Closed {
+	if c.GetConnectionStatus() != Connected {
 		return sdkerrs.ErrNetwork.Wrap("connection closed,re conning...")
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
@@ -402,13 +403,12 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 func (c *LongConnMgr) close() error {
 	c.w.Lock()
 	defer c.w.Unlock()
-	if c.connStatus == Closed || c.connStatus == Connecting {
+	if c.connStatus == Closed || c.connStatus == Connecting || c.connStatus == DefaultNotConnect {
 		return nil
 	}
 	c.connStatus = Closed
 	log.ZWarn(c.ctx, "conn closed", c.closedErr)
 	return c.conn.Close()
-
 }
 
 func (c *LongConnMgr) handleMessage(message []byte) error {

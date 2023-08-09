@@ -1,28 +1,21 @@
 package main
 
 import (
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/OpenIMSDK/tools/mcontext"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/testv3new"
-	"open_im_sdk/testv3new/testcore"
+
+	"github.com/OpenIMSDK/tools/log"
+	"github.com/OpenIMSDK/tools/mcontext"
 )
 
 func main() {
-	if err := log.InitFromConfig("sdk.log", "sdk", 3, true, false, "", 2, 24); err != nil {
+	if err := log.InitFromConfig("sdk.log", "sdk", 6, true, false, "", 2, 24); err != nil {
 		panic(err)
 	}
-	userID := "4844258055"
-	recvID := "4950983283"
-	manager := testv3new.NewRegisterManager()
-	token, _ := manager.GetToken(userID)
-	ctx := testv3new.NewCtx(testcore.APIADDR, testcore.WSADDR, userID, token)
-	baseCore := testcore.NewBaseCore(ctx, userID)
+	recvID := "9799811842"
+	conversationNum := 10
+	pressureTester := testv3new.NewPressureTester(testv3new.APIADDR, testv3new.WSADDR, testv3new.SECRET, testv3new.Admin)
+	ctx := pressureTester.NewAdminCtx()
 	ctx = mcontext.SetOperationID(ctx, utils.OperationIDGenerator())
-	if err := baseCore.SendSingleMsg(ctx, recvID, 0); err != nil {
-		panic(err)
-	}
-	if err := baseCore.SendSingleMsg(ctx, recvID, 1); err != nil {
-		panic(err)
-	}
+	pressureTester.CreateConversations(ctx, conversationNum, recvID)
 }

@@ -63,7 +63,7 @@ func init() {
 	AdminToken, _ = GetToken(AdminUID)
 	// init log
 	if err := imLog.InitFromConfig(
-		"open-im-sdk-core", LogName, int(LogLevel), IsLogStandardOutput, isLogJson, LogFilePath, rotateCount); err != nil {
+		"open-im-sdk-core", LogName, int(LogLevel), IsLogStandardOutput, isLogJson, LogFilePath, rotateCount, 24); err != nil {
 		fmt.Println(utils.OperationIDGenerator(), "log init failed ", err.Error())
 	}
 }
