@@ -14,7 +14,10 @@
 
 package testv2
 
-import "open_im_sdk/sdk_struct"
+import (
+	"github.com/OpenIMSDK/protocol/constant"
+	"open_im_sdk/sdk_struct"
+)
 
 const (
 	//APIADDR = "http://43.154.157.177:10002"
@@ -45,7 +48,7 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.DataDir = "../"
 	cf.LogLevel = 6
 	cf.IsExternalExtensions = true
-	cf.PlatformID = 1
+	cf.PlatformID = constant.LinuxPlatformID
 	cf.LogFilePath = ""
 	cf.IsLogStandardOutput = true
 	return cf
