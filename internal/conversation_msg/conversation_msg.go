@@ -219,7 +219,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			msg.AttachedInfoElem = &attachedInfo
 
 			msg.Status = constant.MsgStatusSendSuccess
-			msg.IsRead = false
+			// msg.IsRead = false
 			//De-analyze data
 			err := c.msgHandleByContentType(msg)
 			if err != nil {

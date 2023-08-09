@@ -229,16 +229,25 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		for _, info := range detail.InvitedUserList {
 			userIDs = append(userIDs, info.UserID)
 		}
-		return g.SyncGroupMembers(ctx, detail.Group.GroupID, userIDs...)
+
+		if utils.IsContain(g.loginUserID, userIDs) {
+			return g.SyncAllGroupMember(ctx, detail.Group.GroupID)
+		} else {
+			return g.SyncGroupMembers(ctx, detail.Group.GroupID, userIDs...)
+		}
 	case constant.MemberEnterNotification: // 1510
 		var detail sdkws.MemberEnterTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		if err := g.SyncGroups(ctx, detail.Group.GroupID); err != nil {
-			return err
+		if detail.EntrantUser.UserID == g.loginUserID {
+			if err := g.SyncGroups(ctx, detail.Group.GroupID); err != nil {
+				return err
+			}
+			return g.SyncAllGroupMember(ctx, detail.Group.GroupID)
+		} else {
+			return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.EntrantUser.UserID)
 		}
-		return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.EntrantUser.UserID)
 	case constant.GroupDismissedNotification: // 1511
 		var detail sdkws.GroupDismissedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
