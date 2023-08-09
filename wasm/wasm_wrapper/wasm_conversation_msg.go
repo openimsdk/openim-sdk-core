@@ -343,3 +343,13 @@ func (w *WrapperConMsg) SetConversationBurnDuration(_ js.Value, args []js.Value)
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversationBurnDuration, callback, &args).AsyncCallWithCallback()
 }
+
+func (w *WrapperConMsg) SetConversationIsMsgDestruct(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.SetConversationIsMsgDestruct, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperConMsg) SetConversationMsgDestructTime(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.SetConversationMsgDestructTime, callback, &args).AsyncCallWithCallback()
+}
