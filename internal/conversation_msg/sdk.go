@@ -37,15 +37,10 @@ import (
 	"github.com/OpenIMSDK/tools/errs"
 
 	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/OpenIMSDK/tools/log"
