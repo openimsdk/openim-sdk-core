@@ -166,7 +166,7 @@ message subscribeOrCancelUsersStatusReq{
 }
 
 message subscribeOrCancelUsersStatusResp{
-  map<string, int32> status = 1;
+  repeated onlineStatus statusList = 1;
 }
 
 message onlineStatus {

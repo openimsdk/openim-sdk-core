@@ -14,7 +14,10 @@
 
 package user
 
-import "errors"
+import (
+	"errors"
+	"github.com/OpenIMSDK/protocol/constant"
+)
 
 func (x *GetAllUserIDReq) Check() error {
 	if x.Pagination == nil {
@@ -168,7 +171,7 @@ func (x *SubscribeOrCancelUsersStatusReq) Check() error {
 		return errors.New("subscription User-list is empty")
 	}
 	if x.Genre <= 0 || x.Genre >= 3 {
-		return errors.New("Invalid subscription type parameter")
+		return errors.New("invalid subscription type parameter")
 	}
 	return nil
 }
@@ -179,6 +182,9 @@ func (x *GetUserStatusReq) Check() error {
 	}
 	if x.UserIDs == nil {
 		return errors.New("user-list is empty")
+	}
+	if len(x.UserIDs) > constant.MaxUsersStatusList {
+		return errors.New("user-list is Limit Exceeded")
 	}
 	return nil
 }
