@@ -19,6 +19,7 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/sdkerrs"
 
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -144,6 +145,14 @@ func (c *Conversation) deleteMessageFromSvr(ctx context.Context, conversationID 
 	localMessage, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
 	if err != nil {
 		return err
+	}
+	if localMessage.Status == constant.MsgStatusSendFailed {
+		log.ZInfo(ctx, "delete msg status is send failed, do not need delete", "msg", localMessage)
+		return nil
+	}
+	if localMessage.Seq == 0 {
+		log.ZInfo(ctx, "delete msg seq is 0, try again", "msg", localMessage)
+		return sdkerrs.ErrMsgHasNoSeq
 	}
 	var apiReq pbMsg.DeleteMsgsReq
 	apiReq.UserID = c.loginUserID

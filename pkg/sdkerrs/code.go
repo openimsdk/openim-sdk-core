@@ -38,6 +38,7 @@ const (
 	MsgBinaryTypeNotSupportError  = 10203 //消息类型不支持
 	MsgRepeatError                = 10204 //消息重复发送
 	MsgContentTypeNotSupportError = 10205 //消息类型不支持
+	MsgHasNoSeqError              = 10206 //消息没有seq
 
 	//会话相关
 	NotSupportOptError = 10301 //不支持的操作
