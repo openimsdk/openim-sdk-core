@@ -84,6 +84,7 @@ func (p *TestUserManager) CreateGroup(ctx context.Context, groupID string, owner
 		GroupInfo: &sdkws.GroupInfo{
 			GroupID:   groupID,
 			GroupName: groupName,
+			GroupType: constant.WorkingGroup,
 		},
 	}
 	resp := &group.CreateGroupResp{}

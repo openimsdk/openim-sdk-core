@@ -165,6 +165,29 @@ func (p *PressureTester) CreateConversations(ctx context.Context, conversationNu
 	wg.Wait()
 	return nil
 }
+func (p *PressureTester) CreateConversationsAndBatchSendMsg(ctx context.Context, conversationNum int, onePeopleMessageNum int, recvUserID string) error {
+	userIDs := p.testUserMananger.GenUserIDs(conversationNum)
+	if err := p.testUserMananger.RegisterUsers(ctx, userIDs...); err != nil {
+		return err
+	}
+	var wg sync.WaitGroup
+	for _, userID := range userIDs {
+		time.Sleep(time.Millisecond * 100)
+		token, _ := p.testUserMananger.GetToken(ctx, userID, p.platformID)
+		ctx2 := NewUserCtx(userID, token)
+		baseCore := testcore.NewBaseCore(ctx2, userID, p.platformID)
+		ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())
+		for i := 0; i < onePeopleMessageNum; i++ {
+			if err := baseCore.BatchSendSingleMsg(ctx2, recvUserID, i); err != nil {
+				log.ZError(ctx2, "send msg error", err, "sendUserID", userID)
+			}
+		}
+
+	}
+	wg.Add(1)
+	wg.Wait()
+	return nil
+}
 
 // PressureSendMsgs2 user single chat send msg pressure test
 func (p *PressureTester) PressureSendMsgs2(ctx context.Context, sendUserIDs []string, recvUserIDs []string, msgNum int, duration time.Duration) {

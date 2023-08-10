@@ -49,11 +49,10 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 		return err
 	}
 	defer func(start time.Time) {
-		end := time.Now()
 		if err == nil {
-			log.ZDebug(ctx, "CallApi", "api", api, "use", "state", "success", time.Duration(end.UnixNano()-start.UnixNano()))
+			log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", time.Since(start).Milliseconds())
 		} else {
-			log.ZError(ctx, "CallApi", err, "api", api, "use", "state", "failed", time.Duration(end.UnixNano()-start.UnixNano()))
+			log.ZError(ctx, "CallApi", err, "api", api, "state", "failed", "cost time", time.Since(start).Milliseconds())
 		}
 	}(time.Now())
 	reqBody, err := json.Marshal(req)
