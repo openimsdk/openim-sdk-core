@@ -109,7 +109,7 @@ func registerFunc() {
 	js.Global().Set("getTotalUnreadMsgCount", js.FuncOf(wrapperConMsg.GetTotalUnreadMsgCount))
 	js.Global().Set("setConversationBurnDuration", js.FuncOf(wrapperConMsg.SetConversationBurnDuration))
 	js.Global().Set("setConversationMsgDestructTime", js.FuncOf(wrapperConMsg.SetConversationMsgDestructTime))
-	js.Global().Set("SetConversationIsMsgDestruct", js.FuncOf(wrapperConMsg.SetConversationIsMsgDestruct))
+	js.Global().Set("setConversationIsMsgDestruct", js.FuncOf(wrapperConMsg.SetConversationIsMsgDestruct))
 
 	js.Global().Set("findMessageList", js.FuncOf(wrapperConMsg.FindMessageList))
 
