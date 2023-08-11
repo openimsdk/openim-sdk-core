@@ -28,6 +28,7 @@ import (
 const (
 	connectPullNums = 1
 	defaultPullNums = 10
+	SplitPullMsgNum = 100
 )
 
 // The callback synchronization starts. The reconnection ends
@@ -204,7 +205,25 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 // Fragment synchronization message, seq refresh after successful trigger
 func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
 	if len(seqMap) > 0 {
-		resp, err := m.pullMsgBySeqRange(ctx, seqMap, syncMsgNum)
+		tempSeqMap := make(map[string][2]int64, 100)
+		for k, v := range seqMap {
+			tempSeqMap[k] = v
+			if len(tempSeqMap) == SplitPullMsgNum {
+				resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
+				if err != nil {
+					log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
+					return err
+				}
+				_ = m.triggerConversation(ctx, resp.Msgs)
+				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
+				for conversationID, seqs := range seqMap {
+					m.syncedMaxSeqs[conversationID] = seqs[1]
+				}
+				tempSeqMap = make(map[string][2]int64, 100)
+			}
+		}
+
+		resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 		if err != nil {
 			log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
 			return err
@@ -214,7 +233,6 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 		for conversationID, seqs := range seqMap {
 			m.syncedMaxSeqs[conversationID] = seqs[1]
 		}
-		return err
 	}
 	return nil
 }

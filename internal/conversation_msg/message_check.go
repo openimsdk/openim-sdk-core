@@ -170,7 +170,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 	seqRange.End = newSeqList[len(newSeqList)-1]
 	seqRange.Num = int64(len(newSeqList))
 	pullMsgReq.SeqRanges = append(pullMsgReq.SeqRanges, &seqRange)
-	log.ZDebug(ctx, "read diffusion group pull message,  ", "req", pullMsgReq)
+	log.ZDebug(ctx, "conversation pull message,  ", "req", pullMsgReq)
 	if notStartTime && !c.LongConnMgr.IsConnected() {
 		return
 	}
