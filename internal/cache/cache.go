@@ -79,7 +79,7 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 
 func (c *Cache) BatchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]UserInfo, error) {
 	m := make(map[string]UserInfo)
-	var notCachedUserIDs []string
+	var notCachedUserIDs, notCachedAndNotFriendUserIDs []string
 	for _, userID := range userIDs {
 		if value, ok := c.userMap.Load(userID); ok {
 			user := value.(UserInfo)
@@ -88,7 +88,16 @@ func (c *Cache) BatchGetUserNameAndFaceURL(ctx context.Context, userIDs ...strin
 			notCachedUserIDs = append(notCachedUserIDs, userID)
 		}
 	}
-	if len(notCachedUserIDs) > 0 {
+	for _, notCachedUserID := range notCachedUserIDs {
+		localFriend, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, notCachedUserID)
+		if err == nil {
+			m[notCachedUserID] = UserInfo{FaceURL: localFriend.FaceURL, Nickname: localFriend.Nickname}
+		} else {
+			notCachedAndNotFriendUserIDs = append(notCachedAndNotFriendUserIDs, notCachedUserID)
+		}
+	}
+
+	if len(notCachedAndNotFriendUserIDs) > 0 {
 		users, err := c.user.GetServerUserInfo(ctx, notCachedUserIDs)
 		if err != nil {
 			return nil, err
