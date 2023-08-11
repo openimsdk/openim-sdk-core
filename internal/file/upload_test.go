@@ -35,7 +35,7 @@ func TestName(t *testing.T) {
 	})
 	ctx = ccontext.WithOperationID(ctx, `test`)
 
-	database, err := db.NewDataBase(ctx, userID, `C:\Users\Admin\Desktop\test`)
+	database, err := db.NewDataBase(ctx, userID, `C:\Users\Admin\Desktop\test`, 6)
 	if err != nil {
 		panic(err)
 	}

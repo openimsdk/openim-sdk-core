@@ -30,6 +30,7 @@ import (
 	"github.com/OpenIMSDK/protocol/group"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
@@ -226,6 +227,37 @@ func (g *Group) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (
 		return nil, sdkerrs.ErrGroupIDNotFound.Wrap("server not this group")
 	}
 	return ServerGroupToLocalGroup(svrGroup[0]), nil
+}
+
+func (g *Group) GetGroupsInfoFromLocal2Svr(ctx context.Context, groupIDs ...string) (map[string]*model_struct.LocalGroup, error) {
+	groups, err := g.db.GetGroups(ctx, groupIDs)
+	if err != nil {
+		return nil, err
+	}
+	var groupIDsNeedSync []string
+	localGroupIDs := utils2.Slice(groups, func(group *model_struct.LocalGroup) string {
+		return group.GroupID
+	})
+	for _, groupID := range groupIDs {
+		if !utils2.Contain(groupID, localGroupIDs...) {
+			groupIDsNeedSync = append(groupIDsNeedSync, groupID)
+		}
+	}
+
+	if len(groupIDsNeedSync) > 0 {
+		svrGroups, err := g.getGroupsInfoFromSvr(ctx, groupIDsNeedSync)
+		if err != nil {
+			return nil, err
+		}
+		for _, svrGroup := range svrGroups {
+			groups = append(groups, ServerGroupToLocalGroup(svrGroup))
+		}
+	}
+	groupMap := make(map[string]*model_struct.LocalGroup)
+	for _, group := range groups {
+		groupMap[group.GroupID] = group
+	}
+	return groupMap, nil
 }
 
 func (g *Group) getGroupsInfoFromSvr(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
