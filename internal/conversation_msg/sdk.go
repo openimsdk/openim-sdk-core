@@ -379,6 +379,14 @@ func (c *Conversation) GetConversationIDBySessionType(_ context.Context, sourceI
 	return c.getConversationIDBySessionType(sourceID, sessionType)
 }
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
+	filepathExt := func(name ...string) string {
+		for _, path := range name {
+			if ext := filepath.Ext(path); ext != "" {
+				return ext
+			}
+		}
+		return ""
+	}
 	options := make(map[string]bool, 2)
 	lc, err := c.checkID(ctx, s, recvID, groupID, options)
 	if err != nil {
@@ -426,7 +434,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			ContentType: s.PictureElem.SourcePicture.Type,
 			Filepath:    sourcePath,
 			Uuid:        s.PictureElem.SourcePicture.UUID,
-			Name:        c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
+			Name:        c.fileName("picture", s.ClientMsgID) + filepathExt(s.PictureElem.SourcePicture.UUID, sourcePath),
 			Cause:       "msg-picture",
 		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
@@ -471,7 +479,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			ContentType: s.SoundElem.SoundType,
 			Filepath:    sourcePath,
 			Uuid:        s.SoundElem.UUID,
-			Name:        c.fileName("voice", s.ClientMsgID) + filepath.Ext(sourcePath),
+			Name:        c.fileName("voice", s.ClientMsgID) + filepathExt(s.SoundElem.UUID, sourcePath),
 			Cause:       "msg-voice",
 		}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 		if err != nil {
@@ -509,7 +517,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				ContentType: s.VideoElem.SnapshotType,
 				Filepath:    snapPath,
 				Uuid:        s.VideoElem.SnapshotUUID,
-				Name:        c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
+				Name:        c.fileName("videoSnapshot", s.ClientMsgID) + filepathExt(s.VideoElem.SnapshotUUID, snapPath),
 				Cause:       "msg-video-snapshot",
 			}, nil)
 			if err != nil {
@@ -525,7 +533,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				ContentType: content_type.GetType(s.VideoElem.VideoType, filepath.Ext(s.VideoElem.VideoPath)),
 				Filepath:    videoPath,
 				Uuid:        s.VideoElem.VideoUUID,
-				Name:        c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
+				Name:        c.fileName("video", s.ClientMsgID) + filepathExt(s.VideoElem.VideoUUID, videoPath),
 				Cause:       "msg-video",
 			}, NewUploadFileCallback(ctx, callback.OnProgress, s, lc.ConversationID, c.db))
 			if err != nil {
