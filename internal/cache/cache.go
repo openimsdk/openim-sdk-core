@@ -28,10 +28,11 @@ type UserInfo struct {
 	FaceURL  string
 }
 type Cache struct {
-	user            *user.User
-	friend          *friend.Friend
-	userMap         sync.Map
-	conversationMap sync.Map
+	user                  *user.User
+	friend                *friend.Friend
+	userMap               sync.Map
+	conversationMap       sync.Map
+	SubscriptionStatusMap sync.Map
 }
 
 func NewCache(user *user.User, friend *friend.Friend) *Cache {
