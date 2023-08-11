@@ -190,21 +190,24 @@ func (s *SendMessageCallback) OnProgress(progress int) {
 	mReply["clientMsgID"] = s.clientMsgID
 	s.globalEvent.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(mReply)).SendMessage()
 }
+
 type UploadInterface interface {
 	open_im_sdk_callback.Base
 	open_im_sdk_callback.UploadFileCallback
 }
+
 var _ UploadInterface = (*UploadFileCallback)(nil)
+
 type UploadFileCallback struct {
 	BaseCallback
 	globalEvent CallbackWriter
-	Uuid string
+	Uuid        string
 }
 
 func NewUploadFileCallback(funcName string, callback *js.Value) *UploadFileCallback {
 	return &UploadFileCallback{BaseCallback: BaseCallback{CallbackWriter: NewPromiseHandler().SetEvent(funcName)}, globalEvent: NewEventData(callback).SetEvent(funcName)}
 }
-func (u *UploadFileCallback) SetUuid(args *[]js.Value)*UploadFileCallback{
+func (u *UploadFileCallback) SetUuid(args *[]js.Value) *UploadFileCallback {
 	f := file.UploadFileReq{}
 	utils.JsonStringToStruct((*args)[1].String(), &f)
 	u.Uuid = f.Uuid
@@ -275,9 +278,6 @@ func (u *UploadFileCallback) Complete(size int64, url string, typ int) {
 	mReply["uuid"] = u.Uuid
 	u.globalEvent.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(mReply)).SendMessage()
 }
-
-
-
 
 type BatchMessageCallback struct {
 	CallbackWriter
@@ -387,6 +387,19 @@ func NewUserCallback(callback *js.Value) *UserCallback {
 }
 func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
+
+type CustomBusinessCallback struct {
+	CallbackWriter
+}
+
+func NewCustomBusinessCallback(callback *js.Value) *CustomBusinessCallback {
+	return &CustomBusinessCallback{CallbackWriter: NewEventData(callback)}
+}
+
+func (c CustomBusinessCallback) OnRecvCustomBusinessMessage(businessMessage string) {
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(businessMessage).SendMessage()
+
 }
 
 type SignalingCallback struct {

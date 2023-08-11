@@ -72,6 +72,10 @@ func (s *SetListener) setSignalingListener() {
 	//callback := event_listener.NewSignalingCallback(s.commonFunc)
 	//open_im_sdk.SetSignalingListener(callback)
 }
+func (s *SetListener) setCustomBusinessListener() {
+	callback := event_listener.NewCustomBusinessCallback(s.commonFunc)
+	open_im_sdk.SetCustomBusinessListener(callback)
+}
 
 func (s *SetListener) SetAllListener() {
 	s.setConversationListener()
@@ -81,6 +85,7 @@ func (s *SetListener) SetAllListener() {
 	s.setGroupListener()
 	s.setUserListener()
 	s.setSignalingListener()
+	s.setCustomBusinessListener()
 }
 
 type WrapperCommon struct {

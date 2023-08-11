@@ -48,6 +48,9 @@ func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, c
 	if err != nil {
 		return err
 	}
+	if maxSeq == 0 {
+		return nil
+	}
 	if err := c.setConversationHasReadSeq(ctx, conversationID, maxSeq); err != nil {
 		return err
 	}
