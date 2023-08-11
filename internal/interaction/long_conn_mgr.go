@@ -350,7 +350,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 		select {
 		case resp := <-tempChan:
 			return resp, nil
-		case <-time.After(time.Second * 3):
+		case <-time.After(time.Second * 5):
 			return nil, sdkerrs.ErrNetworkTimeOut
 		}
 
