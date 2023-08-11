@@ -17,7 +17,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
@@ -132,7 +131,7 @@ func (u *User) initSyncer() {
 //}
 
 // DoNotification handles incoming notifications for the user.
-func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData, cache *cache.Cache) {
+func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData, cache func(userID string, statusMap *userPb.OnlineStatus)) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
 	if u.listener == nil {
 		// log.Error(operationID, "listener == nil")
@@ -171,7 +170,7 @@ func (u *User) userInfoUpdatedNotification(ctx context.Context, msg *sdkws.MsgDa
 }
 
 // userStatusChangeNotification get subscriber status change callback
-func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData, c *cache.Cache) {
+func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData, c func(userID string, statusMap *userPb.OnlineStatus)) {
 	log.ZDebug(ctx, "userStatusChangeNotification", "msg", *msg)
 	tips := sdkws.UserStatusChangeTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
