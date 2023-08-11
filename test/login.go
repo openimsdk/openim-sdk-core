@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -48,13 +49,13 @@ func (b *BaseSuccessFailed) OnSuccess(data string) {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-	cf.PlatformID = 1
+	cf.PlatformID = constant.WindowsPlatformID
 	cf.WsAddr = ws
 	cf.DataDir = "./"
 	cf.LogLevel = LogLevel
 	cf.IsExternalExtensions = true
-	cf.IsLogStandardOutput = true
-	cf.LogFilePath = ""
+	cf.IsLogStandardOutput = false
+	cf.LogFilePath = "./"
 
 	b, _ := json.Marshal(cf)
 	s := string(b)

@@ -131,7 +131,7 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 	log.ZDebug(ctx, "update conversations", "conversations", conversations)
 	if len(conversationIDs) > 0 {
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationIDs}, c.GetCh())
-		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: conversationIDs}, c.GetCh())
+		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.GetCh())
 	}
 	return nil
 }
