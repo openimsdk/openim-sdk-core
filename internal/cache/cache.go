@@ -91,7 +91,13 @@ func (c *Cache) BatchGetUserNameAndFaceURL(ctx context.Context, userIDs ...strin
 	for _, notCachedUserID := range notCachedUserIDs {
 		localFriend, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, notCachedUserID)
 		if err == nil {
-			m[notCachedUserID] = UserInfo{FaceURL: localFriend.FaceURL, Nickname: localFriend.Nickname}
+			userInfo := UserInfo{FaceURL: localFriend.FaceURL}
+			if localFriend.Remark != "" {
+				userInfo.Nickname = localFriend.Remark
+			} else {
+				userInfo.Nickname = localFriend.Nickname
+			}
+			m[notCachedUserID] = userInfo
 		} else {
 			notCachedAndNotFriendUserIDs = append(notCachedAndNotFriendUserIDs, notCachedUserID)
 		}
