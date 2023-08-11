@@ -165,23 +165,67 @@ func (p *PressureTester) CreateConversations(ctx context.Context, conversationNu
 	wg.Wait()
 	return nil
 }
-func (p *PressureTester) CreateConversationsAndBatchSendMsg(ctx context.Context, conversationNum int, onePeopleMessageNum int, recvUserID string) error {
-	userIDs := p.testUserMananger.GenUserIDs(conversationNum)
-	if err := p.testUserMananger.RegisterUsers(ctx, userIDs...); err != nil {
-		return err
+func (p *PressureTester) CreateConversationsAndBatchSendMsg(ctx context.Context, conversationNum int, onePeopleMessageNum int,
+	recvUserID string, fixedUserIDs []string) error {
+	var userIDs []string
+	if len(fixedUserIDs) <= 0 {
+		userIDs = p.testUserMananger.GenUserIDs(conversationNum)
+		if err := p.testUserMananger.RegisterUsers(ctx, userIDs...); err != nil {
+			return err
+		}
+	} else {
+		userIDs = fixedUserIDs
 	}
+
 	var wg sync.WaitGroup
 	for _, userID := range userIDs {
-		time.Sleep(time.Millisecond * 100)
-		token, _ := p.testUserMananger.GetToken(ctx, userID, p.platformID)
-		ctx2 := NewUserCtx(userID, token)
-		baseCore := testcore.NewBaseCore(ctx2, userID, p.platformID)
-		ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())
-		for i := 0; i < onePeopleMessageNum; i++ {
-			if err := baseCore.BatchSendSingleMsg(ctx2, recvUserID, i); err != nil {
-				log.ZError(ctx2, "send msg error", err, "sendUserID", userID)
+		go func() {
+			time.Sleep(time.Millisecond * 100)
+			token, _ := p.testUserMananger.GetToken(ctx, userID, p.platformID)
+			ctx2 := NewUserCtx(userID, token)
+			baseCore := testcore.NewBaseCore(ctx2, userID, p.platformID)
+			ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())
+			for i := 0; i < onePeopleMessageNum; i++ {
+				if err := baseCore.BatchSendSingleMsg(ctx2, recvUserID, i); err != nil {
+					log.ZError(ctx2, "send msg error", err, "sendUserID", userID)
+				}
+				time.Sleep(time.Millisecond * 5000)
 			}
+		}()
+
+	}
+	wg.Add(1)
+	wg.Wait()
+	return nil
+}
+func (p *PressureTester) CreateConversationsAndBatchSendGroupMsg(ctx context.Context, conversationNum int, onePeopleMessageNum int,
+	groupID string, fixedUserIDs []string) error {
+	var userIDs []string
+	if len(fixedUserIDs) <= 0 {
+		userIDs = p.testUserMananger.GenUserIDs(conversationNum)
+		if err := p.testUserMananger.RegisterUsers(ctx, userIDs...); err != nil {
+			return err
 		}
+	} else {
+		userIDs = fixedUserIDs
+	}
+
+	var wg sync.WaitGroup
+	for _, userID := range userIDs {
+		go func(u string) {
+			log.ZDebug(ctx, "start send msg", "userID", u)
+			time.Sleep(time.Millisecond * 100)
+			token, _ := p.testUserMananger.GetToken(ctx, u, p.platformID)
+			ctx2 := NewUserCtx(u, token)
+			baseCore := testcore.NewBaseCore(ctx2, u, p.platformID)
+			ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())
+			for i := 0; i < onePeopleMessageNum; i++ {
+				if err := baseCore.BatchSendGroupMsg(ctx2, groupID, i); err != nil {
+					log.ZError(ctx2, "send msg error", err, "sendUserID", u)
+				}
+				time.Sleep(time.Millisecond * 500)
+			}
+		}(userID)
 
 	}
 	wg.Add(1)

@@ -72,6 +72,15 @@ func (b *BaseCore) BatchSendSingleMsg(ctx context.Context, userID string, index 
 func (b *BaseCore) SendGroupMsg(ctx context.Context, groupID string, index int) error {
 	return b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
 }
+func (b *BaseCore) BatchSendGroupMsg(ctx context.Context, groupID string, index int) error {
+	content := fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index)
+	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
+	if err != nil {
+		log.ZError(ctx, "send msg failed", err, "groupID", groupID, "index", index, "content", content)
+		b.failedMessageMap[content] = err
+	}
+	return nil
+}
 
 func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index int, sesstionType int32, content string) error {
 	var resp sdkws.UserSendMsgResp

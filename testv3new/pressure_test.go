@@ -86,17 +86,31 @@ func Test_CreateConversationsAndSendMessages(t *testing.T) {
 		panic(err)
 	}
 	recvID := "6959062403"
-	conversationNum := 369
+	conversationNum := 3
 	onePeopleMessageNum := 100
 	pressureTester := NewPressureTester(APIADDR, WSADDR, SECRET, Admin)
 	ctx := pressureTester.NewAdminCtx()
 	ctx = mcontext.SetOperationID(ctx, utils.OperationIDGenerator())
-	pressureTester.CreateConversationsAndBatchSendMsg(ctx, conversationNum, onePeopleMessageNum, recvID)
+	fixedUserIDs := []string{"register_test_1", "register_test_2", "register_test_3"}
+	pressureTester.CreateConversationsAndBatchSendMsg(ctx, conversationNum, onePeopleMessageNum, recvID, fixedUserIDs)
 	time.Sleep(time.Minute * 10)
 }
-
+func Test_CreateConversationsAndSendGroupMessages(t *testing.T) {
+	if err := log.InitFromConfig("sdk.log", "sdk", 6, true, false, "./", 2, 24); err != nil {
+		panic(err)
+	}
+	groupID := "227809258"
+	conversationNum := 3
+	onePeopleMessageNum := 1000
+	pressureTester := NewPressureTester(APIADDR, WSADDR, SECRET, Admin)
+	ctx := pressureTester.NewAdminCtx()
+	ctx = mcontext.SetOperationID(ctx, utils.OperationIDGenerator())
+	fixedUserIDs := []string{"register_test_1", "register_test_2", "register_test_3"}
+	pressureTester.CreateConversationsAndBatchSendGroupMsg(ctx, conversationNum, onePeopleMessageNum, groupID, fixedUserIDs)
+	time.Sleep(time.Minute * 10)
+}
 func Test_CreateGroup(t *testing.T) {
-	count := 1000
+	count := 9
 	ownerUserID := "6959062403"
 	p := NewPressureTester(APIADDR, WSADDR, SECRET, Admin)
 	ctx := p.NewAdminCtx()
