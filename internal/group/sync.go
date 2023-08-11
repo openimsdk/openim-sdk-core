@@ -17,22 +17,45 @@ package group
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	utils2 "github.com/OpenIMSDK/tools/utils"
+	"math/big"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+	"strings"
 
 	"github.com/OpenIMSDK/protocol/group"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
 )
 
+func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
+	userIDs := utils2.Slice(members, func(member *model_struct.LocalGroupMember) string {
+		return member.UserID
+	})
+	utils2.Sort(userIDs, true)
+	bi := big.NewInt(0)
+	bi.SetString(utils.Md5(strings.Join(userIDs, ";"))[0:8], 16)
+	return bi.Uint64()
+}
+
 func (g *Group) SyncAllGroupMember(ctx context.Context, groupID string) error {
-	members, err := g.GetServerGroupMembers(ctx, groupID)
+	absInfo, err := g.GetGroupAbstractInfo(ctx, groupID)
 	if err != nil {
 		return err
 	}
 	localData, err := g.db.GetGroupMemberListSplit(ctx, groupID, 0, 0, 9999999)
+	if err != nil {
+		return err
+	}
+	hashCode := g.getGroupHash(localData)
+	if len(localData) == int(absInfo.GroupMemberNumber) && hashCode == absInfo.GroupMemberListHash {
+		log.ZDebug(ctx, "SyncAllGroupMember no change in personnel", "groupID", groupID, "hashCode", hashCode, "absInfo.GroupMemberListHash", absInfo.GroupMemberListHash)
+		return nil
+	}
+	members, err := g.GetServerGroupMembers(ctx, groupID)
 	if err != nil {
 		return err
 	}
@@ -210,4 +233,15 @@ func (g *Group) GetDesignatedGroupMembers(ctx context.Context, groupID string, u
 		return nil, err
 	}
 	return resp.Members, nil
+}
+
+func (g *Group) GetGroupAbstractInfo(ctx context.Context, groupID string) (*group.GroupAbstractInfo, error) {
+	resp, err := util.CallApi[group.GetGroupAbstractInfoResp](ctx, constant.GetGroupAbstractInfoRouter, &group.GetGroupAbstractInfoReq{GroupIDs: []string{groupID}})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.GroupAbstractInfos) == 0 {
+		return nil, errors.New("group not found")
+	}
+	return resp.GroupAbstractInfos[0], nil
 }
