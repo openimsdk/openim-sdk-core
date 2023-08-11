@@ -17,6 +17,7 @@ package user
 import (
 	"context"
 	userPb "github.com/OpenIMSDK/protocol/user"
+	"open_im_sdk/internal/cache"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 
@@ -42,12 +43,12 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 }
 
-func (u *User) SyncUserStatus(ctx context.Context, fromId string, toUserID string, status int32, platformID int32) {
+func (u *User) SyncUserStatus(ctx context.Context, fromId string, toUserID string, status int32, platformID int32, c *cache.Cache) {
 	statusMap := userPb.OnlineStatus{
 		UserID:     fromId,
 		Status:     status,
 		PlatformID: platformID,
 	}
-	u.cache.SubscriptionStatusMap.Store(fromId, statusMap)
-	u.listener.OnSelfInfoUpdated(utils.StructToJsonString(statusMap))
+	c.SubscriptionStatusMap.Store(fromId, statusMap)
+	u.listener.OnUserStatusChanged(utils.StructToJsonString(statusMap))
 }

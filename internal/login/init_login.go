@@ -270,7 +270,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
 	u.loginTime = time.Now().UnixNano() / 1e6
 	u.cache = cache.NewCache(u.user, u.friend)
-	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh, u.cache)
+	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 	u.file = file.NewFile(u.db, u.loginUserID)
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
@@ -412,7 +412,7 @@ func CheckToken(userID, token string, operationID string) (int64, error) {
 	}
 	ctx := mcontext.NewCtx(operationID)
 	log.ZDebug(ctx, utils.GetSelfFuncName(), "userID", userID, "token", token)
-	user := user.NewUser(nil, userID, nil, nil)
+	user := user.NewUser(nil, userID, nil)
 	exp, err := user.ParseTokenFromSvr(ctx)
 	return exp, err
 }

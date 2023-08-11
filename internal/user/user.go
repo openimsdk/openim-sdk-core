@@ -44,7 +44,6 @@ type User struct {
 	loginTime      int64
 	userSyncer     *syncer.Syncer[*model_struct.LocalUser, string]
 	conversationCh chan common.Cmd2Value
-	cache          *cache.Cache
 }
 
 // LoginTime gets the login time of the user.
@@ -63,8 +62,8 @@ func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 }
 
 // NewUser creates a new User object.
-func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value, cache *cache.Cache) *User {
-	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh, cache: cache}
+func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
+	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
 	user.initSyncer()
 	return user
 }
@@ -133,7 +132,7 @@ func (u *User) initSyncer() {
 //}
 
 // DoNotification handles incoming notifications for the user.
-func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
+func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData, cache *cache.Cache) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
 	if u.listener == nil {
 		// log.Error(operationID, "listener == nil")
@@ -148,7 +147,7 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		case constant.UserInfoUpdatedNotification:
 			u.userInfoUpdatedNotification(ctx, msg)
 		case constant.UserStatusChangeNotification:
-			u.userStatusChangeNotification(ctx, msg)
+			u.userStatusChangeNotification(ctx, msg, cache)
 		default:
 			// log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
@@ -172,14 +171,14 @@ func (u *User) userInfoUpdatedNotification(ctx context.Context, msg *sdkws.MsgDa
 }
 
 // userStatusChangeNotification get subscriber status change callback
-func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData) {
+func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData, c *cache.Cache) {
 	log.ZDebug(ctx, "userStatusChangeNotification", "msg", *msg)
 	tips := sdkws.UserStatusChangeTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 		log.ZError(ctx, "comm.UnmarshalTips failed", err, "msg", msg.Content)
 		return
 	}
-	u.SyncUserStatus(ctx, tips.FromUserID, tips.ToUserID, tips.Status, tips.PlatformID)
+	u.SyncUserStatus(ctx, tips.FromUserID, tips.ToUserID, tips.Status, tips.PlatformID, c)
 }
 
 // GetUsersInfoFromSvr retrieves user information from the server.
