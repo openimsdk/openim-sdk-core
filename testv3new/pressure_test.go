@@ -2,6 +2,8 @@ package testv3new
 
 import (
 	"fmt"
+	"github.com/OpenIMSDK/tools/mcontext"
+	"open_im_sdk/pkg/utils"
 	"testing"
 	"time"
 
@@ -77,5 +79,60 @@ func TestPressureTester_PressureSendMsgs2(t *testing.T) {
 	for i := 0; i < LoopNumber; i++ {
 		p.WithTimer(p.PressureSendMsgs2)(sendUserIDs, []string{recvUserID}, messageNum, 100*time.Millisecond)
 		time.Sleep(time.Second)
+	}
+}
+func Test_CreateConversationsAndSendMessages(t *testing.T) {
+	if err := log.InitFromConfig("sdk.log", "sdk", 6, true, false, "", 2, 24); err != nil {
+		panic(err)
+	}
+	recvID := "6959062403"
+	conversationNum := 3
+	onePeopleMessageNum := 100
+	pressureTester := NewPressureTester(APIADDR, WSADDR, SECRET, Admin)
+	ctx := pressureTester.NewAdminCtx()
+	ctx = mcontext.SetOperationID(ctx, utils.OperationIDGenerator())
+	fixedUserIDs := []string{"register_test_1", "register_test_2", "register_test_3"}
+	pressureTester.CreateConversationsAndBatchSendMsg(ctx, conversationNum, onePeopleMessageNum, recvID, fixedUserIDs)
+	time.Sleep(time.Minute * 10)
+}
+func Test_CreateConversationsAndSendGroupMessages(t *testing.T) {
+	if err := log.InitFromConfig("sdk.log", "sdk", 6, true, false, "./", 2, 24); err != nil {
+		panic(err)
+	}
+	groupID := "227809258"
+	conversationNum := 3
+	onePeopleMessageNum := 1000
+	pressureTester := NewPressureTester(APIADDR, WSADDR, SECRET, Admin)
+	ctx := pressureTester.NewAdminCtx()
+	ctx = mcontext.SetOperationID(ctx, utils.OperationIDGenerator())
+	fixedUserIDs := []string{"register_test_1", "register_test_2", "register_test_3"}
+	pressureTester.CreateConversationsAndBatchSendGroupMsg(ctx, conversationNum, onePeopleMessageNum, groupID, fixedUserIDs)
+	time.Sleep(time.Minute * 10)
+}
+func Test_CreateGroup(t *testing.T) {
+	count := 9
+	ownerUserID := "6959062403"
+	p := NewPressureTester(APIADDR, WSADDR, SECRET, Admin)
+	ctx := p.NewAdminCtx()
+	ctx = mcontext.SetOperationID(ctx, utils.OperationIDGenerator())
+	token, err := p.testUserMananger.GetToken(ctx, ownerUserID, p.platformID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var userIDs []string
+
+	for i := 1; i <= count; i++ {
+		userIDs = append(userIDs, fmt.Sprintf("register_test_%v", i))
+	}
+	//if err := p.testUserMananger.RegisterUsers(ctx, userIDs...); err != nil {
+	//	t.Fatal(err)
+	//}
+	ctx = p.NewCtx(ownerUserID, token)
+	ctx = mcontext.SetOperationID(ctx, utils.OperationIDGenerator())
+	err = p.testUserMananger.CreateGroup(ctx, "", ownerUserID, userIDs, fmt.Sprintf("group_test_%v", "Gordon"))
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("create group success")
 	}
 }

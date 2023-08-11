@@ -389,6 +389,19 @@ func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
 }
 
+type CustomBusinessCallback struct {
+	CallbackWriter
+}
+
+func NewCustomBusinessCallback(callback *js.Value) *CustomBusinessCallback {
+	return &CustomBusinessCallback{CallbackWriter: NewEventData(callback)}
+}
+
+func (c CustomBusinessCallback) OnRecvCustomBusinessMessage(businessMessage string) {
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(businessMessage).SendMessage()
+
+}
+
 type SignalingCallback struct {
 	CallbackWriter
 }

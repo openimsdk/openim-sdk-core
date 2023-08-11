@@ -74,6 +74,7 @@ type Conversation struct {
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	loginTime            int64
+	startTime            time.Time
 	messageEncryptor     encryption.MessageEncryptor
 }
 
@@ -228,7 +229,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			msg.AttachedInfoElem = &attachedInfo
 
 			msg.Status = constant.MsgStatusSendSuccess
-			msg.IsRead = false
+			// msg.IsRead = false
 			//De-analyze data
 			err := c.msgHandleByContentType(msg)
 			if err != nil {
