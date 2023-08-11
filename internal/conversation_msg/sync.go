@@ -31,8 +31,8 @@ func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	for _, v := range conversationsOnServer {
-		c.addFaceURLAndName(ctx, v)
+	if err := c.batchAddFaceURLAndName(ctx, conversationsOnServer...); err != nil {
+		return err
 	}
 	if err = c.conversationSyncer.Sync(ctx, conversationsOnServer, conversationsOnLocal, func(ctx context.Context, state int, server, local *model_struct.LocalConversation) error {
 		if state == syncer.Update || state == syncer.Insert {
@@ -131,7 +131,7 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 	log.ZDebug(ctx, "update conversations", "conversations", conversations)
 	if len(conversationIDs) > 0 {
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationIDs}, c.GetCh())
-		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: conversationIDs}, c.GetCh())
+		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.GetCh())
 	}
 	return nil
 }

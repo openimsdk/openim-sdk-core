@@ -21,6 +21,7 @@ type BaseCore struct {
 	platformID          int32
 	pushMsgAndMaxSeqCh  chan common.Cmd2Value
 	recvPushMsgCallback func(msg *sdkws.MsgData)
+	failedMessageMap    map[string]error
 }
 
 func (b BaseCore) GetUserID() string {
@@ -41,6 +42,7 @@ func NewBaseCore(ctx context.Context, userID string, platformID int32, opts ...f
 		longConnMgr:        longConnMgr,
 		userID:             userID,
 		platformID:         platformID,
+		failedMessageMap:   make(map[string]error),
 	}
 	for _, opt := range opts {
 		opt(core)
@@ -57,9 +59,27 @@ func (b *BaseCore) Close(ctx context.Context) {
 func (b *BaseCore) SendSingleMsg(ctx context.Context, userID string, index int) error {
 	return b.sendMsg(ctx, userID, "", index, constant.SingleChatType, fmt.Sprintf("this is test msg user %s to user %s, index: %d", b.userID, userID, index))
 }
+func (b *BaseCore) BatchSendSingleMsg(ctx context.Context, userID string, index int) error {
+	content := fmt.Sprintf("this is test msg user %s to user %s, index: %d", b.userID, userID, index)
+	err := b.sendMsg(ctx, userID, "", index, constant.SingleChatType, content)
+	if err != nil {
+		log.ZError(ctx, "send msg failed", err, "userID", userID, "index", index, "content", content)
+		b.failedMessageMap[content] = err
+	}
+	return nil
+}
 
 func (b *BaseCore) SendGroupMsg(ctx context.Context, groupID string, index int) error {
 	return b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
+}
+func (b *BaseCore) BatchSendGroupMsg(ctx context.Context, groupID string, index int) error {
+	content := fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index)
+	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
+	if err != nil {
+		log.ZError(ctx, "send msg failed", err, "groupID", groupID, "index", index, "content", content)
+		b.failedMessageMap[content] = err
+	}
+	return nil
 }
 
 func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index int, sesstionType int32, content string) error {
