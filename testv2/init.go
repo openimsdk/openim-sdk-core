@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/ccontext"
+	"strconv"
 	"time"
 
 	"github.com/OpenIMSDK/tools/log"
@@ -49,7 +50,7 @@ func init() {
 		panic("init sdk failed")
 	}
 	ctx = open_im_sdk.UserForSDK.Context()
-	ctx = ccontext.WithOperationID(ctx, "initOperationID")
+	ctx = ccontext.WithOperationID(ctx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
 	token, err := GetUserToken(ctx, UserID)
 	if err != nil {
 		panic(err)

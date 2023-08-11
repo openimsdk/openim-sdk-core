@@ -16,19 +16,21 @@ package group
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
-	utils2 "github.com/OpenIMSDK/tools/utils"
-	"math/big"
-	"open_im_sdk/internal/util"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
-	"strings"
-
 	"github.com/OpenIMSDK/protocol/group"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
+	"open_im_sdk/internal/util"
+	"open_im_sdk/pkg/ccontext"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/utils"
+	"strconv"
+	"time"
 )
 
 func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
@@ -36,12 +38,37 @@ func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
 		return member.UserID
 	})
 	utils2.Sort(userIDs, true)
-	bi := big.NewInt(0)
-	bi.SetString(utils.Md5(strings.Join(userIDs, ";"))[0:8], 16)
-	return bi.Uint64()
+	memberMap := make(map[string]*model_struct.LocalGroupMember)
+	for i, member := range members {
+		memberMap[member.UserID] = members[i]
+	}
+	data := make([]string, 0, len(members)*11)
+	for _, userID := range userIDs {
+		member, ok := memberMap[userID]
+		if !ok {
+			continue
+		}
+		data = append(data,
+			member.GroupID,
+			member.UserID,
+			member.Nickname,
+			member.FaceURL,
+			strconv.Itoa(int(member.RoleLevel)),
+			strconv.FormatInt(member.JoinTime, 10),
+			strconv.Itoa(int(member.JoinSource)),
+			member.InviterUserID,
+			member.OperatorUserID,
+			strconv.FormatInt(member.MuteEndTime, 10),
+			member.Ex,
+		)
+	}
+	val, _ := json.Marshal(data)
+	sum := md5.Sum(val)
+	return binary.BigEndian.Uint64(sum[:])
 }
 
 func (g *Group) SyncAllGroupMember(ctx context.Context, groupID string) error {
+	ctx = ccontext.WithOperationID(ctx, "test_"+strconv.Itoa(int(time.Now().UnixMilli())))
 	absInfo, err := g.GetGroupAbstractInfo(ctx, groupID)
 	if err != nil {
 		return err
