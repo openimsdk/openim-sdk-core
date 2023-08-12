@@ -16,6 +16,7 @@ package cache
 
 import (
 	"context"
+	userPb "github.com/OpenIMSDK/protocol/user"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/db/model_struct"
@@ -28,14 +29,18 @@ type UserInfo struct {
 	FaceURL  string
 }
 type Cache struct {
-	user            *user.User
-	friend          *friend.Friend
-	userMap         sync.Map
-	conversationMap sync.Map
+	user                  *user.User
+	friend                *friend.Friend
+	userMap               sync.Map
+	conversationMap       sync.Map
+	SubscriptionStatusMap sync.Map
 }
 
 func NewCache(user *user.User, friend *friend.Friend) *Cache {
 	return &Cache{user: user, friend: friend}
+}
+func (c *Cache) UpdateStatus(userID string, statusMap *userPb.OnlineStatus) {
+	c.SubscriptionStatusMap.Store(userID, statusMap)
 }
 
 func (c *Cache) Update(userID, faceURL, nickname string) {
