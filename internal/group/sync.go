@@ -38,31 +38,28 @@ func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
 		return member.UserID
 	})
 	utils2.Sort(userIDs, true)
-	memberMap := make(map[string]*model_struct.LocalGroupMember)
-	for i, member := range members {
-		memberMap[member.UserID] = members[i]
-	}
-	data := make([]string, 0, len(members)*11)
-	for _, userID := range userIDs {
-		member, ok := memberMap[userID]
-		if !ok {
-			continue
+	memberMap := make(map[string]*sdkws.GroupMemberFullInfo)
+	for _, member := range members {
+		memberMap[member.UserID] = &sdkws.GroupMemberFullInfo{
+			GroupID:        member.GroupID,
+			UserID:         member.UserID,
+			RoleLevel:      member.RoleLevel,
+			JoinTime:       member.JoinTime,
+			Nickname:       member.Nickname,
+			FaceURL:        member.FaceURL,
+			AppMangerLevel: 0,
+			JoinSource:     member.JoinSource,
+			OperatorUserID: member.OperatorUserID,
+			Ex:             member.Ex,
+			MuteEndTime:    member.MuteEndTime,
+			InviterUserID:  member.InviterUserID,
 		}
-		data = append(data,
-			member.GroupID,
-			member.UserID,
-			member.Nickname,
-			member.FaceURL,
-			strconv.Itoa(int(member.RoleLevel)),
-			strconv.FormatInt(member.JoinTime, 10),
-			strconv.Itoa(int(member.JoinSource)),
-			member.InviterUserID,
-			member.OperatorUserID,
-			strconv.FormatInt(member.MuteEndTime, 10),
-			member.Ex,
-		)
 	}
-	val, _ := json.Marshal(data)
+	res := make([]*sdkws.GroupMemberFullInfo, 0, len(members))
+	for _, userID := range userIDs {
+		res = append(res, memberMap[userID])
+	}
+	val, _ := json.Marshal(res)
 	sum := md5.Sum(val)
 	return binary.BigEndian.Uint64(sum[:])
 }
