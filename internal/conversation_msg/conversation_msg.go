@@ -74,8 +74,8 @@ type Conversation struct {
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	loginTime            int64
-	messageEncryptor     encryption.MessageEncryptor
 	startTime            time.Time
+	messageEncryptor     encryption.MessageEncryptor
 }
 
 func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
