@@ -20,10 +20,10 @@ import (
 )
 
 func (u *Full) GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
-	//g1, err := u.SuperGroup.GetGroupInfoFromLocal2Svr(ctx, groupID)
-	//if err == nil {
-	//	return g1, nil
-	//}
 	g2, err := u.group.GetGroupInfoFromLocal2Svr(ctx, groupID)
 	return g2, err
+}
+
+func (u *Full) GetGroupsInfo(ctx context.Context, groupIDs ...string) (map[string]*model_struct.LocalGroup, error) {
+	return u.group.GetGroupsInfoFromLocal2Svr(ctx, groupIDs...)
 }
