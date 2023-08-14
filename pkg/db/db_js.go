@@ -53,7 +53,7 @@ func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) erro
 	return err
 }
 
-func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*IndexDB, error) {
+func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel int) (*IndexDB, error) {
 	i := &IndexDB{
 		LocalUsers:                      indexdb.NewLocalUsers(),
 		LocalConversations:              indexdb.NewLocalConversations(),
