@@ -429,6 +429,13 @@ message UserInfoUpdatedTips{
   string userID = 1;
 }
 
+message UserStatusChangeTips {
+  string fromUserID = 1;
+  string toUserID = 2;
+  int32 status = 3;
+  int32 platformID = 4;
+}
+
 //////////////////////conversation/////////////////////
 message ConversationUpdateTips{
   string userID = 1;

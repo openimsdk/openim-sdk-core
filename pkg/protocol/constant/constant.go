@@ -60,10 +60,11 @@ const (
 
 	ConversationChangeNotification = 1300 // change conversation opt
 
-	UserNotificationBegin       = 1301
-	UserInfoUpdatedNotification = 1303 // SetSelfInfoTip              = 204
-	UserNotificationEnd         = 1399
-	OANotification              = 1400
+	UserNotificationBegin        = 1301
+	UserInfoUpdatedNotification  = 1303 // SetSelfInfoTip              = 204
+	UserStatusChangeNotification = 1304
+	UserNotificationEnd          = 1399
+	OANotification               = 1400
 
 	GroupNotificationBegin = 1500
 

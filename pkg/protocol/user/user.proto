@@ -54,7 +54,7 @@ message updateUserInfoResp{
 
 message setGlobalRecvMessageOptReq{
   string userID = 1;
- int32 globalRecvMsgOpt = 3;
+  int32 globalRecvMsgOpt = 3;
 }
 message setGlobalRecvMessageOptResp{
 }
@@ -169,6 +169,14 @@ message subscribeOrCancelUsersStatusResp{
   repeated onlineStatus statusList = 1;
 }
 
+message getSubscribeUsersStatusReq{
+  string userID = 1;
+}
+
+message getSubscribeUsersStatusResp{
+  repeated onlineStatus statusList = 1;
+}
+
 message onlineStatus {
   string userID = 1;
   int32 status = 2;
@@ -215,6 +223,8 @@ service user {
   rpc userRegisterCount(userRegisterCountReq)returns(userRegisterCountResp);
   //Subscribe or unsubscribe user presence
   rpc subscribeOrCancelUsersStatus(subscribeOrCancelUsersStatusReq)returns(subscribeOrCancelUsersStatusResp);
+  //Get the online status of subscribers
+  rpc getSubscribeUsersStatus(getSubscribeUsersStatusReq)returns(getSubscribeUsersStatusResp);
   //Get user online status
   rpc getUserStatus(getUserStatusReq)returns(getUserStatusResp);
   //The gateway synchronizes the online status of users in redis
