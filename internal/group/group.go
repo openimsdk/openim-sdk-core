@@ -230,6 +230,10 @@ func (g *Group) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (
 }
 
 func (g *Group) GetGroupsInfoFromLocal2Svr(ctx context.Context, groupIDs ...string) (map[string]*model_struct.LocalGroup, error) {
+	groupMap := make(map[string]*model_struct.LocalGroup)
+	if len(groupIDs) == 0 {
+		return groupMap, nil
+	}
 	groups, err := g.db.GetGroups(ctx, groupIDs)
 	if err != nil {
 		return nil, err
@@ -253,7 +257,6 @@ func (g *Group) GetGroupsInfoFromLocal2Svr(ctx context.Context, groupIDs ...stri
 			groups = append(groups, ServerGroupToLocalGroup(svrGroup))
 		}
 	}
-	groupMap := make(map[string]*model_struct.LocalGroup)
 	for _, group := range groups {
 		groupMap[group.GroupID] = group
 	}
