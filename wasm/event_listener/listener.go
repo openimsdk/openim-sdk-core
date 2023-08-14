@@ -382,6 +382,10 @@ type UserCallback struct {
 	CallbackWriter
 }
 
+func (u UserCallback) OnUserStatusChanged(statusMap string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(statusMap).SendMessage()
+}
+
 func NewUserCallback(callback *js.Value) *UserCallback {
 	return &UserCallback{CallbackWriter: NewEventData(callback)}
 }
