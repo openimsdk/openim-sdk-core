@@ -16,23 +16,66 @@ package group
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/binary"
 	"encoding/json"
+	"errors"
+	"github.com/OpenIMSDK/protocol/group"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
 )
 
+func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
+	userIDs := utils2.Slice(members, func(member *model_struct.LocalGroupMember) string {
+		return member.UserID
+	})
+	utils2.Sort(userIDs, true)
+	memberMap := make(map[string]*sdkws.GroupMemberFullInfo)
+	for _, member := range members {
+		memberMap[member.UserID] = &sdkws.GroupMemberFullInfo{
+			GroupID:        member.GroupID,
+			UserID:         member.UserID,
+			RoleLevel:      member.RoleLevel,
+			JoinTime:       member.JoinTime,
+			Nickname:       member.Nickname,
+			FaceURL:        member.FaceURL,
+			AppMangerLevel: 0,
+			JoinSource:     member.JoinSource,
+			OperatorUserID: member.OperatorUserID,
+			Ex:             member.Ex,
+			MuteEndTime:    member.MuteEndTime,
+			InviterUserID:  member.InviterUserID,
+		}
+	}
+	res := make([]*sdkws.GroupMemberFullInfo, 0, len(members))
+	for _, userID := range userIDs {
+		res = append(res, memberMap[userID])
+	}
+	val, _ := json.Marshal(res)
+	sum := md5.Sum(val)
+	return binary.BigEndian.Uint64(sum[:])
+}
+
 func (g *Group) SyncAllGroupMember(ctx context.Context, groupID string) error {
-	members, err := g.GetServerGroupMembers(ctx, groupID)
+	absInfo, err := g.GetGroupAbstractInfo(ctx, groupID)
 	if err != nil {
 		return err
 	}
 	localData, err := g.db.GetGroupMemberListSplit(ctx, groupID, 0, 0, 9999999)
+	if err != nil {
+		return err
+	}
+	hashCode := g.getGroupHash(localData)
+	if len(localData) == int(absInfo.GroupMemberNumber) && hashCode == absInfo.GroupMemberListHash {
+		log.ZDebug(ctx, "SyncAllGroupMember no change in personnel", "groupID", groupID, "hashCode", hashCode, "absInfo.GroupMemberListHash", absInfo.GroupMemberListHash)
+		return nil
+	}
+	members, err := g.GetServerGroupMembers(ctx, groupID)
 	if err != nil {
 		return err
 	}
@@ -210,4 +253,15 @@ func (g *Group) GetDesignatedGroupMembers(ctx context.Context, groupID string, u
 		return nil, err
 	}
 	return resp.Members, nil
+}
+
+func (g *Group) GetGroupAbstractInfo(ctx context.Context, groupID string) (*group.GroupAbstractInfo, error) {
+	resp, err := util.CallApi[group.GetGroupAbstractInfoResp](ctx, constant.GetGroupAbstractInfoRouter, &group.GetGroupAbstractInfoReq{GroupIDs: []string{groupID}})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.GroupAbstractInfos) == 0 {
+		return nil, errors.New("group not found")
+	}
+	return resp.GroupAbstractInfos[0], nil
 }

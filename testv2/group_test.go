@@ -287,3 +287,10 @@ func Test_GetGroupMemberList(t *testing.T) {
 
 	t.Log("--------------------------")
 }
+
+func Test_SyncAllGroupMember(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Group().SyncAllGroupMember(ctx, "2527303509")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
