@@ -25,12 +25,9 @@ import (
 	"github.com/OpenIMSDK/tools/log"
 	utils2 "github.com/OpenIMSDK/tools/utils"
 	"open_im_sdk/internal/util"
-	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-	"strconv"
-	"time"
 )
 
 func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
@@ -65,7 +62,6 @@ func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
 }
 
 func (g *Group) SyncAllGroupMember(ctx context.Context, groupID string) error {
-	ctx = ccontext.WithOperationID(ctx, "test_"+strconv.Itoa(int(time.Now().UnixMilli())))
 	absInfo, err := g.GetGroupAbstractInfo(ctx, groupID)
 	if err != nil {
 		return err
