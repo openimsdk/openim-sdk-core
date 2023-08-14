@@ -30,6 +30,7 @@ import (
 	"github.com/OpenIMSDK/protocol/group"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
@@ -234,18 +235,15 @@ func (g *Group) GetGroupsInfoFromLocal2Svr(ctx context.Context, groupIDs ...stri
 		return nil, err
 	}
 	var groupIDsNeedSync []string
+	localGroupIDs := utils2.Slice(groups, func(group *model_struct.LocalGroup) string {
+		return group.GroupID
+	})
 	for _, groupID := range groupIDs {
-		var isExist bool
-		for _, localGroup := range groups {
-			if localGroup.GroupID == groupID {
-				isExist = true
-				break
-			}
-		}
-		if !isExist {
+		if !utils2.Contain(groupID, localGroupIDs...) {
 			groupIDsNeedSync = append(groupIDsNeedSync, groupID)
 		}
 	}
+
 	if len(groupIDsNeedSync) > 0 {
 		svrGroups, err := g.getGroupsInfoFromSvr(ctx, groupIDsNeedSync)
 		if err != nil {

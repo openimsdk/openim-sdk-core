@@ -16,6 +16,7 @@ package user
 
 import (
 	"context"
+	userPb "github.com/OpenIMSDK/protocol/user"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 
@@ -46,4 +47,20 @@ func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string
 		}
 	}
 	return nil
+}
+
+func (u *User) SubscribeUsersStatus(ctx context.Context, userID string, userIDs []string) ([]*userPb.OnlineStatus, error) {
+	return u.subscribeUsersStatus(ctx, userID, userIDs)
+}
+
+func (u *User) UnsubscribeUsersStatus(ctx context.Context, userID string, userIDs []string) error {
+	return u.unsubscribeUsersStatus(ctx, userID, userIDs)
+}
+
+func (u *User) GetSubscribeUsersStatus(ctx context.Context, userID string) ([]*userPb.OnlineStatus, error) {
+	return u.getSubscribeUsersStatus(ctx, userID)
+}
+
+func (u *User) GetUserStatus(ctx context.Context, userID string, userIDs []string) ([]*userPb.OnlineStatus, error) {
+	return u.getUserStatus(ctx, userID, userIDs)
 }

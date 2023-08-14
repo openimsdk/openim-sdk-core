@@ -16,6 +16,7 @@ package cache
 
 import (
 	"context"
+	userPb "github.com/OpenIMSDK/protocol/user"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/db/model_struct"
@@ -28,14 +29,18 @@ type UserInfo struct {
 	FaceURL  string
 }
 type Cache struct {
-	user            *user.User
-	friend          *friend.Friend
-	userMap         sync.Map
-	conversationMap sync.Map
+	user                  *user.User
+	friend                *friend.Friend
+	userMap               sync.Map
+	conversationMap       sync.Map
+	SubscriptionStatusMap sync.Map
 }
 
 func NewCache(user *user.User, friend *friend.Friend) *Cache {
 	return &Cache{user: user, friend: friend}
+}
+func (c *Cache) UpdateStatus(userID string, statusMap *userPb.OnlineStatus) {
+	c.SubscriptionStatusMap.Store(userID, statusMap)
 }
 
 func (c *Cache) Update(userID, faceURL, nickname string) {
@@ -79,7 +84,7 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 
 func (c *Cache) BatchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]UserInfo, error) {
 	m := make(map[string]UserInfo)
-	var notCachedUserIDs []string
+	var notCachedUserIDs, notCachedAndNotFriendUserIDs []string
 	for _, userID := range userIDs {
 		if value, ok := c.userMap.Load(userID); ok {
 			user := value.(UserInfo)
@@ -88,7 +93,22 @@ func (c *Cache) BatchGetUserNameAndFaceURL(ctx context.Context, userIDs ...strin
 			notCachedUserIDs = append(notCachedUserIDs, userID)
 		}
 	}
-	if len(notCachedUserIDs) > 0 {
+	for _, notCachedUserID := range notCachedUserIDs {
+		localFriend, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, notCachedUserID)
+		if err == nil {
+			userInfo := UserInfo{FaceURL: localFriend.FaceURL}
+			if localFriend.Remark != "" {
+				userInfo.Nickname = localFriend.Remark
+			} else {
+				userInfo.Nickname = localFriend.Nickname
+			}
+			m[notCachedUserID] = userInfo
+		} else {
+			notCachedAndNotFriendUserIDs = append(notCachedAndNotFriendUserIDs, notCachedUserID)
+		}
+	}
+
+	if len(notCachedAndNotFriendUserIDs) > 0 {
 		users, err := c.user.GetServerUserInfo(ctx, notCachedUserIDs)
 		if err != nil {
 			return nil, err
