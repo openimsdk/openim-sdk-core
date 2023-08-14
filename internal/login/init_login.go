@@ -263,7 +263,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.token = token
 	u.loginUserID = userID
 	var err error
-	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir)
+	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir, int(u.info.LogLevel))
 	if err != nil {
 		return sdkerrs.ErrSdkInternal.Wrap("init database " + err.Error())
 	}
