@@ -62,6 +62,7 @@ func init() {
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
 	time.Sleep(time.Second * 10)
 }
 
@@ -304,4 +305,15 @@ func (o *onFriendListener) OnBlackAdded(blackInfo string) {
 
 func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
+}
+
+type onUserListener struct {
+	ctx context.Context
+}
+
+func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
+	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", userInfo)
+}
+func (o *onUserListener) OnUserStatusChanged(statusMap string) {
+	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)
 }
