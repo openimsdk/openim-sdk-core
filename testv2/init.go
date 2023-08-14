@@ -19,13 +19,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/protocol/constant"
 	"io"
 	"math/rand"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/ccontext"
 	"time"
+
+	"github.com/OpenIMSDK/protocol/constant"
 
 	"github.com/OpenIMSDK/tools/log"
 )
@@ -63,6 +64,7 @@ func init() {
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetSignalingListener(&OnSignalingListener{})
+	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
 	time.Sleep(time.Second * 10)
 }
 
@@ -356,4 +358,15 @@ func (o *OnSignalingListener) OnStreamChange(OnStreamChangeCallback string) {
 
 func (o *OnSignalingListener) OnReceiveCustomSignal(CustomSignalCallback string) {
 	log.ZInfo(context.Background(), "OnReceiveCustomSignal", "CustomSignalCallback", CustomSignalCallback)
+}
+
+type onUserListener struct {
+	ctx context.Context
+}
+
+func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
+	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", userInfo)
+}
+func (o *onUserListener) OnUserStatusChanged(statusMap string) {
+	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)
 }

@@ -382,11 +382,28 @@ type UserCallback struct {
 	CallbackWriter
 }
 
+func (u UserCallback) OnUserStatusChanged(statusMap string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(statusMap).SendMessage()
+}
+
 func NewUserCallback(callback *js.Value) *UserCallback {
 	return &UserCallback{CallbackWriter: NewEventData(callback)}
 }
 func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
+
+type CustomBusinessCallback struct {
+	CallbackWriter
+}
+
+func NewCustomBusinessCallback(callback *js.Value) *CustomBusinessCallback {
+	return &CustomBusinessCallback{CallbackWriter: NewEventData(callback)}
+}
+
+func (c CustomBusinessCallback) OnRecvCustomBusinessMessage(businessMessage string) {
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(businessMessage).SendMessage()
+
 }
 
 type SignalingCallback struct {

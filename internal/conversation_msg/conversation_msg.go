@@ -75,6 +75,7 @@ type Conversation struct {
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	loginTime            int64
 	messageEncryptor     encryption.MessageEncryptor
+	startTime            time.Time
 }
 
 func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
@@ -228,7 +229,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			msg.AttachedInfoElem = &attachedInfo
 
 			msg.Status = constant.MsgStatusSendSuccess
-			msg.IsRead = false
+			// msg.IsRead = false
 			//De-analyze data
 			err := c.msgHandleByContentType(msg)
 			if err != nil {
@@ -435,6 +436,7 @@ func removeElementInList(a sdk_struct.NewMsgList, e *sdk_struct.MsgStruct) (b sd
 	return b
 }
 func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[string]*model_struct.LocalConversation) {
+	var newConversations []*model_struct.LocalConversation
 	for _, v := range generated {
 		if localC, ok := local[v.ConversationID]; ok {
 
@@ -449,11 +451,16 @@ func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[st
 			}
 
 		} else {
-			c.addFaceURLAndName(ctx, v)
+			newConversations = append(newConversations, v)
+		}
+	}
+	if err := c.batchAddFaceURLAndName(ctx, newConversations...); err != nil {
+		log.ZError(ctx, "batchAddFaceURLAndName err", err, "conversations", newConversations)
+	} else {
+		for _, v := range newConversations {
 			nc[v.ConversationID] = v
 		}
 	}
-
 }
 func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversation, s *sdk_struct.MsgStruct) {
 	if s.ContentType == constant.AtText {
@@ -933,6 +940,35 @@ func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.L
 		}
 		lc.ShowName = g.GroupName
 		lc.FaceURL = g.FaceURL
+	}
+	return nil
+}
+
+func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations ...*model_struct.LocalConversation) error {
+	var userIDs, groupIDs []string
+	for _, conversation := range conversations {
+		if conversation.ConversationType == constant.SingleChatType {
+			userIDs = append(userIDs, conversation.UserID)
+		} else if conversation.ConversationType == constant.SuperGroupChatType {
+			groupIDs = append(groupIDs, conversation.GroupID)
+		}
+	}
+	users, err := c.cache.BatchGetUserNameAndFaceURL(ctx, userIDs...)
+	if err != nil {
+		return err
+	}
+	groups, err := c.full.GetGroupsInfo(ctx, groupIDs...)
+	if err != nil {
+		return err
+	}
+	for _, conversation := range conversations {
+		if conversation.ConversationType == constant.SingleChatType {
+			conversation.FaceURL = users[conversation.UserID].FaceURL
+			conversation.ShowName = users[conversation.UserID].Nickname
+		} else if conversation.ConversationType == constant.SuperGroupChatType {
+			conversation.FaceURL = groups[conversation.GroupID].FaceURL
+			conversation.ShowName = groups[conversation.GroupID].GroupName
+		}
 	}
 	return nil
 }

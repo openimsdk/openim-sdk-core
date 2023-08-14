@@ -20,7 +20,7 @@ import (
 )
 
 var LogLevel uint32 = 6
-var PlatformID = int32(1)
+var PlatformID = int32(3)
 var LogName = ""
 var IsLogStandardOutput = true
 var LogFilePath = ""
@@ -38,7 +38,7 @@ var (
 	WSADDR              = "ws://" + TESTIP + ":10001"
 	REGISTERADDR        = APIADDR + "/auth/user_register"
 	TOKENADDR           = APIADDR + "/auth/user_token"
-	SECRET              = "tuoyun"
+	SECRET              = "openIM123"
 	SENDINTERVAL        = 20
 	GETSELFUSERINFO     = APIADDR + "/user/get_self_user_info"
 	CREATEGROUP         = APIADDR + constant.CreateGroupRouter

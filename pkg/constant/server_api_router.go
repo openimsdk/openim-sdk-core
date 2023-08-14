@@ -22,6 +22,10 @@ const (
 	GetUsersInfoFromCacheRouter   = "/user/get_users_info_from_cache"
 	AccountCheck                  = "/user/account_check"
 	UserRegister                  = "/user/user_register"
+	SubscribeUsersStatusRouter    = "/user/subscribe_users_status"
+	UnsubscribeUsersStatusRouter  = "/user/unsubscribe_users_status"
+	GetSubscribeUsersStatusRouter = "/user/get_subscribe_users_status"
+	GetUserStatusRouter           = "/user/get_users_status"
 
 	AddFriendRouter                    = "/friend/add_friend"
 	DeleteFriendRouter                 = "/friend/delete_friend"

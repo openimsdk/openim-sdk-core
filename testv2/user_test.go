@@ -81,3 +81,46 @@ func Test_UpdateMsgSenderInfo(t *testing.T) {
 	}
 	t.Log(userInfo)
 }
+
+func Test_Sub(t *testing.T) {
+	var users []string
+	users = append(users, "2926672950")
+	status, err := open_im_sdk.UserForSDK.User().SubscribeUsersStatus(ctx, "2285951027", users)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(status)
+
+	for i := 0; i < 20; i++ {
+		status, err = open_im_sdk.UserForSDK.User().SubscribeUsersStatus(ctx, "2285951027", users)
+		t.Log(status)
+		time.Sleep(time.Second * 3)
+	}
+}
+
+func Test_GetSubscribeUsersStatus(t *testing.T) {
+	status, err := open_im_sdk.UserForSDK.User().GetSubscribeUsersStatus(ctx, "2285951027")
+	if err != nil {
+		return
+	}
+	t.Log(status)
+}
+
+func Test_GetUserStatus(t *testing.T) {
+	var UserIDs []string
+	UserIDs = append(UserIDs, "2926672950")
+	status, err := open_im_sdk.UserForSDK.User().GetUserStatus(ctx, "2285951027", UserIDs)
+	if err != nil {
+		return
+	}
+	t.Log(status)
+}
+
+func Test_UnSub(t *testing.T) {
+	var users []string
+	users = append(users, "2926672950")
+	err := open_im_sdk.UserForSDK.User().UnsubscribeUsersStatus(ctx, "2285951027", users)
+	if err != nil {
+		t.Error(err)
+	}
+}
