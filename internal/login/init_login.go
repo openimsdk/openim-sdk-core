@@ -226,10 +226,14 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 	for {
 		select {
 		case <-u.loginMgrCh:
+			log.ZDebug(ctx, "logoutListener exit")
 			err := u.logout(ctx, true)
 			if err != nil {
 				log.ZError(ctx, "logout error", err)
 			}
+		case <-ctx.Done():
+			log.ZInfo(ctx, "logoutListener done sdk logout.....")
+			return
 		}
 	}
 
@@ -350,7 +354,7 @@ func (u *LoginMgr) initResources() {
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
-	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.loginMgrCh = make(chan common.Cmd2Value, 1)
 	u.setLoginStatus(Logout)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }
