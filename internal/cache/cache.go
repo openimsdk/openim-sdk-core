@@ -16,12 +16,13 @@ package cache
 
 import (
 	"context"
-	userPb "github.com/OpenIMSDK/protocol/user"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
 	"sync"
+
+	userPb "github.com/OpenIMSDK/protocol/user"
 )
 
 type UserInfo struct {
@@ -84,6 +85,9 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 
 func (c *Cache) BatchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]UserInfo, error) {
 	m := make(map[string]UserInfo)
+	if len(userIDs) == 0 {
+		return m, nil
+	}
 	var notCachedUserIDs, notCachedAndNotFriendUserIDs []string
 	for _, userID := range userIDs {
 		if value, ok := c.userMap.Load(userID); ok {
