@@ -82,9 +82,10 @@ func (p *TestUserManager) CreateGroup(ctx context.Context, groupID string, owner
 		MemberUserIDs: userIDs,
 		OwnerUserID:   ownerUserID,
 		GroupInfo: &sdkws.GroupInfo{
-			GroupID:   groupID,
-			GroupName: groupName,
-			GroupType: constant.WorkingGroup,
+			GroupID:       groupID,
+			GroupName:     groupName,
+			GroupType:     constant.WorkingGroup,
+			CreatorUserID: ownerUserID,
 		},
 	}
 	resp := &group.CreateGroupResp{}

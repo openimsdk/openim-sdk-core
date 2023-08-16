@@ -19,7 +19,7 @@ import (
 	"sync"
 )
 
-var LogLevel uint32 = 6
+var LogLevel uint32 = 5
 var PlatformID = int32(3)
 var LogName = ""
 var IsLogStandardOutput = true
