@@ -34,7 +34,7 @@ import (
 //	Token   = ""
 //)
 
-type apiResponse struct {
+type ApiResponse struct {
 	ErrCode int             `json:"errCode"`
 	ErrMsg  string          `json:"errMsg"`
 	ErrDlt  string          `json:"errDlt"`
@@ -84,7 +84,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 		return sdkerrs.ErrSdkInternal.Wrap("io.ReadAll(ApiResponse) failed " + err.Error())
 	}
 	log.ZDebug(ctx, "ApiResponse", "url", reqUrl, "status", response.Status, "body", string(respBody))
-	var baseApi apiResponse
+	var baseApi ApiResponse
 	if err := json.Unmarshal(respBody, &baseApi); err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "api code parse")
 		return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("api %s json.Unmarshal(%q, %T) failed %s", api, string(respBody), &baseApi, err.Error()))
