@@ -1,4 +1,4 @@
-package msgtest
+package module
 
 import (
 	"context"
