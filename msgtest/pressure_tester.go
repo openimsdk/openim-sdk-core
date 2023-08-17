@@ -1,4 +1,4 @@
-package testv3new
+package msgtest
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"open_im_sdk/testv3new/testcore"
 	"reflect"
 	"runtime"
 	"sync"
@@ -18,7 +17,7 @@ import (
 )
 
 type PressureTester struct {
-	cores map[string]*testcore.BaseCore
+	cores map[string]*SendMsgUser
 
 	testUserMananger TestUserManager
 	platformID       int32
@@ -30,7 +29,7 @@ type PressureTester struct {
 
 func NewPressureTester(apiAddr, wsAddr string, secret, adminUserID string) *PressureTester {
 	return &PressureTester{
-		cores:            map[string]*testcore.BaseCore{},
+		cores:            map[string]*SendMsgUser{},
 		testUserMananger: *NewTestUserManager(secret),
 		apiAddr:          apiAddr,
 		wsAddr:           wsAddr,
@@ -95,7 +94,7 @@ func (p *PressureTester) InitCores(userIDs []string) {
 				return
 			}
 			mutex.Lock()
-			p.cores[userID] = testcore.NewBaseCore(p.NewCtx(userID, token), userID, p.platformID)
+			p.cores[userID] = NewBaseCore(p.NewCtx(userID, token), userID, p.platformID)
 			mutex.Unlock()
 		}(userID)
 	}
@@ -155,7 +154,7 @@ func (p *PressureTester) CreateConversations(ctx context.Context, conversationNu
 		time.Sleep(time.Millisecond * 100)
 		token, _ := p.testUserMananger.GetToken(ctx, userID, p.platformID)
 		ctx2 := NewUserCtx(userID, token)
-		baseCore := testcore.NewBaseCore(ctx2, userID, p.platformID)
+		baseCore := NewBaseCore(ctx2, userID, p.platformID)
 		ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())
 		if err := baseCore.SendSingleMsg(ctx2, recvUserID, 0); err != nil {
 			log.ZError(ctx2, "send msg error", err, "sendUserID", userID)
@@ -183,7 +182,7 @@ func (p *PressureTester) CreateConversationsAndBatchSendMsg(ctx context.Context,
 			time.Sleep(time.Millisecond * 100)
 			token, _ := p.testUserMananger.GetToken(ctx, userID, p.platformID)
 			ctx2 := NewUserCtx(userID, token)
-			baseCore := testcore.NewBaseCore(ctx2, userID, p.platformID)
+			baseCore := NewBaseCore(ctx2, userID, p.platformID)
 			ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())
 			for i := 0; i < onePeopleMessageNum; i++ {
 				if err := baseCore.BatchSendSingleMsg(ctx2, recvUserID, i); err != nil {
@@ -217,7 +216,7 @@ func (p *PressureTester) CreateConversationsAndBatchSendGroupMsg(ctx context.Con
 			time.Sleep(time.Millisecond * 100)
 			token, _ := p.testUserMananger.GetToken(ctx, u, p.platformID)
 			ctx2 := NewUserCtx(u, token)
-			baseCore := testcore.NewBaseCore(ctx2, u, p.platformID)
+			baseCore := NewBaseCore(ctx2, u, p.platformID)
 			ctx2 = mcontext.SetOperationID(ctx2, utils.OperationIDGenerator())
 			for i := 0; i < onePeopleMessageNum; i++ {
 				if err := baseCore.BatchSendGroupMsg(ctx2, groupID, i); err != nil {

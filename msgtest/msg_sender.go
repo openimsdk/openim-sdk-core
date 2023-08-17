@@ -1,4 +1,4 @@
-package testcore
+package msgtest
 
 import (
 	"context"
@@ -8,14 +8,13 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-
 	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
 )
 
-type BaseCore struct {
+type SendMsgUser struct {
 	longConnMgr         *interaction.LongConnMgr
 	userID              string
 	platformID          int32
@@ -24,20 +23,20 @@ type BaseCore struct {
 	failedMessageMap    map[string]error
 }
 
-func (b BaseCore) GetUserID() string {
+func (b SendMsgUser) GetUserID() string {
 	return b.userID
 }
 
-func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *BaseCore) {
-	return func(core *BaseCore) {
+func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *SendMsgUser) {
+	return func(core *SendMsgUser) {
 		core.recvPushMsgCallback = callback
 	}
 }
 
-func NewBaseCore(ctx context.Context, userID string, platformID int32, opts ...func(core *BaseCore)) *BaseCore {
+func NewBaseCore(ctx context.Context, userID string, platformID int32, opts ...func(core *SendMsgUser)) *SendMsgUser {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListner{}, nil, pushMsgAndMaxSeqCh, nil)
-	core := &BaseCore{
+	core := &SendMsgUser{
 		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		longConnMgr:        longConnMgr,
 		userID:             userID,
@@ -52,14 +51,15 @@ func NewBaseCore(ctx context.Context, userID string, platformID int32, opts ...f
 	return core
 }
 
-func (b *BaseCore) Close(ctx context.Context) {
+func (b *SendMsgUser) Close(ctx context.Context) {
 	b.longConnMgr.Close(ctx)
 }
 
-func (b *BaseCore) SendSingleMsg(ctx context.Context, userID string, index int) error {
+func (b *SendMsgUser) SendSingleMsg(ctx context.Context, userID string, index int) error {
 	return b.sendMsg(ctx, userID, "", index, constant.SingleChatType, fmt.Sprintf("this is test msg user %s to user %s, index: %d", b.userID, userID, index))
 }
-func (b *BaseCore) BatchSendSingleMsg(ctx context.Context, userID string, index int) error {
+
+func (b *SendMsgUser) BatchSendSingleMsg(ctx context.Context, userID string, index int) error {
 	content := fmt.Sprintf("this is test msg user %s to user %s, index: %d", b.userID, userID, index)
 	err := b.sendMsg(ctx, userID, "", index, constant.SingleChatType, content)
 	if err != nil {
@@ -69,10 +69,10 @@ func (b *BaseCore) BatchSendSingleMsg(ctx context.Context, userID string, index 
 	return nil
 }
 
-func (b *BaseCore) SendGroupMsg(ctx context.Context, groupID string, index int) error {
+func (b *SendMsgUser) SendGroupMsg(ctx context.Context, groupID string, index int) error {
 	return b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
 }
-func (b *BaseCore) BatchSendGroupMsg(ctx context.Context, groupID string, index int) error {
+func (b *SendMsgUser) BatchSendGroupMsg(ctx context.Context, groupID string, index int) error {
 	content := fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index)
 	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
 	if err != nil {
@@ -82,7 +82,7 @@ func (b *BaseCore) BatchSendGroupMsg(ctx context.Context, groupID string, index 
 	return nil
 }
 
-func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index int, sesstionType int32, content string) error {
+func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index int, sesstionType int32, content string) error {
 	var resp sdkws.UserSendMsgResp
 	text := sdk_struct.TextElem{Content: content}
 	msg := &sdkws.MsgData{
@@ -107,7 +107,7 @@ func (b *BaseCore) sendMsg(ctx context.Context, userID, groupID string, index in
 	return nil
 }
 
-func (b *BaseCore) recvPushMsg() {
+func (b *SendMsgUser) recvPushMsg() {
 	for {
 		cmd := <-b.pushMsgAndMaxSeqCh
 		switch cmd.Cmd {
@@ -126,5 +126,16 @@ func (b *BaseCore) recvPushMsg() {
 	}
 }
 
-func (b *BaseCore) defaultRecvPushMsgCallback(msg *sdkws.MsgData) {
+func (b *SendMsgUser) defaultRecvPushMsgCallback(msg *sdkws.MsgData) {
 }
+
+type ConnListner struct {
+}
+
+func (c *ConnListner) OnConnecting()     {}
+func (c *ConnListner) OnConnectSuccess() {}
+func (c *ConnListner) OnConnectFailed(errCode int32, errMsg string) {
+	// log.ZError(context.Background(), "connect failed", nil, "errCode", errCode, "errMsg", errMsg)
+}
+func (c *ConnListner) OnKickedOffline()    {}
+func (c *ConnListner) OnUserTokenExpired() {}
