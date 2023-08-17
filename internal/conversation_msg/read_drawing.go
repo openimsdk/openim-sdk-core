@@ -16,6 +16,7 @@ package conversation_msg
 
 import (
 	"context"
+	"errors"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -141,8 +142,12 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context, msgs []*model_struct.LocalChatLog) (asReadMsgIDs []string, seqs []int64) {
 	for _, msg := range msgs {
 		if !msg.IsRead && msg.SendID != c.loginUserID {
-			asReadMsgIDs = append(asReadMsgIDs, msg.ClientMsgID)
-			seqs = append(seqs, msg.Seq)
+			if msg.Seq == 0 {
+				log.ZWarn(ctx, "exception seq", errors.New("exception message "), "msg", msg)
+			} else {
+				asReadMsgIDs = append(asReadMsgIDs, msg.ClientMsgID)
+				seqs = append(seqs, msg.Seq)
+			}
 		} else {
 			log.ZWarn(ctx, "msg can't marked as read", nil, "msg", msg)
 		}
