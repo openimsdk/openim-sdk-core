@@ -122,7 +122,7 @@ SPACE +=
 # ==============================================================================
 # Build definition
 
-GO_SUPPORTED_VERSIONS ?= 1.18|1.19|1.20
+GO_SUPPORTED_VERSIONS ?= 1.18|1.19|1.20|1.21
 GO_LDFLAGS += -X $(VERSION_PACKAGE).GitVersion=$(VERSION) \
 	-X $(VERSION_PACKAGE).GitCommit=$(GIT_COMMIT) \
 	-X $(VERSION_PACKAGE).GitTreeState=$(GIT_TREE_STATE) \
@@ -225,7 +225,7 @@ ios:
 # Note: to build an AAR on Windows, gomobile, Android Studio, and the NDK must be installed.
 # The NDK version tested by the OpenIM team was r20b.
 # To build an AAR on Mac, gomobile, Android Studio, and the NDK version 20.0.5594570 must be installed.
-.PHONY: android
+.PHONY: android ios tools.verify.gomobile
 android:
 	go get golang.org/x/mobile/bind
 	GOARCH=amd64 gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
