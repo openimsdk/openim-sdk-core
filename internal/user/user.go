@@ -244,9 +244,9 @@ func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkw
 }
 
 // subscribeUsersStatus Presence status of subscribed users.
-func (u *User) subscribeUsersStatus(ctx context.Context, userID string, userIDs []string) ([]*userPb.OnlineStatus, error) {
+func (u *User) subscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
 	resp, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
-		UserID:  userID,
+		UserID:  u.loginUserID,
 		UserIDs: userIDs,
 		Genre:   PbConstant.SubscriberUser,
 	})
@@ -257,9 +257,9 @@ func (u *User) subscribeUsersStatus(ctx context.Context, userID string, userIDs 
 }
 
 // unsubscribeUsersStatus Unsubscribe a user's presence.
-func (u *User) unsubscribeUsersStatus(ctx context.Context, userID string, userIDs []string) error {
+func (u *User) unsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
 	_, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.UnsubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
-		UserID:  userID,
+		UserID:  u.loginUserID,
 		UserIDs: userIDs,
 		Genre:   PbConstant.Unsubscribe,
 	})
@@ -270,9 +270,9 @@ func (u *User) unsubscribeUsersStatus(ctx context.Context, userID string, userID
 }
 
 // getSubscribeUsersStatus Get the online status of subscribers.
-func (u *User) getSubscribeUsersStatus(ctx context.Context, userID string) ([]*userPb.OnlineStatus, error) {
+func (u *User) getSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
 	resp, err := util.CallApi[userPb.GetSubscribeUsersStatusResp](ctx, constant.GetSubscribeUsersStatusRouter, &userPb.GetSubscribeUsersStatusReq{
-		UserID: userID,
+		UserID: u.loginUserID,
 	})
 	if err != nil {
 		return nil, err
@@ -281,9 +281,9 @@ func (u *User) getSubscribeUsersStatus(ctx context.Context, userID string) ([]*u
 }
 
 // getUserStatus Get the online status of users.
-func (u *User) getUserStatus(ctx context.Context, userID string, userIDs []string) ([]*userPb.OnlineStatus, error) {
+func (u *User) getUserStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
 	resp, err := util.CallApi[userPb.GetUserStatusResp](ctx, constant.GetUserStatusRouter, &userPb.GetUserStatusReq{
-		UserID:  userID,
+		UserID:  u.loginUserID,
 		UserIDs: userIDs,
 	})
 	if err != nil {
