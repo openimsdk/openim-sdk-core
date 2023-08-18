@@ -370,8 +370,19 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.MsgDestructTime = v.MsgDestructTime
 		}
 	}
+	var newConversationIDs []string
+	for _, v := range newConversationSet {
+		newConversationIDs = append(newConversationIDs, v.ConversationID)
+	}
+	seqs, err := c.getServerHasReadAndMaxSeqs(ctx, newConversationIDs...)
+	if err != nil {
+		log.ZError(ctx, "getServerHasReadAndMaxSeqs err :", err)
+	}
 
 	for k, v := range newConversationSet {
+		if seq, ok := seqs[v.ConversationID]; ok {
+			v.UnreadCount = int32(seq.MaxSeq - seq.HasReadSeq)
+		}
 		if _, ok := phConversationChangedSet[v.ConversationID]; !ok {
 			phNewConversationSet[k] = v
 		}
@@ -400,7 +411,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
-
 	}
 	if len(conversationChangedSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChangeDirect, Args: utils.StructToJsonString(mapConversationToList(conversationChangedSet))}})

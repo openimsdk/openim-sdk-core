@@ -1,6 +1,7 @@
 package msgtest
 
 import (
+
 	"context"
 	"flag"
 	"open_im_sdk/msgtest/module"
@@ -8,6 +9,7 @@ import (
 	"sync"
 	"testing"
 	"time"
+
 
 	"github.com/OpenIMSDK/tools/log"
 )
@@ -46,13 +48,16 @@ var (
 )
 
 func init() {
+
 	InitWithFlag()
 	flag.Parse()
+
 	if err := log.InitFromConfig("sdk.log", "sdk", 4,
 		true, false, "./chat_log", 2, 24); err != nil {
 		panic(err)
 	}
 }
+
 
 func Test_Pressure(t *testing.T) {
 	if friendMsgSenderNum+NotFriendMsgSenderNum+groupMsgSenderNum > totalOnlineUserNum {
@@ -165,3 +170,4 @@ func (p *PressureTester) sendMsgs2Groups(senderIDs, groupIDs []string, num int, 
 	}
 	wg.Wait()
 }
+
