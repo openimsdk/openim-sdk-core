@@ -49,18 +49,18 @@ func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string
 	return nil
 }
 
-func (u *User) SubscribeUsersStatus(ctx context.Context, userID string, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	return u.subscribeUsersStatus(ctx, userID, userIDs)
+func (u *User) SubscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
+	return u.subscribeUsersStatus(ctx, userIDs)
 }
 
-func (u *User) UnsubscribeUsersStatus(ctx context.Context, userID string, userIDs []string) error {
-	return u.unsubscribeUsersStatus(ctx, userID, userIDs)
+func (u *User) UnsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
+	return u.unsubscribeUsersStatus(ctx, userIDs)
 }
 
-func (u *User) GetSubscribeUsersStatus(ctx context.Context, userID string) ([]*userPb.OnlineStatus, error) {
-	return u.getSubscribeUsersStatus(ctx, userID)
+func (u *User) GetSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
+	return u.getSubscribeUsersStatus(ctx)
 }
 
-func (u *User) GetUserStatus(ctx context.Context, userID string, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	return u.getUserStatus(ctx, userID, userIDs)
+func (u *User) GetUserStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
+	return u.getUserStatus(ctx, userIDs)
 }
