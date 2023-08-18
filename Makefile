@@ -156,7 +156,7 @@ ifeq (${BINS},)
   $(error Could not determine BINS, set ROOT_DIR or run in source dir)
 endif
 
-EXCLUDE_TESTS=github.com/OpenIMSDK/chat/test
+EXCLUDE_TESTS=github.com/OpenIMSDK/openim-sdk-core/test
 
 # ==============================================================================
 # Build
@@ -165,51 +165,41 @@ EXCLUDE_TESTS=github.com/OpenIMSDK/chat/test
 .PHONY: all
 all: copyright-verify build # tidy lint cover
 
-## build: Build binaries by default.
-.PHONY: build
-build:
-	@CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BIN_DIR} ./cmd/main.go
-# build: go.build.verify $(addprefix go.build., $(addprefix $(PLATFORM)., $(BINS)))
+# Define available OS and ARCH
+OSES = linux
+ARCHS = amd64 arm64
 
-.PHONY: build.%
-build.%:
-	@echo "$(shell go version)"
-	@echo "===========> Building binary $(BUILDAPP) *[Git Info]: $(VERSION)-$(GIT_COMMIT)"
-	@export CGO_ENABLED=0 && GOOS=linux go build -o $(BUILDAPP)/$*/ -ldflags '-s -w' $*/example/$(BUILDFILE)
-
-.PHONY: go.build.verify
-go.build.verify:
-ifneq ($(shell $(GO) version | grep -q -E '\bgo($(GO_SUPPORTED_VERSIONS))\b' && echo 0 || echo 1), 0)
-	$(error unsupported go version. Please make install one of the following supported version: '$(GO_SUPPORTED_VERSIONS)')
+ifeq ($(ARCH),arm64)
+    export CC=aarch64-linux-gnu-gcc
+    export CXX=aarch64-linux-gnu-g++
 endif
 
-## go.build: Build the binary file of the specified platform.
-.PHONY: go.build.%
-go.build.%:
-	$(eval COMMAND := $(word 2,$(subst ., ,$*)))
-	$(eval PLATFORM := $(word 1,$(subst ., ,$*)))
-	$(eval OS := $(word 1,$(subst _, ,$(PLATFORM))))
-	$(eval ARCH := $(word 2,$(subst _, ,$(PLATFORM))))
-	@echo "=====> COMMAND=$(COMMAND)"
-	@echo "=====> PLATFORM=$(PLATFORM)"
-	@echo "=====> BIN_DIR=$(BIN_DIR)"
-	@echo "===========> Building binary $(COMMAND) $(VERSION) for $(OS)_$(ARCH)"
-	@mkdir -p $(BIN_DIR)/platforms/$(OS)/$(ARCH)
-	@if [ "$(COMMAND)" = "rpc" ] || [ "$(COMMAND)" = "api" ]; then \
-		for d in $(wildcard $(ROOT_DIR)/cmd/$(COMMAND)/*/); do \
-			cd $$d && CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) $(GO) build $(GO_BUILD_FLAGS) -o \
-			$(BIN_DIR)/platforms/$(OS)/$(ARCH)/$$(basename $$d)$(GO_OUT_EXT) .; \
-		done; \
-	else \
-		@CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) $(GO) build $(GO_BUILD_FLAGS) -o \
-		$(BIN_DIR)/platforms/$(OS)/$(ARCH)/$(COMMAND)$(GO_OUT_EXT) $(ROOT_PACKAGE)/cmd/$(COMMAND)/main.go; \
-	fi
+# Set default OS and ARCH (e.g., current platform)
+OS ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
+BIN_DIR ?= ./_output/bin
+TARGET ?= ./cmd/main.go
 
-## build-multiarch: Build binaries for multiple platforms.
-.PHONY: build-multiarch
-build-multiarch: go.build.verify $(foreach p,$(PLATFORMS),$(addprefix go.build., $(addprefix $(p)., $(BINS))))
-# ==============================================================================
-# Targets
+## build: Build for current platform by default
+.PHONY: build
+build:
+	@echo "===========> Building for $(OS)/$(ARCH)"
+	@CGO_ENABLED=1 GOOS=$(OS) GOARCH=$(ARCH) go build -o $(BIN_DIR)/openim-sdk-core-$(OS)-$(ARCH) $(TARGET)
+
+# sudo apt-get install gcc-aarch64-linux-gnu
+## build-multiple: Build for all supported platforms
+.PHONY: build-multiple
+build-multiple:
+	@for os in $(OSES); do \
+		for arch in $(ARCHS); do \
+			$(MAKE) build OS=$$os ARCH=$$arch; \
+		done \
+	done
+
+
+.PHONY: build-wasm
+build-wasm:
+	GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w" -o ${BIN_DIR}/openIM.wasm wasm/cmd/main.go
 
 ## install: Install the binary to the BIN_DIR
 .PHONY: install
@@ -513,3 +503,14 @@ install.richgo:
 .PHONY: install.rts
 install.rts:
 	@$(GO) install github.com/galeone/rts/cmd/rts@latest
+
+
+## install.gomobile: Install gomobile
+.PHONY: install.gomobile
+install.gomobile:
+	@$(GO) install golang.org/x/mobile/cmd/gomobile@latest
+
+## install.gobind: Install gobind
+.PHONY: install.gobind
+install.gobind:
+	@$(GO) install golang.org/x/mobile/cmd/gobind@latest

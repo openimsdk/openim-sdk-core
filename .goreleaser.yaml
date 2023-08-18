@@ -28,19 +28,21 @@ builds:
     id: openim-api
     main: ./cmd/main.go
     goos:
-      - darwin
-      - windows
       - linux
     goarch:
-      - s390x
-      - mips64
-      - mips64le
       - amd64
-      - ppc64le
       - arm64
     goarm:
       - 6
       - 7
+  - id: wasm
+    main: wasm/cmd/main.go  # 指定 wasm 主文件路径
+    binary: openIM.wasm
+    ldflags: "-s -w"
+    goos:
+      - js
+    goarch:
+      - wasm
 
 archives:
   - format: tar.gz
@@ -56,7 +58,6 @@ archives:
     files:
       - LICENSE
       - README.md
-      - docs/*
       # a more complete example, check the globbing deep dive below
       - src: "*.md"
         dst: docs

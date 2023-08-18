@@ -92,7 +92,12 @@ jobs:
       - name: Build source code for host platform
         run: |
           sudo make build
-          echo "Build source code for host platform successfully" 
+          echo "Build source code for host platform successfully"
+
+      - name: Build wasm source code
+        run: |
+          sudo make build-wasm
+          echo "Build wasm source code successfully"
 
       - name: OpenIM verify copyright
         run: |
