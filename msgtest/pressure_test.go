@@ -134,7 +134,7 @@ func (p *PressureTester) sendMsgs2Users(senderIDs, recvIDs []string, num int, du
 	for _, senderID := range senderIDs {
 		for _, recvID := range recvIDs {
 			wg.Add(1)
-			go func(recvID string) {
+			go func(senderID, recvID string) {
 				defer wg.Done()
 				for i := 0; i < num; i++ {
 					if user, ok := p.msgSender[senderID]; ok {
@@ -142,7 +142,7 @@ func (p *PressureTester) sendMsgs2Users(senderIDs, recvIDs []string, num int, du
 					}
 					time.Sleep(duration)
 				}
-			}(recvID)
+			}(senderID, recvID)
 		}
 	}
 	wg.Wait()
@@ -153,14 +153,14 @@ func (p *PressureTester) sendMsgs2Groups(senderIDs, groupIDs []string, num int, 
 	for _, senderID := range senderIDs {
 		for _, groupID := range groupIDs {
 			wg.Add(1)
-			go func(groupID string) {
+			go func(senderID, groupID string) {
 				for i := 0; i < num; i++ {
 					if user, ok := p.groupMsgSender[senderID]; ok {
 						user.SendGroupMsgWithContext(groupID, i)
 					}
 					time.Sleep(duration)
 				}
-			}(groupID)
+			}(senderID, groupID)
 		}
 	}
 	wg.Wait()
