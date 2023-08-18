@@ -636,7 +636,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	case constant.MsgSyncBegin:
 		c.startTime = time.Now()
 		c.ConversationListener.OnSyncServerStart()
-		if err := c.SyncConversationHashReadSeqs(ctx); err != nil {
+		if err := c.SyncAllConversationHashReadSeqs(ctx); err != nil {
 			log.ZError(ctx, "SyncConversationHashReadSeqs err", err)
 		}
 		//clear SubscriptionStatusMap

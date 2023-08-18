@@ -90,7 +90,7 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 	return nil
 }
 
-func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
+func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
 	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
 	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
 	if err != nil {

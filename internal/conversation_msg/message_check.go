@@ -16,6 +16,7 @@ package conversation_msg
 
 import (
 	"context"
+	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
@@ -184,6 +185,11 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 			log.ZWarn(ctx, "encrypt message failed", err, "messages", pullMsgResp.Msgs[conversationID].Msgs)
 		}
 		log.ZDebug(ctx, "syncMsgFromServerSplit pull msg", "resp", pullMsgResp)
+		if pullMsgResp.Msgs == nil {
+			log.ZWarn(ctx, "syncMsgFromServerSplit pull msg is null", errors.New("pull message is null"),
+				"req", pullMsgReq)
+			return
+		}
 		if v, ok := pullMsgResp.Msgs[conversationID]; ok {
 			c.pullMessageIntoTable(ctx, pullMsgResp.Msgs, conversationID)
 			messageListCallback.IsEnd = v.IsEnd

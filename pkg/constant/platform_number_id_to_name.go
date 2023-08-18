@@ -28,6 +28,7 @@ const (
 	LinuxPlatformID      = 7
 	AndroidPadPlatformID = 8
 	IPadPlatformID       = 9
+	AdminPlatformID      = 10
 
 	//Platform string match to Platform ID
 	IOSPlatformStr        = "IOS"
@@ -39,6 +40,7 @@ const (
 	LinuxPlatformStr      = "Linux"
 	AndroidPadPlatformStr = "APad"
 	IPadPlatformStr       = "IPad"
+	AdminPlatformStr      = "Admin"
 
 	//terminal types
 	TerminalPC     = "PC"
