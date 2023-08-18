@@ -45,7 +45,7 @@ jobs:
           distribution: goreleaser
           version: latest
           workdir: .
-          args: release --rm-dist --clean --release-footer-tmpl=scripts/template/footer.md.tmpl --release-header-tmpl=scripts/template/head.md.tmpl
+          args: release --clean --clean --release-footer-tmpl=scripts/template/footer.md.tmpl --release-header-tmpl=scripts/template/head.md.tmpl
         env:
           USERNAME: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
