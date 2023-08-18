@@ -3,9 +3,9 @@ package OpenIMServer.rtc;
 //import "pub/group.proto";
 //import "pub/msg.proto";
 //import "pub/user.proto";
-import "sdkws/sdkws.proto";
-import "wrapperspb/wrapperspb.proto";
-option go_package = "github.com/OpenIMSDK/protocol/rtc";
+import "pub/sdkws.proto";
+import "pub/wrapperspb.proto";
+option go_package = "github.com/livekit/livekit-server/pkg/proto/rtc";
 
 message ParticipantMetaData{
   OpenIMServer.sdkws.GroupInfo groupInfo = 1;
@@ -343,6 +343,95 @@ message GetSignalInvitationInfoStartAppResp {
   sdkws.OfflinePushInfo offlinePushInfo = 2;
 }
 
+message SignalUser {
+  string userID = 1;
+  string nickname = 2;
+  int32 status = 3;
+}
+
+message SignalRecord {
+  string roomID = 1;
+  string sID = 2;
+  string fileName = 3;
+  string mediaType = 4;
+  int32 sessionType = 5;
+  string inviterUserID = 6;
+  string inviterUserNickname = 7;
+  string groupID = 8;
+  string groupName = 9;
+  repeated SignalUser inviterUsers = 10;
+  int64 createTime = 11;
+  int64 endTime = 12;
+  string size = 13;
+  string fileURL = 14;
+}
+
+message MeetingUser {
+  string userID = 1;
+  string nickname = 2;  
+}
+
+message FileRecord {
+  string size = 1;
+  string fileURL = 2;
+}
+
+message MeetingRecord {
+  string roomID = 1;
+  string meetingName = 2;
+  string ex = 3;
+  string hostUserID = 4;
+  string hostUserNickname = 5;
+  int64 createTime = 6;
+  int64 startTime = 7;
+  int64 endTime = 8;
+  repeated MeetingUser joinedUsers = 9;
+  int32 status = 10;
+  repeated FileRecord fileRecords = 11;
+}
+
+message GetSignalInvitationRecordsReq {
+  sdkws.RequestPagination pagination = 1;
+  int32 sessionType = 2;
+  string sendID = 3;
+  string recvID = 4;
+  int64 startTime = 5;
+  int64 endTime = 6;
+  repeated sdkws.UserInfo JoinedUsers = 7;
+}
+
+message GetSignalInvitationRecordsResp {
+  int32 total = 1;
+  repeated SignalRecord signalRecords = 2;
+}
+
+message DeleteSignalRecordsReq {
+  repeated string sIDs = 1;
+}
+
+message DeleteSignalRecordsResp {
+}
+
+message GetMeetingRecordsReq {
+  string hostUserID = 1;
+  string joinedUserID = 2;
+  int64 startTime = 3;
+  int64 endTime = 4;
+  sdkws.RequestPagination pagination = 5;
+}
+
+message GetMeetingRecordsResp {
+  int32 total = 1;
+  repeated MeetingRecord meetingRecords = 2;
+}
+
+message DeleteMeetingRecordsReq {
+  repeated string roomIDs = 1;
+}
+
+message DeleteMeetingRecordsResp {
+}
+
 service RtcService {
   rpc SignalMessageAssemble(SignalMessageAssembleReq) returns(SignalMessageAssembleResp);
   rpc SignalGetRoomByGroupID(SignalGetRoomByGroupIDReq) returns(SignalGetRoomByGroupIDResp);
@@ -361,4 +450,10 @@ service RtcService {
 
   // custom signal
   rpc SignalSendCustomSignal(SignalSendCustomSignalReq) returns(SignalSendCustomSignalResp);
-}
+
+  // rtc cms
+  rpc GetSignalInvitationRecords(GetSignalInvitationRecordsReq) returns(GetSignalInvitationRecordsResp);
+  rpc DeleteSignalRecords(DeleteSignalRecordsReq) returns(DeleteSignalRecordsResp);
+  rpc GetMeetingRecords(GetMeetingRecordsReq) returns(GetMeetingRecordsResp);
+  rpc DeleteMeetingRecords(DeleteMeetingRecordsReq) returns(DeleteMeetingRecordsResp);
+} 

@@ -180,7 +180,7 @@ message getSubscribeUsersStatusResp{
 message onlineStatus {
   string userID = 1;
   int32 status = 2;
-  int32 platformID = 3;
+  repeated int32 platformIDs = 3;
 }
 
 message getUserStatusReq {

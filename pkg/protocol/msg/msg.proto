@@ -182,6 +182,7 @@ message GetConversationMaxSeqResp {
 
 message GetConversationsHasReadAndMaxSeqReq {
   string userID = 1;
+  repeated string conversationIDs = 2;
 }
 
 message Seqs {
@@ -280,6 +281,13 @@ message batchSendMessageReq{
 
 message batchSendMessageResp{
 }
+message GetServerTimeReq{
+
+}
+message GetServerTimeResp{
+  int64 serverTime=1;
+
+}
 
 service msg {
   //获取最小最大seq（包括用户的，以及指定群组的）
@@ -316,4 +324,5 @@ service msg {
 
   rpc GetActiveUser(GetActiveUserReq) returns(GetActiveUserResp);
   rpc GetActiveGroup(GetActiveGroupReq) returns(GetActiveGroupResp);
+  rpc GetServerTime(GetServerTimeReq) returns(GetServerTimeResp);
 }
