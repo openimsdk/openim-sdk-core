@@ -30,3 +30,9 @@ func (t *TestUserManager) RegisterUsers(userIDs ...string) error {
 		Users:  users,
 	}, nil)
 }
+
+
+func (t *TestUserManager) GetToken(userID string, platformID int32) (string, error) {
+	return t.getToken(userID, platformID)
+}
+
