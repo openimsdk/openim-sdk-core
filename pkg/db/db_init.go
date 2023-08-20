@@ -96,13 +96,13 @@ func (d *DataBase) Close(ctx context.Context) error {
 	return nil
 }
 
-func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*DataBase, error) {
+func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel int) (*DataBase, error) {
 	UserDBLock.Lock()
 	defer UserDBLock.Unlock()
 	dataBase, ok := UserDBMap[loginUserID]
 	if !ok {
 		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
-		err := dataBase.initDB(ctx)
+		err := dataBase.initDB(ctx, logLevel)
 		if err != nil {
 			return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
 		}
@@ -154,7 +154,8 @@ func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
 
 }
 
-func (d *DataBase) initDB(ctx context.Context) error {
+func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
+	var zLogLevel logger.LogLevel
 	if d.loginUserID == "" {
 		return errors.New("no uid")
 	}
@@ -169,7 +170,12 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	log.ZInfo(ctx, "sqlite", "path", dbFileName)
 	// slowThreshold := 500
 	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(logger.LogLevel(logger.Info), false, time.Millisecond*200)})
+	if logLevel > 5 {
+		zLogLevel = logger.Info
+	} else {
+		zLogLevel = logger.Silent
+	}
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 	if err != nil {
 		return utils.Wrap(err, "open db failed "+dbFileName)
 	}

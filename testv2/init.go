@@ -19,11 +19,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/protocol/constant"
 	"io"
 	"math/rand"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/ccontext"
+	"strconv"
 	"time"
 
 	"github.com/OpenIMSDK/tools/log"
@@ -48,7 +50,7 @@ func init() {
 		panic("init sdk failed")
 	}
 	ctx = open_im_sdk.UserForSDK.Context()
-	ctx = ccontext.WithOperationID(ctx, "initOperationID")
+	ctx = ccontext.WithOperationID(ctx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
 	token, err := GetUserToken(ctx, UserID)
 	if err != nil {
 		panic(err)
@@ -61,15 +63,15 @@ func init() {
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
 	time.Sleep(time.Second * 10)
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
 	jsonReqData, err := json.Marshal(map[string]any{
 		"userID":     userID,
-		"platformID": 1,
+		"platformID": constant.LinuxPlatformID,
 		"secret":     "openIM123",
-		//"secret": "111111",
 	})
 	if err != nil {
 		return "", err
@@ -106,7 +108,7 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	if result.ErrCode != 0 {
 		return "", fmt.Errorf("errCode:%d, errMsg:%s, errDlt:%s", result.ErrCode, result.ErrMsg, result.ErrDlt)
 	}
-	return result.Data.Token + "12321", nil
+	return result.Data.Token, nil
 }
 
 type onListenerForService struct {
@@ -304,4 +306,15 @@ func (o *onFriendListener) OnBlackAdded(blackInfo string) {
 
 func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
+}
+
+type onUserListener struct {
+	ctx context.Context
+}
+
+func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
+	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", userInfo)
+}
+func (o *onUserListener) OnUserStatusChanged(statusMap string) {
+	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)
 }

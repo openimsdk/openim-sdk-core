@@ -83,10 +83,11 @@ const (
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
-	UserNotificationBegin       = 1301
-	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
-	UserNotificationEnd         = 1399
-	OANotification              = 1400
+	UserNotificationBegin        = 1301
+	UserInfoUpdatedNotification  = 1303 //SetSelfInfoTip             = 204
+	UserStatusChangeNotification = 1304
+	UserNotificationEnd          = 1399
+	OANotification               = 1400
 
 	GroupNotificationBegin = 1500
 
@@ -401,7 +402,7 @@ const (
 const (
 	SplitPullMsgNum              = 100
 	PullMsgNumWhenLogin          = 10000
-	PullMsgNumForReadDiffusion   = 100
+	PullMsgNumForReadDiffusion   = 50
 	NormalMsgMinNumReadDiffusion = 100
 )
 

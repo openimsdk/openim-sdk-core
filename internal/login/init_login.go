@@ -226,10 +226,14 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 	for {
 		select {
 		case <-u.loginMgrCh:
+			log.ZDebug(ctx, "logoutListener exit")
 			err := u.logout(ctx, true)
 			if err != nil {
 				log.ZError(ctx, "logout error", err)
 			}
+		case <-ctx.Done():
+			log.ZInfo(ctx, "logoutListener done sdk logout.....")
+			return
 		}
 	}
 
@@ -263,7 +267,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.token = token
 	u.loginUserID = userID
 	var err error
-	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir)
+	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir, int(u.info.LogLevel))
 	if err != nil {
 		return sdkerrs.ErrSdkInternal.Wrap("init database " + err.Error())
 	}
@@ -277,9 +281,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend.SetLoginTime(u.loginTime)
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.cache = cache.NewCache(u.user, u.friend)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.conversationListener)
 	u.business = business.NewBusiness(u.db)
+	u.cache = cache.NewCache(u.user, u.friend)
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
@@ -350,7 +354,7 @@ func (u *LoginMgr) initResources() {
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
-	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.loginMgrCh = make(chan common.Cmd2Value, 1)
 	u.setLoginStatus(Logout)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }

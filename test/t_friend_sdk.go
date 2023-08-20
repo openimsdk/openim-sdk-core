@@ -665,6 +665,11 @@ func InOutDoTestSendMsg(sendId, receiverID string) {
 type userCallback struct {
 }
 
+func (c userCallback) OnUserStatusChanged(statusMap string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (userCallback) OnSelfInfoUpdated(callbackData string) {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackData)
 }

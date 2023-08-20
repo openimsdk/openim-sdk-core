@@ -88,6 +88,7 @@ func setNumeric(in interface{}, out interface{}) {
 func call_(operationID string, fn any, args ...any) (res any, err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
 			err = fmt.Errorf("call panic: %+v", r)
 		}
 	}()

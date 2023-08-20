@@ -28,6 +28,7 @@ import (
 	userPb "github.com/OpenIMSDK/protocol/user"
 	"github.com/OpenIMSDK/tools/log"
 
+	PbConstant "github.com/OpenIMSDK/protocol/constant"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -130,7 +131,7 @@ func (u *User) initSyncer() {
 //}
 
 // DoNotification handles incoming notifications for the user.
-func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
+func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData, cache func(userID string, statusMap *userPb.OnlineStatus)) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
 	if u.listener == nil {
 		// log.Error(operationID, "listener == nil")
@@ -144,6 +145,8 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:
 			u.userInfoUpdatedNotification(ctx, msg)
+		case constant.UserStatusChangeNotification:
+			u.userStatusChangeNotification(ctx, msg, cache)
 		default:
 			// log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
@@ -166,6 +169,17 @@ func (u *User) userInfoUpdatedNotification(ctx context.Context, msg *sdkws.MsgDa
 	}
 }
 
+// userStatusChangeNotification get subscriber status change callback
+func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData, c func(userID string, statusMap *userPb.OnlineStatus)) {
+	log.ZDebug(ctx, "userStatusChangeNotification", "msg", *msg)
+	tips := sdkws.UserStatusChangeTips{}
+	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+		log.ZError(ctx, "comm.UnmarshalTips failed", err, "msg", msg.Content)
+		return
+	}
+	u.SyncUserStatus(ctx, tips.FromUserID, tips.ToUserID, tips.Status, tips.PlatformID, c)
+}
+
 // GetUsersInfoFromSvr retrieves user information from the server.
 func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
 	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, userPb.GetDesignateUsersReq{UserIDs: userIDs})
@@ -175,7 +189,7 @@ func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*mo
 	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
 }
 
-// GetUsersInfoFromSvrNoCallback retrieves user information from the server.
+// GetSingleUserFromSvr retrieves user information from the server.
 func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
 	users, err := u.GetUsersInfoFromSvr(ctx, []string{userID})
 	if err != nil {
@@ -227,4 +241,53 @@ func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkw
 		return nil, err
 	}
 	return resp.UsersInfo, nil
+}
+
+// subscribeUsersStatus Presence status of subscribed users.
+func (u *User) subscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
+	resp, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
+		UserID:  u.loginUserID,
+		UserIDs: userIDs,
+		Genre:   PbConstant.SubscriberUser,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.StatusList, nil
+}
+
+// unsubscribeUsersStatus Unsubscribe a user's presence.
+func (u *User) unsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
+	_, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.UnsubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
+		UserID:  u.loginUserID,
+		UserIDs: userIDs,
+		Genre:   PbConstant.Unsubscribe,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// getSubscribeUsersStatus Get the online status of subscribers.
+func (u *User) getSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
+	resp, err := util.CallApi[userPb.GetSubscribeUsersStatusResp](ctx, constant.GetSubscribeUsersStatusRouter, &userPb.GetSubscribeUsersStatusReq{
+		UserID: u.loginUserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.StatusList, nil
+}
+
+// getUserStatus Get the online status of users.
+func (u *User) getUserStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
+	resp, err := util.CallApi[userPb.GetUserStatusResp](ctx, constant.GetUserStatusRouter, &userPb.GetUserStatusReq{
+		UserID:  u.loginUserID,
+		UserIDs: userIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.StatusList, nil
 }

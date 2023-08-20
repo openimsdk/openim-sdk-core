@@ -1,4 +1,4 @@
-package testv3new
+package msgtest
 
 import (
 	"fmt"
@@ -9,10 +9,12 @@ import (
 
 // system
 var (
-	TESTIP     = "59.36.173.89"
-	APIADDR    = fmt.Sprintf("http://%v:10002", TESTIP)
-	WSADDR     = fmt.Sprintf("ws://%v:10001", TESTIP)
-	SECRET     = "openIM123"
+	TESTIP        = "59.36.173.89"
+	APIADDR       = fmt.Sprintf("http://%v:10002", TESTIP)
+	WSADDR        = fmt.Sprintf("ws://%v:10001", TESTIP)
+	SECRET        = "openIM123"
+	MANAGERUSERID = "openIMAdmin"
+
 	PLATFORMID = constant.WindowsPlatformID
 
 	REGISTERADDR = APIADDR + constant.UserRegister

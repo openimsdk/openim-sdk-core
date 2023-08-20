@@ -21,7 +21,7 @@ require (
 require golang.org/x/net v0.11.0
 
 require (
-	github.com/OpenIMSDK/protocol v0.0.1
+	github.com/OpenIMSDK/protocol v0.0.12
 	github.com/OpenIMSDK/tools v0.0.5
 	github.com/google/go-cmp v0.5.9
 	golang.org/x/image v0.9.0
@@ -39,6 +39,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
+	golang.org/x/mobile v0.0.0-20230531173138-3c911d8e3eda // indirect
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect

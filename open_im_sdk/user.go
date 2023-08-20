@@ -14,13 +14,15 @@
 
 package open_im_sdk
 
-import "open_im_sdk/open_im_sdk_callback"
+import (
+	"open_im_sdk/open_im_sdk_callback"
+)
 
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.Full().GetUsersInfo, userIDs)
 }
 
-// GetUsersInfo obtains the information about multiple users.
+// GetUsersInfoFromSrv obtains the information about multiple users.
 func GetUsersInfoFromSrv(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDs)
 }
@@ -38,4 +40,24 @@ func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 // UpdateMsgSenderInfo updates the message sender's nickname and face URL.
 func UpdateMsgSenderInfo(callback open_im_sdk_callback.Base, operationID string, nickname, faceURL string) {
 	call(callback, operationID, UserForSDK.User().UpdateMsgSenderInfo, nickname, faceURL)
+}
+
+// SubscribeUsersStatus Presence status of subscribed users.
+func SubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs []string) {
+	call(callback, operationID, UserForSDK.User().SubscribeUsersStatus, userIDs)
+}
+
+// UnsubscribeUsersStatus Unsubscribe a user's presence.
+func UnsubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs []string) {
+	call(callback, operationID, UserForSDK.User().SubscribeUsersStatus, userIDs)
+}
+
+// GetSubscribeUsersStatus Get the online status of subscribers.
+func GetSubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.User().GetSubscribeUsersStatus)
+}
+
+// GetUserStatus Get the online status of users.
+func GetUserStatus(callback open_im_sdk_callback.Base, operationID string, userIDs []string) {
+	call(callback, operationID, UserForSDK.User().GetUserStatus, userIDs)
 }
