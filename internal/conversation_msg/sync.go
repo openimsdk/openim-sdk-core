@@ -24,6 +24,7 @@ import (
 
 	"github.com/OpenIMSDK/tools/errs"
 	"github.com/OpenIMSDK/tools/log"
+	"gorm.io/gorm"
 )
 
 func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, conversationsOnServer []*model_struct.LocalConversation) error {
@@ -68,7 +69,7 @@ func (c *Conversation) SyncAllConversations(ctx context.Context) error {
 	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
 }
 
-func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
+func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
 	var conversationChangedList []string
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
 	log.ZDebug(ctx, "get unread message length", "len", len(allConversations))
@@ -90,7 +91,7 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 	return nil
 }
 
-func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
+func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
 	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
 	if err != nil {
@@ -100,7 +101,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		return nil
 	}
 	var conversations []*model_struct.LocalConversation
-	var conversationIDs []string
+	var conversationChangedIDs []string
 	var conversationIDsNeedSync []string
 	for conversationID, v := range seqs {
 		var unreadCount int32
@@ -110,27 +111,43 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		} else {
 			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 		}
-		if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
-			if errs.Unwrap(err) == errs.ErrRecordNotFound {
+		conversation, err := c.db.GetConversation(ctx, conversationID)
+		if err != nil {
+			if errs.Unwrap(err) == errs.ErrRecordNotFound || errs.Unwrap(err) == gorm.ErrRecordNotFound {
 				conversationIDsNeedSync = append(conversationIDsNeedSync, conversationID)
-			} else {
-				log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 			}
 			continue
 		}
-		conversationIDs = append(conversationIDs, conversationID)
+		if conversation.UnreadCount != unreadCount || conversation.HasReadSeq != v.HasReadSeq {
+			if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
+				log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
+				continue
+			}
+			conversationChangedIDs = append(conversationChangedIDs, conversationID)
+		}
 	}
 	if len(conversationIDsNeedSync) > 0 {
 		if err := c.SyncConversations(ctx, conversationIDsNeedSync); err != nil {
 			log.ZWarn(ctx, "sync new conversations failed", nil, "conversationIDs", conversationIDsNeedSync)
 		} else {
-			conversationIDs = append(conversationIDs, conversationIDsNeedSync...)
+			for _, conversationID := range conversationIDsNeedSync {
+				v, ok := seqs[conversationID]
+				if !ok {
+					continue
+				}
+				unreadCount := int32(v.MaxSeq - v.HasReadSeq)
+				if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
+					log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID, "unreadCount", unreadCount, "hasReadSeq", v.HasReadSeq)
+				} else {
+					conversationChangedIDs = append(conversationChangedIDs, conversationID)
+				}
+			}
 		}
 	}
 
 	log.ZDebug(ctx, "update conversations", "conversations", conversations)
-	if len(conversationIDs) > 0 {
-		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationIDs}, c.GetCh())
+	if len(conversationChangedIDs) > 0 {
+		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.GetCh())
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.GetCh())
 	}
 	return nil
