@@ -69,7 +69,7 @@ func (c *Conversation) SyncAllConversations(ctx context.Context) error {
 	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
 }
 
-func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
+func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 	var conversationChangedList []string
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
 	log.ZDebug(ctx, "get unread message length", "len", len(allConversations))
@@ -91,7 +91,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	return nil
 }
 
-func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
+func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
 	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
 	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
 	if err != nil {
