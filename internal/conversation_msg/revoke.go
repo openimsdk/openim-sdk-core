@@ -68,9 +68,9 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
 		} else {
 			log.ZDebug(ctx, "revoker member name", "groupMember", groupMember)
+			revokerRole = groupMember.RoleLevel
+			revokerNickname = groupMember.Nickname
 		}
-		revokerRole = groupMember.RoleLevel
-		revokerNickname = groupMember.Nickname
 	}
 	m := sdk_struct.MessageRevoked{
 		RevokerID:                   tips.RevokerUserID,
