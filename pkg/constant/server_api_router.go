@@ -31,6 +31,7 @@ const (
 	DeleteFriendRouter                 = "/friend/delete_friend"
 	GetFriendApplicationListRouter     = "/friend/get_friend_apply_list"      //recv
 	GetSelfFriendApplicationListRouter = "/friend/get_self_friend_apply_list" //send
+	ImportFriendListRouter             = "/friend/import_friend"
 
 	GetDesignatedFriendsApplyRouter = "/friend/get_designated_friend_apply"
 	GetFriendListRouter             = "/friend/get_friend_list"
@@ -42,7 +43,6 @@ const (
 	RemoveBlackRouter  = "/friend/remove_black"
 	GetBlackListRouter = "/friend/get_black_list"
 
-	SendMsgRouter          = "/chat/send_msg"
 	PullUserMsgRouter      = "/chat/pull_msg"
 	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
 	NewestSeqRouter        = "/chat/newest_seq"
@@ -60,6 +60,7 @@ const (
 	MarkConversationAsRead    = RouterMsg + "/mark_conversation_as_read"
 	MarkMsgsAsRead            = RouterMsg + "/mark_msgs_as_read"
 	SetConversationHasReadSeq = RouterMsg + "/set_conversation_has_read_seq"
+	SendMsgRouter             = RouterMsg + "/send_msg"
 
 	GetMessageListReactionExtensionsRouter = RouterMsg + "/get_message_list_reaction_extensions"
 	DeleteMessageReactionExtensionsRouter  = RouterMsg + "/delete_message_reaction_extensions"
