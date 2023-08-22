@@ -187,7 +187,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 			uploadedSize += currentPartSize
 		}
 		if md5val := md5Reader.Md5(); md5val != partMd5s[i] {
-			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
+			return nil, fmt.Errorf("upload part %d failed, md5 not match, first calc md5 %s size %d,  upload calc md5 %s size %d, %v", i, partMd5s[i], partSizes[i], md5val, md5Reader.Size(), part == nil)
 		}
 		if part != nil && dbUpload != nil && bitmap != nil {
 			bitmap.Set(int(part.PartNumber - 1))

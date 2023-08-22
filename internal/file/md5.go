@@ -28,11 +28,13 @@ func NewMd5Reader(r io.Reader) *Md5Reader {
 type Md5Reader struct {
 	h hash.Hash
 	r io.Reader
+	n int
 }
 
 func (r *Md5Reader) Read(p []byte) (n int, err error) {
 	n, err = r.r.Read(p)
 	if err == nil && n > 0 {
+		r.n += n
 		r.h.Write(p[:n])
 	}
 	return
@@ -40,4 +42,8 @@ func (r *Md5Reader) Read(p []byte) (n int, err error) {
 
 func (r *Md5Reader) Md5() string {
 	return hex.EncodeToString(r.h.Sum(nil))
+}
+
+func (r *Md5Reader) Size() int64 {
+	return int64(r.n)
 }
