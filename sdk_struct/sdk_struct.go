@@ -41,6 +41,7 @@ type MessageRevoked struct {
 	SessionType                 int32  `json:"sessionType"`
 	Seq                         int64  `json:"seq"`
 	Ex                          string `json:"ex"`
+	IsAdminRevoke               bool   `json:"isAdminRevoke"`
 }
 type MessageReaction struct {
 	ClientMsgID  string `json:"clientMsgID"`

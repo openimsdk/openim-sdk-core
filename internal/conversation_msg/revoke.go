@@ -49,20 +49,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	}
 	var revokerRole int32
 	var revokerNickname string
-	if tips.SesstionType == constant.SuperGroupChatType {
-		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
-		if err != nil {
-			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
-		}
-		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
-		if err != nil {
-			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
-		} else {
-			log.ZDebug(ctx, "revoker member name", "groupMember", groupMember)
-		}
-		revokerRole = groupMember.RoleLevel
-		revokerNickname = groupMember.Nickname
-	} else {
+	if tips.IsAdminRevoke || tips.SesstionType == constant.SingleChatType {
 		_, userName, err := c.cache.GetUserNameAndFaceURL(ctx, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetUserNameAndFaceURL failed", err, "tips", &tips)
@@ -70,6 +57,21 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 			log.ZDebug(ctx, "revoker user name", "userName", userName)
 		}
 		revokerNickname = userName
+	} else if tips.SesstionType == constant.SuperGroupChatType {
+		if tips.SesstionType == constant.SuperGroupChatType {
+			conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
+			if err != nil {
+				log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
+			}
+			groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
+			if err != nil {
+				log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
+			} else {
+				log.ZDebug(ctx, "revoker member name", "groupMember", groupMember)
+			}
+			revokerRole = groupMember.RoleLevel
+			revokerNickname = groupMember.Nickname
+		}
 	}
 	m := sdk_struct.MessageRevoked{
 		RevokerID:                   tips.RevokerUserID,
@@ -83,6 +85,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		SessionType:                 tips.SesstionType,
 		Seq:                         tips.Seq,
 		Ex:                          revokedMsg.Ex,
+		IsAdminRevoke:               tips.IsAdminRevoke,
 	}
 	// log.ZDebug(ctx, "callback revokeMessage", "m", m)
 	var n sdk_struct.NotificationElem
