@@ -61,6 +61,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
 		if err != nil {
 			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
+			return
 		}
 		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
 		if err != nil {
