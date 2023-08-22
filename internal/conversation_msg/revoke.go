@@ -58,20 +58,18 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		}
 		revokerNickname = userName
 	} else if tips.SesstionType == constant.SuperGroupChatType {
-		if tips.SesstionType == constant.SuperGroupChatType {
-			conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
-			if err != nil {
-				log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
-			}
-			groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
-			if err != nil {
-				log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
-			} else {
-				log.ZDebug(ctx, "revoker member name", "groupMember", groupMember)
-			}
-			revokerRole = groupMember.RoleLevel
-			revokerNickname = groupMember.Nickname
+		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
+		if err != nil {
+			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
 		}
+		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
+		if err != nil {
+			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
+		} else {
+			log.ZDebug(ctx, "revoker member name", "groupMember", groupMember)
+		}
+		revokerRole = groupMember.RoleLevel
+		revokerNickname = groupMember.Nickname
 	}
 	m := sdk_struct.MessageRevoked{
 		RevokerID:                   tips.RevokerUserID,
