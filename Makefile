@@ -214,18 +214,18 @@ reset_remote_branch:
 	git pull $(remote_branch)
 
 ## ios: Build the iOS framework
-.PHONY: ios tools.verify.gomobile
+.PHONY: ios
 ios:
 	go get golang.org/x/mobile
 	rm -rf build/ open_im_sdk/t_friend_sdk.go open_im_sdk/t_group_sdk.go  open_im_sdk/ws_wrapper/
 	go mod download golang.org/x/exp
-	GOARCH=arm64 ./_output/tools/gomobile bind -v -trimpath -ldflags "-s -w" -o build/OpenIMCore.xcframework -target=ios ./open_im_sdk/ ./open_im_sdk_callback/
+	GOARCH=arm64 gomobile bind -v -trimpath -ldflags "-s -w" -o build/OpenIMCore.xcframework -target=ios ./open_im_sdk/ ./open_im_sdk_callback/
 
 ## android: Build the Android library
 # Note: to build an AAR on Windows, gomobile, Android Studio, and the NDK must be installed.
 # The NDK version tested by the OpenIM team was r20b.
 # To build an AAR on Mac, gomobile, Android Studio, and the NDK version 20.0.5594570 must be installed.
-.PHONY: android ios tools.verify.gomobile
+.PHONY: android
 android:
 	go get golang.org/x/mobile/bind
 	GOARCH=amd64 gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/

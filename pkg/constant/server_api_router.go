@@ -61,6 +61,7 @@ const (
 	MarkMsgsAsRead            = RouterMsg + "/mark_msgs_as_read"
 	SetConversationHasReadSeq = RouterMsg + "/set_conversation_has_read_seq"
 	SendMsgRouter             = RouterMsg + "/send_msg"
+	GetServerTimeRouter       = RouterMsg + "/get_server_time"
 
 	GetMessageListReactionExtensionsRouter = RouterMsg + "/get_message_list_reaction_extensions"
 	DeleteMessageReactionExtensionsRouter  = RouterMsg + "/delete_message_reaction_extensions"
