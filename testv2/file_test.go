@@ -14,6 +14,13 @@
 
 package testv2
 
+import (
+	"open_im_sdk/internal/file"
+	"open_im_sdk/open_im_sdk"
+	"path/filepath"
+	"testing"
+)
+
 //import (
 //	"flag"
 //	"fmt"
@@ -78,3 +85,15 @@ package testv2
 //	i := flag.Int("sn", 2, "sender num")
 //	fmt.Println(i)
 //}
+
+func TestName(t *testing.T) {
+	req := &file.UploadFileReq{
+		Filepath: `C:\Users\Admin\Desktop\chat.md`,
+	}
+	req.Name = filepath.Base(req.Filepath)
+	resp, err := open_im_sdk.UserForSDK.File().UploadFile(ctx, req, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(resp.URL)
+}

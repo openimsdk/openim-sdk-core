@@ -116,11 +116,15 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	if prefix := f.loginUserID + "/"; !strings.HasPrefix(req.Name, prefix) {
 		req.Name = prefix + req.Name
 	}
-	file, err := Open(req)
+	readFile, err := Open(req)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer readFile.Close()
+	file, err := NewSmallBuffer(readFile)
+	if err != nil {
+		return nil, err
+	}
 	fileSize := file.Size()
 	cb.Open(fileSize)
 	info, err := f.getPartInfo(ctx, file, fileSize, cb)
