@@ -442,6 +442,7 @@ func (f *File) getPartInfo(ctx context.Context, r io.Reader, fileSize int64, cb 
 	buf := make([]byte, 1024*8)
 	fileMd5 := md5.New()
 	var contentType string
+	var idx int
 	for i := 0; i < partNum; i++ {
 		h := md5.New()
 		r := io.LimitReader(r, partSize)
@@ -450,7 +451,8 @@ func (f *File) getPartInfo(ctx context.Context, r io.Reader, fileSize int64, cb 
 				if contentType == "" {
 					contentType = http.DetectContentType(buf[:n])
 				}
-				log.ZInfo(ctx, "FirstRead:", "len", n, "index", i, "data", base64.StdEncoding.EncodeToString(buf[:n]))
+				log.ZInfo(ctx, "FirstRead:", "len", n, "index", idx, "data", base64.StdEncoding.EncodeToString(buf[:n]))
+				idx++
 				h.Write(buf[:n])
 				fileMd5.Write(buf[:n])
 			} else if err == io.EOF {
