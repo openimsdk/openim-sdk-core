@@ -15,8 +15,11 @@
 package file
 
 import (
+	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
+	"github.com/OpenIMSDK/tools/log"
 	"hash"
 	"io"
 )
@@ -29,11 +32,14 @@ type Md5Reader struct {
 	h hash.Hash
 	r io.Reader
 	n int
+	i int
 }
 
 func (r *Md5Reader) Read(p []byte) (n int, err error) {
 	n, err = r.r.Read(p)
 	if err == nil && n > 0 {
+		log.ZInfo(context.Background(), "UploadRead:", "len", n, "index", r.i, "data", base64.StdEncoding.EncodeToString(p[:n]))
+		r.i++
 		r.n += n
 		r.h.Write(p[:n])
 	}

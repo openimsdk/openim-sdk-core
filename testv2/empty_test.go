@@ -20,6 +20,12 @@ import (
 )
 
 func Test_Empty(t *testing.T) {
+
+	//message, err := open_im_sdk.UserForSDK.Conversation().CreateSoundMessage(ctx, `C:\Users\Admin\Desktop\1692759073259.m4a`, 2000)
+	//if err != nil {
+	//	t.Error(err)
+	//}
+
 	for {
 		time.Sleep(time.Second * 10)
 	}

@@ -450,6 +450,7 @@ func (f *File) getPartInfo(ctx context.Context, r io.Reader, fileSize int64, cb 
 				if contentType == "" {
 					contentType = http.DetectContentType(buf[:n])
 				}
+				log.ZInfo(ctx, "FirstRead:", "len", n, "index", i, "data", base64.StdEncoding.EncodeToString(buf[:n]))
 				h.Write(buf[:n])
 				fileMd5.Write(buf[:n])
 			} else if err == io.EOF {
