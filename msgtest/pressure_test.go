@@ -133,7 +133,6 @@ func (p *PressureTester) registerUsers(userIDs []string, fastenedUserIDs []strin
 }
 
 func (p *PressureTester) initUserConns(userIDs []string, fastenedUserIDs []string) {
-	userIDs = append(userIDs, fastenedUserIDs...)
 	for i, userID := range userIDs {
 		token, err := p.userManager.GetToken(userID, int32(PLATFORMID))
 		if err != nil {
@@ -147,10 +146,18 @@ func (p *PressureTester) initUserConns(userIDs []string, fastenedUserIDs []strin
 		} else if friendMsgSenderNum <= i && i < friendMsgSenderNum+NotFriendMsgSenderNum {
 			p.msgSender[userID] = user
 			p.notfriendSenderUserIDs = append(p.notfriendSenderUserIDs, userID)
-		} else if friendMsgSenderNum+NotFriendMsgSenderNum <= i && i < friendMsgSenderNum+NotFriendMsgSenderNum+groupMsgSenderNum {
-			p.groupMsgSender[userID] = user
-			p.groupSenderUserIDs = append(p.groupSenderUserIDs, userID)
 		}
+	}
+
+	for _, userID := range fastenedUserIDs {
+		token, err := p.userManager.GetToken(userID, int32(PLATFORMID))
+		if err != nil {
+			log.ZError(context.Background(), "get token failed", err, "userID", userID, "platformID", PLATFORMID)
+			continue
+		}
+		user := module.NewUser(userID, token, sdk_struct.IMConfig{WsAddr: WSADDR, ApiAddr: APIADDR, PlatformID: int32(PLATFORMID)})
+		p.msgSender[userID] = user
+		p.groupSenderUserIDs = append(p.groupSenderUserIDs, userID)
 	}
 }
 
