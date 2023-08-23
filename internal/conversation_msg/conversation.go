@@ -69,9 +69,11 @@ func (c *Conversation) getServerConversationsByIDs(ctx context.Context, conversa
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*msg.Seqs, error) {
+func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context, conversationIDs ...string) (map[string]*msg.Seqs, error) {
 	resp := &msg.GetConversationsHasReadAndMaxSeqResp{}
-	err := util.ApiPost(ctx, constant.GetConversationsHasReadAndMaxSeqRouter, msg.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID}, resp)
+	req := msg.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID}
+	req.ConversationIDs = conversationIDs
+	err := util.ApiPost(ctx, constant.GetConversationsHasReadAndMaxSeqRouter, &req, resp)
 	if err != nil {
 		log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
 		return nil, err

@@ -44,9 +44,9 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 
 func (u *User) SyncUserStatus(ctx context.Context, fromId string, toUserID string, status int32, platformID int32, c func(userID string, statusMap *userPb.OnlineStatus)) {
 	statusMap := userPb.OnlineStatus{
-		UserID:     fromId,
-		Status:     status,
-		PlatformID: platformID,
+		UserID:      fromId,
+		Status:      status,
+		PlatformIDs: []int32{platformID},
 	}
 	c(fromId, &statusMap)
 	u.listener.OnUserStatusChanged(utils.StructToJsonString(statusMap))

@@ -52,8 +52,10 @@ func InitWithFlag() {
 }
 
 func init() {
+
 	InitWithFlag()
 	flag.Parse()
+
 	if err := log.InitFromConfig("sdk.log", "sdk", 4,
 		true, false, "./chat_log", 2, 24); err != nil {
 		panic(err)

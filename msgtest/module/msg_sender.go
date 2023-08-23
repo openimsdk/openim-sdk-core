@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/ccontext"
+
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
@@ -35,6 +36,7 @@ func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *SendM
 		core.recvPushMsgCallback = callback
 	}
 }
+
 
 func newIMconfig(platformID int32, apiAddr, wsAddr string) sdk_struct.IMConfig {
 	return sdk_struct.IMConfig{
@@ -85,6 +87,7 @@ func (b *SendMsgUser) SendMsgWithContext(userID string, index int) error {
 func (b *SendMsgUser) SendGroupMsgWithContext(groupID string, index int) error {
 	newCtx := mcontext.SetOperationID(b.ctx, utils.OperationIDGenerator())
 	return b.SendGroupMsg(newCtx, groupID, index)
+
 }
 
 func (b *SendMsgUser) SendSingleMsg(ctx context.Context, userID string, index int) error {
@@ -134,6 +137,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	now := time.Now().UnixMilli()
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
 		b.failedMessageMap[clientMsgID] = err
+
 		return err
 	}
 	if resp.SendTime-now > 1500 {
@@ -141,6 +145,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	}
 	return nil
 }
+
 
 func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 	for {
