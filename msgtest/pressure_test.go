@@ -54,7 +54,6 @@ func InitWithFlag() {
 func init() {
 
 	InitWithFlag()
-	flag.Parse()
 
 	if err := log.InitFromConfig("sdk.log", "sdk", 4,
 		true, false, "./chat_log", 2, 24); err != nil {
@@ -63,6 +62,7 @@ func init() {
 }
 
 func Test_PressureFull(t *testing.T) {
+	flag.Parse()
 	if friendMsgSenderNum+NotFriendMsgSenderNum+groupMsgSenderNum > totalOnlineUserNum {
 		t.Fatal("sender num > total online user num")
 	}
@@ -93,6 +93,20 @@ func Test_PressureFull(t *testing.T) {
 	// send msg test
 }
 
+func Test_InitUserConn(t *testing.T) {
+	flag.Parse()
+	p := NewPressureTester()
+	userNum := 10
+	// gen userIDs
+	userIDs := p.userManager.GenUserIDs(userNum)
+	// register
+	if err := p.registerUsers(userIDs, nil, nil); err != nil {
+		t.Fatalf("register users failed, err: %v", err)
+	}
+	// init users
+	p.initUserConns(userIDs, nil)
+}
+
 type PressureTester struct {
 	friendManager  *module.TestFriendManager
 	userManager    *module.TestUserManager
@@ -120,14 +134,28 @@ func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs 
 }
 
 func (p *PressureTester) registerUsers(userIDs []string, fastenedUserIDs []string, recvMsgUserIDs []string) error {
-	if err := p.userManager.RegisterUsers(userIDs...); err != nil {
-		return err
+	for i := 0; i < len(userIDs); i += 1000 {
+		end := i + 1000
+		if end > len(userIDs) {
+			end = len(userIDs)
+		}
+		userIDsSlice := userIDs[i:end]
+		if err := p.userManager.RegisterUsers(userIDsSlice...); err != nil {
+			return err
+		}
+		if len(userIDsSlice) < 1000 {
+			break
+		}
 	}
-	if err := p.userManager.RegisterUsers(fastenedUserIDs...); err != nil {
-		return err
+	if len(fastenedUserIDs) != 0 {
+		if err := p.userManager.RegisterUsers(fastenedUserIDs...); err != nil {
+			return err
+		}
 	}
-	if err := p.userManager.RegisterUsers(recvMsgUserIDs...); err != nil {
-		return err
+	if len(recvMsgUserIDs) != 0 {
+		if err := p.userManager.RegisterUsers(recvMsgUserIDs...); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -148,16 +176,17 @@ func (p *PressureTester) initUserConns(userIDs []string, fastenedUserIDs []strin
 			p.notfriendSenderUserIDs = append(p.notfriendSenderUserIDs, userID)
 		}
 	}
-
-	for _, userID := range fastenedUserIDs {
-		token, err := p.userManager.GetToken(userID, int32(PLATFORMID))
-		if err != nil {
-			log.ZError(context.Background(), "get token failed", err, "userID", userID, "platformID", PLATFORMID)
-			continue
+	if len(fastenedUserIDs) != 0 {
+		for _, userID := range fastenedUserIDs {
+			token, err := p.userManager.GetToken(userID, int32(PLATFORMID))
+			if err != nil {
+				log.ZError(context.Background(), "get token failed", err, "userID", userID, "platformID", PLATFORMID)
+				continue
+			}
+			user := module.NewUser(userID, token, sdk_struct.IMConfig{WsAddr: WSADDR, ApiAddr: APIADDR, PlatformID: int32(PLATFORMID)})
+			p.msgSender[userID] = user
+			p.groupSenderUserIDs = append(p.groupSenderUserIDs, userID)
 		}
-		user := module.NewUser(userID, token, sdk_struct.IMConfig{WsAddr: WSADDR, ApiAddr: APIADDR, PlatformID: int32(PLATFORMID)})
-		p.msgSender[userID] = user
-		p.groupSenderUserIDs = append(p.groupSenderUserIDs, userID)
 	}
 }
 
