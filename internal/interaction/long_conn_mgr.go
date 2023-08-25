@@ -518,9 +518,11 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 				errs.TokenMalformedError,
 				errs.TokenNotValidYetError,
 				errs.TokenUnknownError,
-				errs.TokenKickedError,
 				errs.TokenNotExistError:
 				c.listener.OnUserTokenExpired()
+				_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
+			case errs.TokenKickedError:
+				c.listener.OnKickedOffline()
 				_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 			default:
 				c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
