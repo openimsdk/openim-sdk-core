@@ -5,16 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	authPB "github.com/OpenIMSDK/protocol/auth"
+	"github.com/OpenIMSDK/protocol/msg"
+	"github.com/OpenIMSDK/tools/log"
+	"github.com/OpenIMSDK/tools/mcontext"
 	"io"
 	"net/http"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
-
-	authPB "github.com/OpenIMSDK/protocol/auth"
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/OpenIMSDK/tools/mcontext"
 )
 
 const (
@@ -127,4 +127,14 @@ func (m *MetaManager) initToken() error {
 	}
 	m.token = token
 	return nil
+}
+func (m *MetaManager) GetServerTime() (int64, error) {
+	req := msg.GetServerTimeReq{}
+	resp := msg.GetServerTimeResp{}
+	err := m.postWithCtx(constant.GetServerTimeRouter, &req, &resp)
+	if err != nil {
+		return 0, err
+	} else {
+		return resp.ServerTime, nil
+	}
 }

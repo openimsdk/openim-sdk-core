@@ -43,12 +43,12 @@ func UpdateMsgSenderInfo(callback open_im_sdk_callback.Base, operationID string,
 }
 
 // SubscribeUsersStatus Presence status of subscribed users.
-func SubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs []string) {
+func SubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.User().SubscribeUsersStatus, userIDs)
 }
 
 // UnsubscribeUsersStatus Unsubscribe a user's presence.
-func UnsubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs []string) {
+func UnsubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.User().SubscribeUsersStatus, userIDs)
 }
 
@@ -58,6 +58,6 @@ func GetSubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID str
 }
 
 // GetUserStatus Get the online status of users.
-func GetUserStatus(callback open_im_sdk_callback.Base, operationID string, userIDs []string) {
+func GetUserStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.User().GetUserStatus, userIDs)
 }

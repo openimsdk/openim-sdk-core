@@ -2,7 +2,9 @@ package module
 
 import (
 	"context"
+	"fmt"
 	"open_im_sdk/pkg/constant"
+	"time"
 
 	"github.com/OpenIMSDK/protocol/group"
 	"github.com/OpenIMSDK/protocol/sdkws"
@@ -10,6 +12,10 @@ import (
 
 type TestGroupManager struct {
 	*MetaManager
+}
+
+func (t *TestGroupManager) GenGroupID(prefix string) string {
+	return fmt.Sprintf("%s_test_group_id_%d", prefix, time.Now().UnixNano())
 }
 
 func (t *TestGroupManager) CreateGroup(groupID string, groupName string, ownerUserID string, userIDs []string) error {
