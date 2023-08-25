@@ -45,7 +45,7 @@ message GroupInfoForSet{
   string notification = 3;
   string introduction = 4;
   string faceURL = 5;
-  string ex = 6;
+  OpenIMServer.protobuf.StringValue ex = 6;
   OpenIMServer.protobuf.Int32Value needVerification = 7;
   OpenIMServer.protobuf.Int32Value lookMemberInfo = 8;
   OpenIMServer.protobuf.Int32Value applyMemberFriend = 9;
@@ -479,6 +479,7 @@ message RevokeMsgTips{
   int32 sesstionType = 5;
   int64 seq = 6;
   string conversationID = 7;
+  bool isAdminRevoke = 8;
 }
 
 
