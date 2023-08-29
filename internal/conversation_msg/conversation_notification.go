@@ -624,6 +624,8 @@ func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Co
 		return
 	}
 	go func() {
+		c.privateChatLock.Lock()
+		defer c.privateChatLock.Unlock()
 		c.SyncConversations(ctx, []string{tips.ConversationID})
 	}()
 }

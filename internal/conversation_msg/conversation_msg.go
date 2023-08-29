@@ -72,6 +72,7 @@ type Conversation struct {
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	markAsReadLock       sync.Mutex
+	privateChatLock      sync.Mutex
 	loginTime            int64
 	startTime            time.Time
 }
