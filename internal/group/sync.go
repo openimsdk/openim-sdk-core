@@ -28,6 +28,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+	"sync"
 )
 
 func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
@@ -169,9 +170,23 @@ func (g *Group) SyncAllJoinedGroups(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return err
+	groups, err := g.GetServerJoinGroup(ctx)
+	if err != nil {
+		return err
+	}
+	var wg sync.WaitGroup
+	for _, group := range groups {
+		wg.Add(1)
+		go func(groupID string) {
+			defer wg.Done()
+			if err := g.SyncAllGroupMember(ctx, groupID); err != nil {
+				log.ZError(ctx, "SyncGroupMember failed", err)
+			}
+		}(group.GroupID)
+	}
+	wg.Wait()
+	return nil
 }
-
 func (g *Group) syncAllJoinedGroups(ctx context.Context) ([]*sdkws.GroupInfo, error) {
 	groups, err := g.GetServerJoinGroup(ctx)
 	if err != nil {

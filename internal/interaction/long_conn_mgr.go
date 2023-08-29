@@ -166,7 +166,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
-	//c.conn.SetPongHandler(funcation(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	//c.conn.SetPongHandler(function(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 		needRecon, err := c.reConn(ctx, &connNum)
@@ -518,9 +518,11 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 				errs.TokenMalformedError,
 				errs.TokenNotValidYetError,
 				errs.TokenUnknownError,
-				errs.TokenKickedError,
 				errs.TokenNotExistError:
 				c.listener.OnUserTokenExpired()
+				_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
+			case errs.TokenKickedError:
+				c.listener.OnKickedOffline()
 				_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 			default:
 				c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)

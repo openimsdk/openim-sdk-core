@@ -16,6 +16,10 @@ package group
 
 import (
 	"context"
+	"github.com/OpenIMSDK/protocol/group"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -25,12 +29,6 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
-	"sync"
-
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
-	utils2 "github.com/OpenIMSDK/tools/utils"
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
@@ -287,23 +285,4 @@ func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]str
 		}
 	}
 	return groupIDs, nil
-}
-
-func (g *Group) SyncAllJoinedGroupMembers(ctx context.Context) error {
-	groups, err := g.syncAllJoinedGroups(ctx)
-	if err != nil {
-		return err
-	}
-	var wg sync.WaitGroup
-	for _, group := range groups {
-		wg.Add(1)
-		go func(groupID string) {
-			defer wg.Done()
-			if err := g.SyncAllGroupMember(ctx, groupID); err != nil {
-				log.ZError(ctx, "SyncGroupMember failed", err)
-			}
-		}(group.GroupID)
-	}
-	wg.Wait()
-	return nil
 }

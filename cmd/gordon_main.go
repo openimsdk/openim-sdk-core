@@ -36,7 +36,7 @@ var (
 	REGISTERADDR = APIADDR + "/user_register"
 	ACCOUNTCHECK = APIADDR + "/manager/account_check"
 	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
+	SECRET       = "openIM123"
 	//SECRET       = "4zbF9Y6Fs1QJ0hsmpC3B676txZcCnjcZ"
 	SENDINTERVAL = 20
 )
@@ -89,7 +89,7 @@ func gRunGetToken(strMyUid string) string {
 	return token
 }
 func main() {
-	uid := "7788"
+	uid := "6959062403"
 	//Gordon
 	//uid:="1554321956297519104"
 	//Gordon2
