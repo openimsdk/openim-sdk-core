@@ -200,6 +200,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
 	log.ZDebug(ctx, "message come here conversation ch", "conversation length", len(allMsg))
+	var privateChatNum int
 	b := time.Now()
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
@@ -269,6 +270,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					switch v.SessionType {
 					case constant.SingleChatType:
 						lc.UserID = v.RecvID
+						if !isNotPrivate {
+							privateChatNum++
+						}
 					case constant.GroupChatType, constant.SuperGroupChatType:
 						lc.GroupID = v.GroupID
 					}
@@ -389,6 +393,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 	}
 	//Changed conversation storage
+	if privateChatNum > 0 {
+		c.privateChatLock.Lock()
+		defer c.privateChatLock.Unlock()
+	}
 
 	if err := c.db.BatchUpdateConversationList(ctx, append(mapConversationToList(conversationChangedSet), mapConversationToList(phConversationChangedSet)...)); err != nil {
 		log.ZError(ctx, "insert changed conversation err :", err)
