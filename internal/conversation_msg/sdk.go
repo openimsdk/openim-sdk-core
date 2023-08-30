@@ -184,6 +184,8 @@ func (c *Conversation) PinConversation(ctx context.Context, conversationID strin
 }
 
 func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
+	c.privateChatLock.Lock()
+	defer c.privateChatLock.Unlock()
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsPrivateChat: &wrapperspb.BoolValue{Value: isPrivate}})
 }
 
