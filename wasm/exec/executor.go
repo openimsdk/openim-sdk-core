@@ -19,6 +19,7 @@ package exec
 
 import (
 	"errors"
+	"github.com/OpenIMSDK/tools/errs"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"runtime"
@@ -33,6 +34,7 @@ type CallbackData struct {
 }
 
 const TIMEOUT = 5
+const JSNOTFOUND = 10002
 
 var ErrType = errors.New("from javascript data type err")
 var PrimaryKeyNull = errors.New("primary key is null err")
@@ -127,6 +129,9 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 		panic(ErrTimoutFromJavaScript)
 	}
 	if data.ErrCode != 0 {
+		if data.ErrCode == JSNOTFOUND {
+			return nil, errs.ErrRecordNotFound
+		}
 		return "", errors.New(data.ErrMsg)
 	}
 	return data.Data, err

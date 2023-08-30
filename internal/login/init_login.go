@@ -281,7 +281,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend.SetLoginTime(u.loginTime)
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.conversationListener)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db)
 	u.business = business.NewBusiness(u.db)
 	u.cache = cache.NewCache(u.user, u.friend)
 	if u.businessListener != nil {
