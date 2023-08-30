@@ -270,9 +270,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					switch v.SessionType {
 					case constant.SingleChatType:
 						lc.UserID = v.RecvID
-						if !isNotPrivate {
-							privateChatNum++
-						}
 					case constant.GroupChatType, constant.SuperGroupChatType:
 						lc.GroupID = v.GroupID
 					}
@@ -334,11 +331,18 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
 				}
 			}
+			if msg.ContentType == constant.ConversationPrivateChatNotification {
+				privateChatNum++
+			}
 		}
 		insertMsg[conversationID] = insertMessage
 		updateMsg[conversationID] = updateMessage
 	}
-
+	//Changed conversation storage
+	if privateChatNum > 0 {
+		c.privateChatLock.Lock()
+		defer c.privateChatLock.Unlock()
+	}
 	list, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
 		log.ZError(ctx, "GetAllConversationListDB", err)
@@ -375,27 +379,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.MsgDestructTime = v.MsgDestructTime
 		}
 	}
-	var newConversationIDs []string
-	for _, v := range newConversationSet {
-		newConversationIDs = append(newConversationIDs, v.ConversationID)
-	}
-	seqs, err := c.getServerHasReadAndMaxSeqs(ctx, newConversationIDs...)
-	if err != nil {
-		log.ZError(ctx, "getServerHasReadAndMaxSeqs err :", err)
-	}
 
 	for k, v := range newConversationSet {
-		if seq, ok := seqs[v.ConversationID]; ok {
-			v.UnreadCount = int32(seq.MaxSeq - seq.HasReadSeq)
-		}
 		if _, ok := phConversationChangedSet[v.ConversationID]; !ok {
 			phNewConversationSet[k] = v
 		}
-	}
-	//Changed conversation storage
-	if privateChatNum > 0 {
-		c.privateChatLock.Lock()
-		defer c.privateChatLock.Unlock()
 	}
 
 	if err := c.db.BatchUpdateConversationList(ctx, append(mapConversationToList(conversationChangedSet), mapConversationToList(phConversationChangedSet)...)); err != nil {
