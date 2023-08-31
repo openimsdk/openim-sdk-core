@@ -198,6 +198,8 @@ func (c *Conversation) SetConversationIsMsgDestruct(ctx context.Context, convers
 }
 
 func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
+	c.burnLock.Lock()
+	defer c.burnLock.Unlock()
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{BurnDuration: &wrapperspb.Int32Value{Value: burnDuration}})
 }
 

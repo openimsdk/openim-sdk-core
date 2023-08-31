@@ -73,6 +73,7 @@ type Conversation struct {
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	markAsReadLock       sync.Mutex
 	privateChatLock      sync.Mutex
+	burnLock             sync.Mutex
 	loginTime            int64
 	startTime            time.Time
 }
