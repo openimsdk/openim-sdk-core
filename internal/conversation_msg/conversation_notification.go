@@ -602,9 +602,9 @@ func (c *Conversation) DoConversationChangedNotification(ctx context.Context, ms
 		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
 		return
 	}
-	go func() {
-		c.SyncConversations(ctx, tips.ConversationIDList)
-	}()
+
+	c.SyncConversations(ctx, tips.ConversationIDList)
+
 }
 
 func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
@@ -623,11 +623,9 @@ func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Co
 		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
 		return
 	}
-	go func() {
-		c.privateChatLock.Lock()
-		defer c.privateChatLock.Unlock()
-		c.SyncConversations(ctx, []string{tips.ConversationID})
-	}()
+
+	c.SyncConversations(ctx, []string{tips.ConversationID})
+
 }
 
 func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {

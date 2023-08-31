@@ -34,7 +34,6 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/syncer"
-	"sync"
 
 	"github.com/OpenIMSDK/tools/log"
 
@@ -71,8 +70,6 @@ type Conversation struct {
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
-	markAsReadLock       sync.Mutex
-	privateChatLock      sync.Mutex
 	loginTime            int64
 	startTime            time.Time
 }
@@ -200,7 +197,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
 	log.ZDebug(ctx, "message come here conversation ch", "conversation length", len(allMsg))
-	var privateChatNum int
 	b := time.Now()
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
@@ -331,17 +327,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
 				}
 			}
-			if msg.ContentType == constant.ConversationPrivateChatNotification {
-				privateChatNum++
-			}
 		}
 		insertMsg[conversationID] = insertMessage
 		updateMsg[conversationID] = updateMessage
-	}
-	//Changed conversation storage
-	if privateChatNum > 0 {
-		c.privateChatLock.Lock()
-		defer c.privateChatLock.Unlock()
 	}
 	list, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
