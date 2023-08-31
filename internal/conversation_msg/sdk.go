@@ -449,12 +449,12 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		if err == nil {
 			snapshot := u.Query()
 			snapshot.Set("type", "image")
-			snapshot.Set("width", "320")
-			snapshot.Set("height", "320")
+			snapshot.Set("width", "640")
+			snapshot.Set("height", "640")
 			u.RawQuery = snapshot.Encode()
 			s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
-				Width:  320,
-				Height: 320,
+				Width:  640,
+				Height: 640,
 				Url:    u.String(),
 			}
 		} else {
