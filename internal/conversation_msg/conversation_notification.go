@@ -602,9 +602,9 @@ func (c *Conversation) DoConversationChangedNotification(ctx context.Context, ms
 		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
 		return
 	}
-	go func() {
-		c.SyncConversations(ctx, tips.ConversationIDList)
-	}()
+
+	c.SyncConversations(ctx, tips.ConversationIDList)
+
 }
 
 func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
@@ -623,9 +623,9 @@ func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Co
 		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
 		return
 	}
-	go func() {
-		c.SyncConversations(ctx, []string{tips.ConversationID})
-	}()
+
+	c.SyncConversations(ctx, []string{tips.ConversationID})
+
 }
 
 func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
@@ -647,7 +647,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		for _, syncFunc := range []func(c context.Context) error{
 			c.user.SyncLoginUserInfo,
 			c.friend.SyncAllBlackList, c.friend.SyncAllFriendList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
-			c.group.SyncAllJoinedGroups, c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication,
+			c.group.SyncAllJoinedGroupsAndMembers, c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication,
 		} {
 			go func(syncFunc func(c context.Context) error) {
 				_ = syncFunc(ctx)

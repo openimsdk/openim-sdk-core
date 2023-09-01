@@ -42,6 +42,38 @@ func (wsRouter *WsFuncRouter) GetSelfUserInfo(input string, operationID string) 
 	userWorker.User().GetSelfUserInfo(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
+func (wsRouter *WsFuncRouter) SubscribeUsersStatus(userIDList string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.User().SubscribeUsersStatus(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+
+func (wsRouter *WsFuncRouter) UnsubscribeUsersStatus(userIDList string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.User().UnsubscribeUsersStatus(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+
+func (wsRouter *WsFuncRouter) GetSubscribeUsersStatus(userIDList string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.User().GetSubscribeUsersStatus(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+
+func (wsRouter *WsFuncRouter) GetUserStatus(userIDList string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.User().GetUserStatus(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+
 type UserCallback struct {
 	uid string
 }

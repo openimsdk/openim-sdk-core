@@ -165,12 +165,12 @@ func (g *Group) deleteGroup(ctx context.Context, groupID string) error {
 	return nil
 }
 
-func (g *Group) SyncAllJoinedGroups(ctx context.Context) error {
+func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
 	_, err := g.syncAllJoinedGroups(ctx)
 	if err != nil {
 		return err
 	}
-	groups, err := g.GetServerJoinGroup(ctx)
+	groups, err := g.db.GetJoinedGroupListDB(ctx)
 	if err != nil {
 		return err
 	}

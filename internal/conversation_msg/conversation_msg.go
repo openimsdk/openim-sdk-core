@@ -342,7 +342,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		insertMsg[conversationID] = insertMessage
 		updateMsg[conversationID] = updateMessage
 	}
-
 	list, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
 		log.ZError(ctx, "GetAllConversationListDB", err)
@@ -379,24 +378,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.MsgDestructTime = v.MsgDestructTime
 		}
 	}
-	var newConversationIDs []string
-	for _, v := range newConversationSet {
-		newConversationIDs = append(newConversationIDs, v.ConversationID)
-	}
-	seqs, err := c.getServerHasReadAndMaxSeqs(ctx, newConversationIDs...)
-	if err != nil {
-		log.ZError(ctx, "getServerHasReadAndMaxSeqs err :", err)
-	}
 
 	for k, v := range newConversationSet {
-		if seq, ok := seqs[v.ConversationID]; ok {
-			v.UnreadCount = int32(seq.MaxSeq - seq.HasReadSeq)
-		}
 		if _, ok := phConversationChangedSet[v.ConversationID]; !ok {
 			phNewConversationSet[k] = v
 		}
 	}
-	//Changed conversation storage
 
 	if err := c.db.BatchUpdateConversationList(ctx, append(mapConversationToList(conversationChangedSet), mapConversationToList(phConversationChangedSet)...)); err != nil {
 		log.ZError(ctx, "insert changed conversation err :", err)
