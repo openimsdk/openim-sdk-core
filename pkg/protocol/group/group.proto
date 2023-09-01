@@ -353,6 +353,13 @@ message getGroupUsersReqApplicationListResp {
   repeated sdkws.GroupRequest groupRequests = 2;
 }
 
+message notificationUserInfoUpdateReq {
+  string userID =1;
+}
+
+message notificationUserInfoUpdateResp {
+}
+
 service group{
   //创建群
   rpc createGroup(CreateGroupReq) returns(CreateGroupResp);
@@ -419,6 +426,8 @@ service group{
   rpc GetGroupMemberCache(GetGroupMemberCacheReq) returns (GetGroupMemberCacheResp);
 
   rpc GroupCreateCount(GroupCreateCountReq) returns (GroupCreateCountResp);
+
+  rpc NotificationUserInfoUpdate(notificationUserInfoUpdateReq)returns(notificationUserInfoUpdateResp);
 }
 
 

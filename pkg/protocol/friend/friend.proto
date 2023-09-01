@@ -95,7 +95,7 @@ message getPaginationBlacksReq{
   sdkws.RequestPagination pagination = 2;
 }
 message getPaginationBlacksResp{
-  repeated sdkws.BlackInfo blacks= 1;
+  repeated sdkws.BlackInfo blacks = 1;
   int32 total = 2;
 }
 
@@ -162,6 +162,21 @@ message getFriendIDsResp {
   repeated string friendIDs = 1;
 }
 
+message getSpecifiedFriendsInfoReq {
+  string ownerUserID = 1;
+  repeated string userIDList = 2;
+}
+
+message getSpecifiedFriendsInfoInfo {
+  sdkws.UserInfo userInfo = 1;
+  sdkws.FriendInfo friendInfo = 2;
+  sdkws.BlackInfo blackInfo = 3;
+}
+
+message getSpecifiedFriendsInfoResp {
+  repeated getSpecifiedFriendsInfoInfo infos = 1;
+}
+
 service friend{
   //申请加好友
   rpc applyToAddFriend(applyToAddFriendReq) returns(applyToAddFriendResp);
@@ -195,4 +210,6 @@ service friend{
   rpc getPaginationFriends(getPaginationFriendsReq) returns (getPaginationFriendsResp);
   // 获取好友ID列表
   rpc getFriendIDs(getFriendIDsReq) returns (getFriendIDsResp);
+  // 获取指定好友信息
+  rpc GetSpecifiedFriendsInfo(getSpecifiedFriendsInfoReq) returns (getSpecifiedFriendsInfoResp);
 }
