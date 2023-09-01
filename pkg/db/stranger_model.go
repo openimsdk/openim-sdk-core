@@ -20,5 +20,13 @@ func (d *DataBase) GetStrangerInfo(ctx context.Context, userIDs []string) ([]*mo
 }
 
 func (d *DataBase) SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error {
-
+	err := utils.Wrap(d.conn.Where("1 = 1").Delete(&model_struct.LocalStranger{}).Error, "Delete LocalStrangers failed")
+	if err != nil {
+		return err
+	}
+	err = utils.Wrap(d.conn.Create(localStrangerList).Error, "Creat LocalStrangers failed")
+	if err != nil {
+		return err
+	}
+	return nil
 }

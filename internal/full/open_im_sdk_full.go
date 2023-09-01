@@ -16,6 +16,7 @@ package full
 
 import (
 	"context"
+	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -104,14 +105,50 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 	if users == nil {
 		strangerFlag = true
 	}
-
+	var groupMemberList []*model_struct.LocalGroupMember
 	if groupID != "" {
-
+		groupMemberList, err = u.db.GetGroupMemberListByGroupID(ctx, groupID)
+		if err != nil {
+			return nil, err
+		}
 	}
-	if strangerFlag {
-		u.db.SetStrangerInfo(users)
+	if !strangerFlag {
+		var strangers []*model_struct.LocalStranger
+		for _, val := range users {
+			strangerTemp := &model_struct.LocalStranger{
+				UserID:           val.UserID,
+				Nickname:         val.Nickname,
+				FaceURL:          val.FaceURL,
+				CreateTime:       val.CreateTime,
+				AppMangerLevel:   val.AppMangerLevel,
+				Ex:               val.Ex,
+				AttachedInfo:     val.Ex,
+				GlobalRecvMsgOpt: val.GlobalRecvMsgOpt,
+			}
+			strangers = append(strangers, strangerTemp)
+		}
+		err := u.db.SetStrangerInfo(ctx, strangers)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		strangerList, err := u.db.GetStrangerInfo(ctx, userIDs)
+		if err != nil {
+			return nil, err
+		}
+		for _, val := range strangerList {
+			userTemp := &sdkws.UserInfo{
+				UserID:           val.UserID,
+				Nickname:         val.Nickname,
+				FaceURL:          val.FaceURL,
+				Ex:               val.Ex,
+				CreateTime:       val.CreateTime,
+				AppMangerLevel:   val.AppMangerLevel,
+				GlobalRecvMsgOpt: val.GlobalRecvMsgOpt,
+			}
+			users = append(users, userTemp)
+		}
 	}
-	strangerList, err := u.db.GetStrangerInfo(ctx, userIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -123,9 +160,9 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 	for i, b := range blackList {
 		blackMap[b.BlockUserID] = blackList[i]
 	}
-	strangerMap := make(map[string]*model_struct.LocalStranger)
-	for i, b := range strangerList {
-		strangerMap[b.UserID] = strangerList[i]
+	groupMemberMap := make(map[string]*model_struct.LocalGroupMember)
+	for i, b := range groupMemberList {
+		groupMemberMap[b.UserID] = groupMemberList[i]
 	}
 	userMap := make(map[string]*api.PublicUser)
 	for _, info := range users {
@@ -144,10 +181,10 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 			continue
 		}
 		res = append(res, &api.FullUserInfoStranger{
-			PublicInfo:   info,
-			FriendInfo:   friendMap[userID],
-			BlackInfo:    blackMap[userID],
-			StrangerInfo: strangerMap[userID],
+			PublicInfo:      info,
+			FriendInfo:      friendMap[userID],
+			BlackInfo:       blackMap[userID],
+			GroupMemberInfo: groupMemberMap[userID],
 		})
 
 		// update single conversation
