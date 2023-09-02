@@ -295,8 +295,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, conversationID string) []*model_struct.LocalChatLog {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
-		return
-	}
+		return append(self, others...)
 	switch lc.ConversationType {
 	case constant.SingleChatType:
 		c.singleHandle(ctx, self, others, lc)
