@@ -212,7 +212,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
 			conversationID, "message length", len(msgs.Msgs))
-		var insertMessage []*model_struct.LocalChatLog
+		var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
 		var updateMessage []*model_struct.LocalChatLog
 		for _, v := range msgs.Msgs {
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
@@ -288,7 +288,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						newMessages = append(newMessages, msg)
 					}
 					if isHistory {
-						insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
+						selfInsertMessage = append(selfInsertMessage, c.msgStructToLocalChatLog(msg))
 					}
 				}
 			} else { //Sent by others
@@ -322,7 +322,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						newMessages = append(newMessages, msg)
 					}
 					if isHistory {
-						insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
+						othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
 					}
 					switch msg.ContentType {
 					case constant.Typing:
@@ -335,11 +335,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					log.ZWarn(ctx, "Deduplication operation ", nil, "msg", *c.msgStructToLocalErrChatLog(msg))
 					msg.Status = constant.MsgStatusFiltered
 					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(utils.GetCurrentTimestampByNano())
-					insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
+					othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
 				}
 			}
 		}
-		insertMsg[conversationID] = insertMessage
+		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
 		updateMsg[conversationID] = updateMessage
 	}
 	list, err := c.db.GetAllConversationListDB(ctx)
