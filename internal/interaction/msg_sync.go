@@ -217,7 +217,7 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 			oneConversationSyncNum := v[1] - v[0]
 			if (oneConversationSyncNum/SplitPullMsgNum) > 1 && IsNotification(k) {
 				nSeqMap := make(map[string][2]int64, 1)
-				nSeqMap[k] = [2]int64{v[0], oneConversationSyncNum / 2}
+				nSeqMap[k] = [2]int64{v[0], v[0] + oneConversationSyncNum/2}
 				for i := 0; i < 2; i++ {
 					resp, err := m.pullMsgBySeqRange(ctx, nSeqMap, syncMsgNum)
 					if err != nil {
@@ -229,7 +229,7 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 					for conversationID, seqs := range nSeqMap {
 						m.syncedMaxSeqs[conversationID] = seqs[1]
 					}
-					nSeqMap[k] = [2]int64{oneConversationSyncNum/2 + 1, v[1]}
+					nSeqMap[k] = [2]int64{v[0] + oneConversationSyncNum/2 + 1, v[1]}
 				}
 				continue
 			}
