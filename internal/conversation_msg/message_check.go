@@ -293,7 +293,10 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 // 如果本地的为0，可以理解为初始化的时候，数据还未同步，或者异常情况，如果服务器最大seq-服务器最小seq>=0说明还未到底部，否则到底部
 
 func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, conversationID string) []*model_struct.LocalChatLog {
-	lc, _ := c.db.GetConversation(ctx, conversationID)
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return
+	}
 	switch lc.ConversationType {
 	case constant.SingleChatType:
 		c.singleHandle(ctx, self, others, lc)
@@ -310,9 +313,11 @@ func (c *Conversation) singleHandle(ctx context.Context, self, others []*model_s
 			chatLog.SenderNickname = userInfo.Nickname
 		}
 	}
-	for _, chatLog := range others {
-		chatLog.SenderFaceURL = lc.FaceURL
-		chatLog.SenderNickname = lc.ShowName
+	if lc.FaceURL != "" && lc.ShowName != "" {
+		for _, chatLog := range others {
+			chatLog.SenderFaceURL = lc.FaceURL
+			chatLog.SenderNickname = lc.ShowName
+		}
 	}
 
 }
@@ -330,8 +335,10 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 	})
 	for _, chatLog := range allMessage {
 		if g, ok := groupMap[chatLog.SendID]; ok {
-			chatLog.SenderFaceURL = g.FaceURL
-			chatLog.SenderNickname = g.Nickname
+			if g.FaceURL != "" && g.Nickname != "" {
+				chatLog.SenderFaceURL = g.FaceURL
+				chatLog.SenderNickname = g.Nickname
+			}
 		}
 	}
 }
