@@ -296,7 +296,6 @@ func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, other
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return append(self, others...)
-	}
 	switch lc.ConversationType {
 	case constant.SingleChatType:
 		c.singleHandle(ctx, self, others, lc)
