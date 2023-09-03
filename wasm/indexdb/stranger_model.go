@@ -57,5 +57,6 @@ func (l *LocalStrangers) GetStrangerInfo(ctx context.Context, userIDs []string) 
 }
 
 func (l *LocalStrangers) SetStrangerInfo(ctx context.Context, strangerList []*model_struct.LocalStranger) error {
-	return nil
+	_, err := exec.Exec(utils.StructToJsonString(strangerList))
+	return err
 }
