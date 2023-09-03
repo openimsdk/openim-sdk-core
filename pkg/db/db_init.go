@@ -210,6 +210,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 		&model_struct.TempCacheLocalChatLog{},
 		&model_struct.LocalChatLogReactionExtensions{},
 		&model_struct.LocalUpload{},
+		&model_struct.LocalStranger{},
 	)
 	if err != nil {
 		return err

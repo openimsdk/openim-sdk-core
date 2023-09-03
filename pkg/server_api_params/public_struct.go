@@ -45,6 +45,13 @@ type FullUserInfo struct {
 	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
 
+type FullUserInfoStranger struct {
+	PublicInfo      *PublicUser                    `json:"publicInfo"`
+	FriendInfo      *model_struct.LocalFriend      `json:"friendInfo"`
+	BlackInfo       *model_struct.LocalBlack       `json:"blackInfo"`
+	GroupMemberInfo *model_struct.LocalGroupMember `json:"groupMemberInfo"`
+}
+
 //GroupName    string                `json:"groupName"`
 //	Introduction string                `json:"introduction"`
 //	NotificationCmd string                `json:"notification"`
