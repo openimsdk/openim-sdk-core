@@ -25,7 +25,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (d *DataBase) GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error) {
+func (d DataBase) GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendList []model_struct.LocalStranger
