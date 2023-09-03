@@ -107,7 +107,7 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 	}
 	var groupMemberList []*model_struct.LocalGroupMember
 	if groupID != "" {
-		groupMemberList, err = u.db.GetGroupMemberListByGroupID(ctx, groupID)
+		groupMemberList, err = u.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -148,9 +148,6 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 			}
 			users = append(users, userTemp)
 		}
-	}
-	if err != nil {
-		return nil, err
 	}
 	friendMap := make(map[string]*model_struct.LocalFriend)
 	for i, f := range friendList {
