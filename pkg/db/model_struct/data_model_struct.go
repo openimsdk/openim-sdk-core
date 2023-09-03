@@ -496,3 +496,18 @@ type LocalUpload struct {
 func (LocalUpload) TableName() string {
 	return "local_uploads"
 }
+
+type LocalStranger struct {
+	UserID           string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname         string `gorm:"column:name;type:varchar(255)" json:"nickname"`
+	FaceURL          string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
+	AppMangerLevel   int32  `gorm:"column:app_manger_level" json:"-"`
+	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	GlobalRecvMsgOpt int32  `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
+}
+
+func (LocalStranger) TableName() string {
+	return "local_stranger"
+}
