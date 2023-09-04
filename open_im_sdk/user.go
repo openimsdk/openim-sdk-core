@@ -21,6 +21,9 @@ import (
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.Full().GetUsersInfo, userIDs)
 }
+func GetUsersInfoStranger(callback open_im_sdk_callback.Base, operationID string, userIDs, groupID string) {
+	call(callback, operationID, UserForSDK.Full().GetUsersInfoStranger, userIDs, groupID)
+}
 
 // GetUsersInfoFromSrv obtains the information about multiple users.
 func GetUsersInfoFromSrv(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
@@ -49,7 +52,7 @@ func SubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string
 
 // UnsubscribeUsersStatus Unsubscribe a user's presence.
 func UnsubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.User().SubscribeUsersStatus, userIDs)
+	call(callback, operationID, UserForSDK.User().UnsubscribeUsersStatus, userIDs)
 }
 
 // GetSubscribeUsersStatus Get the online status of subscribers.

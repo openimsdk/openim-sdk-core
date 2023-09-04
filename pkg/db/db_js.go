@@ -40,6 +40,7 @@ type IndexDB struct {
 	*indexdb.LocalChatLogReactionExtensions
 	*indexdb.NotificationSeqs
 	*indexdb.LocalUpload
+	*indexdb.LocalStrangers
 	loginUserID string
 }
 
@@ -71,6 +72,7 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		LocalChatLogReactionExtensions:  indexdb.NewLocalChatLogReactionExtensions(),
 		NotificationSeqs:                indexdb.NewNotificationSeqs(),
 		LocalUpload:                     indexdb.NewLocalUpload(),
+		LocalStrangers:                  indexdb.NewLocalStrangers(),
 		loginUserID:                     loginUserID,
 	}
 	err := i.InitDB(ctx, loginUserID, dbDir)
