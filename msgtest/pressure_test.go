@@ -48,7 +48,7 @@ func InitWithFlag() {
 	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
 
 	flag.IntVar(&recvMsgUserNum, "r", 20, "recv msg user num")
-	flag.IntVar(&fastenedUserNum, "u", 320, "fastened user num")
+	flag.IntVar(&fastenedUserNum, "u", 300, "fastened user num")
 }
 
 func init() {
@@ -128,7 +128,7 @@ func NewPressureTester() *PressureTester {
 
 func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs []string) {
 	userIDs = p.userManager.GenUserIDs(totalOnlineUserNum - fastenedUserNum)                  // 在线用户
-	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(fastenedUserNum, FastenedUserPrefix) // 指定320用户
+	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(fastenedUserNum, FastenedUserPrefix) // 指定300用户
 	recvMsgUserIDs = p.userManager.GenUserIDsWithPrefix(recvMsgUserNum, RecvMsgPrefix)        // 抽样用户完整SDK
 	return
 }
@@ -200,7 +200,7 @@ func (p *PressureTester) createTestGroups(userIDs, fastenedUserIDs, recvMsgUserI
 		}
 		p.tenThousandGroupIDs = append(p.tenThousandGroupIDs, groupID)
 	}
-	// create thousand group
+	// create two thousand group
 	exclude := TenThousandGroupNum * TenThousandGroupUserNum
 	for i := 1; i <= ThousandGroupNum; i++ {
 		groupID := p.groupManager.GenGroupID(fmt.Sprintf("thousandGroup_%d", i))
@@ -210,7 +210,7 @@ func (p *PressureTester) createTestGroups(userIDs, fastenedUserIDs, recvMsgUserI
 		}
 		p.thousandGroupIDs = append(p.thousandGroupIDs, groupID)
 	}
-	// create hundred group
+	// create five hundred group
 	exclude += exclude + ThousandGroupNum*ThousandGroupUserNum
 	for i := 1; i <= HundredGroupNum; i++ {
 		groupID := p.groupManager.GenGroupID(fmt.Sprintf("hundredGroup_%d", i))
