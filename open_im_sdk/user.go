@@ -29,6 +29,10 @@ func GetUsersInfoWithStrange(callback open_im_sdk_callback.Base, operationID str
 	call(callback, operationID, UserForSDK.Full().GetUsersInfoStranger, userIDs)
 }
 
+func GetUsersInfoWithStrange(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
+	call(callback, operationID, UserForSDK.Full().GetUsersInfoStranger, userIDs)
+}
+
 // GetUsersInfoFromSrv obtains the information about multiple users.
 func GetUsersInfoFromSrv(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDs)
