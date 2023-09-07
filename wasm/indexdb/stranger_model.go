@@ -33,7 +33,6 @@ type LocalStrangers struct {
 func NewLocalStrangers() *LocalStrangers {
 	return &LocalStrangers{}
 }
-
 func (l *LocalStrangers) GetStrangerInfo(ctx context.Context, userIDs []string) (result []*model_struct.LocalStranger, err error) {
 	gList, err := exec.Exec(utils.StructToJsonString(userIDs))
 	if err != nil {
