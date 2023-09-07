@@ -19,6 +19,8 @@ package db
 
 import (
 	"context"
+	"errors"
+	"gorm.io/gorm"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
@@ -37,13 +39,20 @@ func (d *DataBase) GetStrangerInfo(ctx context.Context, userIDs []string) ([]*mo
 }
 
 func (d *DataBase) SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error {
-	err := utils.Wrap(d.conn.Where("1 = 1").Delete(&model_struct.LocalStranger{}).Error, "Delete LocalStrangers failed")
-	if err != nil {
-		return err
-	}
-	err = utils.Wrap(d.conn.Create(localStrangerList).Error, "Creat LocalStrangers failed")
-	if err != nil {
-		return err
+	//TODO Can be optimized into two chan batch update or insert operations
+	for _, existingData := range localStrangerList {
+		result := d.conn.First(&existingData, "user_id = ?", existingData.UserID)
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// Data does not exist, perform insert operation
+			err := d.conn.Create(&existingData).Error
+			return err
+		} else if result.Error != nil {
+			return result.Error
+		}
+		err := d.conn.Save(&existingData).Error
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
