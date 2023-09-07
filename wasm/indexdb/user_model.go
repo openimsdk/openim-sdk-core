@@ -94,29 +94,3 @@ func (l *LocalUsers) InsertLoginUser(ctx context.Context, user *model_struct.Loc
 	_, err := exec.Exec(utils.StructToJsonString(temp))
 	return err
 }
-
-func (l *LocalUsers) GetStrangerInfo(ctx context.Context, userIDs []string) (result []*model_struct.LocalStranger, err error) {
-	gList, err := exec.Exec(utils.StructToJsonString(userIDs))
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := gList.(string); ok {
-			var temp []model_struct.LocalStranger
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
-			}
-			return result, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}
-
-func (l *LocalUsers) SetStrangerInfo(ctx context.Context, strangerList []*model_struct.LocalStranger) error {
-	return nil
-}
