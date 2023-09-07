@@ -1,7 +1,7 @@
 package module
 
 import (
-	"open_im_sdk/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 
 	"github.com/OpenIMSDK/protocol/friend"
 )

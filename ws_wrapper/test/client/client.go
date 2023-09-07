@@ -16,9 +16,9 @@ package client
 
 import (
 	"encoding/json"
-	"open_im_sdk/pkg/network"
-	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"sync"
 
 	"github.com/gorilla/websocket"

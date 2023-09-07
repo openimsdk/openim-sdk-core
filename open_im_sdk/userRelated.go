@@ -16,12 +16,12 @@ package open_im_sdk
 
 import (
 	"errors"
-	"open_im_sdk/internal/login"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/sdkerrs"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/login"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"reflect"
 	"runtime"
 	"strings"

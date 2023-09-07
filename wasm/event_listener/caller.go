@@ -20,9 +20,9 @@ package event_listener
 import (
 	"bytes"
 	"errors"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/wasm/exec"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"reflect"
 	"strconv"
 	"strings"

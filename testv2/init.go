@@ -20,11 +20,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/OpenIMSDK/protocol/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"io"
 	"math/rand"
 	"net/http"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/ccontext"
 	"strconv"
 	"time"
 

@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"open_im_sdk/test"
+	"github.com/openimsdk/openim-sdk-core/v3/test"
 	"time"
 )
 

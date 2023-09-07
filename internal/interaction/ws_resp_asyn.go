@@ -17,7 +17,7 @@ package interaction
 import (
 	"context"
 	"errors"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"sync"
 	"time"
 

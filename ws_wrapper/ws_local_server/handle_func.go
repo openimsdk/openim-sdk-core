@@ -8,8 +8,8 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"reflect"
 	"runtime"
 )

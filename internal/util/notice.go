@@ -17,7 +17,7 @@ package util
 import (
 	"context"
 	"encoding/json"
-	"open_im_sdk/pkg/syncer"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 )
 
 func NoticeChange[T any](fn func(data string)) func(ctx context.Context, state int, value T) error {

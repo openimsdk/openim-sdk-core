@@ -3,7 +3,7 @@ package module
 import (
 	"context"
 	"fmt"
-	"open_im_sdk/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"time"
 
 	"github.com/OpenIMSDK/protocol/group"

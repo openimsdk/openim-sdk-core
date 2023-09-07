@@ -15,11 +15,11 @@
 package third
 
 import (
-	"open_im_sdk/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 )
 
 type Push struct {

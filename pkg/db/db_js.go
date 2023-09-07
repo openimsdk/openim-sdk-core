@@ -17,8 +17,8 @@ package db
 import (
 	"context"
 	"errors"
-	"open_im_sdk/wasm/exec"
-	"open_im_sdk/wasm/indexdb"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/indexdb"
 )
 
 var ErrType = errors.New("from javascript data type err")

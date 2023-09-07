@@ -19,8 +19,8 @@ package main
 
 import (
 	"fmt"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/wasm/wasm_wrapper"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 	"runtime"
 	"runtime/debug"
 

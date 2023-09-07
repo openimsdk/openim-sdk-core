@@ -16,13 +16,13 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/test/client"
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/ws_local_server"
 	"net/url"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
-	"open_im_sdk/ws_wrapper/test/client"
-	"open_im_sdk/ws_wrapper/ws_local_server"
 	"sync"
 	"time"
 

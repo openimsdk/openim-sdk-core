@@ -17,11 +17,11 @@ package user
 import (
 	"context"
 	"fmt"
-	"open_im_sdk/internal/util"
-	"open_im_sdk/pkg/db/db_interface"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/sdkerrs"
-	"open_im_sdk/pkg/syncer"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 
 	authPb "github.com/OpenIMSDK/protocol/auth"
 	"github.com/OpenIMSDK/protocol/sdkws"
@@ -29,10 +29,10 @@ import (
 	"github.com/OpenIMSDK/tools/log"
 
 	PbConstant "github.com/OpenIMSDK/protocol/constant"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
 // User is a struct that represents a user in the system.

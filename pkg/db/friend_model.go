@@ -21,8 +21,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
 func (d *DataBase) InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error {

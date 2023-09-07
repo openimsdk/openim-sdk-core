@@ -16,10 +16,10 @@ package test
 
 import (
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"io/ioutil"
 	"math/rand"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
 	"os"
 	"runtime"
 	"strconv"

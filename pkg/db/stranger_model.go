@@ -20,9 +20,9 @@ package db
 import (
 	"context"
 	"errors"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"gorm.io/gorm"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
 )
 
 func (d *DataBase) GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error) {

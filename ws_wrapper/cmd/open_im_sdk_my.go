@@ -9,9 +9,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"open_im_sdk/sdk_struct"
-	"open_im_sdk/ws_wrapper/utils"
-	"open_im_sdk/ws_wrapper/ws_local_server"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/ws_local_server"
 	"runtime"
 	"sync"
 )
