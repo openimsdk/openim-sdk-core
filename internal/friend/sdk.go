@@ -16,12 +16,12 @@ package friend
 
 import (
 	"context"
-	"open_im_sdk/internal/util"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	sdk "open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/sdkerrs"
-	"open_im_sdk/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 
 	"github.com/OpenIMSDK/protocol/friend"
 	"github.com/OpenIMSDK/tools/log"

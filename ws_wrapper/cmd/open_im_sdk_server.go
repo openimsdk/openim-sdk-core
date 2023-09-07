@@ -17,20 +17,20 @@ package main
 import (
 	"flag"
 	"fmt"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 
 	//	_ "net/http/pprof"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"net/http"
 	_ "net/http/pprof"
-	"open_im_sdk/sdk_struct"
 
 	//"open_im_sdk/open_im_sdk"
 
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/ws_local_server"
 	log1 "log"
-	"open_im_sdk/ws_wrapper/utils"
-	"open_im_sdk/ws_wrapper/ws_local_server"
 	"runtime"
 	"sync"
 )

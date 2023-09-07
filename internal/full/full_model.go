@@ -16,7 +16,7 @@ package full
 
 import (
 	"context"
-	"open_im_sdk/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 )
 
 func (u *Full) GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {

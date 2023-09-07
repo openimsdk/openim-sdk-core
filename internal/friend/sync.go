@@ -16,9 +16,9 @@ package friend
 
 import (
 	"context"
-	"open_im_sdk/internal/util"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 
 	"github.com/OpenIMSDK/protocol/friend"
 	"github.com/OpenIMSDK/protocol/sdkws"

@@ -16,8 +16,8 @@ package open_im_sdk_callback
 
 import (
 	"context"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
 	"github.com/OpenIMSDK/tools/log"
 )

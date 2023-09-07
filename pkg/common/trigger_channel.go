@@ -17,9 +17,9 @@ package common
 import (
 	"context"
 	"errors"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
 
 	"github.com/OpenIMSDK/tools/log"

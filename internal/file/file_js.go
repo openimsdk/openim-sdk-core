@@ -19,8 +19,8 @@ package file
 
 import (
 	"errors"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"io"
-	"open_im_sdk/wasm/exec"
 	"syscall/js"
 )
 

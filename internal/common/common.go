@@ -15,7 +15,7 @@
 package common
 
 import (
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/golang/protobuf/proto"

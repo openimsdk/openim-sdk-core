@@ -16,7 +16,7 @@ package testv2
 
 import (
 	"github.com/OpenIMSDK/protocol/constant"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
 
 const (

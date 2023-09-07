@@ -19,10 +19,10 @@ package wasm_wrapper
 
 import (
 	"errors"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/wasm/event_listener"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/event_listener"
 	"syscall/js"
 )
 
