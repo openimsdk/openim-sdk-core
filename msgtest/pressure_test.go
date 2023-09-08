@@ -96,7 +96,7 @@ func Test_PressureFull(t *testing.T) {
 func Test_InitUserConn(t *testing.T) {
 	flag.Parse()
 	p := NewPressureTester()
-	userNum := 10000
+	userNum := 50000
 	// gen userIDs
 	userIDs := p.userManager.GenUserIDs(userNum)
 	// register
