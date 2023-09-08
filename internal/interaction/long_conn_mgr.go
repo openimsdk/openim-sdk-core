@@ -282,10 +282,16 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-c.heartbeatCh:
 			c.sendPingToServer(ctx)
 		case <-ticker.C:
-			c.sendPingToServer(ctx)
+			c.sendPingMessage(ctx)
 		}
 	}
 
+}
+func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
+	c.conn.SetWriteDeadline(writeWait)
+	if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+		return
+	}
 }
 func getGoroutineID() int64 {
 	buf := make([]byte, 64)
