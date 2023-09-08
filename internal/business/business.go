@@ -16,10 +16,10 @@ package business
 
 import (
 	"context"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/db/db_interface"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 

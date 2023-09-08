@@ -15,14 +15,14 @@
 package test
 
 import (
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 
 	//	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/login"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/login"
 )
 
 func init() {

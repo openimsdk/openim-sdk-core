@@ -18,8 +18,8 @@ import (
 	"flag"
 	"fmt"
 
-	"open_im_sdk/ws_wrapper/test"
-	"open_im_sdk/ws_wrapper/test/client"
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/test"
+	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/test/client"
 	"time"
 )
 

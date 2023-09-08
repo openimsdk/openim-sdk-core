@@ -19,8 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"

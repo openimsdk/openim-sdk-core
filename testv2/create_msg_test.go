@@ -15,8 +15,8 @@
 package testv2
 
 import (
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"testing"
 )
 

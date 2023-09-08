@@ -17,8 +17,8 @@ package interaction
 import (
 	"bytes"
 	"compress/gzip"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"io"
-	"open_im_sdk/pkg/utils"
 )
 
 type Compressor interface {

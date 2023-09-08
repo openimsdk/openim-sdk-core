@@ -15,7 +15,7 @@
 package open_im_sdk
 
 import (
-	"open_im_sdk/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 )
 
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
@@ -23,6 +23,10 @@ func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userID
 }
 func GetUsersInfoStranger(callback open_im_sdk_callback.Base, operationID string, userIDs, groupID string) {
 	call(callback, operationID, UserForSDK.Full().GetUsersInfoStranger, userIDs, groupID)
+}
+
+func GetUsersInfoWithStrange(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
+	call(callback, operationID, UserForSDK.Full().GetUsersInfoStranger, userIDs)
 }
 
 // GetUsersInfoFromSrv obtains the information about multiple users.

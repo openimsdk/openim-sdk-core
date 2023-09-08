@@ -16,9 +16,9 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
 type GroupCallback struct {
@@ -425,7 +425,7 @@ func (wsRouter *WsFuncRouter) SearchGroupMembers(input string, operationID strin
 		m["searchParam"].(string), operationID)
 }
 
-//SetGroupApplyMemberFriend
+// SetGroupApplyMemberFriend
 func (wsRouter *WsFuncRouter) SetGroupApplyMemberFriend(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
@@ -441,7 +441,7 @@ func (wsRouter *WsFuncRouter) SetGroupApplyMemberFriend(input string, operationI
 		int32(m["rule"].(float64)), m["groupID"].(string), operationID)
 }
 
-//SetGroupApplyMemberFriend
+// SetGroupApplyMemberFriend
 func (wsRouter *WsFuncRouter) SetGroupLookMemberInfo(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {

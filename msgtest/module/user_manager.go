@@ -2,7 +2,7 @@ package module
 
 import (
 	"fmt"
-	"open_im_sdk/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
@@ -38,8 +38,6 @@ func (t *TestUserManager) RegisterUsers(userIDs ...string) error {
 	}, nil)
 }
 
-
 func (t *TestUserManager) GetToken(userID string, platformID int32) (string, error) {
 	return t.getToken(userID, platformID)
 }
-

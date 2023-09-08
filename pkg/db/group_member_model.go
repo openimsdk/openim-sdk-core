@@ -21,10 +21,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
 func (d *DataBase) GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error) {

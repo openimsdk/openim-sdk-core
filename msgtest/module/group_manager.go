@@ -3,7 +3,7 @@ package module
 import (
 	"context"
 	"fmt"
-	"open_im_sdk/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"time"
 
 	"github.com/OpenIMSDK/protocol/group"
@@ -19,8 +19,15 @@ func (t *TestGroupManager) GenGroupID(prefix string) string {
 }
 
 func (t *TestGroupManager) CreateGroup(groupID string, groupName string, ownerUserID string, userIDs []string) error {
+	const batch = 2000
+	var memberUserIDs []string
+	if len(userIDs) > batch {
+		memberUserIDs = userIDs[:batch]
+	} else {
+		memberUserIDs = userIDs
+	}
 	req := &group.CreateGroupReq{
-		MemberUserIDs: userIDs,
+		MemberUserIDs: memberUserIDs,
 		OwnerUserID:   ownerUserID,
 		GroupInfo: &sdkws.GroupInfo{
 			GroupID:       groupID,
@@ -30,7 +37,32 @@ func (t *TestGroupManager) CreateGroup(groupID string, groupName string, ownerUs
 		},
 	}
 	resp := &group.CreateGroupResp{}
-	return t.postWithCtx(constant.CreateGroupRouter, &req, &resp)
+	if err := t.postWithCtx(constant.CreateGroupRouter, &req, &resp); err != nil {
+		return err
+	}
+	if len(userIDs) > batch {
+		num := len(userIDs) / batch
+		if len(userIDs)%batch != 0 {
+			num++
+		}
+		for i := 1; i < num; i++ {
+			start := batch * i
+			end := batch*i + batch
+			if len(userIDs) < end {
+				end = len(userIDs)
+			}
+			req := map[string]any{
+				"groupID":        groupID,
+				"invitedUserIDs": userIDs[start:end],
+				"reason":         "test",
+			}
+			resp := struct{}{}
+			if err := t.postWithCtx(constant.RouterGroup+"/invite_user_to_group", req, &resp); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (t *TestGroupManager) InviteUserToGroup(ctx context.Context, groupID string, invitedUserIDs []string) error {
