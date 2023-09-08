@@ -166,7 +166,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
-	c.conn.SetPongHandler(c.pongHandler)
 	//c.conn.SetPongHandler(function(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
@@ -556,6 +555,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	c.w.Lock()
 	c.connStatus = Connected
 	c.w.Unlock()
+	c.conn.SetPongHandler(c.pongHandler)
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
