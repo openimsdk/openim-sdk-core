@@ -208,6 +208,9 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
+		case PongMessage:
+			_ = c.conn.SetReadDeadline(pongWait)
+
 		default:
 		}
 
@@ -289,7 +292,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 }
 func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
 	c.conn.SetWriteDeadline(writeWait)
-	if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+	if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
 		return
 	}
 }
