@@ -105,6 +105,7 @@ func Test_InitUserConn(t *testing.T) {
 	//}
 	// init users
 	p.initUserConns(userIDs, nil)
+	time.Sleep(time.Hour * 60)
 }
 
 type PressureTester struct {
