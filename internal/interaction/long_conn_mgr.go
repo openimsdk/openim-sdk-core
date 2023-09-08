@@ -166,6 +166,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
+	c.conn.SetPongHandler(c.pongHandler)
 	//c.conn.SetPongHandler(function(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
@@ -209,6 +210,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			c.closedErr = ErrClientClosed
 			return
 		case PongMessage:
+			log.ZDebug(c.ctx, "receive pong message")
 			_ = c.conn.SetReadDeadline(pongWait)
 
 		default:
@@ -291,6 +293,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 
 }
 func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
+	log.ZInfo(ctx, "ping message tart", "goroutine ID:", getGoroutineID())
 	c.conn.SetWriteDeadline(writeWait)
 	if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
 		return
@@ -306,6 +309,11 @@ func getGoroutineID() int64 {
 	}
 	return id
 }
+func (c *LongConnMgr) pongHandler(_ string) error {
+	c.conn.SetReadDeadline(pongWait)
+	return nil
+}
+
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
 		return

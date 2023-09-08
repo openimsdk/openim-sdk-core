@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-type PongHandler func(string) error
+type PingPongHandler func(string) error
 type LongConn interface {
 	//Close this connection
 	Close() error
@@ -38,7 +38,8 @@ type LongConn interface {
 	IsNil() bool
 	// SetReadLimit sets the maximum size for a message read from the peer.bytes
 	SetReadLimit(limit int64)
-	SetPongHandler(handler PongHandler)
+	SetPongHandler(handler PingPongHandler)
+	SetPingHandler(handler PingPongHandler)
 	// LocalAddr returns the local network address.
 	LocalAddr() string
 }
