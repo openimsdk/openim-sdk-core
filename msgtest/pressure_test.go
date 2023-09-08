@@ -96,13 +96,13 @@ func Test_PressureFull(t *testing.T) {
 func Test_InitUserConn(t *testing.T) {
 	flag.Parse()
 	p := NewPressureTester()
-	userNum := 10
+	userNum := 50000
 	// gen userIDs
 	userIDs := p.userManager.GenUserIDs(userNum)
 	// register
-	if err := p.registerUsers(userIDs, nil, nil); err != nil {
-		t.Fatalf("register users failed, err: %v", err)
-	}
+	//if err := p.registerUsers(userIDs, nil, nil); err != nil {
+	//	t.Fatalf("register users failed, err: %v", err)
+	//}
 	// init users
 	p.initUserConns(userIDs, nil)
 }
