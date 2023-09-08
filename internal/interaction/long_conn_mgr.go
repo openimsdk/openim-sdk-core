@@ -208,9 +208,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
-		case PongMessage:
-			log.ZDebug(c.ctx, "receive pong message")
-			_ = c.conn.SetReadDeadline(pongWait)
 
 		default:
 		}
@@ -273,7 +270,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
-	ticker := time.NewTicker(pongWait)
+	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
 		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat", "heartbeat done sdk logout.....")
