@@ -71,10 +71,10 @@ func Test_PressureFull(t *testing.T) {
 	// gen userIDs
 	userIDs, fastenedUserIDs, recvMsgUserIDs := p.genUserIDs()
 
-	// register
-	if err := p.registerUsers(userIDs, fastenedUserIDs, recvMsgUserIDs); err != nil {
-		t.Fatalf("register users failed, err: %v", err)
-	}
+	//// register
+	//if err := p.registerUsers(userIDs, fastenedUserIDs, recvMsgUserIDs); err != nil {
+	//	t.Fatalf("register users failed, err: %v", err)
+	//}
 	// init users
 	p.initUserConns(userIDs, fastenedUserIDs)
 
