@@ -269,7 +269,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(pongWait)
 	defer func() {
 		ticker.Stop()
 		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat", "heartbeat done sdk logout.....")
