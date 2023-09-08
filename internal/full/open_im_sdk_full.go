@@ -97,22 +97,8 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 	if err != nil {
 		return nil, err
 	}
-	strangerFlag := false
 	users, err := u.user.GetServerUserInfo(ctx, userIDs)
-	if err != nil {
-		return nil, err
-	}
-	if users == nil {
-		strangerFlag = true
-	}
-	var groupMemberList []*model_struct.LocalGroupMember
-	if groupID != "" {
-		groupMemberList, err = u.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if !strangerFlag {
+	if err == nil {
 		var strangers []*model_struct.LocalStranger
 		for _, val := range users {
 			strangerTemp := &model_struct.LocalStranger{
@@ -147,6 +133,13 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 				GlobalRecvMsgOpt: val.GlobalRecvMsgOpt,
 			}
 			users = append(users, userTemp)
+		}
+	}
+	var groupMemberList []*model_struct.LocalGroupMember
+	if groupID != "" {
+		groupMemberList, err = u.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
+		if err != nil {
+			return nil, err
 		}
 	}
 	friendMap := make(map[string]*model_struct.LocalFriend)
