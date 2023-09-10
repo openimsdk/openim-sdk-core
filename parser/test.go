@@ -5,9 +5,11 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"golang.org/x/tools/go/packages"
 	"log"
 	"path/filepath"
+	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 func main() {
@@ -16,7 +18,7 @@ func main() {
 	// 加载包信息
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedFiles | packages.NeedTypesInfo |
-			packages.NeedImports | packages.NeedName,
+			packages.NeedImports | packages.NeedName|packages.NeedDeps,
 		Tests: true,
 		Dir:   filePath,
 	}
@@ -30,14 +32,11 @@ func main() {
 
 	// 遍历文件中的所有声明
 	for _, pkg := range pkgs {
-		for _, file := range pkg.GoFiles {
-			fmt.Println("file name", filepath.Base(file))
+		// for _, file := range pkg.GoFiles {
+		// 	fmt.Println("file name", filepath.Base(file))
 
-		}
+		// }
 		for _, file := range pkg.Syntax {
-			//if file.Name.String() != "sdk.go" {
-			//	continue
-			//}
 			for _, decl := range file.Decls {
 				// 仅处理函数声明
 				if fdecl, ok := decl.(*ast.FuncDecl); ok {
@@ -51,7 +50,9 @@ func main() {
 						funcLine := pkg.Fset.Position(funcPos).Line
 						//fmt.Println("Location:", funcFile, "Line:", funcLine)
 						fmt.Println("Function Declared at:", fmt.Sprintf("%s:%d", funcFile, funcLine))
-
+						if filepath.Base(funcFile)!="sdk.go" {
+							continue
+						}
 						// 处理函数参数
 						fmt.Println("Parameters:")
 						for _, param := range fdecl.Type.Params.List {
@@ -134,23 +135,35 @@ func getObjectPosition(obj types.Object, fset *token.FileSet) string {
 //		return ""
 //	}
 //
+
+func getLastSegment(typeName string, separator string) string {
+	index := strings.Index(typeName, separator)
+	if index == -1 {
+		return typeName
+	}
+	return typeName[index+len(separator):]
+}
 // 没有处理当前包的情况
 // 获取类型的位置信息
 func getTypePosition(typeName string, pkg *packages.Package) string {
 	for _, pkgInfo := range pkg.Imports {
-		fmt.Println("compare::::", pkgInfo.Name)
+		// fmt.Println("compare::::", pkgInfo.Name)
 		for _, file := range pkgInfo.Syntax {
 			var typePos token.Pos
-
+				// fmt.Println("compare file::::", pkgInfo.Name)
+         
 			ast.Inspect(file, func(node ast.Node) bool {
 				if typeSpec, ok := node.(*ast.TypeSpec); ok {
+					if pkgInfo.Name == "sdk_struct"&&typeSpec.Name.Name == "MsgStruct" &&typeName == "*github.com/openimsdk/openim-sdk-core/v3/sdk_struct.MsgStruct"{
+						fmt.Println("msg struct",typeSpec.Name.Name,fmt.Sprintf("%s.%s", pkgInfo.PkgPath, typeSpec.Name.Name))
+					}
+					if fmt.Sprintf("%s.%s", pkgInfo.PkgPath, typeSpec.Name.Name) == getLastSegment(typeName,"*") {
 					fmt.Println("compare::::", getTypeString(typeSpec.Type, pkgInfo.TypesInfo), typeName)
-					if getTypeString(typeSpec.Type, pkgInfo.TypesInfo) == typeName {
 						typePos = typeSpec.Pos()
 						return false // 停止继续遍历
 					}
 				}
-				fmt.Println("not compare::::")
+				// fmt.Println("not compare::::")
 				return true // 继续遍历
 			})
 			if typePos != token.NoPos {
@@ -186,6 +199,7 @@ func isCustomType(typeName string) bool {
 		"uintptr":         true,
 		"context.Context": true,
 		"error":           true,
+		"[]string":        true,
 	}
 
 	return !basicTypes[typeName]
