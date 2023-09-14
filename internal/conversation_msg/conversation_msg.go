@@ -164,7 +164,6 @@ func (c *Conversation) initSyncer() {
 				server.Ex != local.Ex ||
 				server.MaxSeq != local.MaxSeq ||
 				server.MinSeq != local.MinSeq ||
-				server.HasReadSeq != local.HasReadSeq ||
 				server.MsgDestructTime != local.MsgDestructTime ||
 				server.IsMsgDestruct != local.IsMsgDestruct {
 				log.ZDebug(context.Background(), "not same", "conversationID", server.ConversationID, "server", server.RecvMsgOpt, "local", local.RecvMsgOpt)
