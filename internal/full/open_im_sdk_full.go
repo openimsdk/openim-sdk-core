@@ -88,7 +88,7 @@ func (u *Full) GetUsersInfo(ctx context.Context, userIDs []string) ([]*api.FullU
 	return res, nil
 }
 
-func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, groupID string) ([]*api.FullUserInfoStranger, error) {
+func (u *Full) GetUsersInfoWithCache(ctx context.Context, userIDs []string, groupID string) ([]*api.FullUserInfoWithCache, error) {
 	friendList, err := u.db.GetFriendInfoList(ctx, userIDs)
 	if err != nil {
 		return nil, err
@@ -164,13 +164,13 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 			CreateTime: info.CreateTime,
 		}
 	}
-	res := make([]*api.FullUserInfoStranger, 0, len(users))
+	res := make([]*api.FullUserInfoWithCache, 0, len(users))
 	for _, userID := range userIDs {
 		info, ok := userMap[userID]
 		if !ok {
 			continue
 		}
-		res = append(res, &api.FullUserInfoStranger{
+		res = append(res, &api.FullUserInfoWithCache{
 			PublicInfo:      info,
 			FriendInfo:      friendMap[userID],
 			BlackInfo:       blackMap[userID],
