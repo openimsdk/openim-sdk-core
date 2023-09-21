@@ -134,8 +134,8 @@ func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName st
 func CreateImageMessage(operationID string, imagePath string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessage, imagePath)
 }
-func CreateImageMessageByURL(operationID string, sourcePicture, bigPicture, snapshotPicture string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessageByURL, sourcePicture, bigPicture, snapshotPicture)
+func CreateImageMessageByURL(operationID string, sourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessageByURL, sourcePath, sourcePicture, bigPicture, snapshotPicture)
 }
 
 func CreateSoundMessageByURL(operationID string, soundBaseInfo string) string {
