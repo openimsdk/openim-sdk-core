@@ -359,6 +359,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			if nc.IsPrivateChat {
 				nc.BurnDuration = v.BurnDuration
 			}
+			if v.UnreadCount != 0 {
+				nc.UnreadCount = v.UnreadCount
+			}
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo
 			nc.Ex = v.Ex
