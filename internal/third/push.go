@@ -17,21 +17,25 @@ package third
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 
+	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 )
 
-type Push struct {
-	platformID  int32
-	loginUserID string
+type Third struct {
+	platformID   int32
+	loginUserID  string
+	version      string
+	LogFilePath  string
+	fileUploader *file.File
 }
 
-func NewPush(platformID int32, loginUserID string) *Push {
-	return &Push{platformID: platformID, loginUserID: loginUserID}
+func NewThird(platformID int32, loginUserID, version, LogFilePath string, fileUploader *file.File) *Third {
+	return &Third{platformID: platformID, loginUserID: loginUserID, version: version, LogFilePath: LogFilePath, fileUploader: fileUploader}
 }
 
-func (c *Push) UpdateFcmToken(callback open_im_sdk_callback.Base, fcmToken, operationID string) {
+func (c *Third) UpdateFcmToken(callback open_im_sdk_callback.Base, fcmToken, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -44,14 +48,14 @@ func (c *Push) UpdateFcmToken(callback open_im_sdk_callback.Base, fcmToken, oper
 
 }
 
-func (c *Push) fmcUpdateToken(callback open_im_sdk_callback.Base, fcmToken, operationID string) {
+func (c *Third) fmcUpdateToken(callback open_im_sdk_callback.Base, fcmToken, operationID string) {
 	apiReq := server_api_params.FcmUpdateTokenReq{}
 	apiReq.OperationID = operationID
 	apiReq.Platform = int(c.platformID)
 	apiReq.FcmToken = fcmToken
 	//c.p.PostFatalCallback(callback, constant.FcmUpdateTokenRouter, apiReq, nil, apiReq.OperationID)
 }
-func (c *Push) SetAppBadge(callback open_im_sdk_callback.Base, appUnreadCount int32, operationID string) {
+func (c *Third) SetAppBadge(callback open_im_sdk_callback.Base, appUnreadCount int32, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -62,7 +66,7 @@ func (c *Push) SetAppBadge(callback open_im_sdk_callback.Base, appUnreadCount in
 		log.NewInfo(operationID, "SetAppBadge callback: ", sdk_params_callback.SetAppBadgeCallback)
 	}()
 }
-func (c *Push) setAppBadge(callback open_im_sdk_callback.Base, appUnreadCount int32, operationID string) {
+func (c *Third) setAppBadge(callback open_im_sdk_callback.Base, appUnreadCount int32, operationID string) {
 	apiReq := server_api_params.SetAppBadgeReq{}
 	apiReq.OperationID = operationID
 	apiReq.FromUserID = c.loginUserID
