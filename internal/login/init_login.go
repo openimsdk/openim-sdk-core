@@ -17,6 +17,9 @@ package login
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
@@ -36,8 +39,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"sync"
-	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 
@@ -66,7 +67,7 @@ type LoginMgr struct {
 	db           db_interface.DataBase
 	longConnMgr  *interaction.LongConnMgr
 	msgSyncer    *interaction.MsgSyncer
-	push         *third.Push
+	third        *third.Third
 	cache        *cache.Cache
 	token        string
 	loginUserID  string
@@ -113,8 +114,8 @@ func (u *LoginMgr) GetToken() string {
 	return u.token
 }
 
-func (u *LoginMgr) Push() *third.Push {
-	return u.push
+func (u *LoginMgr) Third() *third.Third {
+	return u.third
 }
 
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
@@ -287,7 +288,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	u.push = third.NewPush(u.info.PlatformID, u.loginUserID)
+	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, constant.SdkVersion, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.longConnMgr.Run(ctx)

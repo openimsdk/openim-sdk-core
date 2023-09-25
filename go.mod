@@ -21,7 +21,7 @@ require (
 require golang.org/x/net v0.11.0
 
 require (
-	github.com/OpenIMSDK/protocol v0.0.14
+	github.com/OpenIMSDK/protocol v0.0.23
 	github.com/OpenIMSDK/tools v0.0.5
 	github.com/google/go-cmp v0.5.9
 	golang.org/x/image v0.9.0

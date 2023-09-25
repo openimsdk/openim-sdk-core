@@ -34,6 +34,7 @@ func TestName(t *testing.T) {
 	if Info(ctx).UserID() != conf.UserID {
 		t.Fatal("UserID not match")
 	}
+
 	if Info(ctx).OperationID() != operationID {
 		t.Fatal("OperationID not match")
 	}
