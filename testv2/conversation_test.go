@@ -16,9 +16,9 @@ package testv2
 
 import (
 	"context"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"testing"
 
 	"github.com/OpenIMSDK/protocol/sdkws"

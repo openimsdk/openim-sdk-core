@@ -19,8 +19,8 @@ package main
 
 import (
 	"fmt"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/wasm/wasm_wrapper"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 	"runtime"
 	"runtime/debug"
 
@@ -157,7 +157,7 @@ func registerFunc() {
 	js.Global().Set("getSelfUserInfo", js.FuncOf(wrapperUser.GetSelfUserInfo))
 	js.Global().Set("setSelfInfo", js.FuncOf(wrapperUser.SetSelfInfo))
 	js.Global().Set("getUsersInfo", js.FuncOf(wrapperUser.GetUsersInfo))
-	js.Global().Set("getUsersInfoStranger", js.FuncOf(wrapperUser.GetUsersInfoStranger))
+	js.Global().Set("getUsersInfoWithCache", js.FuncOf(wrapperUser.GetUsersInfoWithCache))
 	js.Global().Set("subscribeUsersStatus", js.FuncOf(wrapperUser.SubscribeUsersStatus))
 	js.Global().Set("unsubscribeUsersStatus", js.FuncOf(wrapperUser.UnsubscribeUsersStatus))
 	js.Global().Set("getSubscribeUsersStatus", js.FuncOf(wrapperUser.GetSubscribeUsersStatus))

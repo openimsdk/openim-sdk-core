@@ -14,7 +14,14 @@
 
 package sdk_params_callback
 
-import "open_im_sdk/pkg/constant"
+import (
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+)
 
 const UpdateFcmTokenCallback = constant.SuccessCallbackDefault
 const SetAppBadgeCallback = constant.SuccessCallbackDefault
+
+type UploadLogParams struct {
+	SystemType string `json:"system_type"`
+	Ex         string `json:"ex"`
+}

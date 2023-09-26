@@ -18,7 +18,7 @@
 package event_listener
 
 import (
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"syscall/js"
 )
 

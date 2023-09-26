@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/OpenIMSDK/tools/log"
-	"open_im_sdk/internal/login"
-	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/login"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
 
 var (

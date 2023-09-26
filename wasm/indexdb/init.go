@@ -19,7 +19,7 @@ package indexdb
 
 import (
 	"context"
-	"open_im_sdk/wasm/exec"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
 //1,使用wasm原生的方式，tinygo应用于go的嵌入式领域，支持的功能有限，支持go语言的子集,甚至json序列化都无法支持

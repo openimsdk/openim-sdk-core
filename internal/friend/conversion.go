@@ -15,7 +15,7 @@
 package friend
 
 import (
-	"open_im_sdk/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 )

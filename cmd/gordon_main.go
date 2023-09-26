@@ -16,11 +16,11 @@ package main
 
 import (
 	"encoding/json"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/network"
-	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/test"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/test"
 	"time"
 )
 

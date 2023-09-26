@@ -17,11 +17,11 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"

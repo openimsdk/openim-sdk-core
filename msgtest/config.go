@@ -2,8 +2,8 @@ package msgtest
 
 import (
 	"fmt"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
 
 // config here

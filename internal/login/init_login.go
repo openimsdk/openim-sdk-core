@@ -17,27 +17,28 @@ package login
 import (
 	"context"
 	"fmt"
-	"open_im_sdk/internal/business"
-	"open_im_sdk/internal/cache"
-	conv "open_im_sdk/internal/conversation_msg"
-	"open_im_sdk/internal/file"
-	"open_im_sdk/internal/friend"
-	"open_im_sdk/internal/full"
-	"open_im_sdk/internal/group"
-	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/third"
-	"open_im_sdk/internal/user"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
-	"open_im_sdk/pkg/db/db_interface"
-	"open_im_sdk/pkg/sdkerrs"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"sync"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
+	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 
@@ -66,7 +67,7 @@ type LoginMgr struct {
 	db           db_interface.DataBase
 	longConnMgr  *interaction.LongConnMgr
 	msgSyncer    *interaction.MsgSyncer
-	push         *third.Push
+	third        *third.Third
 	cache        *cache.Cache
 	token        string
 	loginUserID  string
@@ -113,8 +114,8 @@ func (u *LoginMgr) GetToken() string {
 	return u.token
 }
 
-func (u *LoginMgr) Push() *third.Push {
-	return u.push
+func (u *LoginMgr) Third() *third.Third {
+	return u.third
 }
 
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
@@ -287,7 +288,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	u.push = third.NewPush(u.info.PlatformID, u.loginUserID)
+	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, constant.SdkVersion, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.longConnMgr.Run(ctx)

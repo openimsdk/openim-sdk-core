@@ -16,8 +16,9 @@ package ccontext
 
 import (
 	"context"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/sdk_struct"
+
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/OpenIMSDK/tools/mcontext"
 )

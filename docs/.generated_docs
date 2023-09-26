@@ -1,9 +1,4 @@
 docs/.generated_docs
-docs/guide/en-US/cmd/iam-apiserver.md
-docs/guide/en-US/cmd/iam-authz-server.md
-docs/guide/en-US/cmd/iam-pump.md
-docs/guide/en-US/cmd/iam-watcher.md
-docs/guide/en-US/cmd/openim/openim.md
 docs/guide/en-US/cmd/openim/openim_color.md
 docs/guide/en-US/cmd/openim/openim_completion.md
 docs/guide/en-US/cmd/openim/openim_info.md
@@ -47,11 +42,6 @@ docs/guide/en-US/yaml/openim/openim_set.yaml
 docs/guide/en-US/yaml/openim/openim-rpc-user.yaml
 docs/guide/en-US/yaml/openim/openim_validate.yaml
 docs/guide/en-US/yaml/openim/openim_version.yaml
-docs/man/man1/iam-apiserver.1
-docs/man/man1/iam-authz-server.1
-docs/man/man1/iam-pump.1
-docs/man/man1/iam-watcher.1
-docs/man/man1/openim-color.1
 docs/man/man1/openim-completion.1
 docs/man/man1/openim-info.1
 docs/man/man1/openim-jwt-show.1

@@ -18,11 +18,11 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/mitchellh/mapstructure"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/sdkerrs"
-	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"runtime"
 )
 

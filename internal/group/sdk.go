@@ -16,12 +16,13 @@ package group
 
 import (
 	"context"
-	"open_im_sdk/internal/util"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/sdkerrs"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 
 	"github.com/OpenIMSDK/tools/log"
 

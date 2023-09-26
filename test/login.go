@@ -17,11 +17,11 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
 )
 

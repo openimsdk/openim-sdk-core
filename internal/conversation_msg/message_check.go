@@ -17,10 +17,10 @@ package conversation_msg
 import (
 	"context"
 	"errors"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	sdk "open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
 	"github.com/OpenIMSDK/tools/log"
 

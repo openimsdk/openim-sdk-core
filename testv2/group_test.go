@@ -18,9 +18,9 @@ import (
 	"github.com/OpenIMSDK/protocol/group"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/protocol/wrapperspb"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"testing"
 )
 

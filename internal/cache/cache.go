@@ -16,10 +16,10 @@ package cache
 
 import (
 	"context"
-	"open_im_sdk/internal/friend"
-	"open_im_sdk/internal/user"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"sync"
 
 	userPb "github.com/OpenIMSDK/protocol/user"

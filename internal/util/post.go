@@ -19,10 +19,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"io"
 	"net/http"
-	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/sdkerrs"
 	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"

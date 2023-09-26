@@ -16,9 +16,9 @@ package file
 
 import (
 	"context"
-	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/db"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"path/filepath"
 	"testing"
 	"time"

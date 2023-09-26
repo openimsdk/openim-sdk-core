@@ -3,13 +3,13 @@ package module
 import (
 	"context"
 	"fmt"
-	"open_im_sdk/internal/interaction"
-	"open_im_sdk/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
@@ -36,7 +36,6 @@ func WithRecvPushMsgCallback(callback func(msg *sdkws.MsgData)) func(core *SendM
 		core.recvPushMsgCallback = callback
 	}
 }
-
 
 func newIMconfig(platformID int32, apiAddr, wsAddr string) sdk_struct.IMConfig {
 	return sdk_struct.IMConfig{
@@ -145,7 +144,6 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	}
 	return nil
 }
-
 
 func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 	for {

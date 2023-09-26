@@ -18,10 +18,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"open_im_sdk/pkg/utils"
 	"time"
 	"unsafe"
 )

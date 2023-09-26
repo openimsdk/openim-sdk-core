@@ -18,27 +18,27 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"open_im_sdk/internal/business"
-	"open_im_sdk/internal/cache"
-	"open_im_sdk/internal/file"
-	"open_im_sdk/internal/friend"
-	"open_im_sdk/internal/full"
-	"open_im_sdk/internal/group"
-	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/user"
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/db_interface"
-	"open_im_sdk/pkg/db/model_struct"
-	sdk "open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/syncer"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 
 	"github.com/OpenIMSDK/tools/log"
 
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"sort"
 	"time"
 
@@ -164,7 +164,6 @@ func (c *Conversation) initSyncer() {
 				server.Ex != local.Ex ||
 				server.MaxSeq != local.MaxSeq ||
 				server.MinSeq != local.MinSeq ||
-				server.HasReadSeq != local.HasReadSeq ||
 				server.MsgDestructTime != local.MsgDestructTime ||
 				server.IsMsgDestruct != local.IsMsgDestruct {
 				log.ZDebug(context.Background(), "not same", "conversationID", server.ConversationID, "server", server.RecvMsgOpt, "local", local.RecvMsgOpt)
@@ -359,6 +358,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.IsPrivateChat = v.IsPrivateChat
 			if nc.IsPrivateChat {
 				nc.BurnDuration = v.BurnDuration
+			}
+			if v.UnreadCount != 0 {
+				nc.UnreadCount = v.UnreadCount
 			}
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo

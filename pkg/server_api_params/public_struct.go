@@ -15,7 +15,7 @@
 package server_api_params
 
 import (
-	"open_im_sdk/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 )
 
 type ApiUserInfo struct {
@@ -45,7 +45,7 @@ type FullUserInfo struct {
 	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
 
-type FullUserInfoStranger struct {
+type FullUserInfoWithCache struct {
 	PublicInfo      *PublicUser                    `json:"publicInfo"`
 	FriendInfo      *model_struct.LocalFriend      `json:"friendInfo"`
 	BlackInfo       *model_struct.LocalBlack       `json:"blackInfo"`

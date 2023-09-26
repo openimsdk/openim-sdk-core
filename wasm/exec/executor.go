@@ -20,8 +20,8 @@ package exec
 import (
 	"errors"
 	"github.com/OpenIMSDK/tools/errs"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"runtime"
 	"syscall/js"
 	"time"

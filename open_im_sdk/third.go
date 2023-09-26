@@ -15,13 +15,17 @@
 package open_im_sdk
 
 import (
-	"open_im_sdk/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 )
 
 func UpdateFcmToken(callback open_im_sdk_callback.Base, operationID, userIDList string) {
-	call(callback, operationID, UserForSDK.Push().UpdateFcmToken, userIDList)
+	call(callback, operationID, UserForSDK.Third().UpdateFcmToken, userIDList)
 }
 
 func SetAppBadge(callback open_im_sdk_callback.Base, operationID string, appUnreadCount int32) {
-	call(callback, operationID, UserForSDK.Push().SetAppBadge, appUnreadCount)
+	call(callback, operationID, UserForSDK.Third().SetAppBadge, appUnreadCount)
+}
+
+func UploadLogs(callback open_im_sdk_callback.Base, operationID string, uploadlogParams string) {
+	call(callback, operationID, UserForSDK.Third().UploadLogs, uploadlogParams)
 }

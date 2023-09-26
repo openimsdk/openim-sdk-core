@@ -21,10 +21,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
 func (d *DataBase) GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error) {
@@ -94,17 +94,17 @@ func (d *DataBase) GetGroupMemberListSplit(ctx context.Context, groupID string, 
 	var err error
 	switch filter {
 	case constant.GroupFilterAll:
-		err = d.conn.WithContext(ctx).Where("group_id = ?", groupID).Order("role_level DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ?", groupID).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterOwner:
-		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupOwner).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupOwner).Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterAdmin:
-		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupAdmin).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupAdmin).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterOrdinaryUsers:
-		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupOrdinaryUsers).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupOrdinaryUsers).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterAdminAndOrdinaryUsers:
-		err = d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? or role_level = ?)", groupID, constant.GroupAdmin, constant.GroupOrdinaryUsers).Order("role_level DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? or role_level = ?)", groupID, constant.GroupAdmin, constant.GroupOrdinaryUsers).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterOwnerAndAdmin:
-		err = d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? or role_level = ?)", groupID, constant.GroupOwner, constant.GroupAdmin).Order("role_level DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? or role_level = ?)", groupID, constant.GroupOwner, constant.GroupAdmin).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	default:
 		return nil, fmt.Errorf("filter args failed %d", filter)
 	}
@@ -277,10 +277,10 @@ func (d *DataBase) SearchGroupMembersDB(ctx context.Context, keyword string, gro
 		condition = "( " + condition + " ) "
 		condition += " and group_id IN ? "
 		log.Debug("", "subCondition SearchGroupMembers ", condition)
-		err = d.conn.WithContext(ctx).Where(condition, []string{groupID}).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where(condition, []string{groupID}).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else {
 		log.Debug("", "subCondition SearchGroupMembers ", condition)
-		err = d.conn.WithContext(ctx).Where(condition).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where(condition).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 		log.Debug("", "subCondition SearchGroupMembers ", condition, len(groupMemberList))
 	}
 

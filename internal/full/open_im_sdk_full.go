@@ -18,10 +18,10 @@ import (
 	"context"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	api "open_im_sdk/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	api "github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 )
 
 func (u *Full) GetUsersInfo(ctx context.Context, userIDs []string) ([]*api.FullUserInfo, error) {
@@ -88,7 +88,7 @@ func (u *Full) GetUsersInfo(ctx context.Context, userIDs []string) ([]*api.FullU
 	return res, nil
 }
 
-func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, groupID string) ([]*api.FullUserInfoStranger, error) {
+func (u *Full) GetUsersInfoWithCache(ctx context.Context, userIDs []string, groupID string) ([]*api.FullUserInfoWithCache, error) {
 	friendList, err := u.db.GetFriendInfoList(ctx, userIDs)
 	if err != nil {
 		return nil, err
@@ -97,22 +97,8 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 	if err != nil {
 		return nil, err
 	}
-	strangerFlag := false
 	users, err := u.user.GetServerUserInfo(ctx, userIDs)
-	if err != nil {
-		return nil, err
-	}
-	if users == nil {
-		strangerFlag = true
-	}
-	var groupMemberList []*model_struct.LocalGroupMember
-	if groupID != "" {
-		groupMemberList, err = u.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if !strangerFlag {
+	if err == nil {
 		var strangers []*model_struct.LocalStranger
 		for _, val := range users {
 			strangerTemp := &model_struct.LocalStranger{
@@ -149,6 +135,13 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 			users = append(users, userTemp)
 		}
 	}
+	var groupMemberList []*model_struct.LocalGroupMember
+	if groupID != "" {
+		groupMemberList, err = u.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
 	friendMap := make(map[string]*model_struct.LocalFriend)
 	for i, f := range friendList {
 		friendMap[f.FriendUserID] = friendList[i]
@@ -171,13 +164,13 @@ func (u *Full) GetUsersInfoStranger(ctx context.Context, userIDs []string, group
 			CreateTime: info.CreateTime,
 		}
 	}
-	res := make([]*api.FullUserInfoStranger, 0, len(users))
+	res := make([]*api.FullUserInfoWithCache, 0, len(users))
 	for _, userID := range userIDs {
 		info, ok := userMap[userID]
 		if !ok {
 			continue
 		}
-		res = append(res, &api.FullUserInfoStranger{
+		res = append(res, &api.FullUserInfoWithCache{
 			PublicInfo:      info,
 			FriendInfo:      friendMap[userID],
 			BlackInfo:       blackMap[userID],

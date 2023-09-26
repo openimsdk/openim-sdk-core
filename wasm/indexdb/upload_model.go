@@ -19,9 +19,9 @@ package indexdb
 
 import (
 	"context"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
-	"open_im_sdk/wasm/exec"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
 type LocalUpload struct{}
