@@ -26,6 +26,11 @@
 </p>
 
 ----
+The "openim-sdk-core" is an IM SDK designed to work in conjunction with the "open-im-server", intended for embedding in client-side applications.
+
+It includes local storage, listener callbacks, API wrappers, and connection management, ensuring real-time and completeness of messages.
+
+The "openim-sdk-core" is implemented in Golang and utilizes "gomobile" for cross-platform compilation on mobile devices.
 
 ## 🧩 Awesome features
 
