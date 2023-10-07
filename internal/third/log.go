@@ -40,10 +40,7 @@ func (c *Third) uploadLogs(ctx context.Context, params []sdk_params_callback.Upl
 		req.FileURLs = append(req.FileURLs, &fileURL)
 	}
 	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, &req)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func checkLogPath(logpath string) bool {
