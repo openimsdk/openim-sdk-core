@@ -2,7 +2,6 @@ package third
 
 import (
 	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,42 +15,34 @@ import (
 )
 
 func (c *Third) UploadLogs(ctx context.Context, params []sdk_params_callback.UploadLogParams) error {
-
 	return c.uploadLogs(ctx, params)
 }
 
-func (t *Third) uploadLogs(ctx context.Context, params []sdk_params_callback.UploadLogParams) error {
-
-	logFilePath := t.LogFilePath
+func (c *Third) uploadLogs(ctx context.Context, params []sdk_params_callback.UploadLogParams) error {
+	logFilePath := c.LogFilePath
 	files, err := os.ReadDir(logFilePath)
 	if err != nil {
 		return err
 	}
 	req := third.UploadLogsReq{}
-	errsb := strings.Builder{}
 	for _, file := range files {
 		if !checkLogPath(file.Name()) {
 			continue
 		}
 		var filename = filepath.Join(logFilePath, file.Name())
-		resp, err := t.fileUploader.UploadFile(ctx, &uploadfile.UploadFileReq{Filepath: filename, Name: file.Name(), Cause: "upload_logs"}, nil)
+		resp, err := c.fileUploader.UploadFile(ctx, &uploadfile.UploadFileReq{Filepath: filename, Name: file.Name(), Cause: "upload_logs"}, nil)
 		if err != nil {
-			errsb.WriteString(err.Error())
+			return err
 		}
 		var fileURL third.FileURL
 		fileURL.Filename = filename
 		fileURL.URL = resp.URL
 		req.FileURLs = append(req.FileURLs, &fileURL)
 	}
-	errs := errsb.String()
-	if errs != "" {
-		return errors.New(errs)
-	}
 	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, &req)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
