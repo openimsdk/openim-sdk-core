@@ -326,18 +326,25 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 
 // triggers a conversation with a new message.
 func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
-	err := common.TriggerCmdNewMsgCome(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
-	if err != nil {
-		log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
+	if len(msgs) >= 0 {
+		err := common.TriggerCmdNewMsgCome(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
+		if err != nil {
+			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
+		}
+		log.ZDebug(ctx, "triggerConversation", "msgs", msgs)
+		return err
 	}
-	log.ZDebug(ctx, "triggerConversation", "msgs", msgs)
-	return err
+	return nil
 }
 
 func (m *MsgSyncer) triggerNotification(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
-	err := common.TriggerCmdNotification(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
-	if err != nil {
-		log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
+	if len(msgs) >= 0 {
+		err := common.TriggerCmdNotification(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
+		if err != nil {
+			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
+		}
+		return err
 	}
-	return err
+	return nil
+
 }
