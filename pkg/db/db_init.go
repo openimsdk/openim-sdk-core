@@ -21,12 +21,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
 	"github.com/OpenIMSDK/tools/log"
 	"gorm.io/driver/sqlite"
@@ -184,6 +185,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	if err != nil {
 		return utils.Wrap(err, "get sql db failed")
 	}
+
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
 	sqlDB.SetMaxOpenConns(3)
 	sqlDB.SetMaxIdleConns(2)
@@ -222,24 +224,24 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	if err != nil {
 		log.ZError(ctx, "FindAllConversationConversationID err", err)
 	}
-	for _, v := range conversationIDs {
-		d.conn.WithContext(ctx).Table(utils.GetTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
+	for _, conversationID := range conversationIDs {
+		d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
 		var count int64
 		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
-			"index_seq_"+v, utils.GetTableName(v))).Row().Scan(&count)
+			"index_seq_"+conversationID, utils.GetTableName(conversationID))).Row().Scan(&count)
 		if count == 0 {
-			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+v, utils.GetTableName(v)))
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID, utils.GetTableName(conversationID)))
 			if result.Error != nil {
-				log.ZError(ctx, "create table seq index failed", result.Error, "conversationID", v)
+				log.ZError(ctx, "create table seq index failed", result.Error, "conversationID", conversationID)
 			}
 		}
 		var count2 int64
 		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
-			"index_send_time_"+v, utils.GetTableName(v))).Row().Scan(&count)
+			"index_send_time_"+conversationID, utils.GetTableName(conversationID))).Row().Scan(&count)
 		if count2 == 0 {
-			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+v, utils.GetTableName(v)))
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID, utils.GetTableName(conversationID)))
 			if result.Error != nil {
-				log.ZError(ctx, "create table send_time index failed", result.Error, "conversationID", v)
+				log.ZError(ctx, "create table send_time index failed", result.Error, "conversationID", conversationID)
 			}
 		}
 

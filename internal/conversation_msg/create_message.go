@@ -304,13 +304,14 @@ func (c *Conversation) CreateImageMessage(ctx context.Context, imagePath string)
 	return &s, nil
 
 }
-func (c *Conversation) CreateImageMessageByURL(ctx context.Context, sourcePicture, bigPicture, snapshotPicture sdk_struct.PictureBaseInfo) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateImageMessageByURL(ctx context.Context, sourcePath string, sourcePicture, bigPicture, snapshotPicture sdk_struct.PictureBaseInfo) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Picture)
 	if err != nil {
 		return nil, err
 	}
 	s.PictureElem = &sdk_struct.PictureElem{
+		SourcePath:      sourcePath,
 		SourcePicture:   &sourcePicture,
 		BigPicture:      &bigPicture,
 		SnapshotPicture: &snapshotPicture,

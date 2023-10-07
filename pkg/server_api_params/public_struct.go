@@ -45,7 +45,7 @@ type FullUserInfo struct {
 	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
 
-type FullUserInfoStranger struct {
+type FullUserInfoWithCache struct {
 	PublicInfo      *PublicUser                    `json:"publicInfo"`
 	FriendInfo      *model_struct.LocalFriend      `json:"friendInfo"`
 	BlackInfo       *model_struct.LocalBlack       `json:"blackInfo"`
