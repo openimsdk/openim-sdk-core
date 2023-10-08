@@ -124,6 +124,10 @@ const (
 
 	// auth
 	GetUsersToken = RouterAuth + "/user_token"
+
+	//key
+	SDKGetKey = RouterMsg + "/sdk_get_key"
+	GetAllKey = RouterMsg + "/sdk_get_all_key"
 )
 const (
 	RouterGroup        = "/group"

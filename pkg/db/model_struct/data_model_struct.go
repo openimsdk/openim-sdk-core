@@ -511,3 +511,9 @@ type LocalStranger struct {
 func (LocalStranger) TableName() string {
 	return "local_stranger"
 }
+
+type LocalKey struct {
+	SessionID   string `gorm:"column:session_id;primary_key;type:varchar(64)" json:"sessionID"`
+	SessionKey  string `gorm:"column:session_key;type:varchar(64)" json:"sessionKey"`
+	SessionType int32  `gorm:"column:session_type" json:"sessionType"`
+}
