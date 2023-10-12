@@ -16,7 +16,6 @@ package group
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
@@ -103,17 +102,6 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
-	}
-	members, err := g.db.GetGroupMemberListSplit(ctx, groupID, 0, 0, 999999)
-	if err != nil {
-		return err
-	}
-	for _, member := range members {
-		data, err := json.Marshal(member)
-		if err != nil {
-			return err
-		}
-		g.listener.OnGroupMemberDeleted(string(data))
 	}
 	if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
 		return err
