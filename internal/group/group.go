@@ -70,7 +70,7 @@ func (g *Group) initSyncer() {
 		}
 		return g.db.DeleteGroup(ctx, value.GroupID)
 	}, func(ctx context.Context, server, local *model_struct.LocalGroup) error {
-		log.ZInfo(ctx, "groupSyncer trigger update funcation", "groupID", server.GroupID, "server", server, "local", local)
+		log.ZInfo(ctx, "groupSyncer trigger update function", "groupID", server.GroupID, "server", server, "local", local)
 		return g.db.UpdateGroup(ctx, server)
 	}, func(value *model_struct.LocalGroup) string {
 		return value.GroupID
