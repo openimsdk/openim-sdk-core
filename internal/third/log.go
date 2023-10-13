@@ -73,17 +73,18 @@ func (c *Third) checkLogPath(logpath string) bool {
 }
 
 func (c *Third) fileCopy(src, dst string) error {
-	_ = os.RemoveAll(dst)
 	srcFile, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close()
+
 	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
 		return err
 	}
 	defer dstFile.Close()
+
 	_, err = io.Copy(dstFile, srcFile)
 	return err
 }
