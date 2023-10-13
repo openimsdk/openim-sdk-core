@@ -2,6 +2,9 @@ package third
 
 import (
 	"context"
+	"fmt"
+	"github.com/OpenIMSDK/tools/errs"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,35 +18,46 @@ import (
 )
 
 func (c *Third) UploadLogs(ctx context.Context, params []sdk_params_callback.UploadLogParams) error {
-	return c.uploadLogs(ctx, params)
-}
-
-func (c *Third) uploadLogs(ctx context.Context, params []sdk_params_callback.UploadLogParams) error {
 	logFilePath := c.LogFilePath
 	files, err := os.ReadDir(logFilePath)
 	if err != nil {
 		return err
 	}
+	tempFiles := make([]string, 0, len(files))
+	defer func() {
+		for _, file := range tempFiles {
+			_ = os.RemoveAll(file)
+		}
+	}()
 	req := third.UploadLogsReq{}
 	for _, file := range files {
-		if !checkLogPath(file.Name()) {
+		if !c.checkLogPath(file.Name()) {
 			continue
 		}
-		var filename = filepath.Join(logFilePath, file.Name())
+		logName := filepath.Join(logFilePath, file.Name())
+		filename := fmt.Sprintf("%s.temp_upload.%d", logName, time.Now().UnixMilli())
+		tempFiles = append(tempFiles, filename)
+		if err := c.fileCopy(logName, filename); err != nil {
+			return err
+		}
 		resp, err := c.fileUploader.UploadFile(ctx, &uploadfile.UploadFileReq{Filepath: filename, Name: file.Name(), Cause: "upload_logs"}, nil)
 		if err != nil {
 			return err
 		}
-		var fileURL third.FileURL
-		fileURL.Filename = filename
-		fileURL.URL = resp.URL
-		req.FileURLs = append(req.FileURLs, &fileURL)
+		req.FileURLs = append(req.FileURLs, &third.FileURL{
+			Filename: filename,
+			URL:      resp.URL,
+		})
+	}
+	if len(req.FileURLs) == 0 {
+		return errs.ErrData.Wrap("not found log file")
 	}
 	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, &req)
+
 	return err
 }
 
-func checkLogPath(logpath string) bool {
+func (c *Third) checkLogPath(logpath string) bool {
 	if len(logpath) < len("open-im-sdk-core.yyyy-mm-dd") {
 		return false
 	}
@@ -56,4 +70,20 @@ func checkLogPath(logpath string) bool {
 	}
 
 	return true
+}
+
+func (c *Third) fileCopy(src, dst string) error {
+	_ = os.RemoveAll(dst)
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+	_, err = io.Copy(dstFile, srcFile)
+	return err
 }
