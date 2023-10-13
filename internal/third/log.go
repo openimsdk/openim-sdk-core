@@ -73,7 +73,6 @@ func (c *Third) checkLogPath(logpath string) bool {
 }
 
 func (c *Third) fileCopy(src, dst string) error {
-	_ = os.RemoveAll(dst)
 	srcFile, err := os.Open(src)
 	if err != nil {
 		return err
