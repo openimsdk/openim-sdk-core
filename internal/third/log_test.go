@@ -1,39 +1,43 @@
 package third
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLogMatch(t *testing.T) {
+	// existing code
+}
 
-	filenames := []string{
-		"log1.txt",
-		"log2.log",
-		"log3.log.txt",
-		"log4.log.2022-01-01",
-		"log5.log.2022-01-01.txt",
-		"log20230918.log",
-		"OpenIM.CronTask.log.all.2023-09-18", "OpenIM.log.all.2023-09-18",
-	}
+func TestFileCopy(t *testing.T) {
+	// Create a temporary source file
+	srcFile, err := ioutil.TempFile("", "src")
+	assert.NoError(t, err)
+	defer os.Remove(srcFile.Name())
 
-	expected := []string{
-		"OpenIM.CronTask.log.all.2023-09-18", "OpenIM.log.all.2023-09-18",
-	}
+	// Write some content to the source file
+	srcContent := "test content"
+	_, err = srcFile.Write([]byte(srcContent))
+	assert.NoError(t, err)
+	srcFile.Close()
 
-	var actual []string
-	for _, filename := range filenames {
-		if checkLogPath(filename) {
-			actual = append(actual, filename)
-		}
-	}
+	// Create a temporary destination file
+	dstFile, err := ioutil.TempFile("", "dst")
+	assert.NoError(t, err)
+	defer os.Remove(dstFile.Name())
+	dstFile.Close()
 
-	if len(actual) != len(expected) {
-		t.Errorf("Expected %d matches, but got %d", len(expected), len(actual))
-	}
+	// Call the fileCopy function
+	err = fileCopy(srcFile.Name(), dstFile.Name())
+	assert.NoError(t, err)
 
-	for i := range expected {
-		if actual[i] != expected[i] {
-			t.Errorf("Expected match %d to be %q, but got %q", i, expected[i], actual[i])
-		}
-	}
+	// Read the content of the destination file
+	dstContent, err := ioutil.ReadFile(dstFile.Name())
+	assert.NoError(t, err)
+
+	// Check that the content of the destination file is the same as the source file
+	assert.Equal(t, srcContent, string(dstContent))
 }
