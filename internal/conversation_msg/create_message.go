@@ -142,7 +142,8 @@ func (c *Conversation) CreateAdvancedQuoteMessage(ctx context.Context, text stri
 	return &s, nil
 }
 
-func (c *Conversation) CreateCardMessage(ctx context.Context, card *sdk_struct.CardElem) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateCardMessage(ctx context.Context, card *sdk_struct.CardElem) (*sdk_struct.MsgStruct,
+	error) {
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Card)
 	if err != nil {
@@ -152,7 +153,8 @@ func (c *Conversation) CreateCardMessage(ctx context.Context, card *sdk_struct.C
 	return &s, nil
 }
 
-func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, videoFullPath string, videoType string, duration int64, snapshotFullPath string) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, videoFullPath string, videoType string,
+	duration int64, snapshotFullPath string) (*sdk_struct.MsgStruct, error) {
 	dstFile := utils.FileTmpPath(videoFullPath, c.DataDir) //a->b
 	written, err := utils.CopyFile(videoFullPath, dstFile)
 	if err != nil {
