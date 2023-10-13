@@ -799,6 +799,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	case constant.AdvancedText:
 		t := sdk_struct.AdvancedTextElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.AdvancedTextElem = &t
 	case constant.AtText:
 		t := sdk_struct.AtTextElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
