@@ -20,25 +20,21 @@ import (
 	"path"
 )
 
-func CopyFile(srcName string, dstName string) (written int64, err error) {
+func CopyFile(srcName string, dstName string) error {
 	src, err := os.Open(srcName)
 	if err != nil {
-		return
+		return err
 	}
-	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return
-	}
+	defer src.Close()
 
-	defer func() {
-		if src != nil {
-			src.Close()
-		}
-		if dst != nil {
-			dst.Close()
-		}
-	}()
-	return io.Copy(dst, src)
+	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0777)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	return err
 }
 
 func FileTmpPath(fullPath, dbPrefix string) string {
