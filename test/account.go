@@ -98,6 +98,11 @@ var ctx context.Context
 var cctx context.Context
 
 func register(uid string) error {
+	if ctx.Err() == context.Canceled {
+		return errors.New("register aborted due to context cancellation")
+	}
+	...
+}
 	ctx = ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
 		UserID: uid,
 		Token:  AdminToken,
@@ -116,8 +121,13 @@ func register(uid string) error {
 	getAccountCheckReq.CheckUserIDs = []string{uid}
 
 	for {
+		if ctx.Err() == context.Canceled {
+			return errors.New("ApiPost aborted due to context cancellation")
+		}
 		err := util.ApiPost(ctx, "/user/account_check", &getAccountCheckReq, &getAccountCheckResp)
 		if err != nil {
+		...
+	}
 			return err
 		}
 		if len(getAccountCheckResp.Results) == 1 &&
@@ -141,8 +151,13 @@ func register(uid string) error {
 	rreq.Users = []*sdkws.UserInfo{{UserID: uid}}
 
 	for {
+		if ctx.Err() == context.Canceled {
+			return errors.New("ApiPost aborted due to context cancellation")
+		}
 		err := util.ApiPost(ctx, "/auth/user_register", &rreq, nil)
 		if err != nil {
+		...
+	}
 			log.Error("post failed ,continue ", err.Error(), REGISTERADDR, getAccountCheckReq)
 			time.Sleep(100 * time.Millisecond)
 			continue
@@ -157,38 +172,22 @@ func register(uid string) error {
 }
 
 func getToken(uid string) string {
-	ctx = ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
-		UserID: uid,
-		Token:  "",
-		IMConfig: sdk_struct.IMConfig{
-			PlatformID: PlatformID,
-			ApiAddr:    APIADDR,
-			WsAddr:     WSADDR,
-			LogLevel:   LogLevel,
-		},
-	})
-	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
-	url := TOKENADDR
-	req := authPB.UserTokenReq{
-		Secret:     SECRET,
-		PlatformID: PlatformID,
-		UserID:     uid,
+	if ctx.Err() == context.Canceled {
+		return errors.New("getToken aborted due to context cancellation")
 	}
-	resp := authPB.UserTokenResp{}
-	err := util.ApiPost(ctx, "/auth/user_token", &req, &resp)
-	if err != nil {
-		log.Error(req.UserID, "Post2Api failed ", err.Error(), url, req)
-		return ""
-	}
-
-	log.Info(req.UserID, "get token: ", resp.Token)
-	return resp.Token
+	...
 }
 
 func RunGetToken(strMyUid string) string {
+	if ctx.Err() == context.Canceled {
+		return errors.New("RunGetToken aborted due to context cancellation")
+	}
 	var token string
 	for true {
 		token = getToken(strMyUid)
+		...
+	}
+}
 		if token == "" {
 			time.Sleep(time.Duration(100) * time.Millisecond)
 			continue
@@ -217,50 +216,29 @@ func getMyIP() string {
 }
 
 func RegisterReliabilityUser(id int, timeStamp string) {
-	userID := GenUid(id, "reliability_"+timeStamp)
-	register(userID)
-	token := RunGetToken(userID)
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
-	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
+	if ctx.Err() == context.Canceled {
+		return errors.New("RegisterReliabilityUser aborted due to context cancellation")
+	}
+	...
 }
 
 func WorkGroupRegisterReliabilityUser(id int) {
-	userID := GenUid(id, "workgroup")
-	//	register(userID)
-	token := RunGetToken(userID)
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
-	log.Info("", "WorkGroupRegisterReliabilityUser userID: ", userID, "token: ", token)
-	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
+	if ctx.Err() == context.Canceled {
+		return errors.New("WorkGroupRegisterReliabilityUser aborted due to context cancellation")
+	}
+	...
 }
 
 func RegisterPressUser(id int) {
-	userID := GenUid(id, "press")
-	register(userID)
-	token := RunGetToken(userID)
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
-	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
+	if ctx.Err() == context.Canceled {
+		return errors.New("RegisterPressUser aborted due to context cancellation")
+	}
+	...
 }
 
 func GetGroupMemberNum(groupID string) uint32 {
-	var req server_api_params.GetGroupInfoReq
-	req.OperationID = utils.OperationIDGenerator()
-	req.GroupIDList = []string{groupID}
-
-	var groupInfoList []*sdkws.GroupInfo
-
-	r, err := network.Post2Api(GETGROUPSINFOROUTER, req, AdminToken)
-	if err != nil {
-		log.Error("", "post failed ", GETGROUPSINFOROUTER, req)
-		return 0
+	if ctx.Err() == context.Canceled {
+		return errors.New("GetGroupMemberNum aborted due to context cancellation")
 	}
-	err = common.CheckErrAndResp(nil, r, &groupInfoList, nil)
-	if err != nil {
-		log.Error("", "CheckErrAndResp failed ", err.Error(), string(r))
-		return 0
-	}
-	log.Warn("", "group info", groupInfoList)
-	return groupInfoList[0].MemberCount
+	...
 }
