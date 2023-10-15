@@ -67,6 +67,9 @@ func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) 
 	if err != nil {
 		return sdkerrs.ErrSdkInternal.Wrap("sdk http.NewRequestWithContext failed " + err.Error())
 	}
+	if ctx.Err() == context.Canceled {
+		return sdkerrs.ErrNetwork.Wrap("ApiPost aborted due to context cancellation")
+	}
 	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "body", string(reqBody))
 	request.ContentLength = int64(len(reqBody))
 	request.Header.Set("Content-Type", "application/json")
@@ -103,7 +106,11 @@ func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) 
 }
 
 func (m *MetaManager) postWithCtx(route string, req, resp any) error {
-	return m.apiPost(m.buildCtx(), route, req, resp)
+	ctx := m.buildCtx()
+	if ctx.Err() == context.Canceled {
+		return sdkerrs.ErrNetwork.Wrap("postWithCtx aborted due to context cancellation")
+	}
+	return m.apiPost(ctx, route, req, resp)
 }
 
 func (m *MetaManager) buildCtx() context.Context {
