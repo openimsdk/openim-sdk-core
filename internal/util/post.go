@@ -50,7 +50,11 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	}
 	defer func(start time.Time) {
 		if err == nil {
-			log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", time.Since(start).Milliseconds())
+			if ctx.Err() == context.Canceled {
+				log.ZDebug(ctx, "CallApi", "api", api, "state", "aborted", "cost time", time.Since(start).Milliseconds())
+			} else {
+				log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", time.Since(start).Milliseconds())
+			}
 		} else {
 			log.ZError(ctx, "CallApi", err, "api", api, "state", "failed", "cost time", time.Since(start).Milliseconds())
 		}
@@ -66,6 +70,9 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "http.NewRequestWithContext failed")
 		return sdkerrs.ErrSdkInternal.Wrap("sdk http.NewRequestWithContext failed " + err.Error())
+	}
+	if ctx.Err() == context.Canceled {
+		return sdkerrs.ErrNetwork.Wrap("ApiPost aborted due to context cancellation")
 	}
 	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "body", string(reqBody))
 	request.ContentLength = int64(len(reqBody))
