@@ -39,12 +39,15 @@ func get(url string) (response []byte, err error) {
 	}
 	return body, nil
 }
-func retry(url string, data interface{}, token string, attempts int, sleep time.Duration, fn func(string, interface{}, string) ([]byte, error)) ([]byte, error) {
-	b, err := fn(url, data, token)
+func retry(ctx context.Context, url string, data interface{}, token string, attempts int, sleep time.Duration, fn func(context.Context, string, interface{}, string) ([]byte, error)) ([]byte, error) {
+	if ctx.Err() == context.Canceled {
+		return nil, errors.New("retry aborted due to context cancellation")
+	}
+	b, err := fn(ctx, url, data, token)
 	if err != nil {
 		if attempts--; attempts > 0 {
 			time.Sleep(sleep)
-			return retry(url, data, token, attempts, 2*sleep, fn)
+			return retry(ctx, url, data, token, attempts, 2*sleep, fn)
 		}
 		return nil, err
 	}
@@ -52,17 +55,26 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 }
 
 // application/json; charset=utf-8
-func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
-	c, err := postLogic(url, data, token)
+func Post2Api(ctx context.Context, url string, data interface{}, token string) (content []byte, err error) {
+	if ctx.Err() == context.Canceled {
+		return nil, errors.New("Post2Api aborted due to context cancellation")
+	}
+	c, err := postLogic(ctx, url, data, token)
 	return c, utils.Wrap(err, " post")
-	return retry(url, data, token, 1, 10*time.Second, postLogic)
+	return retry(ctx, url, data, token, 1, 10*time.Second, postLogic)
 }
 
-func Post2ApiForRead(url string, data interface{}, token string) (content []byte, err error) {
-	return retry(url, data, token, 3, 10*time.Second, postLogic)
+func Post2ApiForRead(ctx context.Context, url string, data interface{}, token string) (content []byte, err error) {
+	if ctx.Err() == context.Canceled {
+		return nil, errors.New("Post2ApiForRead aborted due to context cancellation")
+	}
+	return retry(ctx, url, data, token, 3, 10*time.Second, postLogic)
 }
 
-func postLogic(url string, data interface{}, token string) (content []byte, err error) {
+func postLogic(ctx context.Context, url string, data interface{}, token string) (content []byte, err error) {
+	if ctx.Err() == context.Canceled {
+		return nil, errors.New("postLogic aborted due to context cancellation")
+	}
 	jsonStr, err := json.Marshal(data)
 	if err != nil {
 		return nil, utils.Wrap(err, "marshal failed, url")
