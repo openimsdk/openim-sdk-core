@@ -274,4 +274,11 @@ type DataBase interface {
 	FriendDatabase
 	ReactionDatabase
 	S3Database
+	KeyDatabase
+}
+type KeyDatabase interface {
+	InsertLocalKey(localKey *model_struct.LocalKey) error
+	InsertAllLocalKey(localKey *[]model_struct.LocalKey) error
+	GetLocalKeyBySessionID(sessionID string, sessionType int32) (*model_struct.LocalKey, error)
+	GetAllLocalKey() (*[]model_struct.LocalKey, error)
 }
