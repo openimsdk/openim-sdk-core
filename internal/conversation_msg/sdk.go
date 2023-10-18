@@ -1092,7 +1092,6 @@ func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID str
 
 func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
 	message.CreateTime = utils.GetCurrentTimestampByMill()
-	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
