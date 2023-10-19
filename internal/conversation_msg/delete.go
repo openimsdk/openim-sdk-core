@@ -82,7 +82,7 @@ func (c *Conversation) clearConversationMsgFromSvr(ctx context.Context, conversa
 }
 
 // Delete all messages
-func (c *Conversation) deleteAllMessage(ctx context.Context) error {
+func (c *Conversation) deleteAllMsgFromLocalAndSvr(ctx context.Context) error {
 	// Delete the server first (high error rate), then delete it.
 	err := c.deleteAllMessageFromSvr(ctx)
 	if err != nil {

@@ -39,10 +39,6 @@ func GetMultipleConversation(callback open_im_sdk_callback.Base, operationID str
 // 	call(callback, operationID, UserForSDK.Conversation().SetConversationRecvMessageOpt, conversationIDList, opt)
 // }
 
-func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, opt int) {
-	call(callback, operationID, UserForSDK.Conversation().SetGlobalRecvMessageOpt, opt)
-}
-
 func SetConversationMsgDestructTime(callback open_im_sdk_callback.Base, operationID string, conversationID string, msgDestructTime int64) {
 	call(callback, operationID, UserForSDK.Conversation().SetConversationMsgDestructTime, conversationID, msgDestructTime)
 }
@@ -54,6 +50,8 @@ func SetConversationIsMsgDestruct(callback open_im_sdk_callback.Base, operationI
 func HideConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	call(callback, operationID, UserForSDK.Conversation().HideConversation, conversationID)
 }
+
+// deprecated
 func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
 	call(callback, operationID, UserForSDK.Conversation().GetConversationRecvMessageOpt, conversationIDList)
 }
@@ -226,11 +224,11 @@ func DeleteMessage(callback open_im_sdk_callback.Base, operationID string, conve
 }
 
 func DeleteConversationFromLocal(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteAllConversationFromLocal)
+	call(callback, operationID, UserForSDK.Conversation().DeleteConversationFromLocal, conversationID)
 }
 
 func DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteAllMessage)
+	call(callback, operationID, UserForSDK.Conversation().DeleteAllMsgFromLocalAndSvr)
 }
 
 func DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
