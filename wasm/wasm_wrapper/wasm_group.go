@@ -68,6 +68,11 @@ func (w *WrapperGroup) SetGroupMemberRoleLevel(_ js.Value, args []js.Value) inte
 	return event_listener.NewCaller(open_im_sdk.SetGroupMemberRoleLevel, callback, &args).AsyncCallWithCallback()
 }
 
+func (w *WrapperGroup) SetGroupMemberInfo(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.SetGroupMemberInfo, callback, &args).AsyncCallWithCallback()
+}
+
 func (w *WrapperGroup) GetJoinedGroupList(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetJoinedGroupList, callback, &args).AsyncCallWithCallback()

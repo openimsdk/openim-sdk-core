@@ -132,6 +132,7 @@ func registerFunc() {
 	js.Global().Set("changeGroupMute", js.FuncOf(wrapperGroup.ChangeGroupMute))
 	js.Global().Set("changeGroupMemberMute", js.FuncOf(wrapperGroup.ChangeGroupMemberMute))
 	js.Global().Set("setGroupMemberRoleLevel", js.FuncOf(wrapperGroup.SetGroupMemberRoleLevel))
+	js.Global().Set("setGroupMemberInfo", js.FuncOf(wrapperGroup.SetGroupMemberRoleLevel))
 	js.Global().Set("getJoinedGroupList", js.FuncOf(wrapperGroup.GetJoinedGroupList))
 	js.Global().Set("searchGroups", js.FuncOf(wrapperGroup.SearchGroups))
 	js.Global().Set("setGroupInfo", js.FuncOf(wrapperGroup.SetGroupInfo))
@@ -178,14 +179,6 @@ func registerFunc() {
 	js.Global().Set("getBlackList", js.FuncOf(wrapperFriend.GetBlackList))
 	js.Global().Set("removeBlack", js.FuncOf(wrapperFriend.RemoveBlack))
 	js.Global().Set("addBlack", js.FuncOf(wrapperFriend.AddBlack))
-
-	//wrapperSignaling := wasm_wrapper.NewWrapperSignaling(globalFuc)
-	//js.Global().Set("signalingInviteInGroup", js.FuncOf(wrapperSignaling.SignalingInviteInGroup))
-	//js.Global().Set("signalingInvite", js.FuncOf(wrapperSignaling.SignalingInvite))
-	//js.Global().Set("signalingAccept", js.FuncOf(wrapperSignaling.SignalingAccept))
-	//js.Global().Set("signalingReject", js.FuncOf(wrapperSignaling.SignalingReject))
-	//js.Global().Set("signalingCancel", js.FuncOf(wrapperSignaling.SignalingCancel))
-	//js.Global().Set("signalingHungUp", js.FuncOf(wrapperSignaling.SignalingHungUp))
 
 	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
 	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))

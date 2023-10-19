@@ -176,7 +176,6 @@ func DoTestGetAdvancedHistoryMessageList() {
 	var testGetHistoryCallBack GetHistoryCallBack
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
-	params.UserID = ""
 	params.ConversationID = "si_7788_7789"
 	//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
 	params.Count = 20
