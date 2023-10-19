@@ -35,6 +35,9 @@ func GetUsersInfoFromSrv(callback open_im_sdk_callback.Base, operationID string,
 func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
 	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
 }
+func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, opt int) {
+	call(callback, operationID, UserForSDK.User().SetGlobalRecvMessageOpt, opt)
+}
 
 // GetSelfUserInfo obtains the user's own information.
 func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
