@@ -936,7 +936,8 @@ func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.L
 func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations ...*model_struct.LocalConversation) error {
 	var userIDs, groupIDs []string
 	for _, conversation := range conversations {
-		if conversation.ConversationType == constant.SingleChatType {
+		if conversation.ConversationType == constant.SingleChatType ||
+			conversation.ConversationType == constant.NotificationChatType {
 			userIDs = append(userIDs, conversation.UserID)
 		} else if conversation.ConversationType == constant.SuperGroupChatType {
 			groupIDs = append(groupIDs, conversation.GroupID)
@@ -951,19 +952,22 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		return err
 	}
 	for _, conversation := range conversations {
-		if conversation.ConversationType == constant.SingleChatType {
+		if conversation.ConversationType == constant.SingleChatType ||
+			conversation.ConversationType == constant.NotificationChatType {
 			if v, ok := users[conversation.UserID]; ok {
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.Nickname
 			} else {
-				log.ZWarn(ctx, "user info not found", errors.New("user not found"), "userID", conversation.UserID)
+				log.ZWarn(ctx, "user info not found", errors.New("user not found"),
+					"userID", conversation.UserID)
 			}
 		} else if conversation.ConversationType == constant.SuperGroupChatType {
 			if v, ok := groups[conversation.GroupID]; ok {
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.GroupName
 			} else {
-				log.ZWarn(ctx, "group info not found", errors.New("group not found"), "groupID", conversation.GroupID)
+				log.ZWarn(ctx, "group info not found", errors.New("group not found"),
+					"groupID", conversation.GroupID)
 			}
 
 		}
