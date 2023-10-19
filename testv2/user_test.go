@@ -83,6 +83,13 @@ func Test_UpdateMsgSenderInfo(t *testing.T) {
 	t.Log(userInfo)
 }
 
+func Test_SetSetGlobalRecvMessageOpt(t *testing.T) {
+	err := open_im_sdk.UserForSDK.User().SetGlobalRecvMessageOpt(ctx, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_Sub(t *testing.T) {
 	var users []string
 	users = append(users, "2926672950")

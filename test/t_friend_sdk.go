@@ -666,8 +666,7 @@ type userCallback struct {
 }
 
 func (c userCallback) OnUserStatusChanged(statusMap string) {
-	//TODO implement me
-	panic("implement me")
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), statusMap)
 }
 
 func (userCallback) OnSelfInfoUpdated(callbackData string) {
