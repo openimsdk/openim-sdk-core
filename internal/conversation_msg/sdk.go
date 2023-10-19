@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -42,7 +41,6 @@ import (
 
 	pbConversation "github.com/OpenIMSDK/protocol/conversation"
 	"github.com/OpenIMSDK/protocol/sdkws"
-	pbUser "github.com/OpenIMSDK/protocol/user"
 	"github.com/OpenIMSDK/protocol/wrapperspb"
 
 	"github.com/jinzhu/copier"
@@ -54,14 +52,6 @@ func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_str
 
 func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
 	return c.db.GetConversationListSplitDB(ctx, offset, count)
-}
-
-func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
-	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter, &pbUser.SetGlobalRecvMessageOptReq{UserID: c.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
-		return err
-	}
-	c.user.SyncLoginUserInfo(ctx)
-	return nil
 }
 
 func (c *Conversation) HideConversation(ctx context.Context, conversationID string) error {
@@ -139,6 +129,13 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 
 func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (c *Conversation) DeleteConversationFromLocal(ctx context.Context, conversationID string) error {
+	err := c.db.ResetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
@@ -895,12 +892,8 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 
 }
 
-func (c *Conversation) GetHistoryMessageList(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
-	return c.getHistoryMessageList(ctx, req, false)
-}
-
 func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
-	result, err := c.getAdvancedHistoryMessageList2(ctx, req, false)
+	result, err := c.getAdvancedHistoryMessageList(ctx, req, false)
 	if err != nil {
 		return nil, err
 	}
@@ -912,7 +905,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sd
 }
 
 func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
-	result, err := c.getAdvancedHistoryMessageList2(ctx, req, true)
+	result, err := c.getAdvancedHistoryMessageList(ctx, req, true)
 	if err != nil {
 		return nil, err
 	}
@@ -921,10 +914,6 @@ func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context,
 		result.MessageList = s
 	}
 	return result, nil
-}
-
-func (c *Conversation) GetHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
-	return c.getHistoryMessageList(ctx, req, true)
 }
 
 func (c *Conversation) RevokeMessage(ctx context.Context, conversationID, clientMsgID string) error {
@@ -972,8 +961,8 @@ func (c *Conversation) DeleteMessage(ctx context.Context, conversationID string,
 	return c.deleteMessage(ctx, conversationID, clientMsgID)
 }
 
-func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
-	return c.deleteAllMessage(ctx)
+func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
+	return c.deleteAllMsgFromLocalAndSvr(ctx)
 }
 
 func (c *Conversation) DeleteAllMessageFromLocalStorage(ctx context.Context) error {
