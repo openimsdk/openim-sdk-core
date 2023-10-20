@@ -222,6 +222,8 @@ type MsgStruct struct {
 	IsExternalExtensions bool                   `json:"isExternalExtensions,omitempty"`
 	OfflinePush          *sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
 	AttachedInfo         string                 `json:"attachedInfo,omitempty"`
+	Encryption           bool                   `json:"encryption"`
+	EncryptionMode       string                 `json:"encryptionMode"`
 	Ex                   string                 `json:"ex,omitempty"`
 	LocalEx              string                 `json:"localEx,omitempty"`
 	TextElem             *TextElem              `json:"textElem,omitempty"`

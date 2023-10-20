@@ -321,6 +321,8 @@ type LocalChatLog struct {
 	ContentType          int32  `gorm:"column:content_type;index:content_type_alone" json:"contentType"`
 	Content              string `gorm:"column:content;type:varchar(1000)" json:"content"`
 	IsRead               bool   `gorm:"column:is_read" json:"isRead"`
+	Encryption           bool   `gorm:"column:encryption" json:"encryption"`
+	EncryptionMode       string `gorm:"column:encryption_mode"  json:"encryptionMode"`
 	Status               int32  `gorm:"column:status" json:"status"`
 	Seq                  int64  `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
 	SendTime             int64  `gorm:"column:send_time;index:index_send_time;" json:"sendTime"`
