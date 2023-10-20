@@ -263,6 +263,11 @@ type S3Database interface {
 	UpdateUpload(ctx context.Context, upload *model_struct.LocalUpload) error
 	DeleteExpireUpload(ctx context.Context) error
 }
+type AesKeyDatabase interface {
+	InsertKey(ctx context.Context, key *model_struct.AesKey) error
+	BatchInsertKey(ctx context.Context, keys []*model_struct.AesKey) error
+	GetAesKey(ctx context.Context, sessionType int32, groupID, friendUserID string) (*model_struct.AesKey, error)
+}
 
 type DataBase interface {
 	Close(ctx context.Context) error
@@ -274,4 +279,5 @@ type DataBase interface {
 	FriendDatabase
 	ReactionDatabase
 	S3Database
+	AesKeyDatabase
 }

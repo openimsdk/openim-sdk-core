@@ -513,3 +513,11 @@ type LocalStranger struct {
 func (LocalStranger) TableName() string {
 	return "local_stranger"
 }
+
+type AesKey struct {
+	AesKeyId     string
+	sessionType  int32
+	groupID      string
+	friendUserID string
+	Key          string
+}
