@@ -95,13 +95,6 @@ func Test_GetGetMultipleConversation(t *testing.T) {
 //	}
 // }
 
-func Test_DeleteAllConversationFromLocal(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().DeleteAllConversationFromLocal(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func Test_SetConversationDraft(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().SetConversationDraft(ctx, "group_17729585012", "draft")
 	if err != nil {

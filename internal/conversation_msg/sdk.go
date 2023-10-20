@@ -127,15 +127,8 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 
 }
 
-func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
+func (c *Conversation) HideAllConversations(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func (c *Conversation) DeleteConversationFromLocal(ctx context.Context, conversationID string) error {
-	err := c.db.ResetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
