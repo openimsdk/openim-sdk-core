@@ -134,6 +134,13 @@ func (c *Conversation) HideAllConversations(ctx context.Context) error {
 	}
 	return nil
 }
+func (c *Conversation) DeleteConversationFromLocal(ctx context.Context, conversationID string) error {
+	err := c.db.ResetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID, draftText string) error {
 	if draftText != "" {
