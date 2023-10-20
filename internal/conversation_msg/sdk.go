@@ -55,7 +55,11 @@ func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, cou
 }
 
 func (c *Conversation) HideConversation(ctx context.Context, conversationID string) error {
-	return c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg_send_time": 0})
+	err := c.db.ResetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Conversation) GetAtAllTag(_ context.Context) string {
@@ -129,13 +133,6 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 
 func (c *Conversation) HideAllConversations(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func (c *Conversation) DeleteConversationFromLocal(ctx context.Context, conversationID string) error {
-	err := c.db.ResetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
