@@ -31,7 +31,7 @@ func (c *Third) UploadLogs(ctx context.Context, params []sdk_params_callback.Upl
 	}()
 	req := third.UploadLogsReq{}
 	for _, file := range files {
-		if !c.checkLogPath(file.Name()) {
+		if !checkLogPath(file.Name()) {
 			continue
 		}
 		logName := filepath.Join(logFilePath, file.Name())
@@ -57,15 +57,15 @@ func (c *Third) UploadLogs(ctx context.Context, params []sdk_params_callback.Upl
 	return err
 }
 
-func (c *Third) checkLogPath(logpath string) bool {
-	if len(logpath) < len("open-im-sdk-core.yyyy-mm-dd") {
+func checkLogPath(logPath string) bool {
+	if len(logPath) < len("open-im-sdk-core.yyyy-mm-dd") {
 		return false
 	}
-	logTime := logpath[len(logpath)-len(".yyyy-mm-dd"):]
+	logTime := logPath[len(logPath)-len(".yyyy-mm-dd"):]
 	if _, err := time.Parse(".2006-01-02", logTime); err != nil {
 		return false
 	}
-	if !strings.HasPrefix(logpath, "open-im-sdk-core.") {
+	if !strings.HasPrefix(logPath, "open-im-sdk-core.") {
 		return false
 	}
 

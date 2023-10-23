@@ -43,11 +43,6 @@ func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, 
 	}, true); err != nil {
 		return err
 	}
-	conversationsOnLocal, err = c.db.GetAllConversations(ctx)
-	if err != nil {
-		return err
-	}
-	c.cache.UpdateConversations(conversationsOnLocal)
 	return nil
 }
 
@@ -67,28 +62,6 @@ func (c *Conversation) SyncAllConversations(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
 	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
-}
-
-func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
-	var conversationChangedList []string
-	allConversations := c.cache.GetAllHasUnreadMessageConversations()
-	log.ZDebug(ctx, "get unread message length", "len", len(allConversations))
-	for _, conversation := range allConversations {
-		if deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
-			log.ZDebug(ctx, "DeleteConversationUnreadMessageList", conversation.ConversationID, conversation.UpdateUnreadCountTime, "delete rows:", deleteRows)
-			if err := c.db.DecrConversationUnreadCount(ctx, conversation.ConversationID, deleteRows); err != nil {
-				log.ZDebug(ctx, "DecrConversationUnreadCount", conversation.ConversationID, conversation.UpdateUnreadCountTime, "decr unread count err:", err.Error())
-			} else {
-				conversationChangedList = append(conversationChangedList, conversation.ConversationID)
-			}
-		}
-	}
-	if len(conversationChangedList) > 0 {
-		if err := common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
