@@ -127,13 +127,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				}
 				g.listener.OnGroupMemberDeleted(string(data))
 			}
-			//for _, member := range util.Batch(ServerGroupMemberToLocalGroupMember, detail.KickedUserList) {
-			//	data, err := json.Marshal(member)
-			//	if err != nil {
-			//		return err
-			//	}
-			//	g.listener.OnGroupMemberDeleted(string(data))
-			//}
 			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
 			if err != nil {
 				return err
@@ -161,24 +154,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		if detail.QuitUser.UserID == g.loginUserID {
-			//if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
-			//	return err
-			//}
-			//return g.SyncJoinedGroup(ctx)
-			//group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
-			//if err != nil {
-			//	return err
-			//}
-			//group.MemberCount = 0
-			//data, err := json.Marshal(group)
-			//if err != nil {
-			//	return err
-			//}
-			//if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
-			//	return err
-			//}
-			//g.listener.OnGroupInfoChanged(string(data))
-			//return nil
 			members, err := g.db.GetGroupMemberListSplit(ctx, detail.Group.GroupID, 0, 0, 999999)
 			if err != nil {
 				return err
@@ -193,13 +168,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				}
 				g.listener.OnGroupMemberDeleted(string(data))
 			}
-			//for _, member := range util.Batch(ServerGroupMemberToLocalGroupMember, detail.KickedUserList) {
-			//	data, err := json.Marshal(member)
-			//	if err != nil {
-			//		return err
-			//	}
-			//	g.listener.OnGroupMemberDeleted(string(data))
-			//}
 			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
 			if err != nil {
 				return err
@@ -296,14 +264,14 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.ChangedUser.UserID)
-	case 1519: // 1519  constant.GroupInfoSetAnnouncementNotification
-		var detail sdkws.GroupInfoSetTips // sdkws.GroupInfoSetAnnouncementTips
+	case constant.GroupInfoSetAnnouncementNotification: // 1519
+		var detail sdkws.GroupInfoSetAnnouncementTips //
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroups(ctx, detail.Group.GroupID)
-	case 1520: // 1520  constant.GroupInfoSetNameNotification
-		var detail sdkws.GroupInfoSetTips // sdkws.GroupInfoSetNameTips
+	case constant.GroupInfoSetNameNotification: // 1520
+		var detail sdkws.GroupInfoSetNameTips //
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}

@@ -260,18 +260,6 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.SyncConversation:
 
-		c.SyncAllConversations(ctx)
-		err := c.SyncConversationUnreadCount(ctx)
-		if err != nil {
-			// log.Error(operationID, "reconn sync conversation unread count err", err.Error())
-		}
-		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
-		if err != nil {
-			// log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
-		} else {
-			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-		}
-
 	}
 }
 
@@ -640,10 +628,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 			log.ZError(ctx, "SyncConversationHashReadSeqs err", err)
 		}
 		//clear SubscriptionStatusMap
-		c.cache.SubscriptionStatusMap.Range(func(key, value interface{}) bool {
-			c.cache.SubscriptionStatusMap.Delete(key)
-			return true
-		})
+		c.user.OnlineStatusCache.DeleteAll()
 		for _, syncFunc := range []func(c context.Context) error{
 			c.user.SyncLoginUserInfo,
 			c.friend.SyncAllBlackList, c.friend.SyncAllFriendList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
@@ -703,7 +688,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
 					c.friend.DoNotification(ctx, v)
 				} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
-					c.user.DoNotification(ctx, v, c.cache.UpdateStatus)
+					c.user.DoNotification(ctx, v)
 				} else if utils2.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
 					c.group.DoNotification(ctx, v)
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
