@@ -94,7 +94,7 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sourceID)
+			faceUrl, name, err := c.getUserNameAndFaceURL(ctx, sourceID)
 			if err != nil {
 				return nil, err
 			}
@@ -342,7 +342,7 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		if err != nil {
 			t := time.Now()
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, recvID)
+			faceUrl, name, err := c.getUserNameAndFaceURL(ctx, recvID)
 			log.ZDebug(ctx, "GetUserNameAndFaceURL", "cost time", time.Since(t))
 			if err != nil {
 				return nil, err
@@ -981,7 +981,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	}
 	var conversation model_struct.LocalConversation
 	if sendID != c.loginUserID {
-		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sendID)
+		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
 			//log.Error(operationID, "GetUserNameAndFaceURL err", err.Error(), sendID)
 		}
@@ -997,7 +997,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 		conversation.ConversationID = c.getConversationIDBySessionType(recvID, constant.SingleChatType)
 		_, err := c.db.GetConversation(ctx, conversation.ConversationID)
 		if err != nil {
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, recvID)
+			faceUrl, name, err := c.getUserNameAndFaceURL(ctx, recvID)
 			if err != nil {
 				return nil, err
 			}
@@ -1038,7 +1038,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 
 	conversation.ConversationID = c.getConversationIDBySessionType(groupID, int(conversation.ConversationType))
 	if sendID != c.loginUserID {
-		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sendID)
+		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
 			// log.Error("", "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
 		}

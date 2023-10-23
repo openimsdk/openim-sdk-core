@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -33,6 +34,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 
 	"github.com/OpenIMSDK/tools/log"
@@ -65,7 +67,7 @@ type Conversation struct {
 	file                 *file.File
 	business             *business.Business
 	messageController    *MessageController
-	cache                *cache.Cache
+	cache                *cache.Cache[string, *model_struct.LocalConversation]
 	full                 *full.Full
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
@@ -106,7 +108,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	ch chan common.Cmd2Value,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, cache *cache.Cache, full *full.Full, file *file.File) *Conversation {
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, full *full.Full, file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -127,7 +129,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	n.initSyncer()
-	n.cache = cache
+	n.cache = cache.NewCache[string, *model_struct.LocalConversation]()
 	return n
 }
 
@@ -915,7 +917,7 @@ func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*
 func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, lc.UserID)
+		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, lc.UserID)
 		if err != nil {
 			return err
 		}
@@ -943,7 +945,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 			groupIDs = append(groupIDs, conversation.GroupID)
 		}
 	}
-	users, err := c.cache.BatchGetUserNameAndFaceURL(ctx, userIDs...)
+	users, err := c.batchGetUserNameAndFaceURL(ctx, userIDs...)
 	if err != nil {
 		return err
 	}
@@ -973,4 +975,77 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		}
 	}
 	return nil
+}
+func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*user.BasicInfo,
+	error) {
+	m := make(map[string]*user.BasicInfo)
+	var notCachedUserIDs []string
+	var notInFriend []string
+
+	friendList, err := c.friend.Db().GetFriendInfoList(ctx, userIDs)
+	if err != nil {
+		log.ZWarn(ctx, "BatchGetUserNameAndFaceURL", err, "userIDs", userIDs)
+		notInFriend = userIDs
+	} else {
+		notInFriend = utils2.SliceSub(userIDs, utils2.Slice(friendList, func(e *model_struct.LocalFriend) string {
+			return e.FriendUserID
+		}))
+	}
+	for _, localFriend := range friendList {
+		userInfo := &user.BasicInfo{FaceURL: localFriend.FaceURL}
+		if localFriend.Remark != "" {
+			userInfo.Nickname = localFriend.Remark
+		} else {
+			userInfo.Nickname = localFriend.Nickname
+		}
+		m[localFriend.FriendUserID] = userInfo
+	}
+
+	for _, userID := range notInFriend {
+		if value, ok := c.user.UserBasicCache.Load(userID); ok {
+			m[userID] = value
+		} else {
+			notCachedUserIDs = append(notCachedUserIDs, userID)
+		}
+	}
+
+	if len(notCachedUserIDs) > 0 {
+		users, err := c.user.GetServerUserInfo(ctx, notCachedUserIDs)
+		if err != nil {
+			return nil, err
+		}
+		for _, u := range users {
+			userInfo := &user.BasicInfo{FaceURL: u.FaceURL, Nickname: u.Nickname}
+			m[u.UserID] = userInfo
+			c.user.UserBasicCache.Store(u.UserID, userInfo)
+		}
+	}
+	return m, nil
+}
+func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
+	//find in cache
+	if value, ok := c.user.UserBasicCache.Load(userID); ok {
+		return value.FaceURL, value.Nickname, nil
+	}
+	//get from local db
+	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, userID)
+	if err == nil {
+		faceURL = friendInfo.FaceURL
+		if friendInfo.Remark != "" {
+			name = friendInfo.Remark
+		} else {
+			name = friendInfo.Nickname
+		}
+		return faceURL, name, nil
+	}
+	//get from server db
+	users, err := c.user.GetServerUserInfo(ctx, []string{userID})
+	if err != nil {
+		return "", "", err
+	}
+	if len(users) == 0 {
+		return "", "", sdkerrs.ErrUserIDNotFound.Wrap(userID)
+	}
+	c.user.UserBasicCache.Store(userID, &user.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
+	return users[0].FaceURL, users[0].Nickname, nil
 }
