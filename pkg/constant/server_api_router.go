@@ -23,7 +23,6 @@ const (
 	AccountCheck                  = "/user/account_check"
 	UserRegister                  = "/user/user_register"
 	SubscribeUsersStatusRouter    = "/user/subscribe_users_status"
-	UnsubscribeUsersStatusRouter  = "/user/unsubscribe_users_status"
 	GetSubscribeUsersStatusRouter = "/user/get_subscribe_users_status"
 	GetUserStatusRouter           = "/user/get_users_status"
 

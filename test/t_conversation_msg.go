@@ -161,11 +161,6 @@ func DoTestGetMessageListReactionExtensions(operationID string) {
 	//params = append(params, &temp1)
 	// open_im_sdk.GetMessageListReactionExtensions(testGetMessageReactionExtensionsCallBack, testGetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(ss))
 }
-func DoTestUpdateFcmToken() {
-	var testUpdateFcmTokenCallBack UpdateFcmTokenCallBack
-	testUpdateFcmTokenCallBack.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.UpdateFcmToken(testUpdateFcmTokenCallBack, "2132323", testUpdateFcmTokenCallBack.OperationID)
-}
 func DoTestSetAppBadge() {
 	var testSetAppBadgeCallBack SetAppBadgeCallBack
 	testSetAppBadgeCallBack.OperationID = utils.OperationIDGenerator()

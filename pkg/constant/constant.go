@@ -109,6 +109,8 @@ const (
 	GroupMemberInfoSetNotification           = 1516
 	GroupMemberSetToAdminNotification        = 1517
 	GroupMemberSetToOrdinaryUserNotification = 1518
+	GroupInfoSetAnnouncementNotification     = 1519
+	GroupInfoSetNameNotification             = 1520
 	GroupNotificationEnd                     = 1599
 
 	SignalingNotificationBegin = 1600
@@ -307,6 +309,9 @@ const (
 	ReceiveMessage          = 0
 	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
+
+	Online  = 1
+	Offline = 0
 
 	//pinned
 	Pinned    = 1
