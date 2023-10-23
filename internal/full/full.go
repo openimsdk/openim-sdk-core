@@ -17,7 +17,6 @@ package full
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
@@ -28,12 +27,11 @@ import (
 )
 
 type Full struct {
-	user      *user.User
-	friend    *friend.Friend
-	group     *group.Group
-	ch        chan common.Cmd2Value
-	userCache *cache.Cache
-	db        db_interface.DataBase
+	user   *user.User
+	friend *friend.Friend
+	group  *group.Group
+	ch     chan common.Cmd2Value
+	db     db_interface.DataBase
 }
 
 func (u *Full) Group() *group.Group {
@@ -41,8 +39,8 @@ func (u *Full) Group() *group.Group {
 }
 
 func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value,
-	userCache *cache.Cache, db db_interface.DataBase) *Full {
-	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db}
+	db db_interface.DataBase) *Full {
+	return &Full{user: user, friend: friend, group: group, ch: ch, db: db}
 }
 
 func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, sessionType int32) (*model_struct.LocalGroup, error) {

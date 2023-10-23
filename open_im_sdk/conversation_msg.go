@@ -35,10 +35,6 @@ func GetMultipleConversation(callback open_im_sdk_callback.Base, operationID str
 	call(callback, operationID, UserForSDK.Conversation().GetMultipleConversation, conversationIDList)
 }
 
-// funcation SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string, opt int) {
-// 	call(callback, operationID, UserForSDK.Conversation().SetConversationRecvMessageOpt, conversationIDList, opt)
-// }
-
 func SetConversationMsgDestructTime(callback open_im_sdk_callback.Base, operationID string, conversationID string, msgDestructTime int64) {
 	call(callback, operationID, UserForSDK.Conversation().SetConversationMsgDestructTime, conversationID, msgDestructTime)
 }
@@ -54,10 +50,6 @@ func HideConversation(callback open_im_sdk_callback.Base, operationID string, co
 // deprecated
 func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
 	call(callback, operationID, UserForSDK.Conversation().GetConversationRecvMessageOpt, conversationIDList)
-}
-
-func DeleteAllConversationFromLocal(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteAllConversationFromLocal)
 }
 
 func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string, conversationID string, draftText string) {
@@ -182,10 +174,6 @@ func FindMessageList(callback open_im_sdk_callback.Base, operationID string, fin
 	call(callback, operationID, UserForSDK.Conversation().FindMessageList, findMessageOptions)
 }
 
-//funcation GetHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
-//	call(callback, operationID, UserForSDK.Conversation().GetHistoryMessageList, getMessageOptions)
-//}
-
 func GetAdvancedHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
 	call(callback, operationID, UserForSDK.Conversation().GetAdvancedHistoryMessageList, getMessageOptions)
 }
@@ -193,10 +181,6 @@ func GetAdvancedHistoryMessageList(callback open_im_sdk_callback.Base, operation
 func GetAdvancedHistoryMessageListReverse(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
 	call(callback, operationID, UserForSDK.Conversation().GetAdvancedHistoryMessageListReverse, getMessageOptions)
 }
-
-//funcation GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
-//	call(callback, operationID, UserForSDK.Conversation().GetHistoryMessageListReverse, getMessageOptions)
-//}
 
 func RevokeMessage(callback open_im_sdk_callback.Base, operationID string, conversationID, clientMsgID string) {
 	call(callback, operationID, UserForSDK.Conversation().RevokeMessage, conversationID, clientMsgID)
@@ -223,8 +207,8 @@ func DeleteMessage(callback open_im_sdk_callback.Base, operationID string, conve
 	call(callback, operationID, UserForSDK.Conversation().DeleteMessage, conversationID, clientMsgID)
 }
 
-func DeleteConversationFromLocal(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteConversationFromLocal, conversationID)
+func HideAllConversations(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.Conversation().HideAllConversations)
 }
 
 func DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
