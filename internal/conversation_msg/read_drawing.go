@@ -87,7 +87,8 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
 		return nil
 	}
-	log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs", seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
+	log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
+		seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
 	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
 		return err
 	}
@@ -135,13 +136,15 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 		return err
 	}
 	if err := c.db.DecrConversationUnreadCount(ctx, conversationID, decrCount); err != nil {
-		log.ZError(ctx, "decrConversationUnreadCount err", err, "conversationID", conversationID, "decrCount", decrCount)
+		log.ZError(ctx, "decrConversationUnreadCount err", err, "conversationID", conversationID,
+			"decrCount", decrCount)
 	}
 	c.unreadChangeTrigger(ctx, conversationID, hasReadSeq == maxSeq && msgs[0].SendID != c.loginUserID)
 	return nil
 }
 
-func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context, msgs []*model_struct.LocalChatLog) (asReadMsgIDs []string, seqs []int64) {
+func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context,
+	msgs []*model_struct.LocalChatLog) (asReadMsgIDs []string, seqs []int64) {
 	for _, msg := range msgs {
 		if !msg.IsRead && msg.SendID != c.loginUserID {
 			if msg.Seq == 0 {
@@ -159,10 +162,13 @@ func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context, msgs []*model
 
 func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID string, latestMsgIsRead bool) {
 	if latestMsgIsRead {
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange, Args: []string{conversationID}}, Ctx: ctx})
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID,
+			Action: constant.UpdateLatestMessageChange, Args: []string{conversationID}}, Ctx: ctx})
 	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, Ctx: ctx})
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, Ctx: ctx})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID,
+		Action: constant.ConChange, Args: []string{conversationID}}, Ctx: ctx})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged},
+		Ctx: ctx})
 }
 
 func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_struct.LocalConversation, hasReadSeq int64, seqs []int64) {

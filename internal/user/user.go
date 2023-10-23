@@ -17,6 +17,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -35,14 +36,21 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
+type BasicInfo struct {
+	Nickname string
+	FaceURL  string
+}
+
 // User is a struct that represents a user in the system.
 type User struct {
 	db_interface.DataBase
-	loginUserID    string
-	listener       open_im_sdk_callback.OnUserListener
-	loginTime      int64
-	userSyncer     *syncer.Syncer[*model_struct.LocalUser, string]
-	conversationCh chan common.Cmd2Value
+	loginUserID       string
+	listener          open_im_sdk_callback.OnUserListener
+	loginTime         int64
+	userSyncer        *syncer.Syncer[*model_struct.LocalUser, string]
+	conversationCh    chan common.Cmd2Value
+	UserBasicCache    *cache.Cache[string, *BasicInfo]
+	OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
 
 // LoginTime gets the login time of the user.
@@ -64,6 +72,8 @@ func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
 	user.initSyncer()
+	user.UserBasicCache = cache.NewCache[string, *BasicInfo]()
+	user.OnlineStatusCache = cache.NewCache[string, *userPb.OnlineStatus]()
 	return user
 }
 
@@ -131,7 +141,7 @@ func (u *User) initSyncer() {
 //}
 
 // DoNotification handles incoming notifications for the user.
-func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData, cache func(userID string, statusMap *userPb.OnlineStatus)) {
+func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
 	if u.listener == nil {
 		// log.Error(operationID, "listener == nil")
@@ -146,7 +156,7 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData, cache fun
 		case constant.UserInfoUpdatedNotification:
 			u.userInfoUpdatedNotification(ctx, msg)
 		case constant.UserStatusChangeNotification:
-			u.userStatusChangeNotification(ctx, msg, cache)
+			u.userStatusChangeNotification(ctx, msg)
 		default:
 			// log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
@@ -170,14 +180,18 @@ func (u *User) userInfoUpdatedNotification(ctx context.Context, msg *sdkws.MsgDa
 }
 
 // userStatusChangeNotification get subscriber status change callback
-func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData, c func(userID string, statusMap *userPb.OnlineStatus)) {
+func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "userStatusChangeNotification", "msg", *msg)
 	tips := sdkws.UserStatusChangeTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 		log.ZError(ctx, "comm.UnmarshalTips failed", err, "msg", msg.Content)
 		return
 	}
-	u.SyncUserStatus(ctx, tips.FromUserID, tips.ToUserID, tips.Status, tips.PlatformID, c)
+	if tips.FromUserID == u.loginUserID {
+		log.ZDebug(ctx, "self terminal login", "tips", tips)
+		return
+	}
+	u.SyncUserStatus(ctx, tips.FromUserID, tips.Status, tips.PlatformID)
 }
 
 // GetUsersInfoFromSvr retrieves user information from the server.
@@ -258,7 +272,7 @@ func (u *User) subscribeUsersStatus(ctx context.Context, userIDs []string) ([]*u
 
 // unsubscribeUsersStatus Unsubscribe a user's presence.
 func (u *User) unsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
-	_, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.UnsubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
+	_, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
 		UserID:  u.loginUserID,
 		UserIDs: userIDs,
 		Genre:   PbConstant.Unsubscribe,

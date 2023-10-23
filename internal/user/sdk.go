@@ -60,10 +60,19 @@ func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string
 }
 
 func (u *User) SubscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	return u.subscribeUsersStatus(ctx, userIDs)
+	userStatus, err := u.subscribeUsersStatus(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	u.OnlineStatusCache.DeleteAll()
+	u.OnlineStatusCache.StoreAll(func(value *userPb.OnlineStatus) string {
+		return value.UserID
+	}, userStatus)
+	return userStatus, nil
 }
 
 func (u *User) UnsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
+	u.OnlineStatusCache.DeleteAll()
 	return u.unsubscribeUsersStatus(ctx, userIDs)
 }
 
