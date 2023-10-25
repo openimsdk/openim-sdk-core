@@ -15,41 +15,9 @@
 package sdk_params_callback
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
-
-// type GetAllConversationListParam null
-type GetAllConversationListCallback []*model_struct.LocalConversation
-
-// type GetAllConversationListParam offset count
-type GetConversationListSplitCallback []*model_struct.LocalConversation
-
-type SetConversationRecvMessageOptParams []string
-
-const SetConversationRecvMessageOptCallback = constant.SuccessCallbackDefault
-const SetGlobalRecvMessageOptCallback = constant.SuccessCallbackDefault
-
-type GetConversationRecvMessageOptParams []string
-
-type GetMultipleConversationParams []string
-type GetMultipleConversationCallback []*model_struct.LocalConversation
-
-const DeleteConversationCallback = constant.SuccessCallbackDefault
-const DeleteAllConversationFromLocalCallback = constant.SuccessCallbackDefault
-
-const SetConversationDraftCallback = constant.SuccessCallbackDefault
-const ResetConversationGroupAtTypeCallback = constant.SuccessCallbackDefault
-
-const PinConversationDraftCallback = constant.SuccessCallbackDefault
-const HideConversationCallback = constant.SuccessCallbackDefault
-const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
-
-const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
-
-const SetConversationBurnDurationOptCallback = constant.SuccessCallbackDefault
 
 type FindMessageListParams []*ConversationArgs
 type ConversationArgs struct {
@@ -69,9 +37,7 @@ type GetHistoryMessageListParams struct {
 }
 type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
 type GetAdvancedHistoryMessageListParams struct {
-	UserID           string `json:"userID"`
 	LastMinSeq       int64  `json:"lastMinSeq"`
-	GroupID          string `json:"groupID"`
 	ConversationID   string `json:"conversationID"`
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
@@ -83,26 +49,6 @@ type GetAdvancedHistoryMessageListCallback struct {
 	ErrCode     int32                   `json:"errCode"`
 	ErrMsg      string                  `json:"errMsg"`
 }
-
-type RevokeMessageParams sdk_struct.MsgStruct
-
-const RevokeMessageCallback = constant.SuccessCallbackDefault
-
-const TypingStatusUpdateCallback = constant.SuccessCallbackDefault
-
-type MarkC2CMessageAsReadParams []string
-
-const MarkC2CMessageAsReadCallback = constant.SuccessCallbackDefault
-
-const MarkGroupMessageHasReadCallback = constant.SuccessCallbackDefault
-
-type MarkGroupMessageAsReadParams []string
-
-const MarkGroupMessageAsReadCallback = constant.SuccessCallbackDefault
-
-type MarkMessageAsReadByConIDParams []string
-
-const MarkMessageAsReadByConIDCallback = constant.SuccessCallbackDefault
 
 type SetConversationStatusParams struct {
 	UserId string `json:"userID" validate:"required"`

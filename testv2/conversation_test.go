@@ -51,13 +51,6 @@ func Test_GetConversationListSplit(t *testing.T) {
 //	}
 //}
 
-func Test_SetSetGlobalRecvMessageOpt(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SetGlobalRecvMessageOpt(ctx, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func Test_HideConversation(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().HideConversation(ctx, "asdasd")
 	if err != nil {
@@ -101,13 +94,6 @@ func Test_GetGetMultipleConversation(t *testing.T) {
 //		}
 //	}
 // }
-
-func Test_DeleteAllConversationFromLocal(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().DeleteAllConversationFromLocal(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
 
 func Test_SetConversationDraft(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().SetConversationDraft(ctx, "group_17729585012", "draft")
@@ -197,16 +183,6 @@ func Test_FindMessageList(t *testing.T) {
 	}
 }
 
-func Test_GetHistoryMessageList(t *testing.T) {
-	msgs, err := open_im_sdk.UserForSDK.Conversation().GetHistoryMessageList(ctx, sdk_params_callback.GetHistoryMessageListParams{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, v := range msgs {
-		t.Log(v)
-	}
-}
-
 func Test_GetAdvancedHistoryMessageList(t *testing.T) {
 	msgs, err := open_im_sdk.UserForSDK.Conversation().GetAdvancedHistoryMessageList(ctx, sdk_params_callback.GetAdvancedHistoryMessageListParams{})
 	if err != nil {
@@ -268,8 +244,8 @@ func Test_SearchLocalMessages(t *testing.T) {
 //	}
 // }
 
-func Test_DeleteAllMessage(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMessage(ctx)
+func Test_DeleteAllMsgFromLocalAndSvr(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMsgFromLocalAndSvr(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

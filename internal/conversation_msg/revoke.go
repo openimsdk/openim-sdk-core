@@ -50,7 +50,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	var revokerRole int32
 	var revokerNickname string
 	if tips.IsAdminRevoke || tips.SesstionType == constant.SingleChatType {
-		_, userName, err := c.cache.GetUserNameAndFaceURL(ctx, tips.RevokerUserID)
+		_, userName, err := c.getUserNameAndFaceURL(ctx, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetUserNameAndFaceURL failed", err, "tips", &tips)
 		} else {

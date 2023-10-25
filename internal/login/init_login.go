@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
@@ -68,7 +67,6 @@ type LoginMgr struct {
 	longConnMgr  *interaction.LongConnMgr
 	msgSyncer    *interaction.MsgSyncer
 	third        *third.Third
-	cache        *cache.Cache
 	token        string
 	loginUserID  string
 	connListener open_im_sdk_callback.OnConnListener
@@ -282,9 +280,8 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend.SetLoginTime(u.loginTime)
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.db)
 	u.business = business.NewBusiness(u.db)
-	u.cache = cache.NewCache(u.user, u.friend)
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
@@ -294,7 +291,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.longConnMgr.Run(ctx)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.cache, u.full, u.file)
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.full, u.file)
 	u.conversation.SetLoginTime()
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)

@@ -16,7 +16,9 @@ package user
 
 import (
 	"context"
+	pbUser "github.com/OpenIMSDK/protocol/user"
 	userPb "github.com/OpenIMSDK/protocol/user"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 
@@ -34,6 +36,14 @@ func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
 	return u.updateSelfUserInfo(ctx, userInfo)
 }
+func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
+	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter,
+		&pbUser.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
+		return err
+	}
+	u.SyncLoginUserInfo(ctx)
+	return nil
+}
 
 func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string) (err error) {
 	if nickname != "" {
@@ -50,10 +60,19 @@ func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string
 }
 
 func (u *User) SubscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	return u.subscribeUsersStatus(ctx, userIDs)
+	userStatus, err := u.subscribeUsersStatus(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	u.OnlineStatusCache.DeleteAll()
+	u.OnlineStatusCache.StoreAll(func(value *userPb.OnlineStatus) string {
+		return value.UserID
+	}, userStatus)
+	return userStatus, nil
 }
 
 func (u *User) UnsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
+	u.OnlineStatusCache.DeleteAll()
 	return u.unsubscribeUsersStatus(ctx, userIDs)
 }
 
