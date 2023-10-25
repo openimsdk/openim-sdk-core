@@ -59,7 +59,7 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 			if len(v.PlatformIDs) == 0 {
 				v.Status = constant.Offline
 				v.PlatformIDs = []int32{}
-				u.OnlineStatusCache.Store(fromUserID, v)
+				u.OnlineStatusCache.Delete(fromUserID)
 			}
 		}
 		u.listener.OnUserStatusChanged(utils.StructToJsonString(v))
