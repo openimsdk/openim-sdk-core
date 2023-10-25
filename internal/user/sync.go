@@ -62,7 +62,7 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 				u.OnlineStatusCache.Store(fromUserID, v)
 			}
 		}
-		u.listener.OnSelfInfoUpdated(utils.StructToJsonString(userOnlineStatus))
+		u.listener.OnUserStatusChanged(utils.StructToJsonString(userOnlineStatus))
 	} else {
 		if status == constant.Online {
 			u.OnlineStatusCache.Store(fromUserID, &userOnlineStatus)
