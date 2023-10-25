@@ -782,7 +782,15 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	delFile []string, offlinePushInfo *sdkws.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
 	//Protocol conversion
 	var wsMsgData sdkws.MsgData
-	copier.Copy(&wsMsgData, s)
+
+	var encryptionMsg *sdk_struct.MsgStruct
+	encryptionMsg = s
+	if c.encryption.IsEncryption {
+		c.encryption.Mode().EncryptionMsg(encryptionMsg)
+	}
+
+	copier.Copy(&wsMsgData, encryptionMsg)
+	//copier.Copy(&wsMsgData, s)
 	wsMsgData.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime

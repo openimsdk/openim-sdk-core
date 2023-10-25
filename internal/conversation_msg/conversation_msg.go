@@ -20,6 +20,8 @@ import (
 	"errors"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/decrypt"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/encryption"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
@@ -72,6 +74,8 @@ type Conversation struct {
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	loginTime            int64
 	startTime            time.Time
+	encryption           *encryption.Encryption
+	decrypt              *decrypt.Decrypt
 }
 
 func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
@@ -106,7 +110,9 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	ch chan common.Cmd2Value,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, cache *cache.Cache, full *full.Full, file *file.File) *Conversation {
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, cache *cache.Cache, full *full.Full, file *file.File,
+	encryption *encryption.Encryption,
+	decrypt *decrypt.Decrypt) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -128,6 +134,8 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	n.SetConversationListener(conversationListener)
 	n.initSyncer()
 	n.cache = cache
+	n.encryption = encryption
+	n.decrypt = decrypt
 	return n
 }
 
@@ -223,6 +231,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			if err != nil {
 				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType)
 				continue
+			}
+			if msg.Encryption {
+				c.decrypt.DecryptMsg(msg)
 			}
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
 			if msg.Status == constant.MsgStatusHasDeleted {

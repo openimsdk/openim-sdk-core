@@ -2,7 +2,6 @@ package encryption
 
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/aes_key"
-	aes "github.com/openimsdk/openim-sdk-core/v3/pkg/aes"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -11,9 +10,12 @@ import (
 type Encryption struct {
 	IsEncryption   bool
 	EncryptionMode string
-	Mode           EncModes
+	mode           EncModes
 }
 
+func (e Encryption) Mode() EncModes {
+	return e.mode
+}
 func NewEncryption(isEncryption bool, mode string, key *aes_key.AesKey) *Encryption {
 	if isEncryption {
 		switch mode {
@@ -43,11 +45,12 @@ func (a *AesEncryption) EncryptionMsg(msg *sdk_struct.MsgStruct) {
 			log.Error("", "a.key.GetKey err ", err2.Error(), msg.SessionType, msg.GroupID, msg.SendID, msg.RecvID)
 			return
 		}
-		byAes, err := aes.EncryptByAes([]byte(msg.Content), []byte(key))
-		if err != nil {
-			log.Error("", "aes.EncryptByAes err ", err.Error(), msg.ClientMsgID)
-			return
-		}
-		msg.Content = byAes
+		//byAes, err := aes.EncryptByAes([]byte(msg.Content), []byte(key))
+		//if err != nil {
+		//	log.Error("", "aes.EncryptByAes err ", err.Error(), msg.ClientMsgID)
+		//	return
+		//}
+		//msg.Content = byAes
+		msgEncryption(msg, key)
 	}
 }

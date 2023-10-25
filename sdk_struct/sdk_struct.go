@@ -318,6 +318,8 @@ type IMConfig struct {
 	IsLogStandardOutput  bool   `json:"isLogStandardOutput"`
 	LogFilePath          string `json:"logFilePath"`
 	IsExternalExtensions bool   `json:"isExternalExtensions"`
+	IsEncryption         bool   `json:"is_encryption"`
+	EncryptionMode       string `json:"encryption_mode"`
 }
 
 type CmdNewMsgComeToConversation struct {

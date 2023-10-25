@@ -17,6 +17,11 @@ package login
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/aes_key"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/decrypt"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/encryption"
+
+	//"github.com/openimsdk/openim-sdk-core/v3/internal/encryption"
 	"sync"
 	"time"
 
@@ -100,6 +105,7 @@ type LoginMgr struct {
 	cancel    context.CancelFunc
 	info      *ccontext.GlobalConfig
 	id2MinSeq map[string]int64
+	aesKey    *aes_key.AesKey
 }
 
 func (u *LoginMgr) BaseCtx() context.Context {
@@ -126,6 +132,8 @@ func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
 		DataDir:              u.info.DataDir,
 		LogLevel:             u.info.LogLevel,
 		IsExternalExtensions: u.info.IsExternalExtensions,
+		IsEncryption:         u.info.IsEncryption,
+		EncryptionMode:       u.info.EncryptionMode,
 	}
 }
 
@@ -292,9 +300,12 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.longConnMgr.Run(ctx)
+	u.aesKey = aes_key.NewAesKey(u.db)
+	newDecrypt := decrypt.NewDecrypt(u.aesKey)
+	newEncryption := encryption.NewEncryption(u.ImConfig().IsEncryption, u.ImConfig().EncryptionMode, u.aesKey)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.cache, u.full, u.file)
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.cache, u.full, u.file, newEncryption, newDecrypt)
 	u.conversation.SetLoginTime()
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
