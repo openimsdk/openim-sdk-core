@@ -783,6 +783,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	wsMsgData.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
+	wsMsgData.SendTime = 0
 	wsMsgData.Options = options
 	if wsMsgData.ContentType == constant.AtText {
 		wsMsgData.AtUserIDList = s.AtTextElem.AtUserList
@@ -1078,6 +1079,7 @@ func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID str
 
 func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
 	message.CreateTime = utils.GetCurrentTimestampByMill()
+	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
