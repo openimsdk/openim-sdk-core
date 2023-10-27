@@ -44,18 +44,23 @@ type msgUploadFileCallback struct {
 }
 
 func (c *msgUploadFileCallback) Open(size int64) {
+	log.ZInfo(c.ctx, "msgUploadFileCallback Open", "size", size)
 }
 
 func (c *msgUploadFileCallback) PartSize(partSize int64, num int) {
+	log.ZInfo(c.ctx, "msgUploadFileCallback PartSize", "partSize", partSize, "num", num)
 }
 
 func (c *msgUploadFileCallback) HashPartProgress(index int, size int64, partHash string) {
+	log.ZInfo(c.ctx, "msgUploadFileCallback HashPartProgress", "index", index, "size", size, "partHash", partHash)
 }
 
 func (c *msgUploadFileCallback) HashPartComplete(partsHash string, fileHash string) {
+	log.ZInfo(c.ctx, "msgUploadFileCallback HashPartComplete", "partsHash", partsHash, "fileHash", fileHash)
 }
 
 func (c *msgUploadFileCallback) UploadID(uploadID string) {
+	log.ZInfo(c.ctx, "msgUploadFileCallback UploadID", "uploadID", uploadID)
 	c.msg.AttachedInfoElem.Progress.UploadID = uploadID
 	data, err := json.Marshal(c.msg.AttachedInfoElem)
 	if err != nil {
@@ -67,10 +72,11 @@ func (c *msgUploadFileCallback) UploadID(uploadID string) {
 }
 
 func (c *msgUploadFileCallback) UploadPartComplete(index int, partSize int64, partHash string) {
-
+	log.ZInfo(c.ctx, "msgUploadFileCallback UploadPartComplete", "index", index, "partSize", partSize, "partHash", partHash)
 }
 
 func (c *msgUploadFileCallback) UploadComplete(fileSize int64, streamSize int64, storageSize int64) {
+	log.ZInfo(c.ctx, "msgUploadFileCallback UploadComplete", "fileSize", fileSize, "streamSize", streamSize, "storageSize", storageSize)
 	c.msg.AttachedInfoElem.Progress.Save = storageSize
 	c.msg.AttachedInfoElem.Progress.Current = streamSize
 	c.msg.AttachedInfoElem.Progress.Total = fileSize
@@ -90,6 +96,7 @@ func (c *msgUploadFileCallback) UploadComplete(fileSize int64, streamSize int64,
 }
 
 func (c *msgUploadFileCallback) Complete(size int64, url string, typ int) {
+	log.ZInfo(c.ctx, "msgUploadFileCallback Complete", "size", size, "url", url, "typ", typ)
 	c.msg.AttachedInfoElem.Progress = nil
 	data, err := json.Marshal(c.msg.AttachedInfoElem)
 	if err != nil {
