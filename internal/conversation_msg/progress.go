@@ -31,8 +31,7 @@ func NewUploadFileCallback(ctx context.Context, progress func(progress int), msg
 	if msg.AttachedInfoElem.Progress == nil {
 		msg.AttachedInfoElem.Progress = &sdk_struct.UploadProgress{}
 	}
-	// return &msgUploadFileCallback{ctx: ctx, progress: progress, msg: msg, db: db, conversationID: conversationID}
-	return nil
+	return &msgUploadFileCallback{ctx: ctx, progress: progress, msg: msg, db: db, conversationID: conversationID}
 }
 
 type msgUploadFileCallback struct {
