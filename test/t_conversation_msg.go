@@ -161,11 +161,6 @@ func DoTestGetMessageListReactionExtensions(operationID string) {
 	//params = append(params, &temp1)
 	// open_im_sdk.GetMessageListReactionExtensions(testGetMessageReactionExtensionsCallBack, testGetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(ss))
 }
-func DoTestUpdateFcmToken() {
-	var testUpdateFcmTokenCallBack UpdateFcmTokenCallBack
-	testUpdateFcmTokenCallBack.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.UpdateFcmToken(testUpdateFcmTokenCallBack, "2132323", testUpdateFcmTokenCallBack.OperationID)
-}
 func DoTestSetAppBadge() {
 	var testSetAppBadgeCallBack SetAppBadgeCallBack
 	testSetAppBadgeCallBack.OperationID = utils.OperationIDGenerator()
@@ -176,7 +171,6 @@ func DoTestGetAdvancedHistoryMessageList() {
 	var testGetHistoryCallBack GetHistoryCallBack
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
-	params.UserID = ""
 	params.ConversationID = "si_7788_7789"
 	//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
 	params.Count = 20

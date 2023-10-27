@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -42,7 +41,6 @@ import (
 
 	pbConversation "github.com/OpenIMSDK/protocol/conversation"
 	"github.com/OpenIMSDK/protocol/sdkws"
-	pbUser "github.com/OpenIMSDK/protocol/user"
 	"github.com/OpenIMSDK/protocol/wrapperspb"
 
 	"github.com/jinzhu/copier"
@@ -56,16 +54,12 @@ func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, cou
 	return c.db.GetConversationListSplitDB(ctx, offset, count)
 }
 
-func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
-	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter, &pbUser.SetGlobalRecvMessageOptReq{UserID: c.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
+func (c *Conversation) HideConversation(ctx context.Context, conversationID string) error {
+	err := c.db.ResetConversation(ctx, conversationID)
+	if err != nil {
 		return err
 	}
-	c.user.SyncLoginUserInfo(ctx)
 	return nil
-}
-
-func (c *Conversation) HideConversation(ctx context.Context, conversationID string) error {
-	return c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg_send_time": 0})
 }
 
 func (c *Conversation) GetAtAllTag(_ context.Context) string {
@@ -100,7 +94,7 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sourceID)
+			faceUrl, name, err := c.getUserNameAndFaceURL(ctx, sourceID)
 			if err != nil {
 				return nil, err
 			}
@@ -137,7 +131,7 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 
 }
 
-func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
+func (c *Conversation) HideAllConversations(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
 	if err != nil {
 		return err
@@ -348,7 +342,7 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		if err != nil {
 			t := time.Now()
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, recvID)
+			faceUrl, name, err := c.getUserNameAndFaceURL(ctx, recvID)
 			log.ZDebug(ctx, "GetUserNameAndFaceURL", "cost time", time.Since(t))
 			if err != nil {
 				return nil, err
@@ -789,6 +783,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	wsMsgData.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
+	wsMsgData.SendTime = 0
 	wsMsgData.Options = options
 	if wsMsgData.ContentType == constant.AtText {
 		wsMsgData.AtUserIDList = s.AtTextElem.AtUserList
@@ -895,12 +890,8 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 
 }
 
-func (c *Conversation) GetHistoryMessageList(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
-	return c.getHistoryMessageList(ctx, req, false)
-}
-
 func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
-	result, err := c.getAdvancedHistoryMessageList2(ctx, req, false)
+	result, err := c.getAdvancedHistoryMessageList(ctx, req, false)
 	if err != nil {
 		return nil, err
 	}
@@ -912,7 +903,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sd
 }
 
 func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
-	result, err := c.getAdvancedHistoryMessageList2(ctx, req, true)
+	result, err := c.getAdvancedHistoryMessageList(ctx, req, true)
 	if err != nil {
 		return nil, err
 	}
@@ -921,10 +912,6 @@ func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context,
 		result.MessageList = s
 	}
 	return result, nil
-}
-
-func (c *Conversation) GetHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
-	return c.getHistoryMessageList(ctx, req, true)
 }
 
 func (c *Conversation) RevokeMessage(ctx context.Context, conversationID, clientMsgID string) error {
@@ -972,8 +959,8 @@ func (c *Conversation) DeleteMessage(ctx context.Context, conversationID string,
 	return c.deleteMessage(ctx, conversationID, clientMsgID)
 }
 
-func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
-	return c.deleteAllMessage(ctx)
+func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
+	return c.deleteAllMsgFromLocalAndSvr(ctx)
 }
 
 func (c *Conversation) DeleteAllMessageFromLocalStorage(ctx context.Context) error {
@@ -995,7 +982,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	}
 	var conversation model_struct.LocalConversation
 	if sendID != c.loginUserID {
-		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sendID)
+		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
 			//log.Error(operationID, "GetUserNameAndFaceURL err", err.Error(), sendID)
 		}
@@ -1011,7 +998,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 		conversation.ConversationID = c.getConversationIDBySessionType(recvID, constant.SingleChatType)
 		_, err := c.db.GetConversation(ctx, conversation.ConversationID)
 		if err != nil {
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, recvID)
+			faceUrl, name, err := c.getUserNameAndFaceURL(ctx, recvID)
 			if err != nil {
 				return nil, err
 			}
@@ -1052,7 +1039,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 
 	conversation.ConversationID = c.getConversationIDBySessionType(groupID, int(conversation.ConversationType))
 	if sendID != c.loginUserID {
-		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sendID)
+		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
 			// log.Error("", "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
 		}
@@ -1092,6 +1079,7 @@ func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID str
 
 func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
 	message.CreateTime = utils.GetCurrentTimestampByMill()
+	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
