@@ -18,7 +18,7 @@ require (
 	nhooyr.io/websocket v1.8.7
 )
 
-require golang.org/x/net v0.11.0
+require golang.org/x/net v0.16.0
 
 require (
 	github.com/OpenIMSDK/protocol v0.0.23
@@ -27,6 +27,8 @@ require (
 	golang.org/x/image v0.9.0
 	gorm.io/gorm v1.23.8
 )
+
+require golang.org/x/mod v0.13.0 // indirect
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
@@ -39,8 +41,9 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/tools v0.14.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect
 	google.golang.org/grpc v1.56.2 // indirect
 )
