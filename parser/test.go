@@ -13,9 +13,9 @@ import (
 )
 
 func main() {
-	//filePath := "/Users/gordon/GolandProjects/private/fork/openim-sdk-core/internal/conversation_msg" // 替换为你的Go文件路径
+	filePath := "/Users/gordon/GolandProjects/private/fork/openim-sdk-core/internal/conversation_msg" // 替换为你的Go文件路径
 
-	filePath := "D:\\Goland\\fg\\openim-sdk-core\\internal\\conversation_msg"
+	// filePath := "D:\\Goland\\fg\\openim-sdk-core\\internal\\conversation_msg"
 	// 加载包信息
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedFiles | packages.NeedTypesInfo |
@@ -43,8 +43,60 @@ func main() {
 				if fdecl, ok := decl.(*ast.FuncDecl); ok {
 					// 仅处理导出的函数
 					if fdecl.Name.IsExported() {
+							var comments string
+							if fdecl.Doc!=nil {
+								  for _, c := range fdecl.Doc.List {
+				comments += c.Text + "\n"
+			      }
+							}
+			    
 						funcName := fdecl.Name.Name
 						fmt.Println("Function Name:", funcName)
+				
+								fmt.Printf("Comments:\n%s", comments)
+								var sb strings.Builder
+
+	// 如果是方法，输出接收器
+	if fdecl.Recv != nil && len(fdecl.Recv.List) > 0 {
+		sb.WriteString("func (")
+		for i, field := range fdecl.Recv.List {
+			sb.WriteString(getFieldDeclaration(field))
+			if i != len(fdecl.Recv.List)-1 {
+				sb.WriteString(", ")
+			}
+		}
+		sb.WriteString(") ")
+	} else {
+		sb.WriteString("func ")
+	}
+
+	// 输出函数名
+	sb.WriteString(fdecl.Name.Name)
+
+	// 输出函数参数
+	sb.WriteString("(")
+	for i, field := range fdecl.Type.Params.List {
+		sb.WriteString(getFieldDeclaration(field))
+		if i != len(fdecl.Type.Params.List)-1 {
+			sb.WriteString(", ")
+		}
+	}
+	sb.WriteString(")")
+
+	// 输出返回值
+	if fdecl.Type.Results != nil {
+		sb.WriteString(" (")
+		for i, field := range fdecl.Type.Results.List {
+			sb.WriteString(getFieldDeclaration(field))
+			if i != len(fdecl.Type.Results.List)-1 {
+				sb.WriteString(", ")
+			}
+		}
+		sb.WriteString(")")
+	}
+
+								// 构造函数签名字符串
+							fmt.Printf("Function Declaration:\n%s\n", sb.String())
 						// 获取函数位置信息
 						funcPos := fdecl.Pos()
 						funcFile := pkg.Fset.Position(funcPos).Filename
@@ -205,4 +257,37 @@ func isCustomType(typeName string) bool {
 	}
 
 	return !basicTypes[typeName]
+}
+func getFieldDeclaration(field *ast.Field) string {
+	var sb strings.Builder
+
+	for i, name := range field.Names {
+		sb.WriteString(name.Name)
+		if i != len(field.Names)-1 {
+			sb.WriteString(", ")
+		}
+	}
+	if len(field.Names) > 0 {
+		sb.WriteString(" ")
+	}
+	sb.WriteString(getExprString(field.Type))
+
+	return sb.String()
+}
+
+func getExprString(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.StarExpr:
+		return "*" + getExprString(t.X)
+	case *ast.SelectorExpr:
+		return getExprString(t.X) + "." + t.Sel.Name
+	default:
+		return fmt.Sprintf("%T", expr)
+	}
+}
+type Content struct{
+	FuncName  string `json:"funcName"`
+    
 }

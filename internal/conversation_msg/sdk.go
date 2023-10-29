@@ -378,6 +378,10 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 func (c *Conversation) GetConversationIDBySessionType(_ context.Context, sourceID string, sessionType int) string {
 	return c.getConversationIDBySessionType(sourceID, sessionType)
 }
+//this is a test file
+/**
+his is a test file
+*/
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 	filepathExt := func(name ...string) string {
 		for _, path := range name {
