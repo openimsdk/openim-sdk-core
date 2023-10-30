@@ -801,7 +801,6 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess
 	s.ServerMsgID = sendMsgResp.ServerMsgID
-	callback.OnProgress(100)
 	go func() {
 		//remove media cache file
 		for _, v := range delFile {
