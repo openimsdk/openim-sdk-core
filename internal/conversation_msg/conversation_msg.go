@@ -936,6 +936,9 @@ func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.L
 }
 
 func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations ...*model_struct.LocalConversation) error {
+	if len(conversations) == 0 {
+		return nil
+	}
 	var userIDs, groupIDs []string
 	for _, conversation := range conversations {
 		if conversation.ConversationType == constant.SingleChatType ||
