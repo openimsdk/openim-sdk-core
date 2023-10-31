@@ -42,6 +42,8 @@ type MsgSyncer struct {
 	db                 db_interface.DataBase // data store
 	syncTimes          int                   // times of sync
 	ctx                context.Context       // context
+	reinstalled        bool                  //true if the app was uninstalled and reinstalled
+
 }
 
 // NewMsgSyncer creates a new instance of the message synchronizer.
@@ -71,6 +73,9 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	if err != nil {
 		log.ZError(ctx, "get conversation id list failed", err)
 		return err
+	}
+	if len(conversationIDList) == 0 {
+		m.reinstalled = true
 	}
 	for _, v := range conversationIDList {
 		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, v)
@@ -131,13 +136,43 @@ func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 
 func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync map[string]int64, pullNums int64) {
 	needSyncSeqMap := make(map[string][2]int64)
-	for conversationID, maxSeq := range maxSeqToSync {
-		if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
-			if maxSeq > syncedMaxSeq {
-				needSyncSeqMap[conversationID] = [2]int64{syncedMaxSeq, maxSeq}
+	//when app reinstalled do not pull notifications messages.
+	if m.reinstalled {
+		notificationsSeqMap := make(map[string]int64)
+		messagesSeqMap := make(map[string]int64)
+		for conversationID, seq := range maxSeqToSync {
+			if IsNotification(conversationID) {
+				notificationsSeqMap[conversationID] = seq
+			} else {
+				messagesSeqMap[conversationID] = seq
 			}
-		} else {
-			needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
+		}
+		for conversationID, seq := range notificationsSeqMap {
+			err := m.db.SetNotificationSeq(ctx, conversationID, seq)
+			if err != nil {
+				log.ZWarn(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "seq", seq)
+				continue
+			}
+		}
+		for conversationID, maxSeq := range messagesSeqMap {
+			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
+				if maxSeq > syncedMaxSeq {
+					needSyncSeqMap[conversationID] = [2]int64{syncedMaxSeq + 1, maxSeq}
+				}
+			} else {
+				needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
+			}
+		}
+		m.reinstalled = false
+	} else {
+		for conversationID, maxSeq := range maxSeqToSync {
+			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
+				if maxSeq > syncedMaxSeq {
+					needSyncSeqMap[conversationID] = [2]int64{syncedMaxSeq + 1, maxSeq}
+				}
+			} else {
+				needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
+			}
 		}
 	}
 	_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap, pullNums)
@@ -213,12 +248,23 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 		tempSeqMap := make(map[string][2]int64, 50)
 		msgNum := 0
 		for k, v := range seqMap {
-
-			oneConversationSyncNum := v[1] - v[0]
+			oneConversationSyncNum := v[1] - v[0] + 1
 			if (oneConversationSyncNum/SplitPullMsgNum) > 1 && IsNotification(k) {
 				nSeqMap := make(map[string][2]int64, 1)
-				nSeqMap[k] = [2]int64{v[0], v[0] + oneConversationSyncNum/2}
-				for i := 0; i < 2; i++ {
+				count := int(oneConversationSyncNum / SplitPullMsgNum)
+				startSeq := v[0]
+				var end int64
+				for i := 0; i <= count; i++ {
+					if i == count {
+						nSeqMap[k] = [2]int64{startSeq, v[1]}
+					} else {
+						end = startSeq + int64(SplitPullMsgNum)
+						if end > v[1] {
+							end = v[1]
+							i = count
+						}
+						nSeqMap[k] = [2]int64{startSeq, end}
+					}
 					resp, err := m.pullMsgBySeqRange(ctx, nSeqMap, syncMsgNum)
 					if err != nil {
 						log.ZError(ctx, "syncMsgFromSvr err", err, "nSeqMap", nSeqMap)
@@ -229,7 +275,7 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 					for conversationID, seqs := range nSeqMap {
 						m.syncedMaxSeqs[conversationID] = seqs[1]
 					}
-					nSeqMap[k] = [2]int64{v[0] + oneConversationSyncNum/2 + 1, v[1]}
+					startSeq = end + 1
 				}
 				continue
 			}
