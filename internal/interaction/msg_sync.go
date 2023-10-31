@@ -152,6 +152,8 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 			if err != nil {
 				log.ZWarn(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "seq", seq)
 				continue
+			} else {
+				m.syncedMaxSeqs[conversationID] = seq
 			}
 		}
 		for conversationID, maxSeq := range messagesSeqMap {
@@ -245,6 +247,7 @@ func IsNotification(conversationID string) bool {
 // Fragment synchronization message, seq refresh after successful trigger
 func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
 	if len(seqMap) > 0 {
+		log.ZDebug(ctx, "current sync seqMap", "seqMap", seqMap)
 		tempSeqMap := make(map[string][2]int64, 50)
 		msgNum := 0
 		for k, v := range seqMap {
@@ -309,6 +312,8 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 		for conversationID, seqs := range seqMap {
 			m.syncedMaxSeqs[conversationID] = seqs[1]
 		}
+	} else {
+		log.ZDebug(ctx, "noting conversation to sync", "syncMsgNum", syncMsgNum)
 	}
 	return nil
 }
