@@ -5,17 +5,16 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"golang.org/x/tools/go/packages"
 	"log"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/tools/go/packages"
 )
 
 func main() {
-	filePath := "/Users/gordon/GolandProjects/private/fork/openim-sdk-core/internal/conversation_msg" // 替换为你的Go文件路径
+	//filePath := "/Users/gordon/GolandProjects/private/fork/openim-sdk-core/internal/conversation_msg" // 替换为你的Go文件路径
 
-	// filePath := "D:\\Goland\\fg\\openim-sdk-core\\internal\\conversation_msg"
+	filePath := "D:\\Goland\\fg\\openim-sdk-core\\internal\\conversation_msg"
 	// 加载包信息
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedFiles | packages.NeedTypesInfo |
@@ -29,83 +28,43 @@ func main() {
 	}
 	if len(pkgs) == 0 {
 		log.Fatal("Failed to load packages")
+	} else {
+		log.Println("package is:", pkgs)
 	}
+	//time.Sleep(time.Second * 100)
 
-	// 遍历文件中的所有声明
+	// 遍历所有的包
 	for _, pkg := range pkgs {
-		// for _, file := range pkg.GoFiles {
-		// 	fmt.Println("file name", filepath.Base(file))
+		//遍历包中所有语法树
+		for i, file := range pkg.Syntax {
 
-		// }
-		for _, file := range pkg.Syntax {
+			filename := pkg.GoFiles[i]
+			log.Println("file name is", filename)
+			if filepath.Base(filename) != "sdk.go" {
+				continue
+			}
+			log.Println("file name is", filename)
+			//遍历一个文件所有的申明
 			for _, decl := range file.Decls {
 				// 仅处理函数声明
 				if fdecl, ok := decl.(*ast.FuncDecl); ok {
+
 					// 仅处理导出的函数
 					if fdecl.Name.IsExported() {
-							var comments string
-							if fdecl.Doc!=nil {
-								  for _, c := range fdecl.Doc.List {
-				comments += c.Text + "\n"
-			      }
-							}
-			    
-						funcName := fdecl.Name.Name
-						fmt.Println("Function Name:", funcName)
-				
-								fmt.Printf("Comments:\n%s", comments)
-								var sb strings.Builder
+						//获取函数名字
+						fmt.Println("Function Name:", fdecl.Name.Name)
+						//获取函数注释
+						fmt.Printf("Comments:\n%s", getFunComments(fdecl))
 
-	// 如果是方法，输出接收器
-	if fdecl.Recv != nil && len(fdecl.Recv.List) > 0 {
-		sb.WriteString("func (")
-		for i, field := range fdecl.Recv.List {
-			sb.WriteString(getFieldDeclaration(field))
-			if i != len(fdecl.Recv.List)-1 {
-				sb.WriteString(", ")
-			}
-		}
-		sb.WriteString(") ")
-	} else {
-		sb.WriteString("func ")
-	}
+						//获取函数原型
+						fmt.Printf("Function Declaration:\n%s\n", getFunProtoType(fdecl))
 
-	// 输出函数名
-	sb.WriteString(fdecl.Name.Name)
-
-	// 输出函数参数
-	sb.WriteString("(")
-	for i, field := range fdecl.Type.Params.List {
-		sb.WriteString(getFieldDeclaration(field))
-		if i != len(fdecl.Type.Params.List)-1 {
-			sb.WriteString(", ")
-		}
-	}
-	sb.WriteString(")")
-
-	// 输出返回值
-	if fdecl.Type.Results != nil {
-		sb.WriteString(" (")
-		for i, field := range fdecl.Type.Results.List {
-			sb.WriteString(getFieldDeclaration(field))
-			if i != len(fdecl.Type.Results.List)-1 {
-				sb.WriteString(", ")
-			}
-		}
-		sb.WriteString(")")
-	}
-
-								// 构造函数签名字符串
-							fmt.Printf("Function Declaration:\n%s\n", sb.String())
 						// 获取函数位置信息
 						funcPos := fdecl.Pos()
 						funcFile := pkg.Fset.Position(funcPos).Filename
 						funcLine := pkg.Fset.Position(funcPos).Line
-						//fmt.Println("Location:", funcFile, "Line:", funcLine)
 						fmt.Println("Function Declared at:", fmt.Sprintf("%s:%d", funcFile, funcLine))
-						if filepath.Base(funcFile) != "sdk.go" {
-							continue
-						}
+
 						// 处理函数参数
 						fmt.Println("Parameters:")
 						for _, param := range fdecl.Type.Params.List {
@@ -150,6 +109,60 @@ func main() {
 	}
 }
 
+func getFunProtoType(fdecl *ast.FuncDecl) string {
+	var sb strings.Builder
+
+	// 如果是方法，输出接收器
+	if fdecl.Recv != nil && len(fdecl.Recv.List) > 0 {
+		sb.WriteString("func (")
+		for i, field := range fdecl.Recv.List {
+			sb.WriteString(getFieldDeclaration(field))
+			if i != len(fdecl.Recv.List)-1 {
+				sb.WriteString(", ")
+			}
+		}
+		sb.WriteString(") ")
+	} else {
+		sb.WriteString("func ")
+	}
+
+	// 输出函数名
+	sb.WriteString(fdecl.Name.Name)
+
+	// 输出函数参数
+	sb.WriteString("(")
+	for i, field := range fdecl.Type.Params.List {
+		sb.WriteString(getFieldDeclaration(field))
+		if i != len(fdecl.Type.Params.List)-1 {
+			sb.WriteString(", ")
+		}
+	}
+	sb.WriteString(")")
+
+	// 输出返回值
+	if fdecl.Type.Results != nil {
+		sb.WriteString(" (")
+		for i, field := range fdecl.Type.Results.List {
+			sb.WriteString(getFieldDeclaration(field))
+			if i != len(fdecl.Type.Results.List)-1 {
+				sb.WriteString(", ")
+			}
+		}
+		sb.WriteString(")")
+	}
+	return sb.String()
+}
+
+func getFunComments(fdecl *ast.FuncDecl) string {
+	var comments string
+	if fdecl.Doc != nil {
+		for _, c := range fdecl.Doc.List {
+			comments += c.Text + "\n"
+		}
+	}
+	return comments
+}
+
 // 获取类型的字符串表示形式
 func getTypeString(expr ast.Expr, info *types.Info) string {
 	return info.TypeOf(expr).String()
@@ -163,31 +176,6 @@ func getObjectPosition(obj types.Object, fset *token.FileSet) string {
 	pos := fset.Position(obj.Pos())
 	return fmt.Sprintf("%s:%d", pos.Filename, pos.Line)
 }
-
-// // 获取类型的位置信息
-// // 获取类型的位置信息
-//
-//	func getTypePosition(typeName string, pkg *packages.Package) string {
-//		for _, file := range pkg.Syntax {
-//			var typePos token.Pos
-//			ast.Inspect(file, func(node ast.Node) bool {
-//				if typeSpec, ok := node.(*ast.TypeSpec); ok {
-//					if typeSpec.Name.Name == typeName {
-//						typePos = typeSpec.Pos()
-//						return false // 停止继续遍历
-//					}
-//				}
-//				return true // 继续遍历
-//			})
-//			if typePos != token.NoPos {
-//				typeFile := pkg.Fset.Position(typePos).Filename
-//				typeLine := pkg.Fset.Position(typePos).Line
-//				return fmt.Sprintf("%s:%d", typeFile, typeLine)
-//			}
-//		}
-//		return ""
-//	}
-//
 
 func getLastSegment(typeName string, separator string) string {
 	index := strings.Index(typeName, separator)
@@ -283,11 +271,15 @@ func getExprString(expr ast.Expr) string {
 		return "*" + getExprString(t.X)
 	case *ast.SelectorExpr:
 		return getExprString(t.X) + "." + t.Sel.Name
+	case *ast.ArrayType:
+		return "[]" + getExprString(t.Elt)
+	case *ast.MapType:
+		return "map[" + getExprString(t.Key) + "]" + getExprString(t.Value)
 	default:
-		return fmt.Sprintf("%T", expr)
+		return fmt.Sprintf("%T", expr) // 用于调试，显示AST类型
 	}
 }
-type Content struct{
-	FuncName  string `json:"funcName"`
-    
+
+type Content struct {
+	FuncName string `json:"funcName"`
 }
