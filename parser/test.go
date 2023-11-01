@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/token"
 	"go/types"
 	"golang.org/x/tools/go/packages"
@@ -78,6 +80,9 @@ func main() {
 									fmt.Println("  111Type Location:", pkg.PkgPath)
 									typePos := getTypePosition(stringParamType, pkg)
 									fmt.Println("  Type Location:", typePos, pkg.Name)
+									//fmt.Printf("obj.Type() is of type: %T\n", obj.Type())
+									//parsmProtoType := getParamsProtoType(obj.Type(), pkg)
+									//fmt.Println("  Type ProtoType:", parsmProtoType)
 								}
 							}
 						}
@@ -151,6 +156,57 @@ func getFunProtoType(fdecl *ast.FuncDecl) string {
 		sb.WriteString(")")
 	}
 	return sb.String()
+}
+func getParamsProtoType(t types.Type, pkg *packages.Package) string {
+	// 循环处理，因为可能存在多级的指针，例如 **MyType
+	for {
+		if ptrType, ok := t.(*types.Pointer); ok {
+			t = ptrType.Elem()
+			continue
+		} else if sliceType, ok := t.(*types.Slice); ok {
+			t = sliceType.Elem()
+			continue
+		}
+		break
+	}
+
+	// 接下来的代码是处理 *types.Named 的
+	named, ok := t.(*types.Named)
+	if !ok {
+		return ""
+	}
+
+	obj := named.Obj()
+	typeName := obj.Name()
+
+	for _, file := range pkg.Syntax {
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			if !ok || genDecl.Tok != token.TYPE {
+				continue
+			}
+
+			for _, spec := range genDecl.Specs {
+				typeSpec, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				if typeSpec.Name.Name == typeName {
+					// 获取类型的源代码，包括注释
+					var buf bytes.Buffer
+					if genDecl.Doc != nil {
+						buf.WriteString(genDecl.Doc.Text())
+					}
+					err := format.Node(&buf, pkg.Fset, genDecl)
+					if err != nil {
+						log.Fatalf("Failed to format node: %v", err)
+					}
+					return buf.String()
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func getFunComments(fdecl *ast.FuncDecl) string {
