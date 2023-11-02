@@ -110,49 +110,7 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		UserDBMap[loginUserID] = dataBase
 		//log.Info(operationID, "open db", loginUserID)
 	}
-	dataBase.setChatLogFailedStatus(ctx)
 	return dataBase, nil
-}
-
-func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
-	msgList, err := d.GetSendingMessageList(ctx)
-	if err != nil {
-		log.ZError(ctx, "GetSendingMessageList failed", err)
-		return
-	}
-	for _, v := range msgList {
-		v.Status = constant.MsgStatusSendFailed
-		//todo
-		err := d.UpdateMessage(ctx, "", v)
-		if err != nil {
-			log.ZError(ctx, "UpdateMessage failed", err, "msg", v)
-			continue
-		}
-	}
-	groupIDList, err := d.GetReadDiffusionGroupIDList(ctx)
-	if err != nil {
-		log.ZError(ctx, "GetReadDiffusionGroupIDList failed", err)
-		return
-	}
-	for _, v := range groupIDList {
-		msgList, err := d.SuperGroupGetSendingMessageList(ctx, v)
-		if err != nil {
-			log.ZError(ctx, "GetSendingMessageList failed", err)
-			return
-		}
-		if len(msgList) > 0 {
-			for _, v := range msgList {
-				v.Status = constant.MsgStatusSendFailed
-				err := d.SuperGroupUpdateMessage(ctx, v)
-				if err != nil {
-					log.ZError(ctx, "UpdateMessage failed", err, "msg", v)
-					continue
-				}
-			}
-		}
-
-	}
-
 }
 
 func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
@@ -213,6 +171,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 		&model_struct.LocalChatLogReactionExtensions{},
 		&model_struct.LocalUpload{},
 		&model_struct.LocalStranger{},
+		&model_struct.LocalSendingMessages{},
 	)
 	if err != nil {
 		return err
@@ -245,9 +204,6 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 			}
 		}
 
-	}
-	if err := d.InitWorkMomentsNotificationUnreadCount(ctx); err != nil {
-		log.ZError(ctx, "init InitWorkMomentsNotificationUnreadCount failed", err)
 	}
 	return nil
 }
