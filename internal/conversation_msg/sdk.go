@@ -277,7 +277,12 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	s.ServerMsgID = serverMsgID
 	err := c.db.UpdateMessageTimeAndStatus(ctx, lc.ConversationID, clientMsgID, serverMsgID, sendTime, status)
 	if err != nil {
-		// log.Error("", "send message update message status error", sendTime, status, clientMsgID, serverMsgID, err.Error())
+		log.ZWarn(ctx, "send message update message status error", err,
+			"sendTime", sendTime, "status", status, "clientMsgID", clientMsgID, "serverMsgID", serverMsgID)
+	}
+	err = c.db.DeleteSendingMessage(ctx, lc.ConversationID, clientMsgID)
+	if err != nil {
+		log.ZWarn(ctx, "send message delete sending message error", err)
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
@@ -392,6 +397,13 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	if err != nil {
 		localMessage := c.msgStructToLocalChatLog(s)
 		err := c.db.InsertMessage(ctx, lc.ConversationID, localMessage)
+		if err != nil {
+			return nil, err
+		}
+		err = c.db.InsertSendingMessage(ctx, &model_struct.LocalSendingMessages{
+			ConversationID: lc.ConversationID,
+			ClientMsgID:    localMessage.ClientMsgID,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -614,6 +626,13 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 		if err != nil {
 			return nil, err
 		}
+		err = c.db.InsertSendingMessage(ctx, &model_struct.LocalSendingMessages{
+			ConversationID: lc.ConversationID,
+			ClientMsgID:    localMessage.ClientMsgID,
+		})
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		if oldMessage.Status != constant.MsgStatusSendFailed {
 			return nil, sdkerrs.ErrMsgRepeated
@@ -682,6 +701,13 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 	if err != nil {
 		localMessage := c.msgStructToLocalChatLog(s)
 		err := c.db.InsertMessage(ctx, lc.ConversationID, localMessage)
+		if err != nil {
+			return nil, err
+		}
+		err = c.db.InsertSendingMessage(ctx, &model_struct.LocalSendingMessages{
+			ConversationID: lc.ConversationID,
+			ClientMsgID:    localMessage.ClientMsgID,
+		})
 		if err != nil {
 			return nil, err
 		}
