@@ -18,11 +18,14 @@
 package file
 
 import (
+	"bufio"
 	"errors"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"io"
 	"syscall/js"
 )
+
+const readBufferSize = 1024 * 1024 * 5 // 5mb
 
 func Open(req *UploadFileReq) (ReadFile, error) {
 	file := newJsCallFile(req.Uuid)
@@ -30,19 +33,26 @@ func Open(req *UploadFileReq) (ReadFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &jsFile{
+	jf := &jsFile{
 		size: size,
 		file: file,
-	}, nil
+	}
+	jf.resetReaderBuffer()
+	return jf, nil
 }
 
 type jsFile struct {
 	size   int64
 	file   *jsCallFile
 	whence int
+	reader io.Reader
 }
 
-func (j *jsFile) Read(p []byte) (n int, err error) {
+func (j *jsFile) resetReaderBuffer() {
+	j.reader = bufio.NewReaderSize(&reader{fn: j.read}, readBufferSize)
+}
+
+func (j *jsFile) read(p []byte) (n int, err error) {
 	length := len(p)
 	if length == 0 {
 		return 0, errors.New("read buffer is empty")
@@ -65,6 +75,10 @@ func (j *jsFile) Read(p []byte) (n int, err error) {
 	return len(data), nil
 }
 
+func (j *jsFile) Read(p []byte) (n int, err error) {
+	return j.reader.Read(p)
+}
+
 func (j *jsFile) Close() error {
 	return j.file.Close()
 }
@@ -78,7 +92,16 @@ func (j *jsFile) StartSeek(whence int) error {
 		return errors.New("seek whence is out of range")
 	}
 	j.whence = whence
+	j.resetReaderBuffer()
 	return nil
+}
+
+type reader struct {
+	fn func(p []byte) (n int, err error)
+}
+
+func (r *reader) Read(p []byte) (n int, err error) {
+	return r.fn(p)
 }
 
 type jsCallFile struct {
