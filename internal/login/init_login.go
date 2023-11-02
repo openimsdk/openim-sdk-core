@@ -17,6 +17,7 @@ package login
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"sync"
 	"time"
 
@@ -253,6 +254,31 @@ func (u *LoginMgr) setLoginStatus(status int) {
 	defer u.w.Unlock()
 	u.loginStatus = status
 }
+func (u *LoginMgr) checkSendingMessage(ctx context.Context) {
+	sendingMessages, err := u.db.GetAllSendingMessages(ctx)
+	if err != nil {
+		log.ZError(ctx, "GetAllSendingMessages failed", err)
+	}
+	for _, message := range sendingMessages {
+		tableMessage, err := u.db.GetMessage(ctx, message.ConversationID, message.ClientMsgID)
+		if err != nil {
+			log.ZError(ctx, "GetMessage failed", err, "message", message)
+			continue
+		}
+		if tableMessage.Status == constant.MsgStatusSending {
+			err := u.db.UpdateMessage(ctx, message.ConversationID, &model_struct.LocalChatLog{ClientMsgID: message.ClientMsgID, Status: constant.MsgStatusSendFailed})
+			if err != nil {
+				log.ZError(ctx, "UpdateMessage failed", err, "tableMessage", tableMessage)
+			} else {
+				err := u.db.DeleteSendingMessage(ctx, message.ConversationID, message.ClientMsgID)
+				if err != nil {
+					log.ZError(ctx, "DeleteSendingMessage failed", err, "tableMessage", tableMessage)
+				}
+			}
+
+		}
+	}
+}
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.getLoginStatus(ctx) == Logged {
@@ -267,6 +293,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.loginUserID = userID
 	var err error
 	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir, int(u.info.LogLevel))
+	u.checkSendingMessage(ctx)
 	if err != nil {
 		return sdkerrs.ErrSdkInternal.Wrap("init database " + err.Error())
 	}

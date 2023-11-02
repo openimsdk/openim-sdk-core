@@ -511,3 +511,13 @@ type LocalStranger struct {
 func (LocalStranger) TableName() string {
 	return "local_stranger"
 }
+
+type LocalSendingMessages struct {
+	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	ClientMsgID    string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+}
+
+func (LocalSendingMessages) TableName() string {
+	return "local_sending_messages"
+}

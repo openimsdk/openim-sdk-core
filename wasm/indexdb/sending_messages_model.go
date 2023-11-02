@@ -24,27 +24,35 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
-type NotificationSeqs struct {
+type LocalSendingMessages struct {
 }
 
-func NewNotificationSeqs() *NotificationSeqs {
-	return &NotificationSeqs{}
+func NewLocalSendingMessages() *LocalSendingMessages {
+	return &LocalSendingMessages{}
 }
-
-func (i *NotificationSeqs) SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error {
-	_, err := exec.Exec(conversationID, seq)
+func (i *LocalSendingMessages) InsertSendingMessage(ctx context.Context, message *model_struct.LocalSendingMessages) error {
+	_, err := exec.Exec(utils.StructToJsonString(message))
 	return err
 }
 
-func (i *NotificationSeqs) GetNotificationAllSeqs(ctx context.Context) (result []*model_struct.NotificationSeqs, err error) {
+func (i *LocalSendingMessages) DeleteSendingMessage(ctx context.Context, conversationID, clientMsgID string) error {
+	_, err := exec.Exec(conversationID, clientMsgID)
+	return err
+}
+func (i *LocalSendingMessages) GetAllSendingMessages(ctx context.Context) (result []*model_struct.LocalSendingMessages, err error) {
 	gList, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
 		if v, ok := gList.(string); ok {
-			err := utils.JsonStringToStruct(v, &result)
+			var temp []model_struct.LocalSendingMessages
+			err := utils.JsonStringToStruct(v, &temp)
 			if err != nil {
 				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
 			}
 			return result, err
 		} else {

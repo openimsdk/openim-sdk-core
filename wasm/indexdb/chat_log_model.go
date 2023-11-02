@@ -53,29 +53,6 @@ func (i *LocalChatLogs) GetMessage(ctx context.Context, conversationID, clientMs
 	}
 }
 
-// GetSendingMessageList gets the list of messages that are being sent
-func (i *LocalChatLogs) GetSendingMessageList(ctx context.Context) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := exec.Exec()
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
-			}
-			return result, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}
-
 // UpdateMessage updates the message in the database
 func (i *LocalChatLogs) UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
 	if c.ClientMsgID == "" {
