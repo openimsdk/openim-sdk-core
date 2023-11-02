@@ -483,18 +483,6 @@ func (d *DataBase) GetAllMessageForTest(ctx context.Context) (result []*model_st
 //	}
 //}
 
-func (d *DataBase) GetSendingMessageList(ctx context.Context) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.WithContext(ctx).Where("status = ?", constant.MsgStatusSending).Find(&messageList).Error, "GetMessageList failed")
-	for _, v := range messageList {
-		v1 := v
-		result = append(result, &v1)
-	}
-	return result, err
-}
-
 func (d *DataBase) GetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
