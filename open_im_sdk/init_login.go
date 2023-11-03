@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/login"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -75,7 +74,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
 	}
-	UserForSDK = new(login.LoginMgr)
+	UserForSDK = new(LoginMgr)
 	return UserForSDK.InitSDK(configArgs, listener)
 }
 func UnInitSDK(operationID string) {
@@ -115,4 +114,22 @@ func GetLoginUserID() string {
 		return ""
 	}
 	return UserForSDK.GetLoginUserID()
+}
+
+func (u *LoginMgr) Login(ctx context.Context, userID, token string) error {
+	return u.login(ctx, userID, token)
+}
+
+func (u *LoginMgr) Logout(ctx context.Context) error {
+	return u.logout(ctx, false)
+}
+
+func (u *LoginMgr) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {
+	return u.setAppBackgroundStatus(ctx, isBackground)
+}
+func (u *LoginMgr) NetworkStatusChanged(ctx context.Context) {
+	u.longConnMgr.Close(ctx)
+}
+func (u *LoginMgr) GetLoginStatus(ctx context.Context) int {
+	return u.getLoginStatus(ctx)
 }
