@@ -89,7 +89,8 @@ func Test_CreateImageMessage(t *testing.T) {
 }
 
 func Test_CreateImageMessageByURL(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessageByURL(ctx, sdk_struct.PictureBaseInfo{}, sdk_struct.PictureBaseInfo{}, sdk_struct.PictureBaseInfo{})
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessageByURL(ctx, "",
+		sdk_struct.PictureBaseInfo{}, sdk_struct.PictureBaseInfo{}, sdk_struct.PictureBaseInfo{})
 	if err != nil {
 		t.Error(err)
 	}

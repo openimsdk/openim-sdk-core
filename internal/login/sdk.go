@@ -13,25 +13,3 @@
 // limitations under the License.
 
 package login
-
-import (
-	"context"
-)
-
-func (u *LoginMgr) Login(ctx context.Context, userID, token string) error {
-	return u.login(ctx, userID, token)
-}
-
-func (u *LoginMgr) Logout(ctx context.Context) error {
-	return u.logout(ctx, false)
-}
-
-func (u *LoginMgr) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	return u.setAppBackgroundStatus(ctx, isBackground)
-}
-func (u *LoginMgr) NetworkStatusChanged(ctx context.Context) {
-	u.longConnMgr.Close(ctx)
-}
-func (u *LoginMgr) GetLoginStatus(ctx context.Context) int {
-	return u.getLoginStatus(ctx)
-}
