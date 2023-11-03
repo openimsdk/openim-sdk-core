@@ -412,6 +412,13 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			return nil, sdkerrs.ErrMsgRepeated
 		} else {
 			s.Status = constant.MsgStatusSending
+			err = c.db.InsertSendingMessage(ctx, &model_struct.LocalSendingMessages{
+				ConversationID: lc.ConversationID,
+				ClientMsgID:    s.ClientMsgID,
+			})
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
@@ -638,6 +645,13 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 			return nil, sdkerrs.ErrMsgRepeated
 		} else {
 			s.Status = constant.MsgStatusSending
+			err = c.db.InsertSendingMessage(ctx, &model_struct.LocalSendingMessages{
+				ConversationID: lc.ConversationID,
+				ClientMsgID:    s.ClientMsgID,
+			})
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
@@ -716,6 +730,13 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 			return nil, sdkerrs.ErrMsgRepeated
 		} else {
 			s.Status = constant.MsgStatusSending
+			err = c.db.InsertSendingMessage(ctx, &model_struct.LocalSendingMessages{
+				ConversationID: lc.ConversationID,
+				ClientMsgID:    s.ClientMsgID,
+			})
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
