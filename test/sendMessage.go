@@ -15,14 +15,12 @@
 package test
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
-
-	//	"open_im_sdk/internal/interaction"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/login"
 )
 
 func init() {
@@ -39,7 +37,7 @@ func init() {
 type CoreNode struct {
 	token             string
 	userID            string
-	mgr               *login.LoginMgr
+	mgr               *open_im_sdk.LoginMgr
 	sendMsgSuccessNum uint32
 	sendMsgFailedNum  uint32
 	idx               int
