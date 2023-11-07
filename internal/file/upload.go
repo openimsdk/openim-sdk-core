@@ -175,6 +175,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	}
 	continueUpload := uploadedSize > 0
 	for i, currentPartSize := range partSizes {
+		partNumber := int32(i + 1)
 		md5Reader := NewMd5Reader(io.LimitReader(file, currentPartSize))
 		if uploadInfo.Bitmap.Get(i) {
 			if _, err := io.Copy(io.Discard, md5Reader); err != nil {
@@ -184,7 +185,6 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 			reader := NewProgressReader(md5Reader, func(current int64) {
 				cb.UploadComplete(fileSize, uploadedSize+current, uploadedSize)
 			})
-			partNumber := int32(i + 1)
 			urlval, header, err := uploadInfo.GetPartSign(ctx, partNumber)
 			if err != nil {
 				return nil, err
@@ -202,11 +202,14 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 				}
 			}
 		}
-		if md5val := md5Reader.Md5(); md5val != partMd5s[i] {
+		md5val := md5Reader.Md5()
+		if md5val != partMd5s[i] {
 			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
 		}
 		cb.UploadPartComplete(i, currentPartSize, partMd5s[i])
+		log.ZDebug(ctx, "upload part success", "partMd5Val", md5val, "name", req.Name, "partNumber", partNumber)
 	}
+	log.ZDebug(ctx, "upload all part success", "partHash", partMd5Val, "name", req.Name)
 	resp, err := f.completeMultipartUpload(ctx, &third.CompleteMultipartUploadReq{
 		UploadID:    uploadInfo.Resp.Upload.UploadID,
 		Parts:       partMd5s,
@@ -349,9 +352,9 @@ func (u *UploadInfo) getIndex(partNumber int32) int {
 func (u *UploadInfo) buildRequest(i int) (*url.URL, http.Header, error) {
 	sign := u.Resp.Upload.Sign
 	part := sign.Parts[i]
-	rawURL := part.Url
-	if rawURL == "" {
-		rawURL = sign.Url
+	rawURL := sign.Url
+	if part.Url != "" {
+		rawURL = part.Url
 	}
 	urlval, err := url.Parse(rawURL)
 	if err != nil {
