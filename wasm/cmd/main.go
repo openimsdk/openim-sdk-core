@@ -19,7 +19,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 	"runtime"
 	"runtime/debug"
@@ -30,7 +29,7 @@ import (
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("MAIN", "panic info is:", r, string(debug.Stack()))
+			fmt.Println("MAIN", "panic info is:", r, debug.Stack())
 		}
 	}()
 	fmt.Println("runtime env", runtime.GOARCH, runtime.GOOS)
