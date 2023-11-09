@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/OpenIMSDK/tools/errs"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
@@ -139,12 +140,15 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	}
 	f.lockHash(partMd5Val)
 	defer f.unlockHash(partMd5Val)
-	// 获取上传文件
-	bitmap, dbUpload, upload, err := f.getUpload(ctx, &third.InitiateMultipartUploadReq{
+	maxParts := 20
+	if maxParts > len(partSizes) {
+		maxParts = len(partSizes)
+	}
+	uploadInfo, err := f.getUpload(ctx, &third.InitiateMultipartUploadReq{
 		Hash:        partMd5Val,
 		Size:        fileSize,
 		PartSize:    partSize,
-		MaxParts:    -1,
+		MaxParts:    int32(maxParts), // 一次性获取签名数量
 		Cause:       req.Cause,
 		Name:        req.Name,
 		ContentType: req.ContentType,
@@ -152,28 +156,28 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 	if err != nil {
 		return nil, err
 	}
-	if upload.Upload == nil {
-		cb.Complete(fileSize, upload.Url, 0)
+	if uploadInfo.Resp.Upload == nil {
+		cb.Complete(fileSize, uploadInfo.Resp.Url, 0)
 		return &UploadFileResp{
-			URL: upload.Url,
+			URL: uploadInfo.Resp.Url,
 		}, nil
 	}
-	if upload.Upload.PartSize != partSize {
+	if uploadInfo.Resp.Upload.PartSize != partSize {
 		f.cleanPartLimit()
-		return nil, fmt.Errorf("part fileSize not match, expect %d, got %d", partSize, upload.Upload.PartSize)
+		return nil, fmt.Errorf("part fileSize not match, expect %d, got %d", partSize, uploadInfo.Resp.Upload.PartSize)
 	}
-	cb.UploadID(upload.Upload.UploadID)
+	cb.UploadID(uploadInfo.Resp.Upload.UploadID)
 	uploadedSize := fileSize
-	uploadParts := make([]*third.SignPart, info.PartNum)
-	for _, part := range upload.Upload.Sign.Parts {
-		uploadParts[part.PartNumber-1] = part
-		uploadedSize -= partSizes[part.PartNumber-1]
+	for i := 0; i < len(partSizes); i++ {
+		if !uploadInfo.Bitmap.Get(i) {
+			uploadedSize -= partSizes[i]
+		}
 	}
 	continueUpload := uploadedSize > 0
 	for i, currentPartSize := range partSizes {
+		partNumber := int32(i + 1)
 		md5Reader := NewMd5Reader(io.LimitReader(file, currentPartSize))
-		part := uploadParts[i]
-		if part == nil {
+		if uploadInfo.Bitmap.Get(i) {
 			if _, err := io.Copy(io.Discard, md5Reader); err != nil {
 				return nil, err
 			}
@@ -181,25 +185,33 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 			reader := NewProgressReader(md5Reader, func(current int64) {
 				cb.UploadComplete(fileSize, uploadedSize+current, uploadedSize)
 			})
-			if err := f.doPut(ctx, http.DefaultClient, upload.Upload.Sign, part, reader, currentPartSize); err != nil {
+			urlval, header, err := uploadInfo.GetPartSign(ctx, partNumber)
+			if err != nil {
+				return nil, err
+			}
+			if err := f.doPut(ctx, http.DefaultClient, urlval, header, reader, currentPartSize); err != nil {
+				log.ZError(ctx, "doPut", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", partNumber)
 				return nil, err
 			}
 			uploadedSize += currentPartSize
-		}
-		if md5val := md5Reader.Md5(); md5val != partMd5s[i] {
-			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
-		}
-		if part != nil && dbUpload != nil && bitmap != nil {
-			bitmap.Set(int(part.PartNumber - 1))
-			dbUpload.UploadInfo = base64.StdEncoding.EncodeToString(bitmap.Serialize())
-			if err := f.database.UpdateUpload(ctx, dbUpload); err != nil {
-				log.ZError(ctx, "SetUploadPartPush", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", part.PartNumber)
+			if uploadInfo.DBInfo != nil && uploadInfo.Bitmap != nil {
+				uploadInfo.Bitmap.Set(i)
+				uploadInfo.DBInfo.UploadInfo = base64.StdEncoding.EncodeToString(uploadInfo.Bitmap.Serialize())
+				if err := f.database.UpdateUpload(ctx, uploadInfo.DBInfo); err != nil {
+					log.ZError(ctx, "SetUploadPartPush", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", partNumber)
+				}
 			}
 		}
+		md5val := md5Reader.Md5()
+		if md5val != partMd5s[i] {
+			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
+		}
 		cb.UploadPartComplete(i, currentPartSize, partMd5s[i])
+		log.ZDebug(ctx, "upload part success", "partMd5Val", md5val, "name", req.Name, "partNumber", partNumber)
 	}
+	log.ZDebug(ctx, "upload all part success", "partHash", partMd5Val, "name", req.Name)
 	resp, err := f.completeMultipartUpload(ctx, &third.CompleteMultipartUploadReq{
-		UploadID:    upload.Upload.UploadID,
+		UploadID:    uploadInfo.Resp.Upload.UploadID,
 		Parts:       partMd5s,
 		Name:        req.Name,
 		ContentType: req.ContentType,
@@ -213,8 +225,10 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 		typ++
 	}
 	cb.Complete(fileSize, resp.Url, typ)
-	if err := f.database.DeleteUpload(ctx, info.PartMd5); err != nil {
-		log.ZError(ctx, "DeleteUpload", err, "partMd5Val", info.PartMd5, "name", req.Name)
+	if uploadInfo.DBInfo != nil {
+		if err := f.database.DeleteUpload(ctx, info.PartMd5); err != nil {
+			log.ZError(ctx, "DeleteUpload", err, "partMd5Val", info.PartMd5, "name", req.Name)
+		}
 	}
 	return &UploadFileResp{
 		URL: resp.Url,
@@ -232,6 +246,9 @@ func (f *File) initiateMultipartUploadResp(ctx context.Context, req *third.Initi
 }
 
 func (f *File) authSign(ctx context.Context, req *third.AuthSignReq) (*third.AuthSignResp, error) {
+	if len(req.PartNumbers) == 0 {
+		return nil, errs.ErrArgs.Wrap("partNumbers is empty")
+	}
 	return util.CallApi[third.AuthSignResp](ctx, constant.ObjectAuthSign, req)
 }
 
@@ -296,89 +313,55 @@ func (f *File) partMD5(parts []string) string {
 	return hex.EncodeToString(md5Sum[:])
 }
 
-func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUploadReq) (*Bitmap, *model_struct.LocalUpload, *third.InitiateMultipartUploadResp, error) {
-	partNum := f.getPartNum(req.Size, req.PartSize)
-	dbUpload, err := f.database.GetUpload(ctx, req.Hash)
-	var bitmap *Bitmap
-	if err == nil {
-		bitmapBytes, err := base64.StdEncoding.DecodeString(dbUpload.UploadInfo)
-		if len(bitmapBytes) == 0 || err != nil || partNum <= 1 || dbUpload.ExpireTime-3600*1000 < time.Now().UnixMilli() {
-			if err := f.database.DeleteUpload(ctx, req.Hash); err != nil {
-				return nil, nil, nil, err
-			}
-			dbUpload = nil
-		}
-		if dbUpload != nil {
-			bitmap = ParseBitmap(bitmapBytes, partNum)
-		}
-	} else {
-		dbUpload = nil
-		log.ZError(ctx, "get upload db", err, "pratsMd5", req.Hash)
-	}
-	if dbUpload == nil {
-		resp, err := f.initiateMultipartUploadResp(ctx, req)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		if resp.Upload == nil {
-			return nil, nil, resp, nil
-		}
-		bitmap = NewBitmap(partNum)
-		if resp.Upload != nil {
-			dbUpload = &model_struct.LocalUpload{
-				PartHash:   req.Hash,
-				UploadID:   resp.Upload.UploadID,
-				UploadInfo: base64.StdEncoding.EncodeToString(bitmap.Serialize()),
-				ExpireTime: resp.Upload.ExpireTime,
-				CreateTime: time.Now().UnixMilli(),
-			}
-			if err := f.database.InsertUpload(ctx, dbUpload); err != nil {
-				return nil, nil, nil, err
-			}
-		}
-		return bitmap, dbUpload, resp, nil
-	}
-	partNumbers := make([]int32, 0, partNum)
-	for i := 0; i < partNum; i++ {
-		if !bitmap.Get(i) {
-			partNumbers = append(partNumbers, int32(i+1))
-		}
-	}
-	resp := &third.InitiateMultipartUploadResp{
-		Upload: &third.UploadInfo{
-			UploadID:   dbUpload.UploadID,
-			PartSize:   req.PartSize,
-			ExpireTime: dbUpload.ExpireTime,
-			Sign:       &third.AuthSignParts{},
-		},
-	}
-	if len(partNumbers) > 0 {
-		authSignResp, err := f.authSign(ctx, &third.AuthSignReq{
-			UploadID:    dbUpload.UploadID,
-			PartNumbers: partNumbers,
-		})
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		resp.Upload.Sign.Url = authSignResp.Url
-		resp.Upload.Sign.Query = authSignResp.Query
-		resp.Upload.Sign.Header = authSignResp.Header
-		resp.Upload.Sign.Parts = authSignResp.Parts
-	}
-	return bitmap, dbUpload, resp, nil
+type AuthSignParts struct {
+	Sign  *third.SignPart
+	Times []time.Time
 }
 
-func (f *File) doPut(ctx context.Context, client *http.Client, sign *third.AuthSignParts, part *third.SignPart, reader io.Reader, size int64) error {
-	rawURL := part.Url
-	if rawURL == "" {
-		rawURL = sign.Url
+type UploadInfo struct {
+	PartNum int
+	Bitmap  *Bitmap
+	DBInfo  *model_struct.LocalUpload
+	Resp    *third.InitiateMultipartUploadResp
+	//Signs   *AuthSignParts
+	CreateTime   time.Time
+	BatchSignNum int32
+	f            *File
+}
+
+func (u *UploadInfo) getIndex(partNumber int32) int {
+	if u.Resp.Upload.Sign == nil {
+		return -1
+	} else {
+		if u.CreateTime.IsZero() {
+			return -1
+		} else {
+			if time.Since(u.CreateTime) > time.Minute {
+				return -1
+			}
+		}
+	}
+	for i, part := range u.Resp.Upload.Sign.Parts {
+		if part.PartNumber == partNumber {
+			return i
+		}
+	}
+	return -1
+}
+
+func (u *UploadInfo) buildRequest(i int) (*url.URL, http.Header, error) {
+	sign := u.Resp.Upload.Sign
+	part := sign.Parts[i]
+	rawURL := sign.Url
+	if part.Url != "" {
+		rawURL = part.Url
+	}
+	urlval, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, nil, err
 	}
 	if len(sign.Query)+len(part.Query) > 0 {
-		u, err := url.Parse(rawURL)
-		if err != nil {
-			return err
-		}
-		query := u.Query()
+		query := urlval.Query()
 		for i := range sign.Query {
 			v := sign.Query[i]
 			query[v.Key] = v.Values
@@ -387,20 +370,134 @@ func (f *File) doPut(ctx context.Context, client *http.Client, sign *third.AuthS
 			v := part.Query[i]
 			query[v.Key] = v.Values
 		}
-		u.RawQuery = query.Encode()
-		rawURL = u.String()
+		urlval.RawQuery = query.Encode()
 	}
+	header := make(http.Header)
+	for i := range sign.Header {
+		v := sign.Header[i]
+		header[v.Key] = v.Values
+	}
+	for i := range part.Header {
+		v := part.Header[i]
+		header[v.Key] = v.Values
+	}
+	return urlval, header, nil
+}
+
+func (u *UploadInfo) GetPartSign(ctx context.Context, partNumber int32) (*url.URL, http.Header, error) {
+	if partNumber < 1 || int(partNumber) > u.PartNum {
+		return nil, nil, errors.New("invalid partNumber")
+	}
+	if index := u.getIndex(partNumber); index >= 0 {
+		return u.buildRequest(index)
+	}
+	partNumbers := make([]int32, 0, u.BatchSignNum)
+	for i := int32(0); i < u.BatchSignNum; i++ {
+		if int(partNumber+i) > u.PartNum {
+			break
+		}
+		partNumbers = append(partNumbers, partNumber+i)
+	}
+	authSignResp, err := u.f.authSign(ctx, &third.AuthSignReq{
+		UploadID:    u.Resp.Upload.UploadID,
+		PartNumbers: partNumbers,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	u.Resp.Upload.Sign.Url = authSignResp.Url
+	u.Resp.Upload.Sign.Query = authSignResp.Query
+	u.Resp.Upload.Sign.Header = authSignResp.Header
+	u.Resp.Upload.Sign.Parts = authSignResp.Parts
+	u.CreateTime = time.Now()
+	index := u.getIndex(partNumber)
+	if index < 0 {
+		return nil, nil, errs.ErrInternalServer.Wrap("server part sign invalid")
+	}
+	return u.buildRequest(index)
+}
+
+func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUploadReq) (*UploadInfo, error) {
+	partNum := f.getPartNum(req.Size, req.PartSize)
+	var bitmap *Bitmap
+	if f.database != nil {
+		dbUpload, err := f.database.GetUpload(ctx, req.Hash)
+		if err == nil {
+			bitmapBytes, err := base64.StdEncoding.DecodeString(dbUpload.UploadInfo)
+			if err != nil || len(bitmapBytes) == 0 || partNum <= 1 || dbUpload.ExpireTime-3600*1000 < time.Now().UnixMilli() {
+				if err := f.database.DeleteUpload(ctx, req.Hash); err != nil {
+					return nil, err
+				}
+				dbUpload = nil
+			}
+			if dbUpload == nil {
+				bitmap = NewBitmap(partNum)
+			} else {
+				bitmap = ParseBitmap(bitmapBytes, partNum)
+			}
+			return &UploadInfo{
+				PartNum: partNum,
+				Bitmap:  bitmap,
+				DBInfo:  dbUpload,
+				Resp: &third.InitiateMultipartUploadResp{
+					Upload: &third.UploadInfo{
+						UploadID:   dbUpload.UploadID,
+						PartSize:   req.PartSize,
+						ExpireTime: dbUpload.ExpireTime,
+						Sign:       &third.AuthSignParts{},
+					},
+				},
+				BatchSignNum: req.MaxParts,
+				f:            f,
+			}, nil
+		}
+		log.ZError(ctx, "get upload db", err, "pratsMd5", req.Hash)
+	}
+	resp, err := f.initiateMultipartUploadResp(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Upload == nil {
+		return &UploadInfo{
+			Resp: resp,
+		}, nil
+	}
+	bitmap = NewBitmap(partNum)
+	var dbUpload *model_struct.LocalUpload
+	if f.database != nil {
+		dbUpload = &model_struct.LocalUpload{
+			PartHash:   req.Hash,
+			UploadID:   resp.Upload.UploadID,
+			UploadInfo: base64.StdEncoding.EncodeToString(bitmap.Serialize()),
+			ExpireTime: resp.Upload.ExpireTime,
+			CreateTime: time.Now().UnixMilli(),
+		}
+		if err := f.database.InsertUpload(ctx, dbUpload); err != nil {
+			log.ZError(ctx, "insert upload db", err, "pratsHash", req.Hash, "name", req.Name)
+		}
+	}
+	if req.MaxParts >= 0 && len(resp.Upload.Sign.Parts) != int(req.MaxParts) {
+		resp.Upload.Sign.Parts = nil
+	}
+	return &UploadInfo{
+		PartNum:      partNum,
+		Bitmap:       bitmap,
+		DBInfo:       dbUpload,
+		Resp:         resp,
+		CreateTime:   time.Now(),
+		BatchSignNum: req.MaxParts,
+		f:            f,
+	}, nil
+}
+
+func (f *File) doPut(ctx context.Context, client *http.Client, url *url.URL, header http.Header, reader io.Reader, size int64) error {
+	rawURL := url.String()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, rawURL, reader)
 	if err != nil {
 		return err
 	}
-	for i := range sign.Header {
-		v := sign.Header[i]
-		req.Header[v.Key] = v.Values
-	}
-	for i := range part.Header {
-		v := part.Header[i]
-		req.Header[v.Key] = v.Values
+	for key := range header {
+		req.Header[key] = header[key]
 	}
 	req.ContentLength = size
 	log.ZDebug(ctx, "do put req", "url", rawURL, "contentLength", size, "header", req.Header)
@@ -418,7 +515,7 @@ func (f *File) doPut(ctx context.Context, client *http.Client, sign *third.AuthS
 	}
 	log.ZDebug(ctx, "do put resp body", "url", rawURL, "body", string(body))
 	if resp.StatusCode/200 != 1 {
-		return fmt.Errorf("PUT %s part %d failed, status code %d, body %s", rawURL, part.PartNumber, resp.StatusCode, string(body))
+		return fmt.Errorf("PUT %s failed, status code %d, body %s", rawURL, resp.StatusCode, string(body))
 	}
 	return nil
 }
