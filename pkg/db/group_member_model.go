@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
@@ -276,12 +275,10 @@ func (d *DataBase) SearchGroupMembersDB(ctx context.Context, keyword string, gro
 	if groupID != "" {
 		condition = "( " + condition + " ) "
 		condition += " and group_id IN ? "
-		log.Debug("", "subCondition SearchGroupMembers ", condition)
 		err = d.conn.WithContext(ctx).Where(condition, []string{groupID}).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else {
-		log.Debug("", "subCondition SearchGroupMembers ", condition)
 		err = d.conn.WithContext(ctx).Where(condition).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-		log.Debug("", "subCondition SearchGroupMembers ", condition, len(groupMemberList))
+
 	}
 
 	for _, v := range groupMemberList {

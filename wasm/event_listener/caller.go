@@ -19,8 +19,9 @@ package event_listener
 
 import (
 	"bytes"
+	"context"
 	"errors"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"reflect"
@@ -63,6 +64,7 @@ func (r *ReflectCall) asyncCallWithCallback() {
 			r.ErrHandle(rc)
 		}
 	}()
+	ctx := context.Background()
 	var funcName reflect.Value
 	var typeFuncName reflect.Type
 	var hasCallback bool
@@ -79,7 +81,7 @@ func (r *ReflectCall) asyncCallWithCallback() {
 		r.callback.SetOperationID(r.arguments[0].String())
 		values = append(values, reflect.ValueOf(r.callback))
 	} else {
-		log.Error("AsyncCallWithCallback", "not set callback")
+		log.ZDebug(ctx, "AsyncCallWithCallback not set callback")
 		panic(ErrNotSetCallback)
 	}
 	funcFieldsNum := typeFuncName.NumIn()
@@ -99,11 +101,11 @@ func (r *ReflectCall) asyncCallWithCallback() {
 			if !strings.HasPrefix(convertValue, "<number: ") {
 				values = append(values, reflect.ValueOf(convertValue))
 			} else {
-				log.Error("AsyncCallWithCallback", "input args type err index:", utils.IntToString(i))
+				log.ZError(ctx, "AsyncCallWithCallback", nil, "input args type err index:",
+					utils.IntToString(i))
 				panic("input args type err index:" + utils.IntToString(i))
 			}
 		case reflect.Int:
-			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		case reflect.Int32:
 			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
@@ -114,7 +116,8 @@ func (r *ReflectCall) asyncCallWithCallback() {
 		case reflect.Ptr:
 			values = append(values, reflect.ValueOf(bytes.NewBuffer(exec.ExtractArrayBuffer(r.arguments[i]))))
 		default:
-			log.Error("AsyncCallWithCallback", "input args type not support:", strconv.Itoa(int(typeFuncName.In(temp).Kind())))
+			log.ZError(ctx, "AsyncCallWithCallback", nil,
+				"input args type not support:", strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 		}
 	}
@@ -133,6 +136,7 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 			r.ErrHandle(rc)
 		}
 	}()
+	ctx := context.Background()
 	var funcName reflect.Value
 	var typeFuncName reflect.Type
 	if r.funcName == nil {
@@ -145,7 +149,7 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 	if r.callback == nil {
 		r.callback = NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
 	}
-	log.Error("test", "asyncCallWithOutCallback", len(r.arguments))
+	log.ZError(ctx, "test", nil, "asyncCallWithOutCallback", len(r.arguments))
 	r.callback.SetOperationID(r.arguments[0].String())
 	//strings.SplitAfter()
 	for i := 0; i < len(r.arguments); i++ {
@@ -159,7 +163,6 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 				panic("input args type err index:" + utils.IntToString(i))
 			}
 		case reflect.Int:
-			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		case reflect.Int32:
 			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
@@ -236,7 +239,6 @@ func (r *ReflectCall) SyncCall() (result []interface{}) {
 				panic("input args type err index:" + utils.IntToString(i))
 			}
 		case reflect.Int:
-			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		case reflect.Int32:
 			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
@@ -266,18 +268,19 @@ func (r *ReflectCall) SyncCall() (result []interface{}) {
 
 }
 func (r *ReflectCall) ErrHandle(recover interface{}) []string {
+	ctx := context.Background()
 	var temp string
 	switch x := recover.(type) {
 	case string:
-		log.Error("STRINGERR", x)
+		log.ZError(ctx, "STRINGERR", nil, "r", x)
 		temp = utils.Wrap(errors.New(x), "").Error()
 	case error:
 		//buf := make([]byte, 1<<20)
 		//runtime.Stack(buf, true)
-		log.Error("ERR", x.Error())
+		log.ZError(ctx, "ERR", x, "r", x.Error())
 		temp = x.Error()
 	default:
-		log.Error("unknown panic")
+		log.ZError(ctx, "unknown panic", nil, "r", x)
 		temp = utils.Wrap(errors.New("unknown panic"), "").Error()
 	}
 	if r.callback != nil {
