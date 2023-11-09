@@ -20,7 +20,6 @@ package wasm_wrapper
 import (
 	"errors"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/event_listener"
 	"syscall/js"
@@ -96,8 +95,6 @@ func NewWrapperCommon() *WrapperCommon {
 	return &WrapperCommon{}
 }
 func (w *WrapperCommon) CommonEventFunc(_ js.Value, args []js.Value) interface{} {
-	log.NewDebug("CommonEventFunc", "js com here")
-
 	if len(args) >= 1 {
 		w.commonFunc = &args[len(args)-1]
 		return js.ValueOf(true)

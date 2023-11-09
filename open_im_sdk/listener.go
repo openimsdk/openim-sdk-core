@@ -16,12 +16,10 @@ package open_im_sdk
 
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 )
 
 func SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 	if callback == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetGroupListener(callback)
@@ -29,21 +27,18 @@ func SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 
 func SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetConversationListener(listener)
 }
 func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener) {
 	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetAdvancedMsgListener(listener)
 }
 func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
 	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetBatchMsgListener(listener)
@@ -51,7 +46,6 @@ func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
 
 func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetUserListener(listener)
@@ -59,7 +53,6 @@ func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 
 func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetFriendListener(listener)
@@ -67,7 +60,6 @@ func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
 
 func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
 	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetBusinessListener(listener)
@@ -75,7 +67,6 @@ func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessLis
 
 func SetMessageKvInfoListener(listener open_im_sdk_callback.OnMessageKvInfoListener) {
 	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
 		return
 	}
 	UserForSDK.SetMessageKvInfoListener(listener)
