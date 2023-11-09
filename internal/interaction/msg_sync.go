@@ -180,18 +180,6 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 	_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap, pullNums)
 }
 
-func (m *MsgSyncer) compareSeqsAndSync(maxSeqToSync map[string]int64) {
-	for conversationID, maxSeq := range maxSeqToSync {
-		if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
-			if maxSeq > syncedMaxSeq {
-				_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: {syncedMaxSeq, maxSeq}}, defaultPullNums)
-			}
-		} else {
-			_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: {syncedMaxSeq, maxSeq}}, defaultPullNums)
-		}
-	}
-}
-
 func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 	log.ZDebug(ctx, "push msgs", "push", push, "syncedMaxSeqs", m.syncedMaxSeqs)
 	m.pushTriggerAndSync(ctx, push.Msgs, m.triggerConversation)
