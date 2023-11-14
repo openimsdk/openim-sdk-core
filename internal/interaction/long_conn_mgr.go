@@ -180,7 +180,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			continue
 		}
 		c.conn.SetReadLimit(maxMessageSize)
-		_ = c.conn.SetReadDeadline(pongWait)
+		//_ = c.conn.SetReadDeadline(pongWait)
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
 			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -306,7 +306,7 @@ func getGoroutineID() int64 {
 	return id
 }
 func (c *LongConnMgr) pongHandler(_ string) error {
-	c.conn.SetReadDeadline(pongWait)
+	//c.conn.SetReadDeadline(pongWait)
 	return nil
 }
 
