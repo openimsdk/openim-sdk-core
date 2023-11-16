@@ -70,12 +70,13 @@ type SearchLocalMessagesCallback struct {
 	SearchResultItems []*SearchByConversationResult `json:"searchResultItems"`
 }
 type SearchByConversationResult struct {
-	ConversationID   string                  `json:"conversationID"`
-	ConversationType int32                   `json:"conversationType"`
-	ShowName         string                  `json:"showName"`
-	FaceURL          string                  `json:"faceURL"`
-	MessageCount     int                     `json:"messageCount"`
-	MessageList      []*sdk_struct.MsgStruct `json:"messageList"`
+	ConversationID    string                  `json:"conversationID"`
+	ConversationType  int32                   `json:"conversationType"`
+	ShowName          string                  `json:"showName"`
+	FaceURL           string                  `json:"faceURL"`
+	LatestMsgSendTime int64                   `json:"latestMsgSendTime,omitempty"`
+	MessageCount      int                     `json:"messageCount"`
+	MessageList       []*sdk_struct.MsgStruct `json:"messageList"`
 }
 type SetMessageReactionExtensionsParams []*server_api_params.KeyValue
 
