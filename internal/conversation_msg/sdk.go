@@ -1114,7 +1114,6 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 }
 
 func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk_params_callback.SearchLocalMessagesParams) (*sdk_params_callback.SearchLocalMessagesCallback, error) {
-
 	searchParam.KeywordList = utils.TrimStringList(searchParam.KeywordList)
 	return c.searchLocalMessages(ctx, searchParam)
 

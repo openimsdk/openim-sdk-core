@@ -405,6 +405,9 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			log.ZError(ctx, "Parsing data error:", err, "msg", temp)
 			continue
 		}
+		if c.filterMsg(&temp, searchParam) {
+			continue
+		}
 		if temp.ContentType == constant.File && !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName, searchParam.KeywordListMatchType) {
 			continue
 		}
@@ -441,6 +444,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			searchResultItem.ConversationID = conversationID
 			searchResultItem.FaceURL = localConversation.FaceURL
 			searchResultItem.ShowName = localConversation.ShowName
+			searchResultItem.LatestMsgSendTime = localConversation.LatestMsgSendTime
 			searchResultItem.ConversationType = localConversation.ConversationType
 			searchResultItem.MessageList = append(searchResultItem.MessageList, &temp)
 			searchResultItem.MessageCount++
@@ -456,7 +460,48 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		r.TotalCount += v.MessageCount
 
 	}
+	sort.Slice(r.SearchResultItems, func(i, j int) bool {
+		return r.SearchResultItems[i].LatestMsgSendTime > r.SearchResultItems[j].LatestMsgSendTime
+	})
 	return &r, nil
+}
+func (c *Conversation) filterMsg(temp *sdk_struct.MsgStruct, searchParam *sdk.SearchLocalMessagesParams) bool {
+	switch temp.ContentType {
+	case constant.Text:
+		return !c.judgeMultipleSubString(searchParam.KeywordList, temp.TextElem.Content,
+			searchParam.KeywordListMatchType)
+	case constant.AtText:
+		return !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtTextElem.Text,
+			searchParam.KeywordListMatchType)
+	case constant.File:
+		return !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName,
+			searchParam.KeywordListMatchType)
+	case constant.Merger:
+		if !c.judgeMultipleSubString(searchParam.KeywordList, temp.MergeElem.Title, searchParam.KeywordListMatchType) {
+			for _, msgStruct := range temp.MergeElem.MultiMessage {
+				if c.filterMsg(msgStruct, searchParam) {
+					continue
+				} else {
+					break
+				}
+			}
+
+		}
+	case constant.Card:
+		return !c.judgeMultipleSubString(searchParam.KeywordList, temp.CardElem.Nickname,
+			searchParam.KeywordListMatchType)
+	case constant.Location:
+		return !c.judgeMultipleSubString(searchParam.KeywordList, temp.LocationElem.Description,
+			searchParam.KeywordListMatchType)
+	case constant.Custom:
+		return !c.judgeMultipleSubString(searchParam.KeywordList, temp.CustomElem.Description,
+			searchParam.KeywordListMatchType)
+	case constant.Quote:
+		if !c.judgeMultipleSubString(searchParam.KeywordList, temp.QuoteElem.Text, searchParam.KeywordListMatchType) {
+			return c.filterMsg(temp.QuoteElem.QuoteMessage, searchParam)
+		}
+	}
+	return false
 }
 
 func (c *Conversation) delMsgBySeq(seqList []uint32) error {
