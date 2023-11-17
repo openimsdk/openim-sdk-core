@@ -408,16 +408,6 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if c.filterMsg(&temp, searchParam) {
 			continue
 		}
-		if temp.ContentType == constant.File && !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName, searchParam.KeywordListMatchType) {
-			continue
-		}
-		if temp.ContentType == constant.AtText && !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtTextElem.Text, searchParam.KeywordListMatchType) {
-			continue
-		}
-		if temp.ContentType == constant.Text && !c.judgeMultipleSubString(searchParam.KeywordList, temp.TextElem.Content, searchParam.KeywordListMatchType) {
-			continue
-		}
-
 		switch temp.SessionType {
 		case constant.SingleChatType:
 			if temp.SendID == c.loginUserID {
@@ -465,6 +455,8 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	})
 	return &r, nil
 }
+
+// true is filter, false is not filter
 func (c *Conversation) filterMsg(temp *sdk_struct.MsgStruct, searchParam *sdk.SearchLocalMessagesParams) bool {
 	switch temp.ContentType {
 	case constant.Text:
@@ -485,7 +477,6 @@ func (c *Conversation) filterMsg(temp *sdk_struct.MsgStruct, searchParam *sdk.Se
 					break
 				}
 			}
-
 		}
 	case constant.Card:
 		return !c.judgeMultipleSubString(searchParam.KeywordList, temp.CardElem.Nickname,
@@ -500,6 +491,8 @@ func (c *Conversation) filterMsg(temp *sdk_struct.MsgStruct, searchParam *sdk.Se
 		if !c.judgeMultipleSubString(searchParam.KeywordList, temp.QuoteElem.Text, searchParam.KeywordListMatchType) {
 			return c.filterMsg(temp.QuoteElem.QuoteMessage, searchParam)
 		}
+	default:
+		return true
 	}
 	return false
 }
