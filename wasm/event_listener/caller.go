@@ -168,6 +168,8 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
 		case reflect.Bool:
 			values = append(values, reflect.ValueOf(r.arguments[i].Bool()))
+		case reflect.Float64:
+			values = append(values, reflect.ValueOf(r.arguments[i].Float()))
 		default:
 			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(i).Kind())))
 		}
