@@ -660,7 +660,7 @@ func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (boo
 
 func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation) {
 	sort.Sort(newMessagesList)
-	if c.IsBackground.Load() {
+	if c.GetBackground() {
 		u, err := c.user.GetSelfUserInfo(ctx)
 		if err != nil {
 			log.ZWarn(ctx, "GetSelfUserInfo err", err)
