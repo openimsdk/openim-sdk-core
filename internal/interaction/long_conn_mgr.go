@@ -31,6 +31,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
@@ -93,7 +94,7 @@ type LongConnMgr struct {
 	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
-	IsBackground       bool
+	IsBackground       atomic.Bool
 	// write conn lock
 	connWrite *sync.Mutex
 }
@@ -489,7 +490,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	c.connStatus = Connecting
 	c.w.Unlock()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t", ccontext.Info(ctx).WsAddr(),
-		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.IsBackground)
+		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.IsBackground.Load())
 	if c.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
@@ -565,5 +566,5 @@ func (c *LongConnMgr) Close(ctx context.Context) {
 
 }
 func (c *LongConnMgr) SetBackground(isBackground bool) {
-	c.IsBackground = isBackground
+	c.IsBackground.Store(isBackground)
 }
