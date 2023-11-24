@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+func init() {
+
+	if err := log.InitFromConfig("sdk.log", "sdk", 5,
+		true, false, "./chat_log", 2, 24); err != nil {
+		panic(err)
+	}
+}
 func main() {
 	ctx := context.Background()
 	p := pressuser.NewPressureTester()
