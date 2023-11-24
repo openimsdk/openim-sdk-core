@@ -491,6 +491,14 @@ func (c *Conversation) filterMsg(temp *sdk_struct.MsgStruct, searchParam *sdk.Se
 		if !c.judgeMultipleSubString(searchParam.KeywordList, temp.QuoteElem.Text, searchParam.KeywordListMatchType) {
 			return c.filterMsg(temp.QuoteElem.QuoteMessage, searchParam)
 		}
+	case constant.Picture:
+		fallthrough
+	case constant.Video:
+		if len(searchParam.KeywordList) == 0 {
+			return false
+		} else {
+			return true
+		}
 	default:
 		return true
 	}
