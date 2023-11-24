@@ -281,6 +281,7 @@ func (p *PressureTester) importFriends(friendSenderUserIDs, recvMsgUserIDs []str
 }
 
 func (p *PressureTester) CheckMsg() {
+	var max, min, latencySum int64
 	var sampleSendLength, sampleRecvLength, failedMessageLength int
 	for _, user := range p.msgSender {
 		if len(user.failedMessageMap) != 0 {
@@ -291,8 +292,23 @@ func (p *PressureTester) CheckMsg() {
 		}
 		if len(user.recvSampleMessage) != 0 {
 			sampleRecvLength += len(user.recvSampleMessage)
+			for _, value := range user.recvSampleMessage {
+				if min == 0 && max == 0 {
+					min = value.Latency
+					max = value.Latency
+
+				}
+				if value.Latency < min {
+					min = value.Latency
+				}
+				if value.Latency > max {
+					max = value.Latency
+				}
+				latencySum += value.Latency
+			}
 		}
 	}
 	log.ZDebug(context.Background(), "check result", "failedMessageLength", failedMessageLength,
-		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength)
+		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "message average",
+		latencySum/int64(sampleRecvLength), "max", max, "min", min)
 }
