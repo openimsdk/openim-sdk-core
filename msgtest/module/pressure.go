@@ -70,6 +70,7 @@ type PressureTester struct {
 
 func NewPressureTester() *PressureTester {
 	metaManager := NewMetaManager(APIADDR, SECRET, MANAGERUSERID)
+	metaManager.initToken()
 	serverTime, err := metaManager.GetServerTime()
 	if err != nil {
 		panic(err)
