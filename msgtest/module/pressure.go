@@ -1,11 +1,11 @@
-package pressuser
+package module
 
 import (
 	"context"
 	"fmt"
 	"github.com/OpenIMSDK/tools/log"
-	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"math/rand"
 	"sync"
@@ -35,7 +35,7 @@ var (
 	fastenedUserNum       = 600    // 固定用户数
 
 	recvMsgUserNum = 20 // 消息接收者数, 抽样账号
-
+	SampleUserList []string
 )
 
 const (
@@ -55,11 +55,12 @@ const (
 )
 
 type PressureTester struct {
-	friendManager  *module.TestFriendManager
-	userManager    *module.TestUserManager
-	groupManager   *module.TestGroupManager
-	msgSender      map[string]*module.SendMsgUser
-	groupMsgSender map[string]*module.SendMsgUser
+	friendManager  *TestFriendManager
+	userManager    *TestUserManager
+	groupManager   *TestGroupManager
+	msgSender      map[string]*SendMsgUser
+	groupMsgSender map[string]*SendMsgUser
+	timeOffset     int64
 
 	groupSenderUserIDs, friendSenderUserIDs, notfriendSenderUserIDs []string
 	recvMsgUserIDs                                                  []string
@@ -68,9 +69,13 @@ type PressureTester struct {
 }
 
 func NewPressureTester() *PressureTester {
-	metaManager := module.NewMetaManager(APIADDR, SECRET, MANAGERUSERID)
+	metaManager := NewMetaManager(APIADDR, SECRET, MANAGERUSERID)
+	serverTime, err := metaManager.GetServerTime()
+	if err != nil {
+		panic(err)
+	}
 	return &PressureTester{friendManager: metaManager.NewFriendManager(), userManager: metaManager.NewUserManager(), groupManager: metaManager.NewGroupMananger(),
-		msgSender: make(map[string]*module.SendMsgUser), groupMsgSender: make(map[string]*module.SendMsgUser)}
+		msgSender: make(map[string]*SendMsgUser), groupMsgSender: make(map[string]*SendMsgUser), timeOffset: serverTime - utils.GetCurrentTimestampByMill()}
 }
 
 func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs []string) {
@@ -88,9 +93,10 @@ func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUs
 	}
 	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(total, FastenedUserPrefix)
 	step := int(1.0 / percentage)
-	for i := 0; i < total; i += step {
+	for i := 0; i <= total; i += step {
 		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3new_%d", FastenedUserPrefix, i))
 	}
+	SampleUserList = sampleReceiver
 	return fastenedUserIDs, sampleReceiver, nil
 
 }
@@ -122,34 +128,18 @@ func (p *PressureTester) RegisterUsers(userIDs []string, fastenedUserIDs []strin
 	return nil
 }
 
-func (p *PressureTester) InitUserConns(userIDs []string, fastenedUserIDs []string) {
-	for i, userID := range userIDs {
+func (p *PressureTester) InitUserConns(userIDs []string) {
+	for _, userID := range userIDs {
 		token, err := p.userManager.GetToken(userID, int32(PLATFORMID))
 		if err != nil {
 			log.ZError(context.Background(), "get token failed", err, "userID", userID, "platformID", PLATFORMID)
 			continue
 		}
-		user := module.NewUser(userID, token, sdk_struct.IMConfig{WsAddr: WSADDR, ApiAddr: APIADDR, PlatformID: int32(PLATFORMID)})
-		if 0 <= i && i < friendMsgSenderNum {
-			p.msgSender[userID] = user
-			p.friendSenderUserIDs = append(p.friendSenderUserIDs, userID)
-		} else if friendMsgSenderNum <= i && i < friendMsgSenderNum+NotFriendMsgSenderNum {
-			p.msgSender[userID] = user
-			p.notfriendSenderUserIDs = append(p.notfriendSenderUserIDs, userID)
-		}
+		user := NewUser(userID, token, p.timeOffset, sdk_struct.IMConfig{WsAddr: WSADDR, ApiAddr: APIADDR, PlatformID: int32(PLATFORMID)})
+		p.msgSender[userID] = user
+
 	}
-	if len(fastenedUserIDs) != 0 {
-		for _, userID := range fastenedUserIDs {
-			token, err := p.userManager.GetToken(userID, int32(PLATFORMID))
-			if err != nil {
-				log.ZError(context.Background(), "get token failed", err, "userID", userID, "platformID", PLATFORMID)
-				continue
-			}
-			user := module.NewUser(userID, token, sdk_struct.IMConfig{WsAddr: WSADDR, ApiAddr: APIADDR, PlatformID: int32(PLATFORMID)})
-			p.msgSender[userID] = user
-			p.groupSenderUserIDs = append(p.groupSenderUserIDs, userID)
-		}
-	}
+
 }
 
 func (p *PressureTester) createTestGroups(userIDs, fastenedUserIDs, recvMsgUserIDs []string) (err error) {
@@ -233,18 +223,31 @@ func (p *PressureTester) sendMsgs2Groups(senderIDs, groupIDs []string, num int, 
 	wg.Wait()
 }
 
-func (p *PressureTester) sendSingleMessages(fastenedUserIDs []string, num int) {
+func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, duration time.Duration) {
+	var wg sync.WaitGroup
 	length := len(fastenedUserIDs)
 	rand.Seed(time.Now().UnixNano())
-	receiverUserIDs := make([]string, 0)
 	for _, userID := range fastenedUserIDs {
+		receiverUserIDs := make([]string, 100)
 		for len(receiverUserIDs) < num {
 			index := rand.Intn(length)
 			if fastenedUserIDs[index] != userID {
 				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
 			}
 		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j, rv := range receiverUserIDs {
+				if user, ok := p.msgSender[userID]; ok {
+					user.SendMsgWithContext(rv, j)
+				}
+				time.Sleep(duration)
+
+			}
+		}()
 	}
+	wg.Wait()
 
 }
 
@@ -274,4 +277,21 @@ func (p *PressureTester) importFriends(friendSenderUserIDs, recvMsgUserIDs []str
 		}
 	}
 	return nil
+}
+
+func (p *PressureTester) CheckMsg() {
+	var sampleSendLength, sampleRecvLength, failedMessageLength int
+	for _, user := range p.msgSender {
+		if len(user.failedMessageMap) != 0 {
+			failedMessageLength += len(user.failedMessageMap)
+		}
+		if len(user.sendSampleMessage) != 0 {
+			sampleSendLength += len(user.sendSampleMessage)
+		}
+		if len(user.recvSampleMessage) != 0 {
+			sampleRecvLength += len(user.recvSampleMessage)
+		}
+	}
+	log.ZDebug(context.Background(), "check result", "failedMessageLength", failedMessageLength,
+		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength)
 }

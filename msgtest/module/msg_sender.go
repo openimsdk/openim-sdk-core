@@ -17,14 +17,33 @@ import (
 	"github.com/OpenIMSDK/tools/mcontext"
 )
 
+type msgValue struct {
+	SendID      string `json:"send_id"`
+	RecvID      string `json:"recv_id"`
+	MsgID       string `json:"msg_id"`
+	OperationID string `json:"operation_id"`
+	sendTime    int64  `json:"send_time"`
+	Latency     int64  `json:"latency"`
+}
+type errorValue struct {
+	err         error
+	SendID      string `json:"send_id"`
+	RecvID      string `json:"recv_id"`
+	MsgID       string `json:"msg_id"`
+	OperationID string `json:"operation_id"`
+}
+
 type SendMsgUser struct {
+	timeOffset          int64
 	longConnMgr         *interaction.LongConnMgr
 	userID              string
 	pushMsgAndMaxSeqCh  chan common.Cmd2Value
 	recvPushMsgCallback func(msg *sdkws.MsgData)
-	failedMessageMap    map[string]error
+	failedMessageMap    map[string]*errorValue
 	cancelFunc          context.CancelFunc
 	ctx                 context.Context
+	sendSampleMessage   map[string]*msgValue
+	recvSampleMessage   map[string]*msgValue
 }
 
 func (b SendMsgUser) GetUserID() string {
@@ -52,7 +71,7 @@ func newUserCtx(userID, token string, imConfig sdk_struct.IMConfig) context.Cont
 		IMConfig: imConfig})
 }
 
-func NewUser(userID, token string, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
+func NewUser(userID, token string, timeOffset int64, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ctx := newUserCtx(userID, token, imConfig)
 	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListner{}, nil, pushMsgAndMaxSeqCh, nil)
@@ -60,7 +79,10 @@ func NewUser(userID, token string, imConfig sdk_struct.IMConfig, opts ...func(co
 		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		longConnMgr:        longConnMgr,
 		userID:             userID,
-		failedMessageMap:   make(map[string]error),
+		failedMessageMap:   make(map[string]*errorValue),
+		sendSampleMessage:  make(map[string]*msgValue),
+		recvSampleMessage:  make(map[string]*msgValue, 100),
+		timeOffset:         timeOffset,
 		ctx:                ctx,
 	}
 	for _, opt := range opts {
@@ -98,7 +120,7 @@ func (b *SendMsgUser) BatchSendSingleMsg(ctx context.Context, userID string, ind
 	err := b.sendMsg(ctx, userID, "", index, constant.SingleChatType, content)
 	if err != nil {
 		log.ZError(ctx, "send msg failed", err, "userID", userID, "index", index, "content", content)
-		b.failedMessageMap[content] = err
+		//b.failedMessageMap[content] = err
 	}
 	return nil
 }
@@ -112,7 +134,7 @@ func (b *SendMsgUser) BatchSendGroupMsg(ctx context.Context, groupID string, ind
 	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
 	if err != nil {
 		log.ZError(ctx, "send msg failed", err, "groupID", groupID, "index", index, "content", content)
-		b.failedMessageMap[content] = err
+		//b.failedMessageMap[content] = err
 	}
 	return nil
 }
@@ -135,9 +157,19 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	}
 	now := time.Now().UnixMilli()
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
-		b.failedMessageMap[clientMsgID] = err
+		b.failedMessageMap[clientMsgID] = &errorValue{err: err,
+			SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
 
 		return err
+	}
+	if utils.IsContain(userID, SampleUserList) {
+		b.sendSampleMessage[msg.ClientMsgID] = &msgValue{
+			SendID:      msg.SendID,
+			RecvID:      msg.RecvID,
+			MsgID:       msg.ClientMsgID,
+			OperationID: mcontext.GetOperationID(ctx),
+			sendTime:    msg.SendTime,
+		}
 	}
 	if resp.SendTime-now > 1500 {
 		log.ZWarn(ctx, "msg recv resp is too slow", nil, "sendTime", resp.SendTime, "now", now)
@@ -155,7 +187,7 @@ func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 				for _, push := range pushMsgs.Msgs {
 					for _, msg := range push.Msgs {
 						if b.recvPushMsgCallback == nil {
-							b.defaultRecvPushMsgCallback(msg)
+							b.defaultRecvPushMsgCallback(cmd.Ctx, msg)
 						} else {
 							b.recvPushMsgCallback(msg)
 						}
@@ -168,7 +200,22 @@ func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 	}
 }
 
-func (b *SendMsgUser) defaultRecvPushMsgCallback(msg *sdkws.MsgData) {
+func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws.MsgData) {
+	if utils.IsContain(b.userID, SampleUserList) {
+		b.recvSampleMessage[msg.ClientMsgID] = &msgValue{
+			SendID:      msg.SendID,
+			RecvID:      msg.RecvID,
+			MsgID:       msg.ClientMsgID,
+			OperationID: mcontext.GetOperationID(ctx),
+			sendTime:    msg.SendTime,
+			Latency:     b.GetRelativeServerTime() - msg.SendTime,
+		}
+	}
+
+}
+
+func (b *SendMsgUser) GetRelativeServerTime() int64 {
+	return utils.GetCurrentTimestampByMill() + b.timeOffset
 }
 
 type ConnListner struct {
