@@ -229,7 +229,7 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 	length := len(fastenedUserIDs)
 	rand.Seed(time.Now().UnixNano())
 	for _, userID := range fastenedUserIDs {
-		receiverUserIDs := make([]string, 100)
+		var receiverUserIDs []string
 		for len(receiverUserIDs) < num {
 			index := rand.Intn(length)
 			if fastenedUserIDs[index] != userID {
