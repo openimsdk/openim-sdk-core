@@ -237,7 +237,7 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 			}
 		}
 		wg.Add(1)
-		go func() {
+		go func(receiverUserIDs []string) {
 			defer wg.Done()
 			for j, rv := range receiverUserIDs {
 				if user, ok := p.msgSender[userID]; ok {
@@ -246,7 +246,7 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 				time.Sleep(duration)
 
 			}
-		}()
+		}(receiverUserIDs)
 	}
 	wg.Wait()
 
