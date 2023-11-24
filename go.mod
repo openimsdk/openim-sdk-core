@@ -28,8 +28,6 @@ require (
 	gorm.io/gorm v1.23.8
 )
 
-require golang.org/x/mod v0.13.0 // indirect
-
 require (
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -43,7 +41,6 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	golang.org/x/tools v0.14.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect
 	google.golang.org/grpc v1.56.2 // indirect
 )
