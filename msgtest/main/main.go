@@ -23,10 +23,10 @@ func main() {
 		return
 	}
 	log.ZDebug(ctx, "Sample UserID", "r", r)
-	if err := p.RegisterUsers(f, nil, nil); err != nil {
-		log.ZError(ctx, "Sample UserID failed", err)
-		return
-	}
+	//if err := p.RegisterUsers(f, nil, nil); err != nil {
+	//	log.ZError(ctx, "Sample UserID failed", err)
+	//	return
+	//}
 	// init users
 	p.InitUserConns(f, nil)
 	time.Sleep(time.Hour * 60)
