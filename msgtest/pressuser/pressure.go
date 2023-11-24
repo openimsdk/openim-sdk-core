@@ -86,10 +86,10 @@ func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUs
 	if percentage < 0 || percentage > 1 {
 		return nil, nil, fmt.Errorf("percentage must be between 0 and 1")
 	}
-	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(fastenedUserNum, FastenedUserPrefix)
+	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(total, FastenedUserPrefix)
 	step := int(1.0 / percentage)
 	for i := 0; i < total; i += step {
-		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3new_%d", singleMsgRecvPrefix, i))
+		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3new_%d", FastenedUserPrefix, i))
 	}
 	return fastenedUserIDs, sampleReceiver, nil
 
