@@ -7,12 +7,13 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"math/rand"
 	"sync"
 	"time"
 )
 
 var (
-	TESTIP        = "125.124.195.201"
+	TESTIP        = "14.29.168.56"
 	APIADDR       = fmt.Sprintf("http://%v:10002", TESTIP)
 	WSADDR        = fmt.Sprintf("ws://%v:10001", TESTIP)
 	SECRET        = "openIM123"
@@ -48,8 +49,9 @@ const (
 	HundredGroupNum     = 50
 	FiftyGroupNum       = 100
 
-	FastenedUserPrefix = "fastened_user_prefix"
-	RecvMsgPrefix      = "recv_msg_prefix"
+	FastenedUserPrefix  = "fastened_user_prefix"
+	RecvMsgPrefix       = "recv_msg_prefix"
+	singleMsgRecvPrefix = "single_msg_recv_prefix"
 )
 
 type PressureTester struct {
@@ -78,7 +80,22 @@ func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs 
 	return
 }
 
-func (p *PressureTester) registerUsers(userIDs []string, fastenedUserIDs []string, recvMsgUserIDs []string) error {
+// selectSample
+func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUserIDs []string,
+	sampleReceiver []string, err error) {
+	if percentage < 0 || percentage > 1 {
+		return nil, nil, fmt.Errorf("percentage must be between 0 and 1")
+	}
+	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(fastenedUserNum, FastenedUserPrefix)
+	step := int(1.0 / percentage)
+	for i := 0; i < total; i += step {
+		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3new_%d", singleMsgRecvPrefix, i))
+	}
+	return fastenedUserIDs, sampleReceiver, nil
+
+}
+
+func (p *PressureTester) RegisterUsers(userIDs []string, fastenedUserIDs []string, recvMsgUserIDs []string) error {
 	for i := 0; i < len(userIDs); i += 1000 {
 		end := i + 1000
 		if end > len(userIDs) {
@@ -105,7 +122,7 @@ func (p *PressureTester) registerUsers(userIDs []string, fastenedUserIDs []strin
 	return nil
 }
 
-func (p *PressureTester) initUserConns(userIDs []string, fastenedUserIDs []string) {
+func (p *PressureTester) InitUserConns(userIDs []string, fastenedUserIDs []string) {
 	for i, userID := range userIDs {
 		token, err := p.userManager.GetToken(userID, int32(PLATFORMID))
 		if err != nil {
@@ -214,6 +231,21 @@ func (p *PressureTester) sendMsgs2Groups(senderIDs, groupIDs []string, num int, 
 		}
 	}
 	wg.Wait()
+}
+
+func (p *PressureTester) sendSingleMessages(fastenedUserIDs []string, num int) {
+	length := len(fastenedUserIDs)
+	rand.Seed(time.Now().UnixNano())
+	receiverUserIDs := make([]string, 0)
+	for _, userID := range fastenedUserIDs {
+		for len(receiverUserIDs) < num {
+			index := rand.Intn(length)
+			if fastenedUserIDs[index] != userID {
+				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
+			}
+		}
+	}
+
 }
 
 func (p *PressureTester) pressureSendMsg() {

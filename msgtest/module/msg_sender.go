@@ -79,12 +79,12 @@ func (b *SendMsgUser) Close(ctx context.Context) {
 }
 
 func (b *SendMsgUser) SendMsgWithContext(userID string, index int) error {
-	newCtx := mcontext.SetOperationID(b.ctx, utils.OperationIDGenerator())
+	newCtx := mcontext.SetOperationID(b.ctx, b.userID+utils.OperationIDGenerator()+userID)
 	return b.SendSingleMsg(newCtx, userID, index)
 }
 
 func (b *SendMsgUser) SendGroupMsgWithContext(groupID string, index int) error {
-	newCtx := mcontext.SetOperationID(b.ctx, utils.OperationIDGenerator())
+	newCtx := mcontext.SetOperationID(b.ctx, b.userID+utils.OperationIDGenerator()+groupID)
 	return b.SendGroupMsg(newCtx, groupID, index)
 
 }
