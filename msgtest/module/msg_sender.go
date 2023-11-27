@@ -208,7 +208,7 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 			MsgID:       msg.ClientMsgID,
 			OperationID: mcontext.GetOperationID(ctx),
 			sendTime:    msg.SendTime,
-			Latency:     utils.GetCurrentTimestampByMill() - msg.SendTime,
+			Latency:     b.GetRelativeServerTime() - msg.SendTime,
 		}
 	}
 

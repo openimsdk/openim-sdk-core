@@ -15,6 +15,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
@@ -67,6 +68,7 @@ func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) 
 	if err != nil {
 		return sdkerrs.ErrSdkInternal.Wrap("sdk http.NewRequestWithContext failed " + err.Error())
 	}
+	start := time.Now()
 	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "body", string(reqBody))
 	request.ContentLength = int64(len(reqBody))
 	request.Header.Set("Content-Type", "application/json")
@@ -84,7 +86,8 @@ func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) 
 		log.ZError(ctx, "ApiResponse", err, "type", "read body", "status", response.Status)
 		return sdkerrs.ErrSdkInternal.Wrap("io.ReadAll(ApiResponse) failed " + err.Error())
 	}
-	log.ZDebug(ctx, "ApiResponse", "url", reqUrl, "status", response.Status, "body", string(respBody))
+	log.ZDebug(ctx, "ApiResponse", "url", reqUrl, "status", response.Status,
+		"body", string(respBody), "time", time.Since(start).Milliseconds())
 	var baseApi util.ApiResponse
 	if err := json.Unmarshal(respBody, &baseApi); err != nil {
 		return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("api %s json.Unmarshal(%q, %T) failed %s", m.apiAddr, string(respBody), &baseApi, err.Error()))

@@ -22,7 +22,7 @@ func main() {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
 	}
-	log.ZDebug(ctx, "Sample UserID", "r", r, "length", len(f))
+	log.ZDebug(ctx, "Sample UserID", "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
 	time.Sleep(10 * time.Second)
 
 	//if err := p.RegisterUsers(f, nil, nil); err != nil {

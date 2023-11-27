@@ -75,8 +75,13 @@ func NewPressureTester() *PressureTester {
 	if err != nil {
 		panic(err)
 	}
-	return &PressureTester{friendManager: metaManager.NewFriendManager(), userManager: metaManager.NewUserManager(), groupManager: metaManager.NewGroupMananger(),
-		msgSender: make(map[string]*SendMsgUser), groupMsgSender: make(map[string]*SendMsgUser), timeOffset: serverTime - utils.GetCurrentTimestampByMill()}
+	log.ZWarn(context.Background(), "server time is", nil, "serverTime", serverTime, "current time",
+		utils.GetCurrentTimestampByMill(), "time offset", serverTime-utils.GetCurrentTimestampByMill())
+
+	return &PressureTester{friendManager: metaManager.NewFriendManager(), userManager: metaManager.NewUserManager(),
+		groupManager: metaManager.NewGroupMananger(),
+		msgSender:    make(map[string]*SendMsgUser), groupMsgSender: make(map[string]*SendMsgUser),
+		timeOffset: serverTime - utils.GetCurrentTimestampByMill()}
 }
 
 func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs []string) {
@@ -94,7 +99,7 @@ func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUs
 	}
 	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(total, FastenedUserPrefix)
 	step := int(1.0 / percentage)
-	for i := 0; i <= total; i += step {
+	for i := 0; i < total; i += step {
 		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3new_%d", FastenedUserPrefix, i))
 	}
 	SampleUserList = sampleReceiver
