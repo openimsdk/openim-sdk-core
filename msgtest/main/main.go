@@ -17,7 +17,7 @@ func init() {
 func main() {
 	ctx := context.Background()
 	p := module.NewPressureTester()
-	f, r, err := p.SelectSample(1000, 0.01)
+	f, r, err := p.SelectSample(20000, 0.1)
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
@@ -33,7 +33,7 @@ func main() {
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 100, time.Millisecond*100)
+	p.SendSingleMessages(f, 10, time.Millisecond*100)
 	log.ZDebug(ctx, "message send finished start to check message")
 	time.Sleep(30 * time.Second)
 	p.CheckMsg()
