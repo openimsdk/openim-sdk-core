@@ -33,9 +33,9 @@ func main() {
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 10, time.Millisecond*100)
+	p.SendSingleMessages(f, 100, time.Millisecond*100)
 	log.ZDebug(ctx, "message send finished start to check message")
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 	p.CheckMsg()
 
 	log.ZDebug(ctx, "message send finished start to check message")
