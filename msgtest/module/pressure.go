@@ -149,7 +149,7 @@ func (p *PressureTester) InitUserConns(userIDs []string) {
 
 }
 
-func (p *PressureTester) createTestGroups(userIDs, fastenedUserIDs, recvMsgUserIDs []string) (err error) {
+func (p *PressureTester) CreateTestGroups(userIDs, fastenedUserIDs, recvMsgUserIDs []string) (err error) {
 	// create ten thousand group
 	for i := 1; i <= TenThousandGroupNum; i++ {
 		groupID := p.groupManager.GenGroupID(fmt.Sprintf("tenThousandGroup_%d", i))
