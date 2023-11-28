@@ -51,17 +51,17 @@ func main() {
 	log.ZDebug(ctx, "Sample UserID", "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
 	time.Sleep(10 * time.Second)
 	//
-	if err := p.RegisterUsers(f, nil, nil); err != nil {
-		log.ZError(ctx, "Sample UserID failed", err)
-		return
-	}
+	//if err := p.RegisterUsers(f, nil, nil); err != nil {
+	//	log.ZError(ctx, "Sample UserID failed", err)
+	//	return
+	//}
 	// init users
 	p.InitUserConns(f)
-	log.ZDebug(ctx, "all user init connect to server success,start send message")
-	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 10, time.Millisecond*100)
-	time.Sleep(5 * time.Minute)
-	p.CheckMsg(ctx)
+	//log.ZDebug(ctx, "all user init connect to server success,start send message")
+	//time.Sleep(10 * time.Second)
+	//p.SendSingleMessages(f, 10, time.Millisecond*100)
+	//time.Sleep(5 * time.Minute)
+	//p.CheckMsg(ctx)
 
 	time.Sleep(time.Hour * 60)
 
