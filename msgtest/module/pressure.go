@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 )
@@ -285,12 +286,17 @@ func (p *PressureTester) importFriends(friendSenderUserIDs, recvMsgUserIDs []str
 	return nil
 }
 
-func (p *PressureTester) CheckMsg() {
+func (p *PressureTester) CheckMsg(ctx context.Context) {
+	log.ZDebug(ctx, "message send finished start to check message")
 	var max, min, latencySum int64
+	failedMessageAllMap := make(map[string]*errorValue)
 	var sampleSendLength, sampleRecvLength, failedMessageLength int
 	for _, user := range p.msgSender {
 		if len(user.failedMessageMap) != 0 {
 			failedMessageLength += len(user.failedMessageMap)
+			for s, value := range user.failedMessageMap {
+				failedMessageAllMap[s] = value
+			}
 		}
 		if len(user.sendSampleMessage) != 0 {
 			sampleSendLength += len(user.sendSampleMessage)
@@ -301,7 +307,6 @@ func (p *PressureTester) CheckMsg() {
 				if min == 0 && max == 0 {
 					min = value.Latency
 					max = value.Latency
-
 				}
 				if value.Latency < min {
 					min = value.Latency
@@ -314,6 +319,32 @@ func (p *PressureTester) CheckMsg() {
 		}
 	}
 	log.ZDebug(context.Background(), "check result", "failedMessageLength", failedMessageLength,
-		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "message average",
-		latencySum/int64(sampleRecvLength), "max", max, "min", min)
+		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "Average of message latency",
+		utils.Int64ToString(latencySum/int64(sampleRecvLength))+" ms", "max", utils.Int64ToString(max)+" ms",
+		"min", utils.Int64ToString(min)+" ms")
+	if len(failedMessageAllMap) > 0 {
+		err := p.saveFailedMessageToFile(failedMessageAllMap, "failedMessageAllMap")
+		if err != nil {
+			log.ZWarn(ctx, "save failed message to file failed", err)
+		}
+	}
+	log.ZDebug(ctx, "message send finished start to check message")
+	os.Exit(1)
+}
+
+func (p *PressureTester) saveFailedMessageToFile(m map[string]*errorValue, filename string) error {
+	file, err := os.Create(filename + ".txt")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	for key, value := range m {
+		line := fmt.Sprintf("Key: %s, Value: %v\n", key, value)
+		_, err := file.WriteString(line)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
