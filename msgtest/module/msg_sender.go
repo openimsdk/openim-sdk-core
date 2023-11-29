@@ -33,6 +33,10 @@ type errorValue struct {
 	OperationID string `json:"operation_id"`
 }
 
+func (e *errorValue) String() string {
+	return "{" + e.err.Error() + "," + e.SendID + "," + e.RecvID + "," + e.MsgID + "," + e.OperationID + "}"
+}
+
 type SendMsgUser struct {
 	timeOffset          int64
 	longConnMgr         *interaction.LongConnMgr

@@ -59,7 +59,7 @@ func main() {
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 10, time.Millisecond*100)
+	p.SendSingleMessages(f, 10, time.Millisecond*200)
 	time.Sleep(1 * time.Minute)
 	p.CheckMsg(ctx)
 
