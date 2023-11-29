@@ -43,7 +43,7 @@ func main() {
 
 	ctx := context.Background()
 	p := module.NewPressureTester()
-	f, r, err := p.SelectSample(2000, 0.01)
+	f, r, err := p.SelectSample(20000, 0.01)
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
@@ -51,10 +51,10 @@ func main() {
 	log.ZDebug(ctx, "Sample UserID", "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
 	time.Sleep(10 * time.Second)
 	//
-	//if err := p.RegisterUsers(f, nil, nil); err != nil {
-	//	log.ZError(ctx, "Sample UserID failed", err)
-	//	return
-	//}
+	if err := p.RegisterUsers(f, nil, nil); err != nil {
+		log.ZError(ctx, "Sample UserID failed", err)
+		return
+	}
 	// init users
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
