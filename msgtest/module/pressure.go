@@ -338,12 +338,29 @@ func (p *PressureTester) saveFailedMessageToFile(m map[string]*errorValue, filen
 		return err
 	}
 	defer file.Close()
-
+	samepleReceiverFailedMap := make(map[string]*errorValue)
 	for key, value := range m {
+		if utils.IsContain(value.RecvID, SampleUserList) {
+			samepleReceiverFailedMap[key] = value
+		}
 		line := fmt.Sprintf("Key: %s, Value: %v\n", key, value)
 		_, err := file.WriteString(line)
 		if err != nil {
 			return err
+		}
+	}
+	if len(samepleReceiverFailedMap) > 0 {
+		file, err := os.Create("sampleReceiverFailedMap" + ".txt")
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		for key, value := range samepleReceiverFailedMap {
+			line := fmt.Sprintf("Key: %s, Value: %v\n", key, value)
+			_, err := file.WriteString(line)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

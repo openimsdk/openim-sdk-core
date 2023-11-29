@@ -205,7 +205,7 @@ func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 }
 
 func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws.MsgData) {
-	if utils.IsContain(b.userID, SampleUserList) {
+	if utils.IsContain(msg.RecvID, SampleUserList) {
 		b.recvSampleMessage[msg.ClientMsgID] = &msgValue{
 			SendID:      msg.SendID,
 			RecvID:      msg.RecvID,
