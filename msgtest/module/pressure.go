@@ -15,8 +15,8 @@ import (
 
 var (
 	TESTIP        = "14.29.168.56"
-	APIADDR       = fmt.Sprintf("http://%v:10002", TESTIP)
-	WSADDR        = fmt.Sprintf("ws://%v:10001", TESTIP)
+	APIADDR       = fmt.Sprintf("http://%v:20002", TESTIP)
+	WSADDR        = fmt.Sprintf("ws://%v:20001", TESTIP)
 	SECRET        = "openIM123"
 	MANAGERUSERID = "openIMAdmin"
 
