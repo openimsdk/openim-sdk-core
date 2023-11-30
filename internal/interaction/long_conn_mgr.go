@@ -290,7 +290,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 }
 func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
 	log.ZInfo(ctx, "ping message tart", "goroutine ID:", getGoroutineID())
-	c.conn.SetWriteDeadline(writeWait)
+	//c.conn.SetWriteDeadline(writeWait)
 	if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
 		return
 	}
