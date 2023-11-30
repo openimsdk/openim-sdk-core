@@ -24,8 +24,8 @@ var (
 	msgSenderNumEvreyUser int     // 每个用户的消息数
 	fastenedUserNum       int     // 固定用户数
 
-	recvMsgUserNum int // 消息接收者数, 抽样账号
-
+	//recvMsgUserNum int // 消息接收者数, 抽样账号
+	isRegisterUser bool // 是否注册用户
 )
 
 func InitWithFlag() {
@@ -35,7 +35,7 @@ func InitWithFlag() {
 	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
 	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
 
-	flag.IntVar(&recvMsgUserNum, "r", 20, "recv msg user num")
+	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
 	flag.IntVar(&fastenedUserNum, "u", 300, "fastened user num")
 }
 
@@ -51,10 +51,12 @@ func main() {
 	log.ZDebug(ctx, "Sample UserID", "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
 	time.Sleep(10 * time.Second)
 	//
-	//if err := p.RegisterUsers(f, nil, nil); err != nil {
-	//	log.ZError(ctx, "Sample UserID failed", err)
-	//	return
-	//}
+	if isRegisterUser {
+		if err := p.RegisterUsers(f, nil, nil); err != nil {
+			log.ZError(ctx, "Sample UserID failed", err)
+			return
+		}
+	}
 	// init users
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
