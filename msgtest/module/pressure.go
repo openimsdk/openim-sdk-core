@@ -289,17 +289,26 @@ func (p *PressureTester) importFriends(friendSenderUserIDs, recvMsgUserIDs []str
 func (p *PressureTester) CheckMsg(ctx context.Context) {
 	log.ZDebug(ctx, "message send finished start to check message")
 	var max, min, latencySum int64
+	samepleReceiverFailedMap := make(map[string]*errorValue)
 	failedMessageAllMap := make(map[string]*errorValue)
+	sendSampleMessageAllMap := make(map[string]*msgValue)
+	recvSampleMessageAllMap := make(map[string]*msgValue)
 	var sampleSendLength, sampleRecvLength, failedMessageLength int
 	for _, user := range p.msgSender {
 		if len(user.failedMessageMap) != 0 {
 			failedMessageLength += len(user.failedMessageMap)
 			for s, value := range user.failedMessageMap {
 				failedMessageAllMap[s] = value
+				if utils.IsContain(value.RecvID, SampleUserList) {
+					samepleReceiverFailedMap[s] = value
+				}
 			}
 		}
 		if len(user.sendSampleMessage) != 0 {
 			sampleSendLength += len(user.sendSampleMessage)
+			for s, value := range user.sendSampleMessage {
+				sendSampleMessageAllMap[s] = value
+			}
 		}
 		if len(user.recvSampleMessage) != 0 {
 			sampleRecvLength += len(user.recvSampleMessage)
@@ -316,6 +325,9 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 				}
 				latencySum += value.Latency
 			}
+			for s, value := range user.recvSampleMessage {
+				recvSampleMessageAllMap[s] = value
+			}
 		}
 	}
 	log.ZDebug(context.Background(), "check result", "failedMessageLength", failedMessageLength,
@@ -328,6 +340,22 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 			log.ZWarn(ctx, "save failed message to file failed", err)
 		}
 	}
+
+	if len(samepleReceiverFailedMap) > 0 {
+		err := p.saveFailedMessageToFile(failedMessageAllMap, "sampleReceiverFailedMap")
+		if err != nil {
+			log.ZWarn(ctx, "save sampleReceiverFailedMap message to file failed", err)
+		}
+	}
+	if sampleSendLength != sampleRecvLength {
+		recvEx, sendEx := findMapIntersection(sendSampleMessageAllMap, recvSampleMessageAllMap)
+		if len(recvEx) != 0 {
+			p.saveSucessMessageToFile(recvEx, "recvAdditional")
+		}
+		if len(sendEx) != 0 {
+			p.saveSucessMessageToFile(recvEx, "sendAdditional")
+		}
+	}
 	log.ZDebug(ctx, "message send finished start to check message")
 	os.Exit(1)
 }
@@ -338,30 +366,48 @@ func (p *PressureTester) saveFailedMessageToFile(m map[string]*errorValue, filen
 		return err
 	}
 	defer file.Close()
-	samepleReceiverFailedMap := make(map[string]*errorValue)
+
 	for key, value := range m {
-		if utils.IsContain(value.RecvID, SampleUserList) {
-			samepleReceiverFailedMap[key] = value
-		}
+
 		line := fmt.Sprintf("Key: %s, Value: %v\n", key, value)
 		_, err := file.WriteString(line)
 		if err != nil {
 			return err
 		}
 	}
-	if len(samepleReceiverFailedMap) > 0 {
-		file, err := os.Create("sampleReceiverFailedMap" + ".txt")
+	return nil
+}
+func (p *PressureTester) saveSucessMessageToFile(m map[string]*msgValue, filename string) error {
+	file, err := os.Create(filename + ".txt")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	for key, value := range m {
+
+		line := fmt.Sprintf("Key: %s, Value: %v\n", key, value)
+		_, err := file.WriteString(line)
 		if err != nil {
 			return err
 		}
-		defer file.Close()
-		for key, value := range samepleReceiverFailedMap {
-			line := fmt.Sprintf("Key: %s, Value: %v\n", key, value)
-			_, err := file.WriteString(line)
-			if err != nil {
-				return err
-			}
-		}
 	}
 	return nil
+}
+
+func findMapIntersection(map1, map2 map[string]*msgValue) (map[string]*msgValue, map[string]*msgValue) {
+	InMap1NotInMap2 := make(map[string]*msgValue)
+	InMap2NotInMap1 := make(map[string]*msgValue)
+	for key := range map1 {
+		if _, ok := map2[key]; !ok {
+			InMap1NotInMap2[key] = map1[key]
+		}
+	}
+	for key := range map2 {
+		if _, ok := map1[key]; !ok {
+			InMap2NotInMap1[key] = map2[key]
+		}
+	}
+
+	return InMap1NotInMap2, InMap2NotInMap1
 }
