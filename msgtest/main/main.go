@@ -40,7 +40,7 @@ func InitWithFlag() {
 }
 
 func main() {
-
+	flag.Parse()
 	ctx := context.Background()
 	p := module.NewPressureTester()
 	f, r, err := p.SelectSample(20000, 0.01)
