@@ -29,7 +29,7 @@ var (
 )
 
 func InitWithFlag() {
-	flag.IntVar(&totalOnlineUserNum, "t", 20000, "total online user num")
+	flag.IntVar(&totalOnlineUserNum, "o", 20000, "total online user num")
 	flag.Float64Var(&samplingRate, "f", 0.1, "sampling rate")
 	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
 	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
@@ -43,7 +43,7 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 	p := module.NewPressureTester()
-	f, r, err := p.SelectSample(20000, 0.01)
+	f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
