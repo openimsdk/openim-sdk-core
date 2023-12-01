@@ -272,6 +272,9 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		if r := recover(); r != nil {
+
+		}
 		ticker.Stop()
 		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat", "heartbeat done sdk logout.....")
 	}()
