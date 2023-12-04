@@ -234,17 +234,17 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 	var wg sync.WaitGroup
 	length := len(fastenedUserIDs)
 	rand.Seed(time.Now().UnixNano())
-	for _, userID := range fastenedUserIDs {
-		var receiverUserIDs []string
-		for len(receiverUserIDs) < num {
+	for i, userID := range fastenedUserIDs {
+		counter:=0
+		for counter < num {
 			index := rand.Intn(length)
-			if fastenedUserIDs[index] != userID {
-				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
+			if index != i {
+				counter++
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
 					if user, ok := p.msgSender[userID]; ok {
-						user.SendMsgWithContext(fastenedUserIDs[index], 0)
+						user.SendMsgWithContext(fastenedUserIDs[index], counter)
 					}
 					time.Sleep(duration)
 				}()
