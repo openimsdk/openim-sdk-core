@@ -39,6 +39,13 @@ func InitWithFlag() {
 	flag.IntVar(&fastenedUserNum, "u", 300, "fastened user num")
 }
 
+func PrintQPS() {
+	for {
+		time.Sleep(1 * time.Second)
+		log.ZDebug(context.Background(), "QPS", "qps", module.GetQPS())
+	}
+}
+
 func main() {
 	flag.Parse()
 	ctx := context.Background()
@@ -57,11 +64,12 @@ func main() {
 			return
 		}
 	}
+	go PrintQPS()
 	// init users
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 10, time.Millisecond*200)
+	p.SendSingleMessages(f, 10, time.Millisecond*100)
 	time.Sleep(1 * time.Minute)
 	p.CheckMsg(ctx)
 

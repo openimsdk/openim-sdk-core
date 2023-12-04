@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -16,6 +17,32 @@ import (
 	"github.com/OpenIMSDK/tools/log"
 	"github.com/OpenIMSDK/tools/mcontext"
 )
+
+var (
+	qpsCounter    int64      // 全局变量用于统计请求数
+	qpsMutex      sync.Mutex // 互斥锁用于保护全局变量的并发访问
+	qpsUpdateTime time.Time  // 全局变量用于记录上次更新时间
+)
+
+func IncrementQPS() {
+	qpsMutex.Lock()
+	defer qpsMutex.Unlock()
+
+	now := time.Now()
+	// 如果距离上次更新时间超过1秒，则重置计数器
+	if now.Sub(qpsUpdateTime) >= time.Second {
+		qpsCounter = 0
+		qpsUpdateTime = now
+	}
+	qpsCounter++
+}
+
+func GetQPS() int64 {
+	qpsMutex.Lock()
+	defer qpsMutex.Unlock()
+
+	return qpsCounter
+}
 
 type msgValue struct {
 	SendID      string `json:"send_id"`
@@ -159,6 +186,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 		SenderPlatformID: constant.AdminPlatformID,
 		ClientMsgID:      clientMsgID,
 	}
+	IncrementQPS()
 	now := time.Now().UnixMilli()
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
 		b.failedMessageMap[clientMsgID] = &errorValue{err: err,
