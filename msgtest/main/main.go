@@ -42,7 +42,7 @@ func InitWithFlag() {
 func PrintQPS() {
 	for {
 		time.Sleep(1 * time.Second)
-		log.ZDebug(context.Background(), "QPS", "qps", module.GetQPS())
+		log.ZError(context.Background(), "QPS", nil, "qps", module.GetQPS())
 	}
 }
 
