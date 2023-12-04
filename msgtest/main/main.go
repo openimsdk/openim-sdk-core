@@ -44,6 +44,7 @@ func PrintQPS() {
 		select {
 		case qps := <-module.QPSChan:
 			log.ZError(context.Background(), "QPS", nil, "qps", qps)
+			case <-time.After(time.Second):
 		}
 	}
 }
