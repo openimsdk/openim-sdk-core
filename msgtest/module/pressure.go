@@ -267,18 +267,14 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
 			}
 		}
-		wg.Add(1)
+			wg.Add(1)
 		go func(receiverUserIDs []string) {
 			defer wg.Done()
 			for j, rv := range receiverUserIDs {
 				if user, ok := p.msgSender[userID]; ok {
-					go func() {
-						wg.Add(1)
-						defer wg.Done()
-						user.SendMsgWithContext(rv, j)
-					}()
+					user.SendMsgWithContext(rv, j)
 				}
-				//time.Sleep(duration)
+				time.Sleep(duration)
 
 			}
 		}(receiverUserIDs)
