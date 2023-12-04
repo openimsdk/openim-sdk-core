@@ -41,13 +41,12 @@ func InitWithFlag() {
 
 func PrintQPS() {
 	for {
-		select {
-		case qps := <-module.QPSChan:
-			log.ZError(context.Background(), "QPS", nil, "qps", qps)
-			case <-time.After(time.Second):
+	
+			log.ZError(context.Background(), "QPS", nil, "qps", module.GetQPS())
+			time.Sleep(time.Second*1)
 		}
-	}
 }
+
 
 func main() {
 	flag.Parse()
