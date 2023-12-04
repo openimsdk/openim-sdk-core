@@ -205,7 +205,7 @@ func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 }
 
 func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws.MsgData) {
-	if utils.IsContain(msg.RecvID, SampleUserList) &&b.userID!=msg.SendID{
+	if utils.IsContain(msg.RecvID, SampleUserList) && b.userID != msg.SendID {
 		b.recvSampleMessage[msg.ClientMsgID] = &msgValue{
 			SendID:      msg.SendID,
 			RecvID:      msg.RecvID,
@@ -219,7 +219,7 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 }
 
 func (b *SendMsgUser) GetRelativeServerTime() int64 {
-	return utils.GetCurrentTimestampByMill() + b.timeOffset
+	return utils.GetCurrentTimestampByMill()
 }
 
 type ConnListner struct {
