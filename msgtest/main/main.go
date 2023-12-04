@@ -41,8 +41,10 @@ func InitWithFlag() {
 
 func PrintQPS() {
 	for {
-		time.Sleep(1 * time.Second)
-		log.ZError(context.Background(), "QPS", nil, "qps", module.GetQPS())
+		select {
+		case qps := <-module.QPSChan:
+			log.ZError(context.Background(), "QPS", nil, "qps", qps)
+		}
 	}
 }
 

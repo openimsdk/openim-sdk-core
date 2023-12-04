@@ -22,7 +22,12 @@ var (
 	qpsCounter    int64      // 全局变量用于统计请求数
 	qpsMutex      sync.Mutex // 互斥锁用于保护全局变量的并发访问
 	qpsUpdateTime time.Time  // 全局变量用于记录上次更新时间
+	QPSChan       chan int64 // 用于定时更新qpsCounter的channel
 )
+
+func init() {
+	QPSChan = make(chan int64, 100)
+}
 
 func IncrementQPS() {
 	qpsMutex.Lock()
@@ -31,8 +36,10 @@ func IncrementQPS() {
 	now := time.Now()
 	// 如果距离上次更新时间超过1秒，则重置计数器
 	if now.Sub(qpsUpdateTime) >= time.Second {
+		QPSChan <- qpsCounter
 		qpsCounter = 0
 		qpsUpdateTime = now
+
 	}
 	qpsCounter++
 }

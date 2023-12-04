@@ -251,7 +251,6 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 				}()
 			}
 			time.Sleep(duration)
-
 		}
 	}
 	wg.Wait()
