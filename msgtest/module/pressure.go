@@ -230,27 +230,54 @@ func (p *PressureTester) sendMsgs2Groups(senderIDs, groupIDs []string, num int, 
 	wg.Wait()
 }
 
+// func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, duration time.Duration) {
+// 	var wg sync.WaitGroup
+// 	length := len(fastenedUserIDs)
+// 	rand.Seed(time.Now().UnixNano())
+// 	for i, userID := range fastenedUserIDs {
+// 		counter:=0
+// 		for counter < num {
+// 			index := rand.Intn(length)
+// 			if index != i {
+// 				counter++
+// 				wg.Add(1)
+// 				go func(reciver string,sender string,counter int) {
+// 					defer wg.Done()
+// 					if user, ok := p.msgSender[sender]; ok {
+// 						user.SendMsgWithContext(reciver, counter)
+// 					}
+// 					time.Sleep(duration)
+// 				}(fastenedUserIDs[index],userID,counter)
+// 			}
+// 		}
+
+// 	}
+// 	wg.Wait()
+
+// }
 func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, duration time.Duration) {
 	var wg sync.WaitGroup
 	length := len(fastenedUserIDs)
 	rand.Seed(time.Now().UnixNano())
-	for i, userID := range fastenedUserIDs {
-		counter:=0
-		for counter < num {
+	for _, userID := range fastenedUserIDs {
+		var receiverUserIDs []string
+		for len(receiverUserIDs) < num {
 			index := rand.Intn(length)
-			if index != i {
-				counter++
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					if user, ok := p.msgSender[userID]; ok {
-						user.SendMsgWithContext(fastenedUserIDs[index], counter)
-					}
-					time.Sleep(duration)
-				}()
+			if fastenedUserIDs[index] != userID {
+				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
 			}
 		}
+		wg.Add(1)
+		go func(receiverUserIDs []string) {
+			defer wg.Done()
+			for j, rv := range receiverUserIDs {
+				if user, ok := p.msgSender[userID]; ok {
+					user.SendMsgWithContext(rv, j)
+				}
+				time.Sleep(duration)
 
+			}
+		}(receiverUserIDs)
 	}
 	wg.Wait()
 
