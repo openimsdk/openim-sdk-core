@@ -287,12 +287,18 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 
 func (p *PressureTester) SendMessages(sendID, recvID string, msgNum int) {
 	var i = 0
+	var ws sync.WaitGroup
 	user, _ := p.msgSender[sendID]
 	for i < msgNum {
+		ws.Add(1)
 		i++
-		go user.SendMsgWithContext(recvID, i)
+		go func() {
+			defer ws.Done()
+			user.SendMsgWithContext(recvID, i)
+		}()
 
 	}
+	ws.Wait()
 
 }
 
