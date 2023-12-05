@@ -292,6 +292,8 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 
 }
 func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
 	log.ZInfo(ctx, "ping message tart", "goroutine ID:", getGoroutineID())
 	if c.IsConnected() {
 		c.conn.SetWriteDeadline(writeWait)
