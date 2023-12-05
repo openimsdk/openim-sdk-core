@@ -39,6 +39,7 @@ func IncrementQPS() {
 		QPSChan <- qpsCounter
 		qpsCounter = 0
 		qpsUpdateTime = now
+		log.ZError(context.Background(), "QPS", nil, "qps", "timer")
 
 	}
 	qpsCounter++
