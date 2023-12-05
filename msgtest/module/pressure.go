@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	TESTIP        = "14.29.168.56"
+	TESTIP        = "127.0.0.1"
 	APIADDR       = fmt.Sprintf("http://%v:20002", TESTIP)
 	WSADDR        = fmt.Sprintf("ws://%v:20001", TESTIP)
 	SECRET        = "openIM123"
