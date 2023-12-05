@@ -10,7 +10,7 @@ import (
 
 func init() {
 	InitWithFlag()
-	if err := log.InitFromConfig("sdk.log", "sdk", 5,
+	if err := log.InitFromConfig("sdk.log", "sdk", 1,
 		true, false, "./", 2, 24); err != nil {
 		panic(err)
 	}
