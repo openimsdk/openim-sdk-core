@@ -51,23 +51,23 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 	p := module.NewPressureTester()
-	f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
-	if err != nil {
-		log.ZError(ctx, "Sample UserID failed", err)
-		return
-	}
-	log.ZDebug(ctx, "Sample UserID", "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
-	time.Sleep(10 * time.Second)
-	//
-	if isRegisterUser {
-		if err := p.RegisterUsers(f, nil, nil); err != nil {
-			log.ZError(ctx, "Sample UserID failed", err)
-			return
-		}
-	}
+	//f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
+	//if err != nil {
+	//	log.ZError(ctx, "Sample UserID failed", err)
+	//	return
+	//}
+	//log.ZDebug(ctx, "Sample UserID", "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
+	//time.Sleep(10 * time.Second)
+	////
+	//if isRegisterUser {
+	//	if err := p.RegisterUsers(f, nil, nil); err != nil {
+	//		log.ZError(ctx, "Sample UserID failed", err)
+	//		return
+	//	}
+	//}
 	go PrintQPS()
 	// init users
-	p.InitUserConns(f)
+	p.InitUserConns([]string{"fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1"})
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
 	//p.SendSingleMessages(f, 100, time.Millisecond*100)
