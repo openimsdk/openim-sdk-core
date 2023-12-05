@@ -41,12 +41,11 @@ func InitWithFlag() {
 
 func PrintQPS() {
 	for {
-	
-			log.ZError(context.Background(), "QPS", nil, "qps", module.GetQPS())
-			time.Sleep(time.Second*1)
-		}
-}
 
+		log.ZError(context.Background(), "QPS", nil, "qps", module.GetQPS())
+		time.Sleep(time.Second * 1)
+	}
+}
 
 func main() {
 	flag.Parse()
@@ -71,7 +70,8 @@ func main() {
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 100, time.Millisecond*100)
+	//p.SendSingleMessages(f, 100, time.Millisecond*100)
+	p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_0", 10000)
 	time.Sleep(1 * time.Minute)
 	p.CheckMsg(ctx)
 

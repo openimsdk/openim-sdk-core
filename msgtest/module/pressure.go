@@ -260,7 +260,7 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 	length := len(fastenedUserIDs)
 	rand.Seed(time.Now().UnixNano())
 	for i, userID := range fastenedUserIDs {
-		counter:=0
+		counter := 0
 		var receiverUserIDs []string
 		for counter < num {
 			index := rand.Intn(length)
@@ -269,8 +269,8 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
 			}
 		}
-			wg.Add(1)
-		go func(receiverUserIDs []string,u string) {
+		wg.Add(1)
+		go func(receiverUserIDs []string, u string) {
 			defer wg.Done()
 			for j, rv := range receiverUserIDs {
 				if user, ok := p.msgSender[u]; ok {
@@ -279,9 +279,20 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 				time.Sleep(duration)
 
 			}
-		}(receiverUserIDs,userID)
+		}(receiverUserIDs, userID)
 	}
 	wg.Wait()
+
+}
+
+func (p *PressureTester) SendMessages(sendID, recvID string, msgNum int) {
+	var i = 0
+	user, _ := p.msgSender[sendID]
+	for i < msgNum {
+		i++
+		go user.SendMsgWithContext(recvID, i)
+
+	}
 
 }
 
