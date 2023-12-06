@@ -284,6 +284,40 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 
 }
 
+func (p *PressureTester) SendSingleMessagesTo(fastenedUserIDs []string, num int, duration time.Duration) {
+	var wg sync.WaitGroup
+	//length := len(fastenedUserIDs)
+	rand.Seed(time.Now().UnixNano())
+	for i, userID := range fastenedUserIDs {
+		//counter := 0
+		//var receiverUserIDs []string
+		//for counter < num {
+		//	index := rand.Intn(length)
+		//	if index != i {
+		//		counter++
+		//		receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
+		//	}
+		//}
+		var receiverUserIDs []string
+		for i < num {
+			receiverUserIDs = append(receiverUserIDs, utils.IntToString(i))
+			i++
+		}
+		wg.Add(1)
+		go func(receiverUserIDs []string, u string) {
+			defer wg.Done()
+			user, _ := p.msgSender[u]
+			for j, rv := range receiverUserIDs {
+				user.SendMsgWithContext(rv, j)
+				time.Sleep(duration)
+
+			}
+		}(receiverUserIDs, userID)
+	}
+	wg.Wait()
+
+}
+
 func (p *PressureTester) SendMessages(sendID, recvID string, msgNum int) {
 	var i = 0
 	var ws sync.WaitGroup
