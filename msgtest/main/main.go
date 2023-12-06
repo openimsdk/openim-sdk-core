@@ -5,10 +5,12 @@ import (
 	"flag"
 	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
+	"runtime"
 	"time"
 )
 
 func init() {
+	_ = runtime.GOMAXPROCS(4)
 	InitWithFlag()
 	if err := log.InitFromConfig("sdk.log", "sdk", 3,
 		true, false, "./", 2, 24); err != nil {
