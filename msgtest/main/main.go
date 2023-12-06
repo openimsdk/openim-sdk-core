@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	_ = runtime.GOMAXPROCS(6)
+	_ = runtime.GOMAXPROCS(7)
 	InitWithFlag()
 	if err := log.InitFromConfig("sdk.log", "sdk", 3,
 		true, false, "./", 2, 24); err != nil {
@@ -72,7 +72,7 @@ func main() {
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 20000, time.Millisecond*1)
+	p.SendSingleMessages(f, 2000000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
 	time.Sleep(1 * time.Minute)
 	p.CheckMsg(ctx)
