@@ -107,6 +107,9 @@ func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUs
 	return fastenedUserIDs, sampleReceiver, nil
 
 }
+func (p *PressureTester)SelectStartAndEnd(start,end int)(fastenedUserIDs []string){
+	return p.userManager.GenSEUserIDsWithPrefix(start,end,FastenedUserPrefix)
+}
 
 func (p *PressureTester) RegisterUsers(userIDs []string, fastenedUserIDs []string, recvMsgUserIDs []string) error {
 	for i := 0; i < len(userIDs); i += 1000 {

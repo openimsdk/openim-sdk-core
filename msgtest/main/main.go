@@ -25,6 +25,8 @@ var (
 	groupMsgSenderNum     int     // 群消息发送者数
 	msgSenderNumEvreyUser int     // 每个用户的消息数
 	fastenedUserNum       int     // 固定用户数
+	start  int
+	end   int
 
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser bool // 是否注册用户
@@ -32,6 +34,8 @@ var (
 
 func InitWithFlag() {
 	flag.IntVar(&totalOnlineUserNum, "o", 20000, "total online user num")
+	flag.IntVar(&start, "s", 0, "start user")
+	flag.IntVar(&end, "e", 0, "end user")
 	flag.Float64Var(&samplingRate, "f", 0.1, "sampling rate")
 	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
 	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
@@ -66,6 +70,9 @@ func main() {
 			log.ZError(ctx, "Sample UserID failed", err)
 			return
 		}
+	}
+	if  start!=0{
+		f=p.SelectStartAndEnd(start,end)
 	}
 	//go PrintQPS()
 	// init users
