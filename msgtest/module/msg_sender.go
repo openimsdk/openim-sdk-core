@@ -199,7 +199,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
 		b.failedMessageMap[clientMsgID] = &errorValue{err: err,
 			SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
-
+		log.ZError(ctx, "send msg failed", err, "userID", userID, "index", index, "content", content)
 		return err
 	}
 	if utils.IsContain(userID, SampleUserList) {
