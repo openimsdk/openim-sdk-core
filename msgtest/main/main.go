@@ -25,8 +25,8 @@ var (
 	groupMsgSenderNum     int     // 群消息发送者数
 	msgSenderNumEvreyUser int     // 每个用户的消息数
 	fastenedUserNum       int     // 固定用户数
-	start  int
-	end   int
+	start                 int
+	end                   int
 
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser bool // 是否注册用户
@@ -71,16 +71,16 @@ func main() {
 			return
 		}
 	}
-	if  start!=0{
-		f=p.SelectStartAndEnd(start,end)
+	if start != 0 {
+		f = p.SelectStartAndEnd(start, end)
 	}
 	//go PrintQPS()
 	// init users
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	//p.SendSingleMessages(f, 2000000, time.Millisecond*1)
-	p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
+	p.SendSingleMessages(f, 2000000, time.Millisecond*1)
+	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
 	time.Sleep(1 * time.Minute)
 	p.CheckMsg(ctx)
