@@ -107,8 +107,8 @@ func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUs
 	return fastenedUserIDs, sampleReceiver, nil
 
 }
-func (p *PressureTester)SelectStartAndEnd(start,end int)(fastenedUserIDs []string){
-	return p.userManager.GenSEUserIDsWithPrefix(start,end,FastenedUserPrefix)
+func (p *PressureTester) SelectStartAndEnd(start, end int) (fastenedUserIDs []string) {
+	return p.userManager.GenSEUserIDsWithPrefix(start, end, FastenedUserPrefix)
 }
 
 func (p *PressureTester) RegisterUsers(userIDs []string, fastenedUserIDs []string, recvMsgUserIDs []string) error {
@@ -274,6 +274,7 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 		}
 		wg.Add(1)
 		go func(receiverUserIDs []string, u string) {
+			log.ZError(context.Background(), "SendSingleMessages", nil, "length", len(receiverUserIDs))
 			defer wg.Done()
 			user, _ := p.msgSender[u]
 			for j, rv := range receiverUserIDs {
