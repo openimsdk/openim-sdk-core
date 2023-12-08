@@ -274,7 +274,7 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 		}
 		wg.Add(1)
 		go func(receiverUserIDs []string, u string) {
-			log.ZError(context.Background(), "SendSingleMessages", nil, "length", len(receiverUserIDs))
+			//log.ZError(context.Background(), "SendSingleMessages", nil, "length", len(receiverUserIDs))
 			defer wg.Done()
 			user, _ := p.msgSender[u]
 			for j, rv := range receiverUserIDs {
@@ -411,7 +411,7 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 			}
 		}
 	}
-	log.ZDebug(context.Background(), "check result", "failedMessageLength", failedMessageLength,
+	log.ZError(context.Background(), "check result", nil, "failedMessageLength", failedMessageLength,
 		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "Average of message latency",
 		utils.Int64ToString(latencySum/int64(sampleRecvLength))+" ms", "max", utils.Int64ToString(max)+" ms",
 		"min", utils.Int64ToString(min)+" ms")
