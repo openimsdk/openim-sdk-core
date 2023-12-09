@@ -71,7 +71,7 @@ type PressureTester struct {
 
 	tenThousandGroupIDs, thousandGroupIDs, hundredGroupUserIDs, fiftyGroupUserIDs []string
 }
-func (p *PressureTester) ()int64{
+func (p *PressureTester) GetSendNum()int64{
 	return p.sendNum.Load()
 }
 func NewPressureTester() *PressureTester {
