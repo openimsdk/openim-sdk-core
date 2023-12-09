@@ -80,6 +80,7 @@ func main() {
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
 	p.SendSingleMessages(f, 10000, time.Millisecond*1)
+	log.ZWarn(ctx,"send over",nil,"num",p.GetSendNum())
 	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
 	time.Sleep(1 * time.Minute)

@@ -3,14 +3,16 @@ package module
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"os"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"math/rand"
-	"os"
-	"sync"
-	"time"
 )
 
 var (
@@ -62,13 +64,16 @@ type PressureTester struct {
 	msgSender      map[string]*SendMsgUser
 	groupMsgSender map[string]*SendMsgUser
 	timeOffset     int64
+    sendNum           atomic.Int64
 
 	groupSenderUserIDs, friendSenderUserIDs, notfriendSenderUserIDs []string
 	recvMsgUserIDs                                                  []string
 
 	tenThousandGroupIDs, thousandGroupIDs, hundredGroupUserIDs, fiftyGroupUserIDs []string
 }
-
+func (p *PressureTester) ()int64{
+	return p.sendNum.Load()
+}
 func NewPressureTester() *PressureTester {
 	metaManager := NewMetaManager(APIADDR, SECRET, MANAGERUSERID)
 	metaManager.initToken()
@@ -279,6 +284,8 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 			user, _ := p.msgSender[u]
 			for j, rv := range receiverUserIDs {
 				user.SendMsgWithContext(rv, j)
+	p.sendNum.Add(1)
+				
 				time.Sleep(duration)
 
 			}
