@@ -368,7 +368,7 @@ func (p *PressureTester) importFriends(friendSenderUserIDs, recvMsgUserIDs []str
 }
 
 func (p *PressureTester) CheckMsg(ctx context.Context) {
-	log.ZDebug(ctx, "message send finished start to check message")
+	log.ZWarn(ctx, "message send finished start to check message",nil)
 	var max, min, latencySum int64
 	samepleReceiverFailedMap := make(map[string]*errorValue)
 	failedMessageAllMap := make(map[string]*errorValue)
