@@ -196,7 +196,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 		SenderPlatformID: constant.AdminPlatformID,
 		ClientMsgID:      clientMsgID,
 	}
-	IncrementQPS()
+	// IncrementQPS()
 	now := time.Now().UnixMilli()
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
 		b.failedMessageMap[clientMsgID] = &errorValue{err: err,
