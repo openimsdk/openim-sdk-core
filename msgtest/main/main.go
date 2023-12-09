@@ -27,6 +27,7 @@ var (
 	fastenedUserNum       int     // 固定用户数
 	start                 int
 	end                   int
+	count                 int
 
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser bool // 是否注册用户
@@ -37,6 +38,7 @@ func InitWithFlag() {
 	flag.IntVar(&start, "s", 0, "start user")
 	flag.IntVar(&end, "e", 0, "end user")
 	flag.Float64Var(&samplingRate, "f", 0.1, "sampling rate")
+	flag.IntVar(&count,"c",1000,"number of messages per user")
 	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
 	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
 	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
@@ -79,7 +81,7 @@ func main() {
 	p.InitUserConns(f)
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, 10000, time.Millisecond*1)
+	p.SendSingleMessages(f, count, time.Millisecond*1)
 	log.ZWarn(ctx,"send over",nil,"num",p.GetSendNum())
 	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
