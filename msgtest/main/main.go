@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	_ = runtime.GOMAXPROCS(7)
+	_ = runtime.GOMAXPROCS(4)
 	InitWithFlag()
 	if err := log.InitFromConfig("sdk.log", "sdk", 3,
 		true, false, "./", 2, 24); err != nil {
