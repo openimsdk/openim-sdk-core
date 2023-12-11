@@ -93,9 +93,6 @@ func (u *User) initSyncer() {
 		},
 		nil,
 		func(ctx context.Context, state int, server, local *model_struct.LocalUser) error {
-			if u.listener == nil {
-				return nil
-			}
 			switch state {
 			case syncer.Update:
 				u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
@@ -143,10 +140,6 @@ func (u *User) initSyncer() {
 // DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
-	if u.listener == nil {
-		// log.Error(operationID, "listener == nil")
-		return
-	}
 	if msg.SendTime < u.loginTime {
 		log.ZWarn(ctx, "ignore notification ", nil, "msg", *msg)
 		return

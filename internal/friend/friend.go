@@ -16,7 +16,6 @@ package friend
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -60,9 +59,6 @@ func (f *Friend) initSyncer() {
 	}, func(value *model_struct.LocalFriend) [2]string {
 		return [...]string{value.OwnerUserID, value.FriendUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnFriendAdded(*server)
@@ -93,9 +89,6 @@ func (f *Friend) initSyncer() {
 	}, func(value *model_struct.LocalBlack) [2]string {
 		return [...]string{value.OwnerUserID, value.BlockUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalBlack) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnBlackAdded(*server)
@@ -113,9 +106,6 @@ func (f *Friend) initSyncer() {
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnFriendApplicationAdded(*server)
@@ -142,9 +132,6 @@ func (f *Friend) initSyncer() {
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnFriendApplicationAdded(*server)
@@ -183,9 +170,6 @@ func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
-	if f.friendListener == nil {
-		return errors.New("f.friendListener == nil")
-	}
 	switch msg.ContentType {
 	case constant.FriendApplicationNotification:
 		tips := sdkws.FriendApplicationTips{}
