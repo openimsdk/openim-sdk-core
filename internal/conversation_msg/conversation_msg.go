@@ -75,10 +75,6 @@ type Conversation struct {
 	startTime time.Time
 }
 
-func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
-	c.listenerForService = listener
-}
-
 func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
 	return c.msgListener
 }
@@ -669,33 +665,21 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 			if v, ok := nc[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
 				c.msgListener.OnRecvOfflineNewMessage(utils.StructToJsonString(w))
 			}
-			if c.listenerForService != nil {
-				c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
-			}
 		}
 	} else {
 		for _, w := range newMessagesList {
-			if c.msgListener != nil {
-				c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
-			}
-			if c.listenerForService != nil {
-				c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
-			}
+			c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
 		}
 	}
 
 }
 func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
-	if c.batchMsgListener != nil {
-		if len(newMessagesList) > 0 {
-			c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
-			//if c.IsBackground {
-			//	c.batchMsgListener.OnRecvOfflineNewMessages(utils.StructToJsonString(newMessagesList))
-			//}
-		}
-	} else {
-		log.ZWarn(ctx, "not set batchMsgListener", nil)
+	if len(newMessagesList) > 0 {
+		c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
+		//if c.IsBackground {
+		//	c.batchMsgListener.OnRecvOfflineNewMessages(utils.StructToJsonString(newMessagesList))
+		//}
 	}
 
 }

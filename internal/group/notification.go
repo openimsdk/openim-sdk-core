@@ -35,9 +35,6 @@ func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
-	if g.listener == nil {
-		return errors.New("listener is nil")
-	}
 	switch msg.ContentType {
 	case constant.GroupCreatedNotification: // 1501
 		var detail sdkws.GroupCreatedTips
