@@ -58,7 +58,6 @@ func init() {
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
-	open_im_sdk.UserForSDK.SetListenerForService(&onListenerForService{ctx: ctx})
 	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})

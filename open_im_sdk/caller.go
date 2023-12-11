@@ -283,7 +283,6 @@ func syncCall(operationID string, fn any, args ...any) string {
 	if numOut := fnt.NumOut(); numOut > 0 {
 		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf((*error)(nil)).Elem())
 	}
-	fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
 		//callback.OnSuccess("")
@@ -452,4 +451,19 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 	}
 	log.ZInfo(ctx, "output resp", "function name", funcName, "resp", jsonVal, "cost time", time.Since(t))
 	callback.OnSuccess(string(jsonData))
+}
+
+func listenerCall(fn any, listener any) {
+	ctx := context.Background()
+	if UserForSDK == nil {
+		log.ZWarn(ctx, "UserForSDK is nil,set listener is invalid", nil)
+		return
+	}
+	fnv := reflect.ValueOf(fn)
+	if fnv.Kind() != reflect.Func {
+		log.ZWarn(ctx, "fn is error,set listener is invalid", nil)
+		return
+	}
+	args := reflect.ValueOf(listener)
+	fnv.Call([]reflect.Value{args})
 }

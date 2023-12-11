@@ -92,8 +92,6 @@ type LoginMgr struct {
 	loginUserID  string
 	connListener open_im_sdk_callback.OnConnListener
 
-	loginTime int64
-
 	justOnceFlag bool
 
 	w           sync.Mutex
@@ -108,6 +106,7 @@ type LoginMgr struct {
 	signalingListener           open_im_sdk_callback.OnSignalingListener
 	signalingListenerFroService open_im_sdk_callback.OnSignalingListener
 	businessListener            open_im_sdk_callback.OnCustomBusinessListener
+	msgKvListener               open_im_sdk_callback.OnMessageKvInfoListener
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
@@ -173,74 +172,35 @@ func (u *LoginMgr) Friend() *friend.Friend {
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
-	if u.conversation != nil {
-		u.conversation.SetConversationListener(conversationListener)
-	} else {
-		u.conversationListener = conversationListener
-	}
+	u.conversationListener = conversationListener
 }
 
 func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callback.OnAdvancedMsgListener) {
-	if u.conversation != nil {
-		u.conversation.SetMsgListener(advancedMsgListener)
-	} else {
-		u.advancedMsgListener = advancedMsgListener
-	}
+	u.advancedMsgListener = advancedMsgListener
 }
 
 func (u *LoginMgr) SetMessageKvInfoListener(messageKvInfoListener open_im_sdk_callback.OnMessageKvInfoListener) {
-	if u.conversation != nil {
-		u.conversation.SetMsgKvListener(messageKvInfoListener)
-	}
+	u.msgKvListener = messageKvInfoListener
 }
 
 func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
-	if u.conversation != nil {
-		u.conversation.SetBatchMsgListener(batchMsgListener)
-	} else {
-		u.batchMsgListener = batchMsgListener
-	}
+	u.batchMsgListener = batchMsgListener
 }
 
 func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
-	if u.friend != nil {
-		u.friend.SetListener(friendListener)
-	} else {
-		u.friendListener = friendListener
-	}
+	u.friendListener = friendListener
 }
 
 func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupListener) {
-	if u.group != nil {
-		u.group.SetGroupListener(groupListener)
-	} else {
-		u.groupListener = groupListener
-	}
+	u.groupListener = groupListener
 }
 
 func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListener) {
-	if u.user != nil {
-		u.user.SetListener(userListener)
-	} else {
-		u.userListener = userListener
-	}
+	u.userListener = userListener
 }
 
-func (u *LoginMgr) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
-	if u.friend == nil || u.group == nil || u.conversation == nil {
-		return
-	}
-	u.friend.SetListenerForService(listener)
-	u.group.SetListenerForService(listener)
-	u.conversation.SetListenerForService(listener)
-}
-
-func (u *LoginMgr) SetBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
-	if u.business != nil {
-		u.business.SetListener(listener)
-	} else {
-		u.businessListener = listener
-	}
+func (u *LoginMgr) SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
+	u.businessListener = listener
 }
 func (u *LoginMgr) GetLoginUserID() string {
 	return u.loginUserID
@@ -321,64 +281,49 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	u.checkSendingMessage(ctx)
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
-	u.loginTime = time.Now().UnixNano() / 1e6
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
-	u.user.SetListener(u.userListener)
 	u.file = file.NewFile(u.db, u.loginUserID)
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
-	u.friend.SetListener(u.friendListener)
-	u.friend.SetLoginTime(u.loginTime)
+
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
-	u.group.SetGroupListener(u.groupListener)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.db)
 	u.business = business.NewBusiness(u.db)
-	if u.businessListener != nil {
-		u.business.SetListener(u.businessListener)
-	}
 	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, constant.SdkVersion, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
-	u.longConnMgr.Run(ctx)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.full, u.file)
-	u.conversation.SetLoginTime()
-	if u.batchMsgListener != nil {
-		u.conversation.SetBatchMsgListener(u.batchMsgListener)
-		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
-	}
-	go common.DoListener(u.conversation, u.ctx)
-	go func() {
-		memberGroupIDs, err := u.db.GetGroupMemberAllGroupIDs(ctx)
-		if err != nil {
-			log.ZError(ctx, "GetGroupMemberAllGroupIDs failed", err)
-			return
-		}
-		if len(memberGroupIDs) > 0 {
-			groups, err := u.db.GetJoinedGroupListDB(ctx)
-			if err != nil {
-				log.ZError(ctx, "GetJoinedGroupListDB failed", err)
-				return
-			}
-			memberGroupIDMap := make(map[string]struct{})
-			for _, groupID := range memberGroupIDs {
-				memberGroupIDMap[groupID] = struct{}{}
-			}
-			for _, info := range groups {
-				delete(memberGroupIDMap, info.GroupID)
-			}
-			for groupID := range memberGroupIDMap {
-				if err := u.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
-					log.ZError(ctx, "DeleteGroupAllMembers failed", err, "groupID", groupID)
-				}
-			}
-		}
-	}()
-
-	go u.logoutListener(ctx)
+	u.setListener(ctx)
+	u.run(ctx)
 	u.setLoginStatus(Logged)
 	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
+}
+
+func (u *LoginMgr) setListener(ctx context.Context) {
+	setListener(ctx, &u.userListener, u.user.SetListener, newEmptyUserListener)
+	setListener(ctx, &u.friendListener, u.friend.SetListener, newEmptyFriendshipListener)
+	setListener(ctx, &u.groupListener, u.group.SetGroupListener, newEmptyGroupListener)
+	setListener(ctx, &u.conversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
+	setListener(ctx, &u.advancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
+	setListener(ctx, &u.batchMsgListener, u.conversation.SetBatchMsgListener, nil)
+	setListener(ctx, &u.businessListener, u.business.SetListener, newEmptyCustomBusinessListener)
+}
+func setListener[T any](ctx context.Context, listener *T,
+	setFunc func(T), newFunc func(context.Context) T) {
+	if listener == nil && newFunc != nil {
+		*listener = newFunc(ctx)
+	}
+	setFunc(*listener)
+}
+
+func (u *LoginMgr) run(ctx context.Context) {
+	u.longConnMgr.Run(ctx)
+	go u.msgSyncer.DoListener(ctx)
+	go common.DoListener(u.conversation, u.ctx)
+	go u.group.DeleteGroupAndMemberInfo(ctx)
+	go u.logoutListener(ctx)
 }
 
 func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener) bool {
