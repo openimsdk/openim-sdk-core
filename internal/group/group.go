@@ -182,9 +182,6 @@ func (g *Group) initSyncer() {
 }
 
 func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
-	if callback == nil {
-		return
-	}
 	g.listener = callback
 }
 
@@ -285,4 +282,31 @@ func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]str
 		}
 	}
 	return groupIDs, nil
+}
+
+func (g *Group) DeleteGroupAndMemberInfo(ctx context.Context) {
+	memberGroupIDs, err := g.db.GetGroupMemberAllGroupIDs(ctx)
+	if err != nil {
+		log.ZError(ctx, "GetGroupMemberAllGroupIDs failed", err)
+		return
+	}
+	if len(memberGroupIDs) > 0 {
+		groups, err := g.db.GetJoinedGroupListDB(ctx)
+		if err != nil {
+			log.ZError(ctx, "GetJoinedGroupListDB failed", err)
+			return
+		}
+		memberGroupIDMap := make(map[string]struct{})
+		for _, groupID := range memberGroupIDs {
+			memberGroupIDMap[groupID] = struct{}{}
+		}
+		for _, info := range groups {
+			delete(memberGroupIDMap, info.GroupID)
+		}
+		for groupID := range memberGroupIDMap {
+			if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
+				log.ZError(ctx, "DeleteGroupAllMembers failed", err, "groupID", groupID)
+			}
+		}
+	}
 }
