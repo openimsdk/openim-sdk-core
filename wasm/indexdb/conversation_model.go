@@ -275,6 +275,7 @@ func (i *LocalConversations) RemoveConversationDraft(ctx context.Context, conver
 	return err
 }
 
+// TODO PIN UNPIN
 func (i *LocalConversations) UnPinConversation(ctx context.Context, conversationID string, isPinned int) error {
 	_, err := exec.Exec(conversationID, isPinned)
 	return err

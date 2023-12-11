@@ -1189,6 +1189,44 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 	return c.getMessageListReactionExtensions(ctx, conversationID, messageList)
 
 }
+func (c *Conversation) SearchConversation(ctx context.Context, searchParam string) ([]*server_api_params.Conversation, error) {
+	// Check if search parameter is empty
+	if searchParam == "" {
+		return nil, sdkerrs.ErrArgs.Wrap("search parameter cannot be empty")
+	}
+
+	// Perform the search in your database or data source
+	// This is a placeholder for the actual database call
+	conversations, err := c.db.SearchConversations(ctx, searchParam)
+	if err != nil {
+		// Handle any errors that occurred during the search
+		return nil, err
+	}
+	apiConversations := make([]*server_api_params.Conversation, len(conversations))
+	for i, localConv := range conversations {
+		// Create new server_api_params.Conversation and map fields from localConv
+		apiConv := &server_api_params.Conversation{
+			ConversationID:        localConv.ConversationID,
+			ConversationType:      localConv.ConversationType,
+			UserID:                localConv.UserID,
+			GroupID:               localConv.GroupID,
+			RecvMsgOpt:            localConv.RecvMsgOpt,
+			UnreadCount:           localConv.UnreadCount,
+			DraftTextTime:         localConv.DraftTextTime,
+			IsPinned:              localConv.IsPinned,
+			IsPrivateChat:         localConv.IsPrivateChat,
+			BurnDuration:          localConv.BurnDuration,
+			GroupAtType:           localConv.GroupAtType,
+			IsNotInGroup:          localConv.IsNotInGroup,
+			UpdateUnreadCountTime: localConv.UpdateUnreadCountTime,
+			AttachedInfo:          localConv.AttachedInfo,
+			Ex:                    localConv.Ex,
+		}
+		apiConversations[i] = apiConv
+	}
+	// Return the list of conversations
+	return apiConversations, nil
+}
 
 /**
 **Get some reaction extensions in reactionExtensionKeyList of message list

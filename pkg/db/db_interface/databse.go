@@ -208,6 +208,7 @@ type ConversationModel interface {
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) ([]*model_struct.LocalChatLog, error)
 	SuperGroupSearchAllMessageByContentType(ctx context.Context, superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
+	SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error)
 }
 
 type UserModel interface {
@@ -223,6 +224,7 @@ type FriendModel interface {
 	InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error
 	DeleteFriendDB(ctx context.Context, friendUserID string) error
 	UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error
+	PinFriend(ctx context.Context, pinUserIDs []string, isPinned bool) error
 	GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error)
 	GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error)
 	SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error)

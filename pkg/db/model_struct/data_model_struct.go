@@ -57,6 +57,7 @@ type LocalFriend struct {
 	//Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	IsPinned     bool   `gorm:"column:is_pinned;type:boolean" json:"isPinned"`
 }
 
 // message FriendRequest{

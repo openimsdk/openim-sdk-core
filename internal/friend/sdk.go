@@ -225,6 +225,12 @@ func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFrien
 	return f.SyncFriends(ctx, []string{userIDRemark.ToUserID})
 }
 
+func (f *Friend) SetFriendsPin(ctx context.Context, userIDPin *sdk.SetFriendPinParams) error {
+	if err := util.ApiPost(ctx, constant.SetFriendPin, &friend.PinFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: userIDPin.ToUserIDs, IsPinned: userIDPin.IsPinned}, nil); err != nil {
+		return err
+	}
+	return f.SyncFriends(ctx, userIDPin.ToUserIDs)
+}
 func (f *Friend) AddBlack(ctx context.Context, blackUserID string) error {
 	if err := util.ApiPost(ctx, constant.AddBlackRouter, &friend.AddBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID}, nil); err != nil {
 		return err
