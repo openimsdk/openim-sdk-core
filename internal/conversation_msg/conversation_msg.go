@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/OpenIMSDK/tools/log"
 	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
@@ -36,8 +37,6 @@ import (
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-
-	"github.com/OpenIMSDK/tools/log"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -386,18 +385,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(phNewConversationSet)); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
-	// c.doMsgReadState(ctx, msgReadList)
-
-	// c.DoGroupMsgReadState(ctx, groupMsgReadList)
 	if c.batchMsgListener != nil {
 		c.batchNewMessages(ctx, newMessages)
 	} else {
-		c.newMessage(newMessages)
+		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet)
 	}
-	// c.revokeMessage(ctx, newMsgRevokeList)
-	// c.doReactionMsgModifier(ctx, reactionMsgModifierList)
-	// c.doReactionMsgDeleter(ctx, reactionMsgDeleterList)
-	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
 	}
@@ -666,21 +658,40 @@ func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (boo
 	return false, nil
 }
 
-func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
+func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation) {
 	sort.Sort(newMessagesList)
-	for _, w := range newMessagesList {
-		// log.Info("internal", "newMessage: ", w.ClientMsgID)
-		if c.msgListener != nil {
-			// log.Info("internal", "msgListener,OnRecvNewMessage")
-			c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
-		} else {
-			// log.Error("internal", "set msgListener is err ")
+	if c.GetBackground() {
+		u, err := c.user.GetSelfUserInfo(ctx)
+		if err != nil {
+			log.ZWarn(ctx, "GetSelfUserInfo err", err)
+			return
 		}
-		if c.listenerForService != nil {
-			// log.Info("internal", "msgListener,OnRecvNewMessage")
-			c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
+		if u.GlobalRecvMsgOpt != constant.ReceiveMessage {
+			return
+		}
+		for _, w := range newMessagesList {
+			conversationID := utils.GetConversationIDByMsg(w)
+			if v, ok := cc[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				c.msgListener.OnRecvOfflineNewMessage(utils.StructToJsonString(w))
+			}
+			if v, ok := nc[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				c.msgListener.OnRecvOfflineNewMessage(utils.StructToJsonString(w))
+			}
+			if c.listenerForService != nil {
+				c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
+			}
+		}
+	} else {
+		for _, w := range newMessagesList {
+			if c.msgListener != nil {
+				c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
+			}
+			if c.listenerForService != nil {
+				c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
+			}
 		}
 	}
+
 }
 func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)

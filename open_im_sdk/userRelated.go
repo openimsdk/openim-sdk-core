@@ -316,10 +316,10 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.loginUserID = userID
 	var err error
 	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir, int(u.info.LogLevel))
-	u.checkSendingMessage(ctx)
 	if err != nil {
 		return sdkerrs.ErrSdkInternal.Wrap("init database " + err.Error())
 	}
+	u.checkSendingMessage(ctx)
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
 	u.loginTime = time.Now().UnixNano() / 1e6
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
@@ -403,8 +403,8 @@ func (u *LoginMgr) initResources() {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
-	u.setLoginStatus(LogoutStatus)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+	u.setLoginStatus(LogoutStatus)
 }
 
 func (u *LoginMgr) UnInitSDK() {
