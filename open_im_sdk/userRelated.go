@@ -43,6 +43,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 const (
@@ -310,9 +311,9 @@ func (u *LoginMgr) setListener(ctx context.Context) {
 	setListener(ctx, &u.batchMsgListener, u.conversation.SetBatchMsgListener, nil)
 	setListener(ctx, &u.businessListener, u.business.SetListener, newEmptyCustomBusinessListener)
 }
-func setListener[T any](ctx context.Context, listener *T,
-	setFunc func(T), newFunc func(context.Context) T) {
-	if listener == nil && newFunc != nil {
+
+func setListener[T any](ctx context.Context, listener *T, setFunc func(T), newFunc func(context.Context) T) {
+	if *(*unsafe.Pointer)(unsafe.Pointer(listener)) == nil && newFunc != nil {
 		*listener = newFunc(ctx)
 	}
 	setFunc(*listener)
