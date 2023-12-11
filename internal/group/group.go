@@ -75,9 +75,6 @@ func (g *Group) initSyncer() {
 	}, func(value *model_struct.LocalGroup) string {
 		return value.GroupID
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroup) error {
-		if g.listener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			g.listener.OnJoinedGroupAdded(utils.StructToJsonString(server))
@@ -111,9 +108,6 @@ func (g *Group) initSyncer() {
 	}, func(value *model_struct.LocalGroupMember) [2]string {
 		return [...]string{value.GroupID, value.UserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroupMember) error {
-		if g.listener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			g.listener.OnGroupMemberAdded(utils.StructToJsonString(server))

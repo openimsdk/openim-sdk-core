@@ -68,10 +68,6 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
-	if c.ConversationListener == nil {
-		// log.Error("internal", "not set conversationListener")
-		return
-	}
 	ctx := c2v.Ctx
 	node := c2v.Value.(common.UpdateConNode)
 	switch node.Action {
@@ -264,11 +260,6 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
-	if c.ConversationListener == nil {
-		// log.Error("internal", "not set conversationListener")
-		return
-	}
-
 	node := c2v.Value.(common.UpdateMessageNode)
 	ctx := c2v.Ctx
 	switch node.Action {
@@ -574,10 +565,6 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 // }
 
 func (c *Conversation) DoConversationChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if c.msgListener == nil {
-		log.ZError(ctx, "msgListner is nil", nil)
-		return
-	}
 	//var notification sdkws.ConversationChangedNotification
 	tips := &sdkws.ConversationUpdateTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
@@ -590,10 +577,6 @@ func (c *Conversation) DoConversationChangedNotification(ctx context.Context, ms
 }
 
 func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if c.msgListener == nil {
-		log.ZError(ctx, "msgListner is nil", nil)
-		return
-	}
 	tips := &sdkws.ConversationSetPrivateTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
 		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
