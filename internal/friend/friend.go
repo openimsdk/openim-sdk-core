@@ -46,7 +46,6 @@ type Friend struct {
 	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, [2]string]
 	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
 	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
-	loginTime          int64
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
@@ -163,14 +162,6 @@ func (f *Friend) initSyncer() {
 	})
 }
 
-func (f *Friend) LoginTime() int64 {
-	return f.loginTime
-}
-
-func (f *Friend) SetLoginTime(loginTime int64) {
-	f.loginTime = loginTime
-}
-
 func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
@@ -194,9 +185,6 @@ func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	if f.friendListener == nil {
 		return errors.New("f.friendListener == nil")
-	}
-	if msg.SendTime < f.loginTime || f.loginTime == 0 {
-		return errors.New("ignore notification")
 	}
 	switch msg.ContentType {
 	case constant.FriendApplicationNotification:
