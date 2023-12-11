@@ -574,12 +574,6 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 // }
 
 func (c *Conversation) DoConversationChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
-		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID",
-			msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType,
-			"sendTime", msg.SendTime, "loginTime", c.full.Group().LoginTime())
-		return
-	}
 	if c.msgListener == nil {
 		log.ZError(ctx, "msgListner is nil", nil)
 		return
@@ -596,12 +590,6 @@ func (c *Conversation) DoConversationChangedNotification(ctx context.Context, ms
 }
 
 func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
-		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID",
-			msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType,
-			"sendTime", msg.SendTime, "loginTime", c.full.Group().LoginTime())
-		return
-	}
 	if c.msgListener == nil {
 		log.ZError(ctx, "msgListner is nil", nil)
 		return

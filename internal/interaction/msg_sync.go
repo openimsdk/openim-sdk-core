@@ -63,7 +63,6 @@ func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan c
 		log.ZError(ctx, "loadSeq err", err)
 		return nil, err
 	}
-	go m.DoListener()
 	return m, nil
 }
 
@@ -99,12 +98,12 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 
 // DoListener Listen to the message pipe of the message synchronizer
 // and process received and pushed messages
-func (m *MsgSyncer) DoListener() {
+func (m *MsgSyncer) DoListener(ctx context.Context) {
 	for {
 		select {
 		case cmd := <-m.PushMsgAndMaxSeqCh:
 			m.handlePushMsgAndEvent(cmd)
-		case <-m.ctx.Done():
+		case <-ctx.Done():
 			log.ZInfo(m.ctx, "msg syncer done, sdk logout.....")
 			return
 		}
