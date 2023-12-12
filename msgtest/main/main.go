@@ -79,7 +79,7 @@ func main() {
 	//go PrintQPS()
 	// init users
 	p.InitUserConns(f)
-	log.ZDebug(ctx, "all user init connect to server success,start send message")
+	log.ZWarn(ctx, "all user init connect to server success,start send message", nil, "count", count)
 	time.Sleep(10 * time.Second)
 	p.SendSingleMessages(f, count, time.Millisecond*1)
 	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
