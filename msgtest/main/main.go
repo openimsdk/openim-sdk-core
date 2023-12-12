@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	_ = runtime.GOMAXPROCS(4)
+	_ = runtime.GOMAXPROCS(7)
 	InitWithFlag()
 	if err := log.InitFromConfig("sdk.log", "sdk", 3,
 		true, false, "./", 2, 24); err != nil {
@@ -38,7 +38,7 @@ func InitWithFlag() {
 	flag.IntVar(&start, "s", 0, "start user")
 	flag.IntVar(&end, "e", 0, "end user")
 	flag.Float64Var(&samplingRate, "f", 0.1, "sampling rate")
-	flag.IntVar(&count,"c",1000,"number of messages per user")
+	flag.IntVar(&count, "c", 1000, "number of messages per user")
 	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
 	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
 	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
@@ -82,7 +82,7 @@ func main() {
 	log.ZDebug(ctx, "all user init connect to server success,start send message")
 	time.Sleep(10 * time.Second)
 	p.SendSingleMessages(f, count, time.Millisecond*1)
-	log.ZWarn(ctx,"send over",nil,"num",p.GetSendNum())
+	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
 	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
 	time.Sleep(1 * time.Minute)
