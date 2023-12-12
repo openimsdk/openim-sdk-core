@@ -122,7 +122,7 @@ func NewUser(userID, token string, timeOffset int64, imConfig sdk_struct.IMConfi
 		userID:             userID,
 		failedMessageMap:   make(map[string]*errorValue),
 		sendSampleMessage:  make(map[string]*msgValue),
-		recvSampleMessage:  make(map[string]*msgValue, 100),
+		recvSampleMessage:  make(map[string]*msgValue),
 		timeOffset:         timeOffset,
 		ctx:                ctx,
 	}
