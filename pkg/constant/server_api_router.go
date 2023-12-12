@@ -19,6 +19,11 @@ const (
 	GetUsersInfoRouter            = "/user/get_users_info"
 	UpdateSelfUserInfoRouter      = "/user/update_user_info"
 	SetGlobalRecvMessageOptRouter = "/user/set_global_msg_recv_opt"
+	ProcessUserCommandAdd         = "/process_user_command_add"
+	ProcessUserCommandDelete      = "/process_user_command_delete"
+	ProcessUserCommandUpdate      = "/process_user_command_update"
+	ProcessUserCommandGet         = "/process_user_command_get"
+
 	GetUsersInfoFromCacheRouter   = "/user/get_users_info_from_cache"
 	AccountCheck                  = "/user/account_check"
 	UserRegister                  = "/user/user_register"

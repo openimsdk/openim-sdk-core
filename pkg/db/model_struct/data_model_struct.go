@@ -522,3 +522,9 @@ type LocalSendingMessages struct {
 func (LocalSendingMessages) TableName() string {
 	return "local_sending_messages"
 }
+
+type UserCommand struct {
+	UserID   string            `bson:"userID"`
+	Type     int32             `bson:"type"`
+	Commands map[string]string `bson:"commands"`
+}
