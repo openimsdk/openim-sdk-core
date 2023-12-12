@@ -307,6 +307,7 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
+	SystemType           string `json:"systemType"`
 	PlatformID           int32  `json:"platformID"`
 	ApiAddr              string `json:"apiAddr"`
 	WsAddr               string `json:"wsAddr"`

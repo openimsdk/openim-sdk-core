@@ -289,7 +289,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.db)
 	u.business = business.NewBusiness(u.db)
-	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, constant.SdkVersion, u.info.LogFilePath, u.file)
+	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, constant.SdkVersion, u.info.SystemType, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
@@ -350,6 +350,7 @@ func (u *LoginMgr) initResources() {
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh})
 	u.setLoginStatus(LogoutStatus)
 }
 
