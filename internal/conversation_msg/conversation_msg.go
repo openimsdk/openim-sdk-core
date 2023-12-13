@@ -79,23 +79,21 @@ func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener 
 	return c.msgListener
 }
 
-func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
-	c.msgListener = msgListener
+func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
+	c.msgListener = msgListener()
 }
 
 func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
 	c.msgKvListener = msgKvListener
 }
 
-func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
-	c.batchMsgListener = batchMsgListener
+func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_callback.OnBatchMsgListener) {
+	c.batchMsgListener = batchMsgListener()
 }
 
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	ch chan common.Cmd2Value,
-	friend *friend.Friend, group *group.Group, user *user.User,
-	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, full *full.Full, file *file.File) *Conversation {
+	ch chan common.Cmd2Value, friend *friend.Friend, group *group.Group, user *user.User, business *business.Business,
+	full *full.Full, file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -113,8 +111,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 	}
-	n.SetMsgListener(msgListener)
-	n.SetConversationListener(conversationListener)
 	n.initSyncer()
 	n.cache = cache.NewCache[string, *model_struct.LocalConversation]()
 	return n
