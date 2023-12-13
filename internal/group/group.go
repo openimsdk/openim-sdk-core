@@ -44,14 +44,13 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 
 // //utils.GetCurrentTimestampByMill()
 type Group struct {
-	listener                open_im_sdk_callback.OnGroupListener
+	listener                func() open_im_sdk_callback.OnGroupListener
 	loginUserID             string
 	db                      db_interface.DataBase
 	groupSyncer             *syncer.Syncer[*model_struct.LocalGroup, string]
 	groupMemberSyncer       *syncer.Syncer[*model_struct.LocalGroupMember, [2]string]
 	groupRequestSyncer      *syncer.Syncer[*model_struct.LocalGroupRequest, [2]string]
 	groupAdminRequestSyncer *syncer.Syncer[*model_struct.LocalAdminGroupRequest, [2]string]
-	loginTime               int64
 	joinedSuperGroupCh      chan common.Cmd2Value
 	heartbeatCmdCh          chan common.Cmd2Value
 
@@ -77,18 +76,18 @@ func (g *Group) initSyncer() {
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroup) error {
 		switch state {
 		case syncer.Insert:
-			g.listener.OnJoinedGroupAdded(utils.StructToJsonString(server))
+			g.listener().OnJoinedGroupAdded(utils.StructToJsonString(server))
 		case syncer.Delete:
-			g.listener.OnJoinedGroupDeleted(utils.StructToJsonString(local))
+			g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(local))
 		case syncer.Update:
 			log.ZInfo(ctx, "groupSyncer trigger update", "groupID", server.GroupID, "data", server, "isDismissed", server.Status == constant.GroupStatusDismissed)
 			if server.Status == constant.GroupStatusDismissed {
 				if err := g.db.DeleteGroupAllMembers(ctx, server.GroupID); err != nil {
 					log.ZError(ctx, "delete group all members failed", err)
 				}
-				g.listener.OnGroupDismissed(utils.StructToJsonString(server))
+				g.listener().OnGroupDismissed(utils.StructToJsonString(server))
 			} else {
-				g.listener.OnGroupInfoChanged(utils.StructToJsonString(server))
+				g.listener().OnGroupInfoChanged(utils.StructToJsonString(server))
 				if server.GroupName != local.GroupName || local.FaceURL != server.FaceURL {
 					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: server.GroupID,
 						SessionType: constant.SuperGroupChatType, FaceURL: server.FaceURL, Nickname: server.GroupName}}, g.conversationCh)
@@ -110,11 +109,11 @@ func (g *Group) initSyncer() {
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroupMember) error {
 		switch state {
 		case syncer.Insert:
-			g.listener.OnGroupMemberAdded(utils.StructToJsonString(server))
+			g.listener().OnGroupMemberAdded(utils.StructToJsonString(server))
 		case syncer.Delete:
-			g.listener.OnGroupMemberDeleted(utils.StructToJsonString(local))
+			g.listener().OnGroupMemberDeleted(utils.StructToJsonString(local))
 		case syncer.Update:
-			g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(server))
+			g.listener().OnGroupMemberInfoChanged(utils.StructToJsonString(server))
 			if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
 				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL,
 					Nickname: server.Nickname, GroupID: server.GroupID}}, g.conversationCh)
@@ -134,15 +133,15 @@ func (g *Group) initSyncer() {
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroupRequest) error {
 		switch state {
 		case syncer.Insert:
-			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(server))
+			g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
 		case syncer.Update:
 			switch server.HandleResult {
 			case constant.FriendResponseAgree:
-				g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(server))
+				g.listener().OnGroupApplicationAccepted(utils.StructToJsonString(server))
 			case constant.FriendResponseRefuse:
-				g.listener.OnGroupApplicationRejected(utils.StructToJsonString(server))
+				g.listener().OnGroupApplicationRejected(utils.StructToJsonString(server))
 			default:
-				g.listener.OnGroupApplicationAdded(utils.StructToJsonString(server))
+				g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
 			}
 		}
 		return nil
@@ -159,15 +158,15 @@ func (g *Group) initSyncer() {
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalAdminGroupRequest) error {
 		switch state {
 		case syncer.Insert:
-			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(server))
+			g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
 		case syncer.Update:
 			switch server.HandleResult {
 			case constant.FriendResponseAgree:
-				g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(server))
+				g.listener().OnGroupApplicationAccepted(utils.StructToJsonString(server))
 			case constant.FriendResponseRefuse:
-				g.listener.OnGroupApplicationRejected(utils.StructToJsonString(server))
+				g.listener().OnGroupApplicationRejected(utils.StructToJsonString(server))
 			default:
-				g.listener.OnGroupApplicationAdded(utils.StructToJsonString(server))
+				g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
 			}
 		}
 		return nil
@@ -175,16 +174,8 @@ func (g *Group) initSyncer() {
 
 }
 
-func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
-	g.listener = callback
-}
-
-func (g *Group) LoginTime() int64 {
-	return g.loginTime
-}
-
-func (g *Group) SetLoginTime(loginTime int64) {
-	g.loginTime = loginTime
+func (g *Group) SetGroupListener(listener func() open_im_sdk_callback.OnGroupListener) {
+	g.listener = listener
 }
 
 func (g *Group) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {

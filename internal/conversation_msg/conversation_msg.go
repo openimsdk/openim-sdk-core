@@ -52,10 +52,10 @@ type Conversation struct {
 	*interaction.LongConnMgr
 	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, string]
 	db                   db_interface.DataBase
-	ConversationListener open_im_sdk_callback.OnConversationListener
-	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
-	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
-	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
+	ConversationListener func() open_im_sdk_callback.OnConversationListener
+	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
+	msgKvListener        func() open_im_sdk_callback.OnMessageKvInfoListener
+	batchMsgListener     func() open_im_sdk_callback.OnBatchMsgListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
@@ -70,32 +70,25 @@ type Conversation struct {
 	full                 *full.Full
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
-	listenerForService   open_im_sdk_callback.OnListenerForService
 
 	startTime time.Time
 }
 
-func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
-	return c.msgListener
-}
-
-func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
+func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
 
-func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
+func (c *Conversation) SetMsgKvListener(msgKvListener func() open_im_sdk_callback.OnMessageKvInfoListener) {
 	c.msgKvListener = msgKvListener
 }
 
-func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
+func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
 }
 
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	ch chan common.Cmd2Value,
-	friend *friend.Friend, group *group.Group, user *user.User,
-	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, full *full.Full, file *file.File) *Conversation {
+	ch chan common.Cmd2Value, friend *friend.Friend, group *group.Group, user *user.User, business *business.Business,
+	full *full.Full, file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -113,8 +106,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 	}
-	n.SetMsgListener(msgListener)
-	n.SetConversationListener(conversationListener)
 	n.initSyncer()
 	n.cache = cache.NewCache[string, *model_struct.LocalConversation]()
 	return n
@@ -373,7 +364,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(phNewConversationSet)); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
-	if c.batchMsgListener != nil {
+	if c.batchMsgListener() != nil {
 		c.batchNewMessages(ctx, newMessages)
 	} else {
 		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet)
@@ -660,15 +651,15 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 		for _, w := range newMessagesList {
 			conversationID := utils.GetConversationIDByMsg(w)
 			if v, ok := cc[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
-				c.msgListener.OnRecvOfflineNewMessage(utils.StructToJsonString(w))
+				c.msgListener().OnRecvOfflineNewMessage(utils.StructToJsonString(w))
 			}
 			if v, ok := nc[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
-				c.msgListener.OnRecvOfflineNewMessage(utils.StructToJsonString(w))
+				c.msgListener().OnRecvOfflineNewMessage(utils.StructToJsonString(w))
 			}
 		}
 	} else {
 		for _, w := range newMessagesList {
-			c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
+			c.msgListener().OnRecvNewMessage(utils.StructToJsonString(w))
 		}
 	}
 
@@ -676,7 +667,7 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	if len(newMessagesList) > 0 {
-		c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
+		c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
 		//if c.IsBackground {
 		//	c.batchMsgListener.OnRecvOfflineNewMessages(utils.StructToJsonString(newMessagesList))
 		//}
@@ -741,7 +732,7 @@ func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_st
 	if len(messageReceiptResp) > 0 {
 
 		// log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
-		c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+		c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
 }
 

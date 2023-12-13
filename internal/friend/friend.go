@@ -153,7 +153,7 @@ func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
-func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
+func (f *Friend) SetListener(listener func() open_im_sdk_callback.OnFriendshipListener) {
 	f.friendListener = open_im_sdk_callback.NewOnFriendshipListenerSdk(listener)
 }
 

@@ -45,26 +45,15 @@ type BasicInfo struct {
 type User struct {
 	db_interface.DataBase
 	loginUserID       string
-	listener          open_im_sdk_callback.OnUserListener
-	loginTime         int64
+	listener          func() open_im_sdk_callback.OnUserListener
 	userSyncer        *syncer.Syncer[*model_struct.LocalUser, string]
 	conversationCh    chan common.Cmd2Value
 	UserBasicCache    *cache.Cache[string, *BasicInfo]
 	OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
 
-// LoginTime gets the login time of the user.
-func (u *User) LoginTime() int64 {
-	return u.loginTime
-}
-
-// SetLoginTime sets the login time of the user.
-func (u *User) SetLoginTime(loginTime int64) {
-	u.loginTime = loginTime
-}
-
 // SetListener sets the user's listener.
-func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
+func (u *User) SetListener(listener func() open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
@@ -95,7 +84,7 @@ func (u *User) initSyncer() {
 		func(ctx context.Context, state int, server, local *model_struct.LocalUser) error {
 			switch state {
 			case syncer.Update:
-				u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
+				u.listener().OnSelfInfoUpdated(utils.StructToJsonString(server))
 				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
 					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
 						Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
@@ -140,10 +129,6 @@ func (u *User) initSyncer() {
 // DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
-	if msg.SendTime < u.loginTime {
-		log.ZWarn(ctx, "ignore notification ", nil, "msg", *msg)
-		return
-	}
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:

@@ -201,7 +201,7 @@ func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadC
 	return c.db.GetTotalUnreadMsgCountDB(ctx)
 }
 
-func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
+func (c *Conversation) SetConversationListener(listener func() open_im_sdk_callback.OnConversationListener) {
 	c.ConversationListener = listener
 }
 
