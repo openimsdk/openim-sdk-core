@@ -98,16 +98,15 @@ type LoginMgr struct {
 	w           sync.Mutex
 	loginStatus int
 
-	groupListener               open_im_sdk_callback.OnGroupListener
-	friendListener              open_im_sdk_callback.OnFriendshipListener
-	conversationListener        open_im_sdk_callback.OnConversationListener
-	advancedMsgListener         open_im_sdk_callback.OnAdvancedMsgListener
-	batchMsgListener            open_im_sdk_callback.OnBatchMsgListener
-	userListener                open_im_sdk_callback.OnUserListener
-	signalingListener           open_im_sdk_callback.OnSignalingListener
-	signalingListenerFroService open_im_sdk_callback.OnSignalingListener
-	businessListener            open_im_sdk_callback.OnCustomBusinessListener
-	msgKvListener               open_im_sdk_callback.OnMessageKvInfoListener
+	groupListener        open_im_sdk_callback.OnGroupListener
+	friendListener       open_im_sdk_callback.OnFriendshipListener
+	conversationListener open_im_sdk_callback.OnConversationListener
+	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
+	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
+	userListener         open_im_sdk_callback.OnUserListener
+	signalingListener    open_im_sdk_callback.OnSignalingListener
+	businessListener     open_im_sdk_callback.OnCustomBusinessListener
+	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
@@ -119,6 +118,42 @@ type LoginMgr struct {
 	cancel    context.CancelFunc
 	info      *ccontext.GlobalConfig
 	id2MinSeq map[string]int64
+}
+
+func (u *LoginMgr) GroupListener() open_im_sdk_callback.OnGroupListener {
+	return u.groupListener
+}
+
+func (u *LoginMgr) FriendListener() open_im_sdk_callback.OnFriendshipListener {
+	return u.friendListener
+}
+
+func (u *LoginMgr) ConversationListener() open_im_sdk_callback.OnConversationListener {
+	return u.conversationListener
+}
+
+func (u *LoginMgr) AdvancedMsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
+	return u.advancedMsgListener
+}
+
+func (u *LoginMgr) BatchMsgListener() open_im_sdk_callback.OnBatchMsgListener {
+	return u.batchMsgListener
+}
+
+func (u *LoginMgr) UserListener() open_im_sdk_callback.OnUserListener {
+	return u.userListener
+}
+
+func (u *LoginMgr) SignalingListener() open_im_sdk_callback.OnSignalingListener {
+	return u.signalingListener
+}
+
+func (u *LoginMgr) BusinessListener() open_im_sdk_callback.OnCustomBusinessListener {
+	return u.businessListener
+}
+
+func (u *LoginMgr) MsgKvListener() open_im_sdk_callback.OnMessageKvInfoListener {
+	return u.msgKvListener
 }
 
 func (u *LoginMgr) BaseCtx() context.Context {
@@ -271,7 +306,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.setLoginStatus(Logging)
 	u.info.UserID = userID
 	u.info.Token = token
-	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token)
+	log.ZDebug(ctx, "login start... ", "userID", userID, "token", token)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
@@ -294,29 +329,30 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.full, u.file)
+		u.friend, u.group, u.user, u.business, u.full, u.file)
 	u.setListener(ctx)
 	u.run(ctx)
 	u.setLoginStatus(Logged)
-	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
+	log.ZDebug(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
 }
 
 func (u *LoginMgr) setListener(ctx context.Context) {
-	setListener(ctx, &u.userListener, u.user.SetListener, newEmptyUserListener)
-	setListener(ctx, &u.friendListener, u.friend.SetListener, newEmptyFriendshipListener)
-	setListener(ctx, &u.groupListener, u.group.SetGroupListener, newEmptyGroupListener)
-	setListener(ctx, &u.conversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
-	setListener(ctx, &u.advancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
-	setListener(ctx, &u.batchMsgListener, u.conversation.SetBatchMsgListener, nil)
-	setListener(ctx, &u.businessListener, u.business.SetListener, newEmptyCustomBusinessListener)
+	setListener(ctx, u.UserListener, u.user.SetListener, newEmptyUserListener)
+	setListener(ctx, u.FriendListener, u.friend.SetListener, newEmptyFriendshipListener)
+	setListener(ctx, u.GroupListener, u.group.SetGroupListener, newEmptyGroupListener)
+	setListener(ctx, u.ConversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
+	setListener(ctx, u.AdvancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
+	setListener(ctx, u.BatchMsgListener, u.conversation.SetBatchMsgListener, nil)
+	setListener(ctx, u.BusinessListener, u.business.SetListener, newEmptyCustomBusinessListener)
 }
 
-func setListener[T any](ctx context.Context, listener *T, setFunc func(T), newFunc func(context.Context) T) {
-	if *(*unsafe.Pointer)(unsafe.Pointer(listener)) == nil && newFunc != nil {
-		*listener = newFunc(ctx)
+func setListener[T any](ctx context.Context, listener func() T, setFunc func(listener func() T), newFunc func(context.Context) T) {
+	LoginListener := listener()
+	if *(*unsafe.Pointer)(unsafe.Pointer(&LoginListener)) == nil && newFunc != nil {
+		LoginListener = newFunc(ctx)
 	}
-	setFunc(*listener)
+	setFunc(listener)
 }
 
 func (u *LoginMgr) run(ctx context.Context) {
