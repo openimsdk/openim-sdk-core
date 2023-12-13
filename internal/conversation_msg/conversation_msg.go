@@ -74,7 +74,6 @@ type Conversation struct {
 	startTime time.Time
 }
 
-
 func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
@@ -365,7 +364,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(phNewConversationSet)); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
-	if c.batchMsgListener != nil {
+	if c.batchMsgListener() != nil {
 		c.batchNewMessages(ctx, newMessages)
 	} else {
 		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet)
