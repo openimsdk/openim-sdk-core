@@ -338,21 +338,20 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 }
 
 func (u *LoginMgr) setListener(ctx context.Context) {
-	setListener(ctx, u.UserListener, u.user.SetListener, newEmptyUserListener)
-	setListener(ctx, u.FriendListener, u.friend.SetListener, newEmptyFriendshipListener)
-	setListener(ctx, u.GroupListener, u.group.SetGroupListener, newEmptyGroupListener)
-	setListener(ctx, u.ConversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
-	setListener(ctx, u.AdvancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
-	setListener(ctx, u.BatchMsgListener, u.conversation.SetBatchMsgListener, nil)
-	setListener(ctx, u.BusinessListener, u.business.SetListener, newEmptyCustomBusinessListener)
+	setListener(ctx, &u.userListener, u.UserListener, u.user.SetListener, newEmptyUserListener)
+	setListener(ctx, &u.friendListener, u.FriendListener, u.friend.SetListener, newEmptyFriendshipListener)
+	setListener(ctx, &u.groupListener, u.GroupListener, u.group.SetGroupListener, newEmptyGroupListener)
+	setListener(ctx, &u.conversationListener, u.ConversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
+	setListener(ctx, &u.advancedMsgListener, u.AdvancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
+	setListener(ctx, &u.batchMsgListener, u.BatchMsgListener, u.conversation.SetBatchMsgListener, nil)
+	setListener(ctx, &u.businessListener, u.BusinessListener, u.business.SetListener, newEmptyCustomBusinessListener)
 }
 
-func setListener[T any](ctx context.Context, listener func() T, setFunc func(listener func() T), newFunc func(context.Context) T) {
-	LoginListener := listener()
-	if *(*unsafe.Pointer)(unsafe.Pointer(&LoginListener)) == nil && newFunc != nil {
-		LoginListener = newFunc(ctx)
+func setListener[T any](ctx context.Context, listener *T, getter func() T, setFunc func(listener func() T), newFunc func(context.Context) T) {
+	if *(*unsafe.Pointer)(unsafe.Pointer(listener)) == nil && newFunc != nil {
+		*listener = newFunc(ctx)
 	}
-	setFunc(listener)
+	setFunc(getter)
 }
 
 func (u *LoginMgr) run(ctx context.Context) {

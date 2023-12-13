@@ -19,5 +19,5 @@ import (
 )
 
 func (w *Business) SetListener(listener func() open_im_sdk_callback.OnCustomBusinessListener) {
-	w.listener = listener()
+	w.listener = listener
 }

@@ -45,7 +45,7 @@ type BasicInfo struct {
 type User struct {
 	db_interface.DataBase
 	loginUserID       string
-	listener          open_im_sdk_callback.OnUserListener
+	listener          func() open_im_sdk_callback.OnUserListener
 	userSyncer        *syncer.Syncer[*model_struct.LocalUser, string]
 	conversationCh    chan common.Cmd2Value
 	UserBasicCache    *cache.Cache[string, *BasicInfo]
@@ -54,7 +54,7 @@ type User struct {
 
 // SetListener sets the user's listener.
 func (u *User) SetListener(listener func() open_im_sdk_callback.OnUserListener) {
-	u.listener = listener()
+	u.listener = listener
 }
 
 // NewUser creates a new User object.
@@ -84,7 +84,7 @@ func (u *User) initSyncer() {
 		func(ctx context.Context, state int, server, local *model_struct.LocalUser) error {
 			switch state {
 			case syncer.Update:
-				u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
+				u.listener().OnSelfInfoUpdated(utils.StructToJsonString(server))
 				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
 					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
 						Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
