@@ -74,6 +74,7 @@ type Conversation struct {
 	startTime time.Time
 }
 
+
 func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
