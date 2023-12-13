@@ -22,7 +22,7 @@ var (
 	SECRET        = "openIM123"
 	MANAGERUSERID = "openIMAdmin"
 
-	PLATFORMID = constant.WindowsPlatformID
+	PLATFORMID = constant.AndroidPlatformID
 	LogLevel   = uint32(5)
 
 	REGISTERADDR = APIADDR + constant.UserRegister
