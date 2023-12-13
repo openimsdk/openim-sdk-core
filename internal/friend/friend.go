@@ -154,7 +154,7 @@ func (f *Friend) Db() db_interface.DataBase {
 }
 
 func (f *Friend) SetListener(listener func() open_im_sdk_callback.OnFriendshipListener) {
-	f.friendListener = open_im_sdk_callback.NewOnFriendshipListenerSdk(listener())
+	f.friendListener = open_im_sdk_callback.NewOnFriendshipListenerSdk(listener)
 }
 
 func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {

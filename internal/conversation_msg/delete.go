@@ -205,7 +205,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 		}
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}})
 	}
-	c.msgListener.OnMsgDeleted(utils.StructToJsonString(s))
+	c.msgListener().OnMsgDeleted(utils.StructToJsonString(s))
 	return nil
 }
 

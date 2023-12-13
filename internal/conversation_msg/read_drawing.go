@@ -239,7 +239,7 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 			}
 			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
 				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
-			c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+			c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 		}
 		//else if conversation.ConversationType == constant.SuperGroupChatType {
 		//	var successMsgIDs []string
