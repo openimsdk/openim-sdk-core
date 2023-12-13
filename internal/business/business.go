@@ -27,7 +27,7 @@ import (
 )
 
 type Business struct {
-	listener open_im_sdk_callback.OnCustomBusinessListener
+	listener func() open_im_sdk_callback.OnCustomBusinessListener
 	db       db_interface.DataBase
 }
 
@@ -45,5 +45,5 @@ func (b *Business) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		return
 
 	}
-	b.listener.OnRecvCustomBusinessMessage(n.Detail)
+	b.listener().OnRecvCustomBusinessMessage(n.Detail)
 }

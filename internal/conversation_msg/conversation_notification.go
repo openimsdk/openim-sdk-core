@@ -85,7 +85,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 					oc.LatestMsgSendTime = lc.LatestMsgSendTime
 					oc.LatestMsg = lc.LatestMsg
 					list = append(list, oc)
-					c.ConversationListener.OnConversationChanged(utils.StructToJsonString(list))
+					c.ConversationListener().OnConversationChanged(utils.StructToJsonString(list))
 				}
 			}
 		} else {
@@ -95,7 +95,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				// log.Error("internal", "insert new conversation err:", err4.Error())
 			} else {
 				list = append(list, &lc)
-				c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
+				c.ConversationListener().OnNewConversation(utils.StructToJsonString(list))
 			}
 		}
 
@@ -105,7 +105,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 			if err == nil {
-				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+				c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
 				log.ZError(ctx, "getTotalUnreadMsgCountDB err", err)
 			}
@@ -134,7 +134,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			// log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
-			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+			c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
 	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
@@ -198,7 +198,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 					newCList = append(newCList, v)
 				}
 			}
-			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
+			c.ConversationListener().OnConversationChanged(utils.StructToJsonStringDefault(newCList))
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
@@ -208,17 +208,17 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			if cLists != nil {
 				// log.Info("internal", "getMultipleConversationModel success :", cLists)
-				c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
+				c.ConversationListener().OnNewConversation(utils.StructToJsonString(cLists))
 			}
 		}
 	case constant.ConChangeDirect:
 		cidList := node.Args.(string)
-		c.ConversationListener.OnConversationChanged(cidList)
+		c.ConversationListener().OnConversationChanged(cidList)
 
 	case constant.NewConDirect:
 		cidList := node.Args.(string)
 		// log.Debug("internal", "NewConversation", cidList)
-		c.ConversationListener.OnNewConversation(cidList)
+		c.ConversationListener().OnNewConversation(cidList)
 
 	case constant.ConversationLatestMsgHasRead:
 		hasReadMsgList := node.Args.(map[string][]string)
@@ -252,7 +252,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 		if result != nil {
 			// log.Info("internal", "getMultipleConversationModel success :", result)
-			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
+			c.ConversationListener().OnNewConversation(utils.StructToJsonString(result))
 		}
 	case constant.SyncConversation:
 
@@ -594,7 +594,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	switch syncFlag {
 	case constant.MsgSyncBegin:
 		c.startTime = time.Now()
-		c.ConversationListener.OnSyncServerStart()
+		c.ConversationListener().OnSyncServerStart()
 		if err := c.SyncAllConversationHashReadSeqs(ctx); err != nil {
 			log.ZError(ctx, "SyncConversationHashReadSeqs err", err)
 		}
@@ -610,10 +610,10 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 			}(syncFunc)
 		}
 	case constant.MsgSyncFailed:
-		c.ConversationListener.OnSyncServerFailed()
+		c.ConversationListener().OnSyncServerFailed()
 	case constant.MsgSyncEnd:
 		log.ZDebug(ctx, "MsgSyncEnd", "time", time.Since(c.startTime).Milliseconds())
-		defer c.ConversationListener.OnSyncServerFinish()
+		defer c.ConversationListener().OnSyncServerFinish()
 		go c.SyncAllConversations(ctx)
 	}
 

@@ -122,7 +122,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				if err != nil {
 					return err
 				}
-				g.listener.OnGroupMemberDeleted(string(data))
+				g.listener().OnGroupMemberDeleted(string(data))
 			}
 			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
 			if err != nil {
@@ -136,7 +136,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
 				return err
 			}
-			g.listener.OnGroupInfoChanged(string(data))
+			g.listener().OnGroupInfoChanged(string(data))
 			return nil
 		} else {
 			var userIDs []string
@@ -163,7 +163,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				if err != nil {
 					return err
 				}
-				g.listener.OnGroupMemberDeleted(string(data))
+				g.listener().OnGroupMemberDeleted(string(data))
 			}
 			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
 			if err != nil {
@@ -177,7 +177,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
 				return err
 			}
-			g.listener.OnGroupInfoChanged(string(data))
+			g.listener().OnGroupInfoChanged(string(data))
 			return nil
 		} else {
 			return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.QuitUser.UserID)
@@ -218,7 +218,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		g.listener.OnGroupDismissed(utils.StructToJsonString(detail.Group))
+		g.listener().OnGroupDismissed(utils.StructToJsonString(detail.Group))
 		if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
 			return err
 		}
