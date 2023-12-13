@@ -101,7 +101,6 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		return nil, sdkerrs.ErrResourceLoad.Wrap("not load resource")
 	}
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
-	log.ZInfo(ctx, "call function", "in sdk args", args)
 
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {

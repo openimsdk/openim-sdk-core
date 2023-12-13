@@ -51,7 +51,6 @@ type Group struct {
 	groupMemberSyncer       *syncer.Syncer[*model_struct.LocalGroupMember, [2]string]
 	groupRequestSyncer      *syncer.Syncer[*model_struct.LocalGroupRequest, [2]string]
 	groupAdminRequestSyncer *syncer.Syncer[*model_struct.LocalAdminGroupRequest, [2]string]
-	loginTime               int64
 	joinedSuperGroupCh      chan common.Cmd2Value
 	heartbeatCmdCh          chan common.Cmd2Value
 
@@ -175,16 +174,8 @@ func (g *Group) initSyncer() {
 
 }
 
-func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
-	g.listener = callback
-}
-
-func (g *Group) LoginTime() int64 {
-	return g.loginTime
-}
-
-func (g *Group) SetLoginTime(loginTime int64) {
-	g.loginTime = loginTime
+func (g *Group) SetGroupListener(listener func() open_im_sdk_callback.OnGroupListener) {
+	g.listener = listener()
 }
 
 func (g *Group) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
