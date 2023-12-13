@@ -1,11 +1,17 @@
 package third
 
+import (
+	"context"
+	"github.com/OpenIMSDK/tools/log"
+)
+
 type Progress interface {
 	OnProgress(current int64, size int64)
 }
 
 type progressConvert struct {
-	p Progress
+	ctx context.Context
+	p   Progress
 }
 
 func (p *progressConvert) Open(size int64) {}
@@ -21,9 +27,8 @@ func (p *progressConvert) UploadID(uploadID string) {}
 func (p *progressConvert) UploadPartComplete(index int, partSize int64, partHash string) {}
 
 func (p *progressConvert) UploadComplete(fileSize int64, streamSize int64, storageSize int64) {
-	if p != nil {
-		p.p.OnProgress(streamSize, fileSize)
-	}
+	log.ZDebug(p.ctx, "upload log progress", "fileSize", fileSize, "current", streamSize)
+	p.p.OnProgress(streamSize, fileSize)
 }
 
 func (p *progressConvert) Complete(size int64, url string, typ int) {}

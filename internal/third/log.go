@@ -38,7 +38,7 @@ func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
 		return err
 	}
 	reqUpload := &file.UploadFileReq{Filepath: zippath, Name: fmt.Sprintf("sdk_log_%s_%s", c.loginUserID, filepath.Base(zippath)), Cause: "sdklog", ContentType: "application/zip"}
-	resp, err := c.fileUploader.UploadFile(ctx, reqUpload, &progressConvert{p: progress})
+	resp, err := c.fileUploader.UploadFile(ctx, reqUpload, &progressConvert{ctx: ctx, p: progress})
 	if err != nil {
 		return err
 	}
