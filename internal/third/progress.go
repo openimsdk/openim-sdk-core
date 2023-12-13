@@ -13,7 +13,9 @@ type progressConvert struct {
 	p   Progress
 }
 
-func (p *progressConvert) Open(size int64) {}
+func (p *progressConvert) Open(size int64) {
+	p.p.OnProgress(0, size)
+}
 
 func (p *progressConvert) PartSize(partSize int64, num int) {}
 
@@ -30,4 +32,6 @@ func (p *progressConvert) UploadComplete(fileSize int64, streamSize int64, stora
 	p.p.OnProgress(streamSize, fileSize)
 }
 
-func (p *progressConvert) Complete(size int64, url string, typ int) {}
+func (p *progressConvert) Complete(size int64, url string, typ int) {
+	p.p.OnProgress(size, size)
+}
