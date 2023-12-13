@@ -60,7 +60,7 @@ func PrintQPS() {
 
 func main() {
 	flag.Parse()
-	fmt.Print("start", totalOnlineUserNum, count, sendInterval)
+	fmt.Print("start", totalOnlineUserNum, count, sendInterval, isRegisterUser)
 	ctx := context.Background()
 	p := module.NewPressureTester()
 	f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
