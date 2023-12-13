@@ -52,7 +52,7 @@ const (
 	HundredGroupNum     = 50
 	FiftyGroupNum       = 100
 
-	FastenedUserPrefix  = "fastened_user_prefix"
+	FastenedUserPrefix  = "f"
 	RecvMsgPrefix       = "recv_msg_prefix"
 	singleMsgRecvPrefix = "single_msg_recv_prefix"
 )
@@ -64,14 +64,15 @@ type PressureTester struct {
 	msgSender      map[string]*SendMsgUser
 	groupMsgSender map[string]*SendMsgUser
 	timeOffset     int64
-    sendNum           atomic.Int64
+	sendNum        atomic.Int64
 
 	groupSenderUserIDs, friendSenderUserIDs, notfriendSenderUserIDs []string
 	recvMsgUserIDs                                                  []string
 
 	tenThousandGroupIDs, thousandGroupIDs, hundredGroupUserIDs, fiftyGroupUserIDs []string
 }
-func (p *PressureTester) GetSendNum()int64{
+
+func (p *PressureTester) GetSendNum() int64 {
 	return p.sendNum.Load()
 }
 func NewPressureTester() *PressureTester {
@@ -106,7 +107,7 @@ func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUs
 	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(total, FastenedUserPrefix)
 	step := int(1.0 / percentage)
 	for i := 0; i < total; i += step {
-		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3new_%d", FastenedUserPrefix, i))
+		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3_%d", FastenedUserPrefix, i))
 	}
 	SampleUserList = sampleReceiver
 	return fastenedUserIDs, sampleReceiver, nil
@@ -284,8 +285,8 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 			user, _ := p.msgSender[u]
 			for j, rv := range receiverUserIDs {
 				user.SendMsgWithContext(rv, j)
-	p.sendNum.Add(1)
-				
+				p.sendNum.Add(1)
+
 				time.Sleep(duration)
 
 			}
@@ -375,7 +376,7 @@ func (p *PressureTester) importFriends(friendSenderUserIDs, recvMsgUserIDs []str
 }
 
 func (p *PressureTester) CheckMsg(ctx context.Context) {
-	log.ZWarn(ctx, "message send finished start to check message",nil)
+	log.ZWarn(ctx, "message send finished start to check message", nil)
 	var max, min, latencySum int64
 	samepleReceiverFailedMap := make(map[string]*errorValue)
 	failedMessageAllMap := make(map[string]*errorValue)
