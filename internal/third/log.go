@@ -26,7 +26,7 @@ func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
 	files := make([]string, 0, len(entrys))
 	for _, entry := range entrys {
 		if (!entry.IsDir()) && (!strings.HasSuffix(entry.Name(), ".zip")) && checkLogPath(entry.Name()) {
-			files = append(files, entry.Name())
+			files = append(files, filepath.Join(logFilePath, entry.Name()))
 		}
 	}
 	if len(files) == 0 {
