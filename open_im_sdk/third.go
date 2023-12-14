@@ -15,6 +15,7 @@
 package open_im_sdk
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 )
 
@@ -26,6 +27,6 @@ func SetAppBadge(callback open_im_sdk_callback.Base, operationID string, appUnre
 	call(callback, operationID, UserForSDK.Third().SetAppBadge, appUnreadCount)
 }
 
-func UploadLogs(callback open_im_sdk_callback.Base, operationID string, uploadLogParams string) {
-	call(callback, operationID, UserForSDK.Third().UploadLogs, uploadLogParams)
+func UploadLogs(callback open_im_sdk_callback.Base, operationID string, progress open_im_sdk_callback.UploadLogProgress) {
+	call(callback, operationID, UserForSDK.Third().UploadLogs, third.Progress(progress))
 }
