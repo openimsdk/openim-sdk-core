@@ -17,6 +17,7 @@ package conversation_msg
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -265,6 +266,27 @@ func (c *Conversation) msgDataToLocalErrChatLog(src *model_struct.LocalChatLog) 
 func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.LocalChatLog) {
 	copier.Copy(dst, &src)
 
+}
+
+func (c *Conversation) InitCheckConversationList(ctx context.Context) error {
+	conversations, err := c.GetAllConversationList(ctx)
+	if err != nil {
+		return err
+	}
+	for _, conversation := range conversations {
+		var msg sdk_struct.MsgStruct
+		if err := json.Unmarshal([]byte(conversation.LatestMsg), &msg); err != nil {
+			return err
+		}
+		if msg.Status != constant.MsgStatusSending {
+			continue
+		}
+		msg.Status = constant.MsgStatusSendFailed
+		if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"latest_msg": utils.StructToJsonString(&msg)}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation) {

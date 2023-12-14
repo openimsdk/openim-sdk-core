@@ -330,6 +330,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.business, u.full, u.file)
+	if err := u.conversation.InitCheckConversationList(ctx); err != nil {
+		log.ZError(ctx, "InitCheckConversationList failed", err)
+	}
 	u.setListener(ctx)
 	u.run(ctx)
 	u.setLoginStatus(Logged)
