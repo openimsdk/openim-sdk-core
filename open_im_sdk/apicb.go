@@ -3,6 +3,7 @@ package open_im_sdk
 import (
 	"context"
 	"github.com/OpenIMSDK/tools/errs"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"sync/atomic"
@@ -32,11 +33,13 @@ func (c *apiErrCallback) OnError(ctx context.Context, err error) {
 		errs.TokenUnknownError,
 		errs.TokenNotExistError:
 		if atomic.CompareAndSwapInt32(&c.tokenExpiredState, 0, 1) {
+			log.ZError(ctx, "OnUserTokenExpired callback", err)
 			c.listener.OnUserTokenExpired()
 			_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 		}
 	case errs.TokenKickedError:
 		if atomic.CompareAndSwapInt32(&c.kickedOfflineState, 0, 1) {
+			log.ZError(ctx, "OnKickedOffline callback", err)
 			c.listener.OnKickedOffline()
 			_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 		}
