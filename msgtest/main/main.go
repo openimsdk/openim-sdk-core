@@ -21,6 +21,8 @@ func init() {
 
 var (
 	totalOnlineUserNum    int     // 总在线用户数
+	randomSender          int     // 随机发送者数
+	randomReceiver        int     // 随机接收者数
 	samplingRate          float64 // 抽样率
 	NotFriendMsgSenderNum int     // 非好友消息发送者数
 	groupMsgSenderNum     int     // 群消息发送者数
@@ -37,10 +39,12 @@ var (
 
 func InitWithFlag() {
 	flag.IntVar(&totalOnlineUserNum, "o", 20000, "total online user num")
+	flag.IntVar(&randomSender, "rs", 100, "random sender num")
+	flag.IntVar(&randomReceiver, "rr", 100, "random receiver num")
 	flag.IntVar(&start, "s", 0, "start user")
 	flag.IntVar(&end, "e", 0, "end user")
 	flag.Float64Var(&samplingRate, "f", 0.1, "sampling rate")
-	flag.IntVar(&count, "c", 1000, "number of messages per user")
+	flag.IntVar(&count, "c", 200, "number of messages per user")
 	flag.IntVar(&sendInterval, "i", 1000, "send message interval per user(milliseconds)")
 	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
 	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
@@ -64,6 +68,7 @@ func main() {
 	ctx := context.Background()
 	p := module.NewPressureTester()
 	f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
+	//f, r, err := p.SelectSample2(totalOnlineUserNum, 0.01)
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
@@ -85,7 +90,7 @@ func main() {
 	p.InitUserConns(f)
 	log.ZWarn(ctx, "all user init connect to server success,start send message", nil, "count", count)
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages(f, count, time.Millisecond*time.Duration(sendInterval))
+	p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
 	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
 	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)

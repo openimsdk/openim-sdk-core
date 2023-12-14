@@ -264,7 +264,7 @@ func (p *PressureTester) sendMsgs2Groups(senderIDs, groupIDs []string, num int, 
 // 	wg.Wait()
 
 // }
-func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, duration time.Duration) {
+func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, randomSender, num int, duration time.Duration) {
 	var wg sync.WaitGroup
 	length := len(fastenedUserIDs)
 	rand.Seed(time.Now().UnixNano())
@@ -294,6 +294,61 @@ func (p *PressureTester) SendSingleMessages(fastenedUserIDs []string, num int, d
 	}
 	wg.Wait()
 
+}
+func (p *PressureTester) SendSingleMessages2(fastenedUserIDs []string, randomSender []string, randomReceiver, num int, duration time.Duration) {
+	var wg sync.WaitGroup
+	length := len(fastenedUserIDs)
+	rand.Seed(time.Now().UnixNano())
+	for _, userID := range randomSender {
+		counter := 0
+		var receiverUserIDs []string
+		for counter < randomReceiver {
+			index := rand.Intn(length)
+			if fastenedUserIDs[index] != userID {
+				counter++
+				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
+			}
+		}
+		wg.Add(1)
+		go func(receiverUserIDs []string, u string) {
+			//log.ZError(context.Background(), "SendSingleMessages", nil, "length", len(receiverUserIDs))
+			defer wg.Done()
+			user, _ := p.msgSender[u]
+			for _, rv := range receiverUserIDs {
+				for x := 0; x < num; x++ {
+					user.SendMsgWithContext(rv, x)
+					p.sendNum.Add(1)
+
+					time.Sleep(duration)
+				}
+
+			}
+		}(receiverUserIDs, userID)
+	}
+	wg.Wait()
+
+}
+func (p *PressureTester) Shuffle(fastenedUserIDs []string, needNum int) []string {
+	// 使用洗牌算法对 fastenedUserIDs 进行随机排序
+	rand.Shuffle(len(fastenedUserIDs), func(i, j int) {
+		fastenedUserIDs[i], fastenedUserIDs[j] = fastenedUserIDs[j], fastenedUserIDs[i]
+	})
+
+	// 选取前100个不重复的 userID
+	selectedUserIDs := make([]string, 0, needNum)
+	seen := make(map[string]bool)
+
+	for _, userID := range fastenedUserIDs {
+		if len(selectedUserIDs) == needNum {
+			break
+		}
+
+		if !seen[userID] {
+			selectedUserIDs = append(selectedUserIDs, userID)
+			seen[userID] = true
+		}
+	}
+	return selectedUserIDs
 }
 
 func (p *PressureTester) SendSingleMessagesTo(fastenedUserIDs []string, num int, duration time.Duration) {
