@@ -16,6 +16,7 @@ package conversation_msg
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -224,6 +225,10 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 			return
 		}
 		if conversation.ConversationType == constant.SingleChatType {
+			var latestMsg sdkws.MsgData
+			if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
+				log.ZError(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
+			}
 			var successMsgIDs []string
 			for _, message := range messages {
 				attachInfo := sdk_struct.AttachedInfoElem{}
@@ -235,6 +240,11 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
 				} else {
 					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
+					if latestMsg.ClientMsgID == message.ClientMsgID {
+						if err := c.db.UpdateColumnsConversation(ctx, tips.ConversationID, map[string]any{"latest_msg": utils.StructToJsonString(message)}); err != nil {
+							log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", tips.ConversationID, "message", message)
+						}
+					}
 				}
 			}
 			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
