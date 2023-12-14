@@ -276,7 +276,8 @@ func (c *Conversation) InitCheckConversationList(ctx context.Context) error {
 	for _, conversation := range conversations {
 		var msg sdk_struct.MsgStruct
 		if err := json.Unmarshal([]byte(conversation.LatestMsg), &msg); err != nil {
-			return err
+			log.ZError(ctx, "InitCheckConversationList", err, "conversation", conversation)
+			continue
 		}
 		if msg.Status != constant.MsgStatusSending {
 			continue
