@@ -3,11 +3,9 @@ package module
 import (
 	"context"
 	"fmt"
-	"sync"
-	"unsafe"
-
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"sync"
 
 	"time"
 
@@ -199,8 +197,6 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	}
 	// IncrementQPS()
 	now := time.Now().UnixMilli()
-	msgSize := int(unsafe.Sizeof(msg))
-	log.ZWarn(ctx, "msg size", nil, "msgSize", msgSize)
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
 		b.failedMessageMap[clientMsgID] = &errorValue{err: err,
 			SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
