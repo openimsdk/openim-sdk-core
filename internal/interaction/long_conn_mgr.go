@@ -153,6 +153,8 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 			return sdkerrs.ErrArgs
 		}
 		return nil
+	case <-time.After(time.Second * 20):
+		return errs.ErrNetwork.Wrap("send message timeout")
 	}
 }
 
