@@ -16,6 +16,7 @@ package open_im_sdk
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/OpenIMSDK/protocol/push"
@@ -279,24 +280,41 @@ func (u *LoginMgr) checkSendingMessage(ctx context.Context) {
 		log.ZError(ctx, "GetAllSendingMessages failed", err)
 	}
 	for _, message := range sendingMessages {
-		tableMessage, err := u.db.GetMessage(ctx, message.ConversationID, message.ClientMsgID)
-		if err != nil {
-			log.ZError(ctx, "GetMessage failed", err, "message", message)
-			continue
+		if err := u.handlerSendingMsg(ctx, message); err != nil {
+			log.ZError(ctx, "handlerSendingMsg failed", err, "message", message)
 		}
-		if tableMessage.Status == constant.MsgStatusSending {
-			err := u.db.UpdateMessage(ctx, message.ConversationID, &model_struct.LocalChatLog{ClientMsgID: message.ClientMsgID, Status: constant.MsgStatusSendFailed})
-			if err != nil {
-				log.ZError(ctx, "UpdateMessage failed", err, "tableMessage", tableMessage)
-			} else {
-				err := u.db.DeleteSendingMessage(ctx, message.ConversationID, message.ClientMsgID)
-				if err != nil {
-					log.ZError(ctx, "DeleteSendingMessage failed", err, "tableMessage", tableMessage)
-				}
-			}
-
+		if err := u.db.DeleteSendingMessage(ctx, message.ConversationID, message.ClientMsgID); err != nil {
+			log.ZError(ctx, "DeleteSendingMessage failed", err, "conversationID", message.ConversationID, "clientMsgID", message.ClientMsgID)
 		}
 	}
+}
+
+func (u *LoginMgr) handlerSendingMsg(ctx context.Context, sendingMsg *model_struct.LocalSendingMessages) error {
+	tableMessage, err := u.db.GetMessage(ctx, sendingMsg.ConversationID, sendingMsg.ClientMsgID)
+	if err != nil {
+		return err
+	}
+	if tableMessage.Status != constant.MsgStatusSending {
+		return nil
+	}
+	err = u.db.UpdateMessage(ctx, sendingMsg.ConversationID, &model_struct.LocalChatLog{ClientMsgID: sendingMsg.ClientMsgID, Status: constant.MsgStatusSendFailed})
+	if err != nil {
+		return err
+	}
+	conversation, err := u.db.GetConversation(ctx, sendingMsg.ConversationID)
+	if err != nil {
+		return err
+	}
+	var latestMsg model_struct.LocalChatLog
+	if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
+		return err
+	}
+	if latestMsg.ClientMsgID == sendingMsg.ClientMsgID {
+		latestMsg.Status = constant.MsgStatusSendFailed
+		conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+		return u.db.UpdateConversation(ctx, conversation)
+	}
+	return nil
 }
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
@@ -332,6 +350,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.friend, u.group, u.user, u.business, u.full, u.file)
 	u.setListener(ctx)
 	u.run(ctx)
+	if err := u.user.SyncLoginUserInfo(ctx); err != nil {
+		log.ZError(ctx, "SyncLoginUserInfo failed", err)
+	}
 	u.setLoginStatus(Logged)
 	log.ZDebug(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
