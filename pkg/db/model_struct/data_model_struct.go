@@ -523,8 +523,15 @@ func (LocalSendingMessages) TableName() string {
 	return "local_sending_messages"
 }
 
-type UserCommand struct {
-	UserID   string            `bson:"userID"`
-	Type     int32             `bson:"type"`
-	Commands map[string]string `bson:"commands"`
+type LocalUserCommand struct {
+	ID         int64  `gorm:"column:id;primary_key;auto_increment" json:"id"`
+	UserID     string `gorm:"column:user_id;type:char(128)" json:"userID"`
+	Type       int32  `gorm:"column:type" json:"type"`
+	CreateTime int64  `gorm:"column:create_time" json:"createTime"`
+	Uuid       string `gorm:"column:uuid;type:varchar(255)" json:"uuid"`
+	Value      string `gorm:"column:value;type:varchar(255)" json:"value"`
+}
+
+func (LocalUserCommand) TableName() string {
+	return "local_user_command"
 }

@@ -68,3 +68,18 @@ func GetSubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID str
 func GetUserStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
 	call(callback, operationID, UserForSDK.User().GetUserStatus, userIDs)
 }
+
+// FavoriteAdd add to user's favorite
+func FavoriteAdd(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string, value string) {
+	call(callback, operationID, UserForSDK.User().ProcessUserCommandAdd, Type, uuid, value)
+}
+
+// FavoriteDelete delete from user's favorite
+func FavoriteDelete(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string) {
+	call(callback, operationID, UserForSDK.User().ProcessUserCommandDelete, Type, uuid)
+}
+
+// FavoriteGet get user's favorite
+func FavoriteGet(callback open_im_sdk_callback.Base, operationID string, Type int32) {
+	call(callback, operationID, UserForSDK.User().ProcessUserCommandGet, Type)
+}

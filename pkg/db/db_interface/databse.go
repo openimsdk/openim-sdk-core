@@ -218,10 +218,10 @@ type UserModel interface {
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error)
 	SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error
-	//ProcessUserCommandAdd(ctx context.Context, Type int32, uuid string, value string) error
-	//ProcessUserCommandUpdate(ctx context.Context, Type int32, uuid string, value string) error
-	//ProcessUserCommandDelete(ctx context.Context, Type int32, uuid string) error
-	//ProcessUserCommandGet(ctx context.Context, Type int32) ([]*model_struct.LocalUserCommand, error)
+	ProcessUserCommandAdd(ctx context.Context, Type int32, uuid string, value string) error
+	ProcessUserCommandUpdate(ctx context.Context, Type int32, uuid string, value string) error
+	ProcessUserCommandDelete(ctx context.Context, Type int32, uuid string) error
+	ProcessUserCommandGet(ctx context.Context, Type int32) ([]*model_struct.LocalUserCommand, error)
 }
 
 type FriendModel interface {

@@ -421,3 +421,8 @@ const (
 	NetworkAvailable = 2 //无网络->有网络
 	NetworkVariation = 3 //有网络，但状态有变化
 )
+
+// UserCommand
+const (
+	Favorite = 1
+)

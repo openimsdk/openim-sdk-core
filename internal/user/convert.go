@@ -15,6 +15,7 @@
 package user
 
 import (
+	"github.com/OpenIMSDK/protocol/user"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
@@ -30,5 +31,13 @@ func ServerUserToLocalUser(user *sdkws.UserInfo) *model_struct.LocalUser {
 		//AppMangerLevel:   user.AppMangerLevel,
 		GlobalRecvMsgOpt: user.GlobalRecvMsgOpt,
 		//AttachedInfo: user.AttachedInfo,
+	}
+}
+func ServerCommandToLocalCommand(data *user.CommandInfoResp) *model_struct.LocalUserCommand {
+	return &model_struct.LocalUserCommand{
+		Type:       data.Type,
+		CreateTime: data.CreateTime,
+		Uuid:       data.Uuid,
+		Value:      data.Value,
 	}
 }

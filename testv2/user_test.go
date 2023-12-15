@@ -15,6 +15,9 @@
 package testv2
 
 import (
+	"fmt"
+	"github.com/OpenIMSDK/protocol/user"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"testing"
 	"time"
 
@@ -130,5 +133,52 @@ func Test_UnSub(t *testing.T) {
 	err := open_im_sdk.UserForSDK.User().UnsubscribeUsersStatus(ctx, users)
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func Test_FavoriteAdd(t *testing.T) {
+	// Creating a request with a pointer
+	req := &user.ProcessUserCommandAddReq{
+		UserID: "3",
+		Type:   constant.Favorite,
+		Uuid:   "1",
+		Value:  "2132",
+	}
+
+	// Passing the pointer to the function
+	err := open_im_sdk.UserForSDK.User().ProcessUserCommandAdd(ctx, req)
+	if err != nil {
+		// Handle the error
+		t.Errorf("Failed to add favorite: %v", err)
+	}
+}
+func Test_FavoriteGet(t *testing.T) {
+	// Creating a request with a pointer
+	req := &user.ProcessUserCommandGetReq{
+		UserID: "3",
+		Type:   constant.Favorite,
+	}
+
+	// Passing the pointer to the function
+	result, err := open_im_sdk.UserForSDK.User().ProcessUserCommandGet(ctx, req)
+	if err != nil {
+		// Handle the error
+		t.Errorf("Failed to add favorite: %v", err)
+	}
+	fmt.Printf("%v\n", result)
+}
+func Test_FavoriteDelete(t *testing.T) {
+	// Creating a request with a pointer
+	req := &user.ProcessUserCommandDeleteReq{
+		UserID: "3",
+		Type:   constant.Favorite,
+		Uuid:   "1",
+	}
+
+	// Passing the pointer to the function
+	err := open_im_sdk.UserForSDK.User().ProcessUserCommandDelete(ctx, req)
+	if err != nil {
+		// Handle the error
+		t.Errorf("Failed to add favorite: %v", err)
 	}
 }
