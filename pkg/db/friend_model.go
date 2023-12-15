@@ -48,17 +48,6 @@ func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalF
 	return utils.Wrap(t.Error, "")
 
 }
-func (d *DataBase) PinFriend(ctx context.Context, pinUserIDs []string, isPinned bool) error {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
-
-	err := utils.Wrap(d.conn.WithContext(ctx).
-		Model(&model_struct.LocalFriend{}).
-		Where("owner_user_id = ? AND friend_user_id IN (?)", d.loginUserID, pinUserIDs).
-		Update("is_pinned", isPinned).Error, "PinFriend failed")
-
-	return utils.Wrap(err, "")
-}
 func (d *DataBase) GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()

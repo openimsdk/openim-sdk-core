@@ -218,13 +218,16 @@ type UserModel interface {
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error)
 	SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error
+	//ProcessUserCommandAdd(ctx context.Context, Type int32, uuid string, value string) error
+	//ProcessUserCommandUpdate(ctx context.Context, Type int32, uuid string, value string) error
+	//ProcessUserCommandDelete(ctx context.Context, Type int32, uuid string) error
+	//ProcessUserCommandGet(ctx context.Context, Type int32) ([]*model_struct.LocalUserCommand, error)
 }
 
 type FriendModel interface {
 	InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error
 	DeleteFriendDB(ctx context.Context, friendUserID string) error
 	UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error
-	PinFriend(ctx context.Context, pinUserIDs []string, isPinned bool) error
 	GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error)
 	GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error)
 	SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error)
