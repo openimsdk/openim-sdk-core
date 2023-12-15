@@ -309,24 +309,21 @@ func (p *PressureTester) SendSingleMessages2(fastenedUserIDs []string, randomSen
 				receiverUserIDs = append(receiverUserIDs, fastenedUserIDs[index])
 			}
 		}
-
-		//log.ZError(context.Background(), "SendSingleMessages", nil, "length", len(receiverUserIDs))
-		user, _ := p.msgSender[userID]
-		for _, rv := range receiverUserIDs {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-
+		wg.Add(1)
+		go func(receiverUserIDs []string, u string) {
+			//log.ZError(context.Background(), "SendSingleMessages", nil, "length", len(receiverUserIDs))
+			defer wg.Done()
+			user, _ := p.msgSender[u]
+			for _, rv := range receiverUserIDs {
 				for x := 0; x < num; x++ {
 					user.SendMsgWithContext(rv, x)
 					p.sendNum.Add(1)
 
 					time.Sleep(duration)
 				}
-			}()
 
-		}
-
+			}
+		}(receiverUserIDs, userID)
 	}
 	wg.Wait()
 
