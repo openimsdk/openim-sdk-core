@@ -417,7 +417,6 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 		}
 		return c.conn.WriteMessage(MessageBinary, resultBuf)
 	} else {
-		log.ZWarn(c.ctx, "length", nil, "length", len(encodeBuf))
 		return c.conn.WriteMessage(MessageBinary, encodeBuf)
 	}
 }
