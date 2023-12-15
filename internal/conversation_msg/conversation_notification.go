@@ -67,6 +67,14 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 }
 
+func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string {
+	var msg sdkws.MsgData
+	if err := json.Unmarshal([]byte(latestMsg), &msg); err != nil {
+		log.ZError(context.Background(), "getConversationLatestMsgClientID", err, "latestMsg", latestMsg)
+	}
+	return msg.ClientMsgID
+}
+
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	node := c2v.Value.(common.UpdateConNode)
@@ -77,10 +85,10 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		oc, err := c.db.GetConversation(ctx, lc.ConversationID)
 		if err == nil {
 			// log.Info("this is old conversation", *oc)
-			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { // The session update of asynchronous messages is subject to the latest sending time
+			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime || c.getConversationLatestMsgClientID(lc.LatestMsg) == c.getConversationLatestMsgClientID(oc.LatestMsg) { // The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
-					// log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+					log.ZError(ctx, "updateConversationLatestMsgModel", err, "conversationID", node.ConID)
 				} else {
 					oc.LatestMsgSendTime = lc.LatestMsgSendTime
 					oc.LatestMsg = lc.LatestMsg
