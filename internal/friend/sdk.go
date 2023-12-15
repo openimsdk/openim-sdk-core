@@ -225,7 +225,7 @@ func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFrien
 	return f.SyncFriends(ctx, []string{userIDRemark.ToUserID})
 }
 
-func (f *Friend) SetFriendsPin(ctx context.Context, userIDPin *sdk.SetFriendPinParams) error {
+func (f *Friend) PinFriends(ctx context.Context, userIDPin *sdk.SetFriendPinParams) error {
 	if err := util.ApiPost(ctx, constant.SetFriendPin, &friend.PinFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: userIDPin.ToUserIDs, IsPinned: userIDPin.IsPinned}, nil); err != nil {
 		return err
 	}

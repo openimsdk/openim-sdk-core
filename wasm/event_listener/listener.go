@@ -298,6 +298,10 @@ type FriendCallback struct {
 	CallbackWriter
 }
 
+func (f *FriendCallback) PinFriends(friendInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendInfo).SendMessage()
+}
+
 func NewFriendCallback(callback *js.Value) *FriendCallback {
 	return &FriendCallback{CallbackWriter: NewEventData(callback)}
 }

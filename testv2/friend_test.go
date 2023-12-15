@@ -102,7 +102,7 @@ func Test_PinFriend(t *testing.T) {
 		IsPinned:  &wrapperspb.BoolValue{Value: true},
 	}
 
-	err := open_im_sdk.UserForSDK.Friend().SetFriendsPin(ctx, pinParams)
+	err := open_im_sdk.UserForSDK.Friend().PinFriends(ctx, pinParams)
 
 	if err != nil {
 		t.Fatal(err)

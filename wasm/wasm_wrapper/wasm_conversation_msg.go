@@ -300,11 +300,6 @@ func (w *WrapperConMsg) PinConversation(_ js.Value, args []js.Value) interface{}
 
 	return event_listener.NewCaller(open_im_sdk.PinConversation, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperConMsg) PinFriends(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-
-	return event_listener.NewCaller(open_im_sdk.PinFriends, callback, &args).AsyncCallWithCallback()
-}
 
 func (w *WrapperConMsg) GetTotalUnreadMsgCount(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)

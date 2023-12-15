@@ -73,14 +73,15 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 		}
 	}
 }
-func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
-	processUserComamnd := userPb.ProcessUserCommandAddReq{
-		UserID: fromUserID,
-		Type:   Type,
-		Uuid:   uuid,
-		Value:  value,
-	}
 
-	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
-	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
-}
+//func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
+//	processUserComamnd := userPb.ProcessUserCommandAddReq{
+//		UserID: fromUserID,
+//		Type:   Type,
+//		Uuid:   uuid,
+//		Value:  value,
+//	}
+//
+//	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
+//	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
+//}
