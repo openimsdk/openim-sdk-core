@@ -89,5 +89,5 @@ func (o *onFriendshipListener) OnBlackDeleted(blackInfo model_struct.LocalBlack)
 }
 func (o *onFriendshipListener) PinFriends(friendInfo model_struct.LocalFriend) {
 	log.ZDebug(context.Background(), "PinFriends", "friendPin", friendInfo)
-	o.onFriendshipListener.PinFriends(utils.StructToJsonString(friendInfo))
+	o.onFriendshipListener.OnPinFriends(utils.StructToJsonString(friendInfo))
 }

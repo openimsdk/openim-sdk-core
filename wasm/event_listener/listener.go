@@ -298,7 +298,7 @@ type FriendCallback struct {
 	CallbackWriter
 }
 
-func (f *FriendCallback) PinFriends(friendInfo string) {
+func (f *FriendCallback) OnPinFriends(friendInfo string) {
 	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendInfo).SendMessage()
 }
 
