@@ -4,10 +4,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
+	"time"
+
 	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
-	"runtime"
-	"time"
 )
 
 func init() {
@@ -32,6 +36,8 @@ var (
 	end                   int
 	count                 int
 	sendInterval          int
+    onlineUsersOnly bool
+
 
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser bool // 是否注册用户
@@ -51,7 +57,8 @@ func InitWithFlag() {
 	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
 
 	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
-	flag.IntVar(&fastenedUserNum, "u", 300, "fastened user num")
+    flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
+
 }
 
 func PrintQPS() {
@@ -89,13 +96,24 @@ func main() {
 	// init users
 	p.InitUserConns(f)
 	log.ZWarn(ctx, "all user init connect to server success,start send message", nil, "count", count)
+	if onlineUsersOnly {
+	log.ZWarn(ctx, "Blocking the process...", nil)
+		// Create a channel to receive operating system interrupt signals
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
+
+		// Block the process until an interrupt signal is received
+		<-signalChannel
+	log.ZWarn(ctx, "Received interrupt signal. Exiting...", nil)
+		return
+	}
 	time.Sleep(10 * time.Second)
-	// p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
-	// log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
-	// //p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
-	// //p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
-	// time.Sleep(1 * time.Minute)
-	// p.CheckMsg(ctx)
+	p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
+	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
+	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
+	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
+	time.Sleep(1 * time.Minute)
+	p.CheckMsg(ctx)
 
 	time.Sleep(time.Hour * 60)
 
