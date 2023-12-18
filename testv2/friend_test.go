@@ -99,7 +99,7 @@ func Test_CheckFriend(t *testing.T) {
 func Test_PinFriend(t *testing.T) {
 	pinParams := &sdk_params_callback.SetFriendPinParams{
 		ToUserIDs: []string{"2", "3"},
-		IsPinned:  &wrapperspb.BoolValue{Value: true},
+		IsPinned:  &wrapperspb.BoolValue{Value: false},
 	}
 
 	err := open_im_sdk.UserForSDK.Friend().PinFriends(ctx, pinParams)
