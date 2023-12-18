@@ -140,3 +140,7 @@ type UploadFileCallback interface {
 	UploadComplete(fileSize int64, streamSize int64, storageSize int64) // 整体进度
 	Complete(size int64, url string, typ int)                           // 上传完成
 }
+
+type UploadLogProgress interface {
+	OnProgress(current int64, size int64)
+}

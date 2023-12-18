@@ -27,7 +27,7 @@ import (
 )
 
 type Business struct {
-	listener open_im_sdk_callback.OnCustomBusinessListener
+	listener func() open_im_sdk_callback.OnCustomBusinessListener
 	db       db_interface.DataBase
 }
 
@@ -38,10 +38,6 @@ func NewBusiness(db db_interface.DataBase) *Business {
 }
 
 func (b *Business) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if b.listener == nil {
-		log.ZWarn(ctx, "listener is nil", nil, "msg", msg)
-		return
-	}
 	var n sdk_struct.NotificationElem
 	err := utils.JsonStringToStruct(string(msg.Content), &n)
 	if err != nil {
@@ -49,5 +45,5 @@ func (b *Business) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		return
 
 	}
-	b.listener.OnRecvCustomBusinessMessage(n.Detail)
+	b.listener().OnRecvCustomBusinessMessage(n.Detail)
 }

@@ -65,6 +65,18 @@ func WithSendMessageCallback(ctx context.Context, callback open_im_sdk_callback.
 	return context.WithValue(ctx, Callback, callback)
 }
 
+func WithApiErrCode(ctx context.Context, cb ApiErrCodeCallback) context.Context {
+	return context.WithValue(ctx, apiErrCode{}, cb)
+}
+
+func GetApiErrCodeCallback(ctx context.Context) ApiErrCodeCallback {
+	fn, _ := ctx.Value(apiErrCode{}).(ApiErrCodeCallback)
+	if fn == nil {
+		return &emptyApiErrCodeCallback{}
+	}
+	return fn
+}
+
 type GlobalConfigKey struct{}
 
 type info struct {
@@ -107,3 +119,13 @@ func (i *info) OperationID() string {
 func (i *info) IsExternalExtensions() bool {
 	return i.conf.IsExternalExtensions
 }
+
+type apiErrCode struct{}
+
+type ApiErrCodeCallback interface {
+	OnError(ctx context.Context, err error)
+}
+
+type emptyApiErrCodeCallback struct{}
+
+func (e *emptyApiErrCodeCallback) OnError(ctx context.Context, err error) {}

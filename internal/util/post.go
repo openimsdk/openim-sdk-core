@@ -90,6 +90,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	}
 	if baseApi.ErrCode != 0 {
 		err := sdkerrs.New(baseApi.ErrCode, baseApi.ErrMsg, baseApi.ErrDlt)
+		ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
 		log.ZError(ctx, "ApiResponse", err, "type", "api code error", "msg", baseApi.ErrMsg, "dlt", baseApi.ErrDlt)
 		return err
 	}

@@ -62,11 +62,11 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 				u.OnlineStatusCache.Delete(fromUserID)
 			}
 		}
-		u.listener.OnUserStatusChanged(utils.StructToJsonString(v))
+		u.listener().OnUserStatusChanged(utils.StructToJsonString(v))
 	} else {
 		if status == constant.Online {
 			u.OnlineStatusCache.Store(fromUserID, &userOnlineStatus)
-			u.listener.OnUserStatusChanged(utils.StructToJsonString(userOnlineStatus))
+			u.listener().OnUserStatusChanged(utils.StructToJsonString(userOnlineStatus))
 		} else {
 			log.ZWarn(ctx, "exception", errors.New("user not exist"), "fromUserID", fromUserID,
 				"status", status, "platformID", platformID)
