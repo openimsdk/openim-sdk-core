@@ -90,12 +90,12 @@ func main() {
 	p.InitUserConns(f)
 	log.ZWarn(ctx, "all user init connect to server success,start send message", nil, "count", count)
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
-	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
-	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
-	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
-	time.Sleep(1 * time.Minute)
-	p.CheckMsg(ctx)
+	// p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
+	// log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
+	// //p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
+	// //p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
+	// time.Sleep(1 * time.Minute)
+	// p.CheckMsg(ctx)
 
 	time.Sleep(time.Hour * 60)
 
