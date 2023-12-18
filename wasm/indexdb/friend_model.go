@@ -58,6 +58,7 @@ func (i *Friend) UpdateFriend(ctx context.Context, friend *model_struct.LocalFri
 		FaceURL:        friend.FaceURL,
 		Ex:             friend.Ex,
 		AttachedInfo:   friend.AttachedInfo,
+		IsPinned:       friend.IsPinned,
 	}
 	_, err := exec.Exec(utils.StructToJsonString(tempLocalFriend))
 	return err

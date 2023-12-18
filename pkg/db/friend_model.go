@@ -48,7 +48,6 @@ func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalF
 	return utils.Wrap(t.Error, "")
 
 }
-
 func (d *DataBase) GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()

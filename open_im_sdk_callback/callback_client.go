@@ -54,6 +54,7 @@ type OnFriendshipListener interface {
 	OnFriendInfoChanged(friendInfo string)
 	OnBlackAdded(blackInfo string)
 	OnBlackDeleted(blackInfo string)
+	OnPinFriends(friendInfo string)
 }
 type OnConversationListener interface {
 	OnSyncServerStart()

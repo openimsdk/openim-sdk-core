@@ -220,6 +220,32 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo)
 	return nil
 }
 
+// CRUD user command
+//func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
+//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
+//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandDeleteReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
+//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandUpdateReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//func (u *User) ProcessUserCommandGet(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
+//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandGetReq{UserID: u.loginUserID, Type: userCommand.Type}, nil); err != nil {
+//		return err
+//	}
+//	return nil
+//}
+
 // ParseTokenFromSvr parses a token from the server.
 func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
 	resp, err := util.CallApi[authPb.ParseTokenResp](ctx, constant.ParseTokenRouter, authPb.ParseTokenReq{})

@@ -62,7 +62,10 @@ func (w *WrapperFriend) SetFriendRemark(_ js.Value, args []js.Value) interface{}
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetFriendRemark, callback, &args).AsyncCallWithCallback()
 }
-
+func (w *WrapperFriend) PinFriends(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.PinFriends, callback, &args).AsyncCallWithCallback()
+}
 func (w *WrapperFriend) DeleteFriend(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.DeleteFriend, callback, &args).AsyncCallWithCallback()

@@ -241,3 +241,7 @@ func SearchLocalMessages(callback open_im_sdk_callback.Base, operationID string,
 func SetMessageLocalEx(callback open_im_sdk_callback.Base, operationID string, conversationID, clientMsgID, localEx string) {
 	call(callback, operationID, UserForSDK.Conversation().SetMessageLocalEx, conversationID, clientMsgID, localEx)
 }
+
+func SearchConversation(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
+	call(callback, operationID, UserForSDK.Conversation().SearchConversation, searchParam)
+}

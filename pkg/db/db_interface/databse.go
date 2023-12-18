@@ -208,6 +208,7 @@ type ConversationModel interface {
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) ([]*model_struct.LocalChatLog, error)
 	SuperGroupSearchAllMessageByContentType(ctx context.Context, superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
+	SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error)
 }
 
 type UserModel interface {
@@ -217,6 +218,10 @@ type UserModel interface {
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error)
 	SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error
+	//ProcessUserCommandAdd(ctx context.Context, Type int32, uuid string, value string) error
+	//ProcessUserCommandUpdate(ctx context.Context, Type int32, uuid string, value string) error
+	//ProcessUserCommandDelete(ctx context.Context, Type int32, uuid string) error
+	//ProcessUserCommandGet(ctx context.Context, Type int32) ([]*model_struct.LocalUserCommand, error)
 }
 
 type FriendModel interface {

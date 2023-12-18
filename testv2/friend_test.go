@@ -15,6 +15,7 @@
 package testv2
 
 import (
+	"github.com/OpenIMSDK/protocol/wrapperspb"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"testing"
@@ -36,7 +37,7 @@ func Test_GetSpecifiedFriendsInfo(t *testing.T) {
 
 func Test_AddFriend(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Friend().AddFriend(ctx, &friend2.ApplyToAddFriendReq{
-		ToUserID: "45644221123",
+		ToUserID: "2",
 		ReqMsg:   "test add",
 	})
 	if err != nil {
@@ -95,7 +96,19 @@ func Test_CheckFriend(t *testing.T) {
 		t.Log(re)
 	}
 }
+func Test_PinFriend(t *testing.T) {
+	pinParams := &sdk_params_callback.SetFriendPinParams{
+		ToUserIDs: []string{"2", "3"},
+		IsPinned:  &wrapperspb.BoolValue{Value: false},
+	}
 
+	err := open_im_sdk.UserForSDK.Friend().PinFriends(ctx, pinParams)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("CheckFriend success", ctx.Value("operationID"))
+}
 func Test_DeleteFriend(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Friend().DeleteFriend(ctx, "863454357")
 	if err != nil {

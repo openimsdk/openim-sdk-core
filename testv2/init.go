@@ -40,7 +40,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
-	config.DataDir = ""
+	config.DataDir = "./"
 	configData, err := json.Marshal(config)
 	if err != nil {
 		panic(err)
@@ -305,6 +305,9 @@ func (o *onFriendListener) OnBlackAdded(blackInfo string) {
 
 func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
+}
+func (o *onFriendListener) OnPinFriends(friendInfo string) {
+	log.ZDebug(context.Background(), "OnPinFriends", "friendPin", friendInfo)
 }
 
 type onUserListener struct {

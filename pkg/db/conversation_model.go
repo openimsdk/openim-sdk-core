@@ -20,6 +20,7 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -365,4 +366,18 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 	}
 	tx.Commit()
 	return nil
+}
+func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
+	// Define the search condition based on the searchParam
+	condition := fmt.Sprintf("showname like %q ", "%"+searchParam+"%")
+
+	var conversationList []model_struct.LocalConversation
+	err := d.conn.WithContext(ctx).Where(condition).Order("create_time DESC").Find(&conversationList).Error
+	var transfer []*model_struct.LocalConversation
+	for _, v := range conversationList {
+		v1 := v // Create a copy to avoid referencing the loop variable
+		transfer = append(transfer, &v1)
+	}
+
+	return transfer, utils.Wrap(err, "SearchConversation failed ")
 }
