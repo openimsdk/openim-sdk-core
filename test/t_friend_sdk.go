@@ -755,6 +755,9 @@ func (testFriendListener) OnBlackDeleted(callbackInfo string) {
 func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
+func (testFriendListener) OnPinFriends(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+}
 
 func (testFriendListener) OnSuccess() {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName())
