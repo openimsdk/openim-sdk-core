@@ -56,8 +56,8 @@ func InitWithFlag() {
 	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
 	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
 
-	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
-    flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
+	isRegisterUser = *flag.Bool( "r", false, "register user to IM system")
+    onlineUsersOnly = *flag.Bool( "u", false, "consider only online users")
 
 }
 
