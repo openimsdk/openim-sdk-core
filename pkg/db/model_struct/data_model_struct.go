@@ -57,6 +57,7 @@ type LocalFriend struct {
 	//Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	IsPinned     bool   `gorm:"column:is_pinned;" json:"isPinned"`
 }
 
 // message FriendRequest{
@@ -520,4 +521,10 @@ type LocalSendingMessages struct {
 
 func (LocalSendingMessages) TableName() string {
 	return "local_sending_messages"
+}
+
+type UserCommand struct {
+	UserID   string            `bson:"userID"`
+	Type     int32             `bson:"type"`
+	Commands map[string]string `bson:"commands"`
 }

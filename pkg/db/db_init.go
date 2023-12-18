@@ -153,7 +153,8 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	superGroup := &model_struct.LocalGroup{}
 	localGroup := &model_struct.LocalGroup{}
 
-	err = db.AutoMigrate(&model_struct.LocalFriend{},
+	err = db.AutoMigrate(
+		&model_struct.LocalFriend{},
 		&model_struct.LocalFriendRequest{},
 		localGroup,
 		&model_struct.LocalGroupMember{},

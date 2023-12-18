@@ -29,8 +29,8 @@ var (
 	//WSADDR  = "ws://43.155.69.205:10001"
 	//APIADDR = "https://chat-api-dev.opencord.so"
 	//WSADDR  = "wss://chat-ws-dev.opencord.so"
-	APIADDR = "http://125.124.195.201:10002"
-	WSADDR  = "ws://125.124.195.201:10001"
+	APIADDR = "http://14.29.168.56:10002"
+	WSADDR  = "ws://14.29.168.56:10001"
 	//APIADDR      = "http://113.108.8.93:10002"
 	//WSADDR       = "ws://113.108.8.93:10001"
 	REGISTERADDR = APIADDR + "/user_register"
@@ -41,7 +41,7 @@ var (
 	SENDINTERVAL = 20
 )
 
-const PlatformID = 1
+const PlatformID = 3
 
 type ResToken struct {
 	Data struct {
@@ -89,7 +89,7 @@ func gRunGetToken(strMyUid string) string {
 	return token
 }
 func main() {
-	uid := "6959062403"
+	uid := "1"
 	//Gordon
 	//uid:="1554321956297519104"
 	//Gordon2

@@ -53,6 +53,7 @@ func ServerFriendToLocalFriend(info *sdkws.FriendInfo) *model_struct.LocalFriend
 		FaceURL:        info.FriendUser.FaceURL,
 		Ex:             info.Ex,
 		//AttachedInfo:   info.FriendUser.AttachedInfo,
+		IsPinned: info.IsPinned,
 	}
 }
 

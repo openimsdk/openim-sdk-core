@@ -56,6 +56,7 @@ func (f *Friend) initSyncer() {
 		return f.db.DeleteFriendDB(ctx, value.FriendUserID)
 	}, func(ctx context.Context, server *model_struct.LocalFriend, local *model_struct.LocalFriend) error {
 		return f.db.UpdateFriend(ctx, server)
+
 	}, func(value *model_struct.LocalFriend) [2]string {
 		return [...]string{value.OwnerUserID, value.FriendUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
@@ -77,9 +78,9 @@ func (f *Friend) initSyncer() {
 					Args: common.UpdateMessageInfo{UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 			}
 
-		}
-		return nil
-	})
+			}
+			return nil
+		})
 	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
@@ -254,6 +255,19 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncAllBlackList(ctx)
+		}
+	case constant.FriendPinSetNotifiaction:
+		var tips sdkws.PinFriendTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+			return err
+		}
+		if tips.UserID == f.loginUserID {
+			var friendIDs []string
+
+			for _, friendInfo := range tips.UpdateFriends {
+				friendIDs = append(friendIDs, friendInfo.FriendUser.UserID)
+			}
+			return f.SyncFriends(ctx, friendIDs)
 		}
 	default:
 		return fmt.Errorf("type failed %d", msg.ContentType)
