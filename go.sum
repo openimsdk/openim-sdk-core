@@ -1,5 +1,5 @@
-github.com/OpenIMSDK/protocol v0.0.34 h1:dK+Y5h10s/S8dcj/jXrRzmEAdKvoDRhw+ASLACh2FYY=
-github.com/OpenIMSDK/protocol v0.0.34/go.mod h1:F25dFrwrIx3lkNoiuf6FkCfxuwf8L4Z8UIsdTHP/r0Y=
+github.com/AndrewZuo01/protocol v0.0.0-20231219031520-648989b91fca h1:OgKuNZHdQ0qihYOQ4xnoJ0xo3TGUwlXzW7SicLa4IEw=
+github.com/AndrewZuo01/protocol v0.0.0-20231219031520-648989b91fca/go.mod h1:F25dFrwrIx3lkNoiuf6FkCfxuwf8L4Z8UIsdTHP/r0Y=
 github.com/OpenIMSDK/tools v0.0.5 h1:yBVHJ3EpIDcp8VFKPjuGr6MQvFa3t4JByZ+vmeC06/Q=
 github.com/OpenIMSDK/tools v0.0.5/go.mod h1:eg+q4A34Qmu73xkY0mt37FHGMCMfC6CtmOnm0kFEGFI=
 github.com/antonfisher/nested-logrus-formatter v1.3.1 h1:NFJIr+pzwv5QLHTPyKz9UMEoHck02Q9L0FP13b/xSbQ=

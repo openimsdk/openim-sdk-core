@@ -42,7 +42,10 @@ func (w *WrapperUser) SetSelfInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetSelfInfo, callback, &args).AsyncCallWithCallback()
 }
-
+func (w *WrapperUser) SetSelfInfoEx(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.SetSelfInfoEx, callback, &args).AsyncCallWithCallback()
+}
 func (w *WrapperUser) GetUsersInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetUsersInfo, callback, &args).AsyncCallWithCallback()
