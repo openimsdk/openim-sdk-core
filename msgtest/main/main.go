@@ -36,8 +36,7 @@ var (
 	end                   int
 	count                 int
 	sendInterval          int
-    onlineUsersOnly bool
-
+	onlineUsersOnly       bool
 
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser bool // 是否注册用户
@@ -57,7 +56,7 @@ func InitWithFlag() {
 	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
 
 	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
-    flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
+	flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
 }
 
 func PrintQPS() {
@@ -70,7 +69,7 @@ func PrintQPS() {
 
 func main() {
 	flag.Parse()
-	fmt.Print("start", totalOnlineUserNum, count, sendInterval, isRegisterUser,onlineUsersOnly)
+	fmt.Print("start", totalOnlineUserNum, count, sendInterval, isRegisterUser, onlineUsersOnly)
 	ctx := context.Background()
 	p := module.NewPressureTester()
 	f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
@@ -96,14 +95,14 @@ func main() {
 	p.InitUserConns(f)
 	log.ZWarn(ctx, "all user init connect to server success,start send message", nil, "count", count)
 	if onlineUsersOnly {
-	log.ZWarn(ctx, "Blocking the process...", nil)
+		log.ZWarn(ctx, "OnlineUsersOnly do not send messages blocking the process...", nil)
 		// Create a channel to receive operating system interrupt signals
 		signalChannel := make(chan os.Signal, 1)
 		signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
 		// Block the process until an interrupt signal is received
 		<-signalChannel
-	log.ZWarn(ctx, "Received interrupt signal. Exiting...", nil)
+		log.ZWarn(ctx, "OnlineUsersOnly do not send messages received interrupt signal. Exiting...", nil)
 		return
 	}
 	time.Sleep(10 * time.Second)
