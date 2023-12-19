@@ -73,6 +73,9 @@ func main() {
 	flag.Parse()
 	fmt.Print("start", totalOnlineUserNum, count, sendInterval, isRegisterUser, onlineUsersOnly)
 	ctx := context.Background()
+	go func() {
+		log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	}()
 	p := module.NewPressureTester()
 	f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
 	//f, r, err := p.SelectSample2(totalOnlineUserNum, 0.01)
@@ -107,9 +110,7 @@ func main() {
 		log.ZWarn(ctx, "OnlineUsersOnly do not send messages received interrupt signal. Exiting...", nil)
 		return
 	}
-	go func() {
-		log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
-	}()
+
 	time.Sleep(10 * time.Second)
 	p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
 	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
