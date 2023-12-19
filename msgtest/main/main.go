@@ -4,6 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	log2 "log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
@@ -105,6 +108,9 @@ func main() {
 		log.ZWarn(ctx, "OnlineUsersOnly do not send messages received interrupt signal. Exiting...", nil)
 		return
 	}
+	go func() {
+		log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	}()
 	time.Sleep(10 * time.Second)
 	p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
 	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
