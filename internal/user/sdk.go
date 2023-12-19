@@ -33,6 +33,7 @@ func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 	return u.getSelfUserInfo(ctx)
 }
 
+// Deprecated: user SetSelfInfoEx instead
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
 	return u.updateSelfUserInfo(ctx, userInfo)
 }
