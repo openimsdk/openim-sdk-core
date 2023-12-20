@@ -248,6 +248,7 @@ type FriendModel interface {
 	InsertBlack(ctx context.Context, black *model_struct.LocalBlack) error
 	UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) error
 	DeleteBlack(ctx context.Context, blockUserID string) error
+	UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]interface{}) error
 }
 
 type ReactionModel interface {

@@ -148,7 +148,7 @@ func (t testAddToBlackList) OnError(code int32, msg string) {
 func DoTestAddToBlackList(userID string) {
 	var test testAddToBlackList
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.AddBlack(test, test.OperationID, userID)
+	open_im_sdk.AddBlack(test, test.OperationID, userID, "")
 }
 
 // /////////////////////////////////////////////////////

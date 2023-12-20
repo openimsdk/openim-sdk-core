@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	APIADDR      = "http://15.29.168.56:10002"
-	WSADDR       = "ws://15.29.168.56:10001"
+	APIADDR      = "http://14.29.168.56:10002"
+	WSADDR       = "ws://14.29.168.56:10001"
 	UserID       = "1"
 	friendUserID = "3281432310"
 )

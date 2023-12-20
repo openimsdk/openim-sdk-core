@@ -16,6 +16,8 @@ package friend
 
 import (
 	"context"
+	"github.com/OpenIMSDK/protocol/wrapperspb"
+	"github.com/OpenIMSDK/tools/errs"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -226,13 +228,13 @@ func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFrien
 }
 
 func (f *Friend) PinFriends(ctx context.Context, userIDPin *sdk.SetFriendPinParams) error {
-	if err := util.ApiPost(ctx, constant.SetFriendPin, &friend.PinFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: userIDPin.ToUserIDs, IsPinned: userIDPin.IsPinned}, nil); err != nil {
+	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: userIDPin.ToUserIDs, IsPinned: userIDPin.IsPinned}, nil); err != nil {
 		return err
 	}
 	return f.SyncFriends(ctx, userIDPin.ToUserIDs)
 }
-func (f *Friend) AddBlack(ctx context.Context, blackUserID string) error {
-	if err := util.ApiPost(ctx, constant.AddBlackRouter, &friend.AddBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID}, nil); err != nil {
+func (f *Friend) AddBlack(ctx context.Context, blackUserID string, ex string) error {
+	if err := util.ApiPost(ctx, constant.AddBlackRouter, &friend.AddBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID, Ex: ex}, nil); err != nil {
 		return err
 	}
 	return f.SyncAllBlackList(ctx)
@@ -247,4 +249,45 @@ func (f *Friend) RemoveBlack(ctx context.Context, blackUserID string) error {
 
 func (f *Friend) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack, error) {
 	return f.db.GetBlackListDB(ctx)
+}
+func (f *Friend) SetFriendEx(ctx context.Context, friendIDs []string, ex *wrapperspb.StringValue) error {
+	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs, Ex: ex}, nil); err != nil {
+		return err
+	}
+	if ex == nil {
+		return errs.Wrap(errs.ErrArgs, "ex is nil")
+	}
+	// Check if the specified ID is a friend
+	friendResults, err := f.CheckFriend(ctx, friendIDs)
+	if err != nil {
+		return errs.Wrap(err, "Error checking friend status")
+	}
+
+	// Determine if friendID is indeed a friend
+	// Iterate over each friendID
+	for _, friendID := range friendIDs {
+		isFriend := false
+
+		// Check if this friendID is in the friendResults
+		for _, result := range friendResults {
+			if result.UserID == friendID && result.Result == 1 { // Assuming result 1 means they are friends
+				isFriend = true
+				break
+			}
+		}
+
+		// If this friendID is not a friend, return an error
+		if !isFriend {
+			return errs.ErrRecordNotFound.Wrap("Not friend")
+		}
+	}
+
+	// If the code reaches here, all friendIDs are confirmed as friends
+	// Update friend information if they are friends
+
+	updateErr := f.db.UpdateColumnsFriend(ctx, friendIDs, map[string]interface{}{"Ex": ex.Value})
+	if updateErr != nil {
+		return errs.Wrap(updateErr, "Error updating friend information")
+	}
+	return nil
 }

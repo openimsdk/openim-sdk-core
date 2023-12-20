@@ -179,6 +179,8 @@ func registerFunc() {
 	js.Global().Set("getBlackList", js.FuncOf(wrapperFriend.GetBlackList))
 	js.Global().Set("removeBlack", js.FuncOf(wrapperFriend.RemoveBlack))
 	js.Global().Set("addBlack", js.FuncOf(wrapperFriend.AddBlack))
+	js.Global().Set("setFriendEx", js.FuncOf(wrapperFriend.SetFriendEx))
+	js.Global().Set("pinFriends", js.FuncOf(wrapperFriend.PinFriends))
 
 	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
 	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))
