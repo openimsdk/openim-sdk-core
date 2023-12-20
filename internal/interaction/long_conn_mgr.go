@@ -411,7 +411,7 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	if c.IsCompression {
-		resultBuf, compressErr := c.compressor.Compress(encodeBuf)
+		resultBuf, compressErr := c.compressor.CompressWithPool(encodeBuf)
 		if compressErr != nil {
 			return compressErr
 		}
@@ -434,7 +434,7 @@ func (c *LongConnMgr) close() error {
 func (c *LongConnMgr) handleMessage(message []byte) error {
 	if c.IsCompression {
 		var decompressErr error
-		message, decompressErr = c.compressor.DeCompress(message)
+		message, decompressErr = c.compressor.DecompressWithPool(message)
 		if decompressErr != nil {
 			log.ZError(c.ctx, "DeCompress failed", decompressErr, message)
 			return sdkerrs.ErrMsgDeCompression
