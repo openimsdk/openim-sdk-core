@@ -26,7 +26,7 @@ func (t *TestUserManager) GenUserIDsWithPrefix(num int, prefix string) (userIDs 
 }
 func (t *TestUserManager) GenSEUserIDsWithPrefix(start, end int, prefix string) (userIDs []string) {
 	for i := start; i < end; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s_testv3new_%d", prefix, i))
+		userIDs = append(userIDs, fmt.Sprintf("%s_testv3_%d", prefix, i))
 	}
 	return userIDs
 }
