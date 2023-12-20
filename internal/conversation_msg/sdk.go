@@ -196,7 +196,9 @@ func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conve
 func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) error {
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{RecvMsgOpt: &wrapperspb.Int32Value{Value: int32(opt)}})
 }
-
+func (c *Conversation) SetOneConversationEx(ctx context.Context, conversationID string, ex *wrapperspb.StringValue) error {
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{Ex: ex})
+}
 func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadCount int32, err error) {
 	return c.db.GetTotalUnreadMsgCountDB(ctx)
 }

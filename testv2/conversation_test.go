@@ -16,6 +16,7 @@ package testv2
 
 import (
 	"context"
+	"github.com/OpenIMSDK/protocol/wrapperspb"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -301,4 +302,10 @@ func Test_SendImgMsg(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("send smg => %+v\n", res)
+}
+func Test_SetConversationEx(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().SetOneConversationEx(ctx, "si_1_2", &wrapperspb.StringValue{Value: "aaa"})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
