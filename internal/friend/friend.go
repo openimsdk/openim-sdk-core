@@ -78,9 +78,9 @@ func (f *Friend) initSyncer() {
 					Args: common.UpdateMessageInfo{UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 			}
 
-		}
-		return nil
-	})
+			}
+			return nil
+		})
 	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
@@ -257,7 +257,9 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return f.SyncAllBlackList(ctx)
 		}
 	case constant.FriendPinSetNotifiaction:
+
 		var tips sdkws.UpdateFriendTips
+
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
