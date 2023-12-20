@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	log2 "log"
 	"net/http"
 	_ "net/http/pprof"
@@ -71,8 +70,12 @@ func PrintQPS() {
 
 func main() {
 	flag.Parse()
-	fmt.Print("start", totalOnlineUserNum, count, sendInterval, isRegisterUser, onlineUsersOnly)
 	ctx := context.Background()
+	log.ZWarn(ctx, "flag args", nil, "totalOnlineUserNum", totalOnlineUserNum,
+		"randomSender", randomSender, "randomReceiver", randomReceiver,
+		"samplingRate", samplingRate, "start", start, "end", end, "count", count, "sendInterval", sendInterval,
+		"onlineUsersOnly", onlineUsersOnly, "isRegisterUser", isRegisterUser)
+
 	go func() {
 		log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 	}()

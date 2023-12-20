@@ -474,7 +474,7 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 			}
 		}
 	}
-	log.ZError(context.Background(), "check result", nil, "failedMessageLength", failedMessageLength,
+	log.ZWarn(context.Background(), "check result", nil, "failedMessageLength", failedMessageLength,
 		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "Average of message latency",
 		utils.Int64ToString(latencySum/int64(sampleRecvLength))+" ms", "max", utils.Int64ToString(max)+" ms",
 		"min", utils.Int64ToString(min)+" ms")
