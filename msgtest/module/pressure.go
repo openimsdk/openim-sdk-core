@@ -113,6 +113,20 @@ func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUs
 	return fastenedUserIDs, sampleReceiver, nil
 
 }
+func (p *PressureTester) SelectSampleFromStarEnd(start, end int, percentage float64) (fastenedUserIDs []string,
+	sampleReceiver []string, err error) {
+	if percentage < 0 || percentage > 1 {
+		return nil, nil, fmt.Errorf("percentage must be between 0 and 1")
+	}
+	fastenedUserIDs = p.userManager.GenSEUserIDsWithPrefix(start, end, FastenedUserPrefix)
+	step := int(1.0 / percentage)
+	for i := start; i < end; i += step {
+		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3_%d", FastenedUserPrefix, i))
+	}
+	SampleUserList = sampleReceiver
+	return fastenedUserIDs, sampleReceiver, nil
+
+}
 func (p *PressureTester) SelectStartAndEnd(start, end int) (fastenedUserIDs []string) {
 	return p.userManager.GenSEUserIDsWithPrefix(start, end, FastenedUserPrefix)
 }

@@ -49,7 +49,7 @@ func InitWithFlag() {
 	flag.IntVar(&randomReceiver, "rr", 100, "random receiver num")
 	flag.IntVar(&start, "s", 0, "start user")
 	flag.IntVar(&end, "e", 0, "end user")
-	flag.Float64Var(&samplingRate, "f", 0.1, "sampling rate")
+	flag.Float64Var(&samplingRate, "f", 0.01, "sampling rate")
 	flag.IntVar(&count, "c", 200, "number of messages per user")
 	flag.IntVar(&sendInterval, "i", 1000, "send message interval per user(milliseconds)")
 	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
@@ -80,13 +80,19 @@ func main() {
 		log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 	}()
 	p := module.NewPressureTester()
-	f, r, err := p.SelectSample(totalOnlineUserNum, 0.01)
+	var f, r []string
+	var err error
+	if start != 0 {
+		f, r, err = p.SelectSampleFromStarEnd(start, end, samplingRate)
+	} else {
+		f, r, err = p.SelectSample(totalOnlineUserNum, samplingRate)
+	}
 	//f, r, err := p.SelectSample2(totalOnlineUserNum, 0.01)
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
 	}
-	log.ZDebug(ctx, "Sample UserID", "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
+	log.ZWarn(ctx, "Sample UserID", nil, "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
 	time.Sleep(10 * time.Second)
 	//
 	if isRegisterUser {
@@ -95,9 +101,7 @@ func main() {
 			return
 		}
 	}
-	if start != 0 {
-		f = p.SelectStartAndEnd(start, end)
-	}
+
 	//go PrintQPS()
 	// init users
 	p.InitUserConns(f)
