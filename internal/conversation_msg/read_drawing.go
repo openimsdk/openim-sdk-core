@@ -192,7 +192,7 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 				log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
 			}
 		}
-		var latestMsg sdkws.MsgData
+		var latestMsg *sdk_struct.MsgStruct
 		if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
 			log.ZError(ctx, "Unmarshal err", err, "conversationID", conversation.ConversationID, "latestMsg", conversation.LatestMsg)
 		}
@@ -235,7 +235,7 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 			return
 		}
 		if conversation.ConversationType == constant.SingleChatType {
-			var latestMsg sdkws.MsgData
+			var latestMsg *sdk_struct.MsgStruct
 			if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
 				log.ZError(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
 			}
@@ -250,10 +250,10 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
 				} else {
 					if latestMsg.ClientMsgID == message.ClientMsgID {
-						if latestMsg.IsRead != message.IsRead {
-							conversation.LatestMsg = utils.StructToJsonString(message)
-							_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
-						}
+						latestMsg.IsRead = message.IsRead
+						conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
+
 					}
 					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
 				}
