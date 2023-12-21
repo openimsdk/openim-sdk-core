@@ -309,3 +309,12 @@ func Test_SetConversationEx(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+func Test_SearchConversation(t *testing.T) {
+	result, err := open_im_sdk.UserForSDK.Conversation().SearchConversation(ctx, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range result {
+		t.Log(v)
+	}
+}

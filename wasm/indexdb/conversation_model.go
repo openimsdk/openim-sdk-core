@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -368,6 +369,26 @@ func (i *LocalConversations) GetAllConversationIDList(ctx context.Context) ([]st
 			return nil, exec.ErrType
 		}
 	}
+}
+func (i *LocalConversations) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
+	// Define the search condition based on searchParam
+	condition := fmt.Sprintf("show_name LIKE %q", "%"+searchParam+"%")
+
+	var result []*model_struct.LocalConversation
+	// Perform the search operation. Replace the below line with the actual search logic.
+	searchResult, err := exec.Exec(condition)
+	if err != nil {
+		return nil, utils.Wrap(err, "SearchConversations failed")
+	}
+
+	// Convert searchResult to []*model_struct.LocalConversation
+	// Assuming searchResult is in a format that can be converted to the required type
+	err = utils.JsonStringToStruct(searchResult.(string), &result)
+	if err != nil {
+		return nil, utils.Wrap(err, "Failed to parse search results")
+	}
+
+	return result, nil
 }
 
 func (i *LocalConversations) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {

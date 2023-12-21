@@ -250,7 +250,7 @@ func (f *Friend) RemoveBlack(ctx context.Context, blackUserID string) error {
 func (f *Friend) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack, error) {
 	return f.db.GetBlackListDB(ctx)
 }
-func (f *Friend) SetFriendEx(ctx context.Context, friendIDs []string, ex *wrapperspb.StringValue) error {
+func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex *wrapperspb.StringValue) error {
 	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs, Ex: ex}, nil); err != nil {
 		return err
 	}

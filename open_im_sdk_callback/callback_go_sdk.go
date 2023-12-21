@@ -32,7 +32,6 @@ type OnFriendshipListenerSdk interface {
 	OnFriendInfoChanged(friendInfo model_struct.LocalFriend)
 	OnBlackAdded(blackInfo model_struct.LocalBlack)
 	OnBlackDeleted(blackInfo model_struct.LocalBlack)
-	OnPinFriends(friendInfo model_struct.LocalFriend)
 }
 
 type onFriendshipListener struct {
@@ -86,8 +85,4 @@ func (o *onFriendshipListener) OnBlackAdded(blackInfo model_struct.LocalBlack) {
 func (o *onFriendshipListener) OnBlackDeleted(blackInfo model_struct.LocalBlack) {
 	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
 	o.onFriendshipListener().OnBlackDeleted(utils.StructToJsonString(blackInfo))
-}
-func (o *onFriendshipListener) OnPinFriends(friendInfo model_struct.LocalFriend) {
-	log.ZDebug(context.Background(), "OnPinFriends", "friendsPin", friendInfo)
-	o.onFriendshipListener().OnPinFriends(utils.StructToJsonString(friendInfo))
 }

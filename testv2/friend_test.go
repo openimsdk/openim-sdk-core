@@ -174,8 +174,8 @@ func Test_GetBlackList(t *testing.T) {
 		t.Log(*item)
 	}
 }
-func Test_SetFriendEx(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Friend().SetFriendEx(ctx, []string{"2"}, &wrapperspb.StringValue{
+func Test_SetFriendsEx(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Friend().SetFriendsEx(ctx, []string{"2"}, &wrapperspb.StringValue{
 		Value: "exx",
 	})
 	if err != nil {
