@@ -255,8 +255,9 @@ func DoTestJoinGroup() {
 	test.OperationID = utils.OperationIDGenerator()
 	groupID := "1003105543"
 	reqMsg := "121212"
-	log.Info(test.OperationID, "test join group input", groupID, reqMsg)
-	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg, constant.JoinBySearch)
+	ex := "ex"
+	log.Info(test.OperationID, "test join group input", groupID, reqMsg, ex)
+	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg, constant.JoinBySearch, ex)
 }
 
 type testQuitGroup struct {
