@@ -1,5 +1,4 @@
-github.com/AndrewZuo01/protocol v0.0.0-20231220082114-c2129ec584bc h1:4GdwA7lRITuClZHaOEubMFT/Bzfr+hd65WmWKozVW2U=
-github.com/AndrewZuo01/protocol v0.0.0-20231220082114-c2129ec584bc/go.mod h1:F25dFrwrIx3lkNoiuf6FkCfxuwf8L4Z8UIsdTHP/r0Y=
+github.com/OpenIMSDK/protocol v0.0.37 h1:sVTnb3TjMQ3PG4m3gDI/LAM1Hkk9nI6gf7lf7UpscnI=
 github.com/OpenIMSDK/protocol v0.0.37/go.mod h1:F25dFrwrIx3lkNoiuf6FkCfxuwf8L4Z8UIsdTHP/r0Y=
 github.com/OpenIMSDK/tools v0.0.5 h1:yBVHJ3EpIDcp8VFKPjuGr6MQvFa3t4JByZ+vmeC06/Q=
 github.com/OpenIMSDK/tools v0.0.5/go.mod h1:eg+q4A34Qmu73xkY0mt37FHGMCMfC6CtmOnm0kFEGFI=
