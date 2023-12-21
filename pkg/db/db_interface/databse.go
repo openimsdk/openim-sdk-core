@@ -240,6 +240,7 @@ type FriendModel interface {
 	GetSendFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error)
 	GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error)
 	GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) ([]*model_struct.LocalFriendRequest, error)
+	UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]interface{}) error
 
 	GetBlackListDB(ctx context.Context) ([]*model_struct.LocalBlack, error)
 	GetBlackListUserID(ctx context.Context) (blackListUid []string, err error)
@@ -248,7 +249,6 @@ type FriendModel interface {
 	InsertBlack(ctx context.Context, black *model_struct.LocalBlack) error
 	UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) error
 	DeleteBlack(ctx context.Context, blockUserID string) error
-	UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]interface{}) error
 }
 
 type ReactionModel interface {
