@@ -82,7 +82,7 @@ func (c *Conversation) clearConversationMsgFromSvr(ctx context.Context, conversa
 }
 
 // Delete all messages
-func (c *Conversation) deleteAllMessage(ctx context.Context) error {
+func (c *Conversation) deleteAllMsgFromLocalAndSvr(ctx context.Context) error {
 	// Delete the server first (high error rate), then delete it.
 	err := c.deleteAllMessageFromSvr(ctx)
 	if err != nil {
@@ -205,7 +205,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 		}
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}})
 	}
-	c.msgListener.OnMsgDeleted(utils.StructToJsonString(s))
+	c.msgListener().OnMsgDeleted(utils.StructToJsonString(s))
 	return nil
 }
 

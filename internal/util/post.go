@@ -29,10 +29,9 @@ import (
 	"github.com/OpenIMSDK/tools/log"
 )
 
-//var (
-//	BaseURL = ""
-//	Token   = ""
-//)
+var apiClient = &http.Client{
+	Timeout: time.Minute,
+}
 
 type ApiResponse struct {
 	ErrCode int             `json:"errCode"`
@@ -72,7 +71,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("operationID", operationID)
 	request.Header.Set("token", ctxInfo.Token())
-	response, err := new(http.Client).Do(request)
+	response, err := apiClient.Do(request)
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "network error")
 		return sdkerrs.ErrNetwork.Wrap("ApiPost http.Client.Do failed " + err.Error())
@@ -91,6 +90,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	}
 	if baseApi.ErrCode != 0 {
 		err := sdkerrs.New(baseApi.ErrCode, baseApi.ErrMsg, baseApi.ErrDlt)
+		ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
 		log.ZError(ctx, "ApiResponse", err, "type", "api code error", "msg", baseApi.ErrMsg, "dlt", baseApi.ErrDlt)
 		return err
 	}

@@ -155,6 +155,7 @@ type LocalFriend struct {
 	FaceURL        string `json:"faceURL,omitempty"`
 	Ex             string `json:"ex,omitempty"`
 	AttachedInfo   string `json:"attachedInfo,omitempty"`
+	IsPinned       bool   `json:"isPinned,omitempty"`
 }
 
 type LocalUser struct {
@@ -167,3 +168,11 @@ type LocalUser struct {
 	AttachedInfo     string `json:"attachedInfo,omitempty"`
 	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt,omitempty"`
 }
+
+//type LocalUserCommand struct {
+//	UserID     string `json:"userID,omitempty"`
+//	Type       int32  `json:"type,omitempty"`
+//	CreateTime int64  `json:"createTime,omitempty"`
+//	Uuid       string `json:"uuid,omitempty"`
+//	Value      string `json:"value,omitempty"`
+//}

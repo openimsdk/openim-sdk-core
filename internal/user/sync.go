@@ -16,7 +16,9 @@ package user
 
 import (
 	"context"
+	"errors"
 	userPb "github.com/OpenIMSDK/protocol/user"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
@@ -42,12 +44,44 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 }
 
-func (u *User) SyncUserStatus(ctx context.Context, fromId string, toUserID string, status int32, platformID int32, c func(userID string, statusMap *userPb.OnlineStatus)) {
-	statusMap := userPb.OnlineStatus{
-		UserID:      fromId,
+func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int32, platformID int32) {
+	userOnlineStatus := userPb.OnlineStatus{
+		UserID:      fromUserID,
 		Status:      status,
 		PlatformIDs: []int32{platformID},
 	}
-	c(fromId, &statusMap)
-	u.listener.OnUserStatusChanged(utils.StructToJsonString(statusMap))
+	if v, ok := u.OnlineStatusCache.Load(fromUserID); ok {
+		if status == constant.Online {
+			v.PlatformIDs = utils.RemoveRepeatedElementsInList(append(v.PlatformIDs, platformID))
+			u.OnlineStatusCache.Store(fromUserID, v)
+		} else {
+			v.PlatformIDs = utils.RemoveOneInList(v.PlatformIDs, platformID)
+			if len(v.PlatformIDs) == 0 {
+				v.Status = constant.Offline
+				v.PlatformIDs = []int32{}
+				u.OnlineStatusCache.Delete(fromUserID)
+			}
+		}
+		u.listener().OnUserStatusChanged(utils.StructToJsonString(v))
+	} else {
+		if status == constant.Online {
+			u.OnlineStatusCache.Store(fromUserID, &userOnlineStatus)
+			u.listener().OnUserStatusChanged(utils.StructToJsonString(userOnlineStatus))
+		} else {
+			log.ZWarn(ctx, "exception", errors.New("user not exist"), "fromUserID", fromUserID,
+				"status", status, "platformID", platformID)
+		}
+	}
 }
+
+//func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
+//	processUserComamnd := userPb.ProcessUserCommandAddReq{
+//		UserID: fromUserID,
+//		Type:   Type,
+//		Uuid:   uuid,
+//		Value:  value,
+//	}
+//
+//	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
+//	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
+//}

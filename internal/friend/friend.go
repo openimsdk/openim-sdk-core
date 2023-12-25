@@ -16,7 +16,6 @@ package friend
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -46,7 +45,6 @@ type Friend struct {
 	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, [2]string]
 	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
 	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
-	loginTime          int64
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
@@ -58,12 +56,10 @@ func (f *Friend) initSyncer() {
 		return f.db.DeleteFriendDB(ctx, value.FriendUserID)
 	}, func(ctx context.Context, server *model_struct.LocalFriend, local *model_struct.LocalFriend) error {
 		return f.db.UpdateFriend(ctx, server)
+
 	}, func(value *model_struct.LocalFriend) [2]string {
 		return [...]string{value.OwnerUserID, value.FriendUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnFriendAdded(*server)
@@ -94,9 +90,6 @@ func (f *Friend) initSyncer() {
 	}, func(value *model_struct.LocalBlack) [2]string {
 		return [...]string{value.OwnerUserID, value.BlockUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalBlack) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnBlackAdded(*server)
@@ -114,9 +107,6 @@ func (f *Friend) initSyncer() {
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnFriendApplicationAdded(*server)
@@ -143,9 +133,6 @@ func (f *Friend) initSyncer() {
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
 	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
-		if f.friendListener == nil {
-			return nil
-		}
 		switch state {
 		case syncer.Insert:
 			f.friendListener.OnFriendApplicationAdded(*server)
@@ -163,19 +150,11 @@ func (f *Friend) initSyncer() {
 	})
 }
 
-func (f *Friend) LoginTime() int64 {
-	return f.loginTime
-}
-
-func (f *Friend) SetLoginTime(loginTime int64) {
-	f.loginTime = loginTime
-}
-
 func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
-func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
+func (f *Friend) SetListener(listener func() open_im_sdk_callback.OnFriendshipListener) {
 	f.friendListener = open_im_sdk_callback.NewOnFriendshipListenerSdk(listener)
 }
 
@@ -192,12 +171,6 @@ func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
-	if f.friendListener == nil {
-		return errors.New("f.friendListener == nil")
-	}
-	if msg.SendTime < f.loginTime || f.loginTime == 0 {
-		return errors.New("ignore notification")
-	}
 	switch msg.ContentType {
 	case constant.FriendApplicationNotification:
 		tips := sdkws.FriendApplicationTips{}
@@ -282,6 +255,19 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncAllBlackList(ctx)
+		}
+	case constant.FriendPinSetNotifiaction:
+		var tips sdkws.PinFriendTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+			return err
+		}
+		if tips.UserID == f.loginUserID {
+			var friendIDs []string
+
+			for _, friendInfo := range tips.UpdateFriends {
+				friendIDs = append(friendIDs, friendInfo.FriendUser.UserID)
+			}
+			return f.SyncFriends(ctx, friendIDs)
 		}
 	default:
 		return fmt.Errorf("type failed %d", msg.ContentType)

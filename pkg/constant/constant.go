@@ -80,6 +80,7 @@ const (
 	BlackAddedNotification                = 1207 //add_black
 	BlackDeletedNotification              = 1208 //remove_black
 	FriendInfoUpdatedNotification         = 1209
+	FriendPinSetNotifiaction              = 1210
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
@@ -109,6 +110,8 @@ const (
 	GroupMemberInfoSetNotification           = 1516
 	GroupMemberSetToAdminNotification        = 1517
 	GroupMemberSetToOrdinaryUserNotification = 1518
+	GroupInfoSetAnnouncementNotification     = 1519
+	GroupInfoSetNameNotification             = 1520
 	GroupNotificationEnd                     = 1599
 
 	SignalingNotificationBegin = 1600
@@ -307,6 +310,9 @@ const (
 	ReceiveMessage          = 0
 	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
+
+	Online  = 1
+	Offline = 0
 
 	//pinned
 	Pinned    = 1

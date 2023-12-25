@@ -18,6 +18,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/OpenIMSDK/tools/log"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -33,9 +35,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-
-	"github.com/OpenIMSDK/tools/log"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -51,10 +52,10 @@ type Conversation struct {
 	*interaction.LongConnMgr
 	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, string]
 	db                   db_interface.DataBase
-	ConversationListener open_im_sdk_callback.OnConversationListener
-	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
-	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
-	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
+	ConversationListener func() open_im_sdk_callback.OnConversationListener
+	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
+	msgKvListener        func() open_im_sdk_callback.OnMessageKvInfoListener
+	batchMsgListener     func() open_im_sdk_callback.OnBatchMsgListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
@@ -65,48 +66,29 @@ type Conversation struct {
 	file                 *file.File
 	business             *business.Business
 	messageController    *MessageController
-	cache                *cache.Cache
+	cache                *cache.Cache[string, *model_struct.LocalConversation]
 	full                 *full.Full
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
-	listenerForService   open_im_sdk_callback.OnListenerForService
-	loginTime            int64
-	startTime            time.Time
+
+	startTime time.Time
 }
 
-func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
-	c.listenerForService = listener
-}
-
-func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
-	return c.msgListener
-}
-
-func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
+func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
 
-func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
+func (c *Conversation) SetMsgKvListener(msgKvListener func() open_im_sdk_callback.OnMessageKvInfoListener) {
 	c.msgKvListener = msgKvListener
 }
 
-func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
+func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
 }
 
-func (c *Conversation) SetLoginTime() {
-	c.loginTime = utils.GetCurrentTimestampByMill()
-}
-
-func (c *Conversation) LoginTime() int64 {
-	return c.loginTime
-}
-
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	ch chan common.Cmd2Value,
-	friend *friend.Friend, group *group.Group, user *user.User,
-	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, cache *cache.Cache, full *full.Full, file *file.File) *Conversation {
+	ch chan common.Cmd2Value, friend *friend.Friend, group *group.Group, user *user.User, business *business.Business,
+	full *full.Full, file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -124,10 +106,8 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 	}
-	n.SetMsgListener(msgListener)
-	n.SetConversationListener(conversationListener)
 	n.initSyncer()
-	n.cache = cache
+	n.cache = cache.NewCache[string, *model_struct.LocalConversation]()
 	return n
 }
 
@@ -384,18 +364,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(phNewConversationSet)); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
-	// c.doMsgReadState(ctx, msgReadList)
-
-	// c.DoGroupMsgReadState(ctx, groupMsgReadList)
-	if c.batchMsgListener != nil {
+	if c.batchMsgListener() != nil {
 		c.batchNewMessages(ctx, newMessages)
 	} else {
-		c.newMessage(newMessages)
+		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet)
 	}
-	// c.revokeMessage(ctx, newMsgRevokeList)
-	// c.doReactionMsgModifier(ctx, reactionMsgModifierList)
-	// c.doReactionMsgDeleter(ctx, reactionMsgDeleterList)
-	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
 	}
@@ -664,33 +637,40 @@ func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (boo
 	return false, nil
 }
 
-func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
+func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation) {
 	sort.Sort(newMessagesList)
-	for _, w := range newMessagesList {
-		// log.Info("internal", "newMessage: ", w.ClientMsgID)
-		if c.msgListener != nil {
-			// log.Info("internal", "msgListener,OnRecvNewMessage")
-			c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
-		} else {
-			// log.Error("internal", "set msgListener is err ")
+	if c.GetBackground() {
+		u, err := c.user.GetSelfUserInfo(ctx)
+		if err != nil {
+			log.ZWarn(ctx, "GetSelfUserInfo err", err)
+			return
 		}
-		if c.listenerForService != nil {
-			// log.Info("internal", "msgListener,OnRecvNewMessage")
-			c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
+		if u.GlobalRecvMsgOpt != constant.ReceiveMessage {
+			return
+		}
+		for _, w := range newMessagesList {
+			conversationID := utils.GetConversationIDByMsg(w)
+			if v, ok := cc[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				c.msgListener().OnRecvOfflineNewMessage(utils.StructToJsonString(w))
+			}
+			if v, ok := nc[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				c.msgListener().OnRecvOfflineNewMessage(utils.StructToJsonString(w))
+			}
+		}
+	} else {
+		for _, w := range newMessagesList {
+			c.msgListener().OnRecvNewMessage(utils.StructToJsonString(w))
 		}
 	}
+
 }
 func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
-	if c.batchMsgListener != nil {
-		if len(newMessagesList) > 0 {
-			c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
-			//if c.IsBackground {
-			//	c.batchMsgListener.OnRecvOfflineNewMessages(utils.StructToJsonString(newMessagesList))
-			//}
-		}
-	} else {
-		log.ZWarn(ctx, "not set batchMsgListener", nil)
+	if len(newMessagesList) > 0 {
+		c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
+		//if c.IsBackground {
+		//	c.batchMsgListener.OnRecvOfflineNewMessages(utils.StructToJsonString(newMessagesList))
+		//}
 	}
 
 }
@@ -752,7 +732,7 @@ func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_st
 	if len(messageReceiptResp) > 0 {
 
 		// log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
-		c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+		c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
 }
 
@@ -799,6 +779,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	case constant.AdvancedText:
 		t := sdk_struct.AdvancedTextElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.AdvancedTextElem = &t
 	case constant.AtText:
 		t := sdk_struct.AtTextElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
@@ -914,7 +895,7 @@ func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*
 func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, lc.UserID)
+		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, lc.UserID)
 		if err != nil {
 			return err
 		}
@@ -933,15 +914,19 @@ func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.L
 }
 
 func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations ...*model_struct.LocalConversation) error {
+	if len(conversations) == 0 {
+		return nil
+	}
 	var userIDs, groupIDs []string
 	for _, conversation := range conversations {
-		if conversation.ConversationType == constant.SingleChatType {
+		if conversation.ConversationType == constant.SingleChatType ||
+			conversation.ConversationType == constant.NotificationChatType {
 			userIDs = append(userIDs, conversation.UserID)
 		} else if conversation.ConversationType == constant.SuperGroupChatType {
 			groupIDs = append(groupIDs, conversation.GroupID)
 		}
 	}
-	users, err := c.cache.BatchGetUserNameAndFaceURL(ctx, userIDs...)
+	users, err := c.batchGetUserNameAndFaceURL(ctx, userIDs...)
 	if err != nil {
 		return err
 	}
@@ -950,22 +935,98 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		return err
 	}
 	for _, conversation := range conversations {
-		if conversation.ConversationType == constant.SingleChatType {
+		if conversation.ConversationType == constant.SingleChatType ||
+			conversation.ConversationType == constant.NotificationChatType {
 			if v, ok := users[conversation.UserID]; ok {
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.Nickname
 			} else {
-				log.ZWarn(ctx, "user info not found", errors.New("user not found"), "userID", conversation.UserID)
+				log.ZWarn(ctx, "user info not found", errors.New("user not found"),
+					"userID", conversation.UserID)
 			}
 		} else if conversation.ConversationType == constant.SuperGroupChatType {
 			if v, ok := groups[conversation.GroupID]; ok {
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.GroupName
 			} else {
-				log.ZWarn(ctx, "group info not found", errors.New("group not found"), "groupID", conversation.GroupID)
+				log.ZWarn(ctx, "group info not found", errors.New("group not found"),
+					"groupID", conversation.GroupID)
 			}
 
 		}
 	}
 	return nil
+}
+func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*user.BasicInfo,
+	error) {
+	m := make(map[string]*user.BasicInfo)
+	var notCachedUserIDs []string
+	var notInFriend []string
+
+	friendList, err := c.friend.Db().GetFriendInfoList(ctx, userIDs)
+	if err != nil {
+		log.ZWarn(ctx, "BatchGetUserNameAndFaceURL", err, "userIDs", userIDs)
+		notInFriend = userIDs
+	} else {
+		notInFriend = utils2.SliceSub(userIDs, utils2.Slice(friendList, func(e *model_struct.LocalFriend) string {
+			return e.FriendUserID
+		}))
+	}
+	for _, localFriend := range friendList {
+		userInfo := &user.BasicInfo{FaceURL: localFriend.FaceURL}
+		if localFriend.Remark != "" {
+			userInfo.Nickname = localFriend.Remark
+		} else {
+			userInfo.Nickname = localFriend.Nickname
+		}
+		m[localFriend.FriendUserID] = userInfo
+	}
+
+	for _, userID := range notInFriend {
+		if value, ok := c.user.UserBasicCache.Load(userID); ok {
+			m[userID] = value
+		} else {
+			notCachedUserIDs = append(notCachedUserIDs, userID)
+		}
+	}
+
+	if len(notCachedUserIDs) > 0 {
+		users, err := c.user.GetServerUserInfo(ctx, notCachedUserIDs)
+		if err != nil {
+			return nil, err
+		}
+		for _, u := range users {
+			userInfo := &user.BasicInfo{FaceURL: u.FaceURL, Nickname: u.Nickname}
+			m[u.UserID] = userInfo
+			c.user.UserBasicCache.Store(u.UserID, userInfo)
+		}
+	}
+	return m, nil
+}
+func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
+	//find in cache
+	if value, ok := c.user.UserBasicCache.Load(userID); ok {
+		return value.FaceURL, value.Nickname, nil
+	}
+	//get from local db
+	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, userID)
+	if err == nil {
+		faceURL = friendInfo.FaceURL
+		if friendInfo.Remark != "" {
+			name = friendInfo.Remark
+		} else {
+			name = friendInfo.Nickname
+		}
+		return faceURL, name, nil
+	}
+	//get from server db
+	users, err := c.user.GetServerUserInfo(ctx, []string{userID})
+	if err != nil {
+		return "", "", err
+	}
+	if len(users) == 0 {
+		return "", "", sdkerrs.ErrUserIDNotFound.Wrap(userID)
+	}
+	c.user.UserBasicCache.Store(userID, &user.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
+	return users[0].FaceURL, users[0].Nickname, nil
 }

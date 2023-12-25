@@ -1,6 +1,9 @@
 package third
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -35,5 +38,37 @@ func TestLogMatch(t *testing.T) {
 		if actual[i] != expected[i] {
 			t.Errorf("Expected match %d to be %q, but got %q", i, expected[i], actual[i])
 		}
+	}
+}
+
+func TestName(t *testing.T) {
+	dir := `C:\Users\openIM\Desktop\testlog`
+
+	dirs, err := os.ReadDir(dir)
+	if err != nil {
+		panic(err)
+	}
+	for _, entry := range dirs {
+		if !entry.IsDir() {
+			info, err := entry.Info()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(entry.Name(), info.Size(), info.ModTime())
+		}
+	}
+
+	if true {
+		return
+	}
+
+	files := []string{
+		//filepath.Join(dir, "open-im-sdk-core.2023-10-13"),
+		filepath.Join(dir, "open-im-sdk-core.2023-11-15"),
+		//filepath.Join(dir, "open-im-sdk-core.2023-11-17"),
+	}
+
+	if err := zipFiles(filepath.Join(dir, "test1.zip"), files); err != nil {
+		t.Error(err)
 	}
 }

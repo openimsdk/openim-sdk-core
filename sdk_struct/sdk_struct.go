@@ -247,14 +247,13 @@ type AtInfo struct {
 	GroupNickname string `json:"groupNickname,omitempty"`
 }
 type AttachedInfoElem struct {
-	GroupHasReadInfo          GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
-	IsPrivateChat             bool             `json:"isPrivateChat"`
-	BurnDuration              int32            `json:"burnDuration"`
-	HasReadTime               int64            `json:"hasReadTime"`
-	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
-	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
-	IsEncryption              bool             `json:"isEncryption"`
-	InEncryptStatus           bool             `json:"inEncryptStatus"`
+	GroupHasReadInfo  GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
+	IsPrivateChat     bool             `json:"isPrivateChat"`
+	BurnDuration      int32            `json:"burnDuration"`
+	HasReadTime       int64            `json:"hasReadTime"`
+	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+	IsEncryption      bool             `json:"isEncryption"`
+	InEncryptStatus   bool             `json:"inEncryptStatus"`
 	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
 	Progress *UploadProgress `json:"uploadProgress,omitempty"`
 }
@@ -308,6 +307,7 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
+	SystemType           string `json:"systemType"`
 	PlatformID           int32  `json:"platformID"`
 	ApiAddr              string `json:"apiAddr"`
 	WsAddr               string `json:"wsAddr"`

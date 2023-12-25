@@ -19,7 +19,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 	"runtime"
 	"runtime/debug"
@@ -30,7 +29,7 @@ import (
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("MAIN", "panic info is:", r, string(debug.Stack()))
+			fmt.Println("MAIN", "panic info is:", r, debug.Stack())
 		}
 	}()
 	fmt.Println("runtime env", runtime.GOARCH, runtime.GOOS)
@@ -101,7 +100,6 @@ func registerFunc() {
 	js.Global().Set("setConversationPrivateChat", js.FuncOf(wrapperConMsg.SetConversationPrivateChat))
 	js.Global().Set("setConversationRecvMessageOpt", js.FuncOf(wrapperConMsg.SetConversationRecvMessageOpt))
 	js.Global().Set("setGlobalRecvMessageOpt", js.FuncOf(wrapperConMsg.SetGlobalRecvMessageOpt))
-	js.Global().Set("deleteAllConversationFromLocal", js.FuncOf(wrapperConMsg.DeleteAllConversationFromLocal))
 	js.Global().Set("hideConversation", js.FuncOf(wrapperConMsg.HideConversation))
 	js.Global().Set("setConversationDraft", js.FuncOf(wrapperConMsg.SetConversationDraft))
 	js.Global().Set("resetConversationGroupAtType", js.FuncOf(wrapperConMsg.ResetConversationGroupAtType))
@@ -114,6 +112,7 @@ func registerFunc() {
 	js.Global().Set("typingStatusUpdate", js.FuncOf(wrapperConMsg.TypingStatusUpdate))
 	js.Global().Set("deleteMessageFromLocalStorage", js.FuncOf(wrapperConMsg.DeleteMessageFromLocalStorage))
 	js.Global().Set("deleteMessage", js.FuncOf(wrapperConMsg.DeleteMessage))
+	js.Global().Set("hideAllConversations", js.FuncOf(wrapperConMsg.HideAllConversations))
 	js.Global().Set("deleteAllMsgFromLocalAndSvr", js.FuncOf(wrapperConMsg.DeleteAllMsgFromLocalAndSvr))
 	js.Global().Set("deleteAllMsgFromLocal", js.FuncOf(wrapperConMsg.DeleteAllMsgFromLocal))
 	js.Global().Set("clearConversationAndDeleteAllMsg", js.FuncOf(wrapperConMsg.ClearConversationAndDeleteAllMsg))
@@ -132,6 +131,7 @@ func registerFunc() {
 	js.Global().Set("changeGroupMute", js.FuncOf(wrapperGroup.ChangeGroupMute))
 	js.Global().Set("changeGroupMemberMute", js.FuncOf(wrapperGroup.ChangeGroupMemberMute))
 	js.Global().Set("setGroupMemberRoleLevel", js.FuncOf(wrapperGroup.SetGroupMemberRoleLevel))
+	js.Global().Set("setGroupMemberInfo", js.FuncOf(wrapperGroup.SetGroupMemberInfo))
 	js.Global().Set("getJoinedGroupList", js.FuncOf(wrapperGroup.GetJoinedGroupList))
 	js.Global().Set("searchGroups", js.FuncOf(wrapperGroup.SearchGroups))
 	js.Global().Set("setGroupInfo", js.FuncOf(wrapperGroup.SetGroupInfo))
@@ -178,14 +178,6 @@ func registerFunc() {
 	js.Global().Set("getBlackList", js.FuncOf(wrapperFriend.GetBlackList))
 	js.Global().Set("removeBlack", js.FuncOf(wrapperFriend.RemoveBlack))
 	js.Global().Set("addBlack", js.FuncOf(wrapperFriend.AddBlack))
-
-	//wrapperSignaling := wasm_wrapper.NewWrapperSignaling(globalFuc)
-	//js.Global().Set("signalingInviteInGroup", js.FuncOf(wrapperSignaling.SignalingInviteInGroup))
-	//js.Global().Set("signalingInvite", js.FuncOf(wrapperSignaling.SignalingInvite))
-	//js.Global().Set("signalingAccept", js.FuncOf(wrapperSignaling.SignalingAccept))
-	//js.Global().Set("signalingReject", js.FuncOf(wrapperSignaling.SignalingReject))
-	//js.Global().Set("signalingCancel", js.FuncOf(wrapperSignaling.SignalingCancel))
-	//js.Global().Set("signalingHungUp", js.FuncOf(wrapperSignaling.SignalingHungUp))
 
 	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
 	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))

@@ -358,17 +358,30 @@ func GetTableName(conversationID string) string {
 func GetErrTableName(conversationID string) string {
 	return constant.SuperGroupErrChatLogsTableNamePre + conversationID
 }
-func RemoveRepeatedStringInList(slc []string) []string {
-	var result []string
-	tempMap := map[string]byte{}
+
+type Comparable interface {
+	~int | ~string | ~float64 | ~int32
+}
+
+func RemoveRepeatedElementsInList[T Comparable](slc []T) []T {
+	var result []T
+	tempMap := map[T]struct{}{}
 	for _, e := range slc {
-		l := len(tempMap)
-		tempMap[e] = 0
-		if len(tempMap) != l {
+		if _, found := tempMap[e]; !found {
+			tempMap[e] = struct{}{}
 			result = append(result, e)
 		}
 	}
+
 	return result
+}
+func RemoveOneInList[T comparable](slice []T, val T) []T {
+	for i, v := range slice {
+		if v == val {
+			return append(slice[:i], slice[i+1:]...)
+		}
+	}
+	return slice
 }
 
 /*

@@ -146,11 +146,13 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 1、保证单次拉取消息量低于sdk单次从服务器拉取量
 // 2、块中连续性检测
 // 3、块之间连续性检测
-func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, conversationID string, seqList []int64, notStartTime,
-	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
+func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, conversationID string, seqList []int64,
+	notStartTime, isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog,
+	messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	existedSeqList, err := c.db.GetAlreadyExistSeqList(ctx, conversationID, seqList)
 	if err != nil {
-		log.ZError(ctx, "GetAlreadyExistSeqList err", err, "conversationID", conversationID, "seqList", seqList)
+		log.ZError(ctx, "GetAlreadyExistSeqList err", err, "conversationID", conversationID,
+			"seqList", seqList)
 		return
 	}
 	if len(existedSeqList) == len(seqList) {
@@ -159,7 +161,8 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 	}
 	newSeqList := utils.DifferenceSubset(seqList, existedSeqList)
 	if len(newSeqList) == 0 {
-		log.ZDebug(ctx, "do not pull message", "seqList", seqList, "existedSeqList", existedSeqList, "newSeqList", newSeqList)
+		log.ZDebug(ctx, "do not pull message", "seqList", seqList, "existedSeqList", existedSeqList,
+			"newSeqList", newSeqList)
 		return
 	}
 	var pullMsgResp sdkws.PullMessageBySeqsResp

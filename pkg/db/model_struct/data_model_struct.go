@@ -57,6 +57,7 @@ type LocalFriend struct {
 	//Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	IsPinned     bool   `gorm:"column:is_pinned;" json:"isPinned"`
 }
 
 // message FriendRequest{
@@ -510,4 +511,20 @@ type LocalStranger struct {
 
 func (LocalStranger) TableName() string {
 	return "local_stranger"
+}
+
+type LocalSendingMessages struct {
+	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	ClientMsgID    string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+}
+
+func (LocalSendingMessages) TableName() string {
+	return "local_sending_messages"
+}
+
+type UserCommand struct {
+	UserID   string            `bson:"userID"`
+	Type     int32             `bson:"type"`
+	Commands map[string]string `bson:"commands"`
 }

@@ -93,7 +93,9 @@ type LongConnMgr struct {
 	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
-	IsBackground       bool
+
+	mutex        sync.Mutex
+	IsBackground bool
 	// write conn lock
 	connWrite *sync.Mutex
 }
@@ -151,6 +153,8 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 			return sdkerrs.ErrArgs
 		}
 		return nil
+	case <-time.After(time.Second * 20):
+		return errs.ErrNetwork.Wrap("send message timeout")
 	}
 }
 
@@ -163,6 +167,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 func (c *LongConnMgr) readPump(ctx context.Context) {
 	log.ZDebug(ctx, "readPump start", "goroutine ID:", getGoroutineID())
 	defer func() {
+		_ = c.close()
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
@@ -508,8 +513,9 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	c.w.Lock()
 	c.connStatus = Connecting
 	c.w.Unlock()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t", ccontext.Info(ctx).WsAddr(),
-		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.IsBackground)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t",
+		ccontext.Info(ctx).WsAddr(), ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(),
+		ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.GetBackground())
 	if c.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
@@ -532,24 +538,26 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return true, err
 			}
-			switch apiResp.ErrCode {
-			case
-				errs.TokenExpiredError,
-				errs.TokenInvalidError,
-				errs.TokenMalformedError,
-				errs.TokenNotValidYetError,
-				errs.TokenUnknownError,
-				errs.TokenNotExistError:
-				c.listener.OnUserTokenExpired()
-				_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
-			case errs.TokenKickedError:
-				c.listener.OnKickedOffline()
-				_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
-			default:
-				c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
-			}
-			log.ZWarn(ctx, "long conn establish failed", sdkerrs.New(apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt))
-			return false, errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
+			//switch apiResp.ErrCode {
+			//case
+			//	errs.TokenExpiredError,
+			//	errs.TokenInvalidError,
+			//	errs.TokenMalformedError,
+			//	errs.TokenNotValidYetError,
+			//	errs.TokenUnknownError,
+			//	errs.TokenNotExistError:
+			//	c.listener.OnUserTokenExpired()
+			//	_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
+			//case errs.TokenKickedError:
+			//	c.listener.OnKickedOffline()
+			//	_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
+			//default:
+			//	c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
+			//}
+			//log.ZWarn(ctx, "long conn establish failed", sdkerrs.New(apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt))
+			err = errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
+			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
+			return false, err
 		}
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return true, err
@@ -585,6 +593,13 @@ func (c *LongConnMgr) Close(ctx context.Context) {
 	}
 
 }
+func (c *LongConnMgr) GetBackground() bool {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.IsBackground
+}
 func (c *LongConnMgr) SetBackground(isBackground bool) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	c.IsBackground = isBackground
 }

@@ -17,7 +17,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/login"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
@@ -455,7 +454,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
-	lg := new(login.LoginMgr)
+	lg := new(open_im_sdk.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
 	allLoginMgr[index].mgr = lg
@@ -504,7 +503,7 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	operationID := utils.OperationIDGenerator()
 	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
-	lg := new(login.LoginMgr)
+	lg := new(open_im_sdk.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
 	allLoginMgr[index].mgr = lg
@@ -666,8 +665,7 @@ type userCallback struct {
 }
 
 func (c userCallback) OnUserStatusChanged(statusMap string) {
-	//TODO implement me
-	panic("implement me")
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), statusMap)
 }
 
 func (userCallback) OnSelfInfoUpdated(callbackData string) {
@@ -755,6 +753,9 @@ func (testFriendListener) OnBlackDeleted(callbackInfo string) {
 }
 
 func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+}
+func (testFriendListener) OnPinFriends(callbackInfo string) {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 

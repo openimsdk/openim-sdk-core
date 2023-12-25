@@ -17,6 +17,7 @@ package db
 import (
 	"context"
 	"errors"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/indexdb"
 )
@@ -41,7 +42,13 @@ type IndexDB struct {
 	*indexdb.NotificationSeqs
 	*indexdb.LocalUpload
 	*indexdb.LocalStrangers
+	*indexdb.LocalSendingMessages
 	loginUserID string
+}
+
+func (i IndexDB) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (i IndexDB) Close(ctx context.Context) error {
@@ -73,6 +80,7 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		NotificationSeqs:                indexdb.NewNotificationSeqs(),
 		LocalUpload:                     indexdb.NewLocalUpload(),
 		LocalStrangers:                  indexdb.NewLocalStrangers(),
+		LocalSendingMessages:            indexdb.NewLocalSendingMessages(),
 		loginUserID:                     loginUserID,
 	}
 	err := i.InitDB(ctx, loginUserID, dbDir)

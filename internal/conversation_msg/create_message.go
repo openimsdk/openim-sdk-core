@@ -17,8 +17,9 @@ package conversation_msg
 import (
 	"context"
 	"errors"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -142,7 +143,8 @@ func (c *Conversation) CreateAdvancedQuoteMessage(ctx context.Context, text stri
 	return &s, nil
 }
 
-func (c *Conversation) CreateCardMessage(ctx context.Context, card *sdk_struct.CardElem) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateCardMessage(ctx context.Context, card *sdk_struct.CardElem) (*sdk_struct.MsgStruct,
+	error) {
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Card)
 	if err != nil {
@@ -152,21 +154,25 @@ func (c *Conversation) CreateCardMessage(ctx context.Context, card *sdk_struct.C
 	return &s, nil
 }
 
-func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, videoFullPath string, videoType string, duration int64, snapshotFullPath string) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, videoFullPath string, videoType string,
+	duration int64, snapshotFullPath string) (*sdk_struct.MsgStruct, error) {
 	dstFile := utils.FileTmpPath(videoFullPath, c.DataDir) //a->b
 	written, err := utils.CopyFile(videoFullPath, dstFile)
 	if err != nil {
 		//log.Error("internal", "open file failed: ", err, videoFullPath)
 		return nil, err
 	}
-	log.Info("internal", "videoFullPath dstFile", videoFullPath, dstFile, written)
+	log.ZDebug(ctx, "videoFullPath dstFile", "videoFullPath", videoFullPath,
+		"dstFile", dstFile, "written", written)
+
 	dstFile = utils.FileTmpPath(snapshotFullPath, c.DataDir) //a->b
 	sWritten, err := utils.CopyFile(snapshotFullPath, dstFile)
 	if err != nil {
 		//log.Error("internal", "open file failed: ", err, snapshotFullPath)
 		return nil, err
 	}
-	log.Info("internal", "snapshotFullPath dstFile", snapshotFullPath, dstFile, sWritten)
+	log.ZDebug(ctx, "snapshotFullPath dstFile", "snapshotFullPath", snapshotFullPath,
+		"dstFile", dstFile, "sWritten", sWritten)
 
 	s := sdk_struct.MsgStruct{}
 	err = c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Video)
@@ -192,7 +198,7 @@ func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, video
 	if snapshotFullPath != "" {
 		imageInfo, err := getImageInfo(s.VideoElem.SnapshotPath)
 		if err != nil {
-			log.Error("internal", "get Image Attributes error", err.Error())
+			log.ZError(ctx, "getImageInfo err:", err, "snapshotFullPath", snapshotFullPath)
 			return nil, err
 		}
 		s.VideoElem.SnapshotHeight = imageInfo.Height
@@ -396,7 +402,7 @@ func (c *Conversation) CreateVideoMessage(ctx context.Context, videoPath string,
 	}
 	fi, err := os.Stat(s.VideoElem.VideoPath)
 	if err != nil {
-		log.Error("internal", "get video file error", err.Error())
+		log.ZDebug(ctx, "get video file error", "videoPath", videoPath, "snapshotPath", snapshotPath)
 		return nil, err
 	}
 	s.VideoElem.VideoSize = fi.Size()
@@ -471,7 +477,8 @@ func (c *Conversation) CreateFaceMessage(ctx context.Context, index int, data st
 
 func (c *Conversation) CreateForwardMessage(ctx context.Context, s *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if s.Status != constant.MsgStatusSendSuccess {
-		log.Error("internal", "only send success message can be Forward")
+		log.ZError(ctx, "only send success message can be Forward",
+			errors.New("only send success message can be Forward"))
 		return nil, errors.New("only send success message can be Forward")
 	}
 	err := c.initBasicInfo(ctx, s, constant.UserMsgType, s.ContentType)

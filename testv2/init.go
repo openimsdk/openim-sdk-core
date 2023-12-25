@@ -40,7 +40,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
-	config.DataDir = ""
+	config.DataDir = "./"
 	configData, err := json.Marshal(config)
 	if err != nil {
 		panic(err)
@@ -58,7 +58,6 @@ func init() {
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
-	open_im_sdk.UserForSDK.SetListenerForService(&onListenerForService{ctx: ctx})
 	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
@@ -306,6 +305,9 @@ func (o *onFriendListener) OnBlackAdded(blackInfo string) {
 
 func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
+}
+func (o *onFriendListener) OnPinFriends(friendInfo string) {
+	log.ZDebug(context.Background(), "OnPinFriends", "friendPin", friendInfo)
 }
 
 type onUserListener struct {

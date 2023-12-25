@@ -20,7 +20,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
 
-type GroupDatabase interface {
+type GroupModel interface {
 	InsertGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	DeleteGroup(ctx context.Context, groupID string) error
 	UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
@@ -72,7 +72,7 @@ type GroupDatabase interface {
 	SearchGroupMembersDB(ctx context.Context, keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error)
 }
 
-type MessageDatabase interface {
+type MessageModel interface {
 	BatchInsertMessageList(ctx context.Context, conversationID string, MessageList []*model_struct.LocalChatLog) error
 	//BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
 	InsertMessage(ctx context.Context, conversationID string, Message *model_struct.LocalChatLog) error
@@ -106,7 +106,6 @@ type MessageDatabase interface {
 	//GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	GetMessageListNoTime(ctx context.Context, conversationID string, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	//GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
-	GetSendingMessageList(ctx context.Context) (result []*model_struct.LocalChatLog, err error)
 	MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error)
 	MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error)
 	GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error)
@@ -177,7 +176,7 @@ type MessageDatabase interface {
 	GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqs, error)
 }
 
-type ConversationDatabase interface {
+type ConversationModel interface {
 	GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error)
 	GetAllConversationListDB(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error)
@@ -209,18 +208,23 @@ type ConversationDatabase interface {
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) ([]*model_struct.LocalChatLog, error)
 	SuperGroupSearchAllMessageByContentType(ctx context.Context, superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
+	SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error)
 }
 
-type UserDatabase interface {
+type UserModel interface {
 	GetLoginUser(ctx context.Context, userID string) (*model_struct.LocalUser, error)
 	UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	UpdateLoginUserByMap(ctx context.Context, user *model_struct.LocalUser, args map[string]interface{}) error
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error)
 	SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error
+	//ProcessUserCommandAdd(ctx context.Context, Type int32, uuid string, value string) error
+	//ProcessUserCommandUpdate(ctx context.Context, Type int32, uuid string, value string) error
+	//ProcessUserCommandDelete(ctx context.Context, Type int32, uuid string) error
+	//ProcessUserCommandGet(ctx context.Context, Type int32) ([]*model_struct.LocalUserCommand, error)
 }
 
-type FriendDatabase interface {
+type FriendModel interface {
 	InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error
 	DeleteFriendDB(ctx context.Context, friendUserID string) error
 	UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error
@@ -246,7 +250,7 @@ type FriendDatabase interface {
 	DeleteBlack(ctx context.Context, blockUserID string) error
 }
 
-type ReactionDatabase interface {
+type ReactionModel interface {
 	GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
 	UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error
@@ -256,22 +260,28 @@ type ReactionDatabase interface {
 	DeleteMessageReactionExtension(ctx context.Context, msgID string) error
 }
 
-type S3Database interface {
+type S3Model interface {
 	GetUpload(ctx context.Context, partHash string) (*model_struct.LocalUpload, error)
 	InsertUpload(ctx context.Context, upload *model_struct.LocalUpload) error
 	DeleteUpload(ctx context.Context, partHash string) error
 	UpdateUpload(ctx context.Context, upload *model_struct.LocalUpload) error
 	DeleteExpireUpload(ctx context.Context) error
 }
+type SendingMessagesModel interface {
+	InsertSendingMessage(ctx context.Context, message *model_struct.LocalSendingMessages) error
+	DeleteSendingMessage(ctx context.Context, conversationID, clientMsgID string) error
+	GetAllSendingMessages(ctx context.Context) (friendRequests []*model_struct.LocalSendingMessages, err error)
+}
 
 type DataBase interface {
 	Close(ctx context.Context) error
 	InitDB(ctx context.Context, userID string, dataDir string) error
-	GroupDatabase
-	MessageDatabase
-	ConversationDatabase
-	UserDatabase
-	FriendDatabase
-	ReactionDatabase
-	S3Database
+	GroupModel
+	MessageModel
+	ConversationModel
+	UserModel
+	FriendModel
+	ReactionModel
+	S3Model
+	SendingMessagesModel
 }
