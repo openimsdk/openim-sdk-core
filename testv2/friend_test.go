@@ -39,6 +39,7 @@ func Test_AddFriend(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Friend().AddFriend(ctx, &friend2.ApplyToAddFriendReq{
 		ToUserID: "2",
 		ReqMsg:   "test add",
+		Ex:       "add",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -67,7 +68,7 @@ func Test_AddFriend(t *testing.T) {
 //}
 
 func Test_AcceptFriendApplication(t *testing.T) {
-	req := &sdk_params_callback.ProcessFriendApplicationParams{ToUserID: "6754269405", HandleMsg: "test accept"}
+	req := &sdk_params_callback.ProcessFriendApplicationParams{ToUserID: "1", HandleMsg: "test accept"}
 	err := open_im_sdk.UserForSDK.Friend().AcceptFriendApplication(ctx, req)
 	if err != nil {
 		t.Fatal(err)
@@ -148,7 +149,7 @@ func Test_SetFriendRemark(t *testing.T) {
 }
 
 func Test_AddBlack(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Friend().AddBlack(ctx, "863454357")
+	err := open_im_sdk.UserForSDK.Friend().AddBlack(ctx, "863454357", "ex")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,5 +172,11 @@ func Test_GetBlackList(t *testing.T) {
 	t.Log("GetBlackList success", ctx.Value("operationID"))
 	for _, item := range info {
 		t.Log(*item)
+	}
+}
+func Test_SetFriendsEx(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Friend().SetFriendsEx(ctx, []string{"2"}, "exx")
+	if err != nil {
+		t.Fatal(err)
 	}
 }

@@ -306,9 +306,6 @@ func (o *onFriendListener) OnBlackAdded(blackInfo string) {
 func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
 }
-func (o *onFriendListener) OnPinFriends(friendInfo string) {
-	log.ZDebug(context.Background(), "OnPinFriends", "friendPin", friendInfo)
-}
 
 type onUserListener struct {
 	ctx context.Context

@@ -220,6 +220,16 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo)
 	return nil
 }
 
+// updateSelfUserInfoEx updates the user's information with Ex field.
+func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
+	userInfo.UserID = u.loginUserID
+	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoExRouter, userPb.UpdateUserInfoExReq{UserInfo: userInfo}, nil); err != nil {
+		return err
+	}
+	_ = u.SyncLoginUserInfo(ctx)
+	return nil
+}
+
 // CRUD user command
 //func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
 //	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
