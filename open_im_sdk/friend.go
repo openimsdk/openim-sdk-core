@@ -77,6 +77,6 @@ func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
 func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeUserID string) {
 	call(callback, operationID, UserForSDK.Friend().RemoveBlack, removeUserID)
 }
-func SetFriendsEx(callback open_im_sdk_callback.Base, operationID string, friendIDs []string, ex string) {
+func SetFriendsEx(callback open_im_sdk_callback.Base, operationID string, friendIDs string, ex string) {
 	call(callback, operationID, UserForSDK.Friend().SetFriendsEx, friendIDs, ex)
 }
