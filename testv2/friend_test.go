@@ -175,9 +175,7 @@ func Test_GetBlackList(t *testing.T) {
 	}
 }
 func Test_SetFriendsEx(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Friend().SetFriendsEx(ctx, []string{"2"}, &wrapperspb.StringValue{
-		Value: "exx",
-	})
+	err := open_im_sdk.UserForSDK.Friend().SetFriendsEx(ctx, []string{"2"}, "exx")
 	if err != nil {
 		t.Fatal(err)
 	}

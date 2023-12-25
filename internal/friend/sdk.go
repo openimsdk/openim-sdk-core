@@ -250,12 +250,11 @@ func (f *Friend) RemoveBlack(ctx context.Context, blackUserID string) error {
 func (f *Friend) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack, error) {
 	return f.db.GetBlackListDB(ctx)
 }
-func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex *wrapperspb.StringValue) error {
-	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs, Ex: ex}, nil); err != nil {
+func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex string) error {
+	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs, Ex: &wrapperspb.StringValue{
+		Value: ex,
+	}}, nil); err != nil {
 		return err
-	}
-	if ex == nil {
-		return errs.Wrap(errs.ErrArgs, "ex is nil")
 	}
 	// Check if the specified ID is a friend
 	friendResults, err := f.CheckFriend(ctx, friendIDs)
@@ -285,7 +284,7 @@ func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex *wrapp
 	// If the code reaches here, all friendIDs are confirmed as friends
 	// Update friend information if they are friends
 
-	updateErr := f.db.UpdateColumnsFriend(ctx, friendIDs, map[string]interface{}{"Ex": ex.Value})
+	updateErr := f.db.UpdateColumnsFriend(ctx, friendIDs, map[string]interface{}{"Ex": ex})
 	if updateErr != nil {
 		return errs.Wrap(updateErr, "Error updating friend information")
 	}
