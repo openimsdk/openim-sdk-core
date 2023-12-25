@@ -15,6 +15,7 @@
 package testv2
 
 import (
+	"github.com/OpenIMSDK/protocol/wrapperspb"
 	"testing"
 	"time"
 
@@ -47,13 +48,52 @@ func Test_GetUsersInfo(t *testing.T) {
 		t.Log(userInfo[0].PublicInfo)
 	}
 }
-
+func Test_GetUsersInfoWithCache(t *testing.T) {
+	userInfo, err := open_im_sdk.UserForSDK.Full().GetUsersInfoWithCache(ctx, []string{"1"}, "")
+	if err != nil {
+		t.Error(err)
+	}
+	if userInfo[0].BlackInfo != nil {
+		t.Log(userInfo[0].BlackInfo)
+	}
+	if userInfo[0].FriendInfo != nil {
+		t.Log(userInfo[0].FriendInfo)
+	}
+	if userInfo[0].PublicInfo != nil {
+		t.Log(userInfo[0].PublicInfo)
+	}
+}
 func Test_SetSelfInfo(t *testing.T) {
 	newNickName := "test"
 	//newFaceURL := "http://test.com"
 	err := open_im_sdk.UserForSDK.User().SetSelfInfo(ctx, &sdkws.UserInfo{
 		Nickname: newNickName,
 		//FaceURL:  newFaceURL,
+	})
+	newFaceURL := "http://test.com"
+
+	if err != nil {
+		t.Error(err)
+	}
+	userInfo, err := open_im_sdk.UserForSDK.User().GetSelfUserInfo(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+	if userInfo.UserID != UserID && userInfo.Nickname != newNickName && userInfo.FaceURL != newFaceURL {
+		t.Error("user id not match")
+	}
+	t.Log(userInfo)
+	time.Sleep(time.Second * 10)
+}
+func Test_SetSelfInfoEx(t *testing.T) {
+	newNickName := "test"
+	//newFaceURL := "http://test.com"
+	err := open_im_sdk.UserForSDK.User().SetSelfInfoEx(ctx, &sdkws.UserInfoWithEx{
+		Nickname: newNickName,
+		//FaceURL:  newFaceURL,
+		Ex: &wrapperspb.StringValue{
+			Value: "ASD",
+		},
 	})
 	newFaceURL := "http://test.com"
 

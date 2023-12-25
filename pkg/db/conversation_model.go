@@ -369,10 +369,10 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 }
 func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
 	// Define the search condition based on the searchParam
-	condition := fmt.Sprintf("showname like %q ", "%"+searchParam+"%")
+	condition := fmt.Sprintf("show_name like %q ", "%"+searchParam+"%")
 
 	var conversationList []model_struct.LocalConversation
-	err := d.conn.WithContext(ctx).Where(condition).Order("create_time DESC").Find(&conversationList).Error
+	err := d.conn.WithContext(ctx).Where(condition).Order("latest_msg_send_time DESC").Find(&conversationList).Error
 	var transfer []*model_struct.LocalConversation
 	for _, v := range conversationList {
 		v1 := v // Create a copy to avoid referencing the loop variable

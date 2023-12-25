@@ -43,8 +43,8 @@ func AddFriend(callback open_im_sdk_callback.Base, operationID string, userIDReq
 func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, userIDRemark string) {
 	call(callback, operationID, UserForSDK.Friend().SetFriendRemark, userIDRemark)
 }
-func PinFriends(callback open_im_sdk_callback.Base, operationID string, friendIDsAndIsPinned string) {
-	call(callback, operationID, UserForSDK.Friend().PinFriends, friendIDsAndIsPinned)
+func PinFriends(callback open_im_sdk_callback.Base, operationID string, setFriendPinParams string) {
+	call(callback, operationID, UserForSDK.Friend().PinFriends, setFriendPinParams)
 }
 func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friendUserID string) {
 	call(callback, operationID, UserForSDK.Friend().DeleteFriend, friendUserID)
@@ -66,8 +66,8 @@ func RefuseFriendApplication(callback open_im_sdk_callback.Base, operationID str
 	call(callback, operationID, UserForSDK.Friend().RefuseFriendApplication, userIDHandleMsg)
 }
 
-func AddBlack(callback open_im_sdk_callback.Base, operationID string, blackUserID string) {
-	call(callback, operationID, UserForSDK.Friend().AddBlack, blackUserID)
+func AddBlack(callback open_im_sdk_callback.Base, operationID string, blackUserID string, ex string) {
+	call(callback, operationID, UserForSDK.Friend().AddBlack, blackUserID, ex)
 }
 
 func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
@@ -76,4 +76,7 @@ func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
 
 func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeUserID string) {
 	call(callback, operationID, UserForSDK.Friend().RemoveBlack, removeUserID)
+}
+func SetFriendsEx(callback open_im_sdk_callback.Base, operationID string, friendIDs string, ex string) {
+	call(callback, operationID, UserForSDK.Friend().SetFriendsEx, friendIDs, ex)
 }

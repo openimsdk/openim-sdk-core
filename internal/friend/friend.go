@@ -257,7 +257,9 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return f.SyncAllBlackList(ctx)
 		}
 	case constant.FriendPinSetNotifiaction:
-		var tips sdkws.PinFriendTips
+
+		var tips sdkws.UpdateFriendTips
+
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
