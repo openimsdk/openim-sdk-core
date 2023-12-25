@@ -107,8 +107,7 @@ func (i *Friend) SearchFriendList(ctx context.Context, keyword string, isSearchU
 		}
 	}
 }
-func (i *Friend) UpdateColumnsFriend(ctx context.Context, friendIDs string, args map[string]interface{}) error {
-
+func (i *Friend) UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]interface{}) error {
 	_, err := exec.Exec(utils.StructToJsonString(friendIDs), utils.StructToJsonString(args))
 	if err != nil {
 		return err // Return immediately if there's an error with any friendID
