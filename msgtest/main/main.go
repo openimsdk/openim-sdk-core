@@ -38,10 +38,10 @@ var (
 	end                   int
 	count                 int
 	sendInterval          int
-	onlineUsersOnly       bool
 
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
-	isRegisterUser bool // 是否注册用户
+	isRegisterUser  bool // 是否注册用户
+	onlineUsersOnly bool
 )
 
 func InitWithFlag() {
