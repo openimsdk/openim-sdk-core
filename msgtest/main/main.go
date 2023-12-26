@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	log2 "log"
 	"net/http"
 	_ "net/http/pprof"
@@ -71,6 +72,7 @@ func PrintQPS() {
 func main() {
 	flag.Parse()
 	ctx := context.Background()
+	fmt.Println("1111:::", onlineUsersOnly)
 	log.ZWarn(ctx, "flag args", nil, "totalOnlineUserNum", totalOnlineUserNum,
 		"randomSender", randomSender, "randomReceiver", randomReceiver,
 		"samplingRate", samplingRate, "start", start, "end", end, "count", count, "sendInterval", sendInterval,
@@ -87,7 +89,6 @@ func main() {
 	} else {
 		f, r, err = p.SelectSample(totalOnlineUserNum, samplingRate)
 	}
-	//f, r, err := p.SelectSample2(totalOnlineUserNum, 0.01)
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
