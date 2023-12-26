@@ -26,9 +26,9 @@ var (
 	QPSChan       chan int64 // 用于定时更新qpsCounter的channel
 )
 
-func init() {
-	QPSChan = make(chan int64, 100)
-}
+//func init() {
+//	QPSChan = make(chan int64, 100)
+//}
 
 func IncrementQPS() {
 	qpsMutex.Lock()
