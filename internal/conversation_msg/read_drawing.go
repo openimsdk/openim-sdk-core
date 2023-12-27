@@ -192,8 +192,8 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 				log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
 			}
 		}
-		var latestMsg *sdk_struct.MsgStruct
-		if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
+		latestMsg := &sdk_struct.MsgStruct{}
+		if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
 			log.ZError(ctx, "Unmarshal err", err, "conversationID", conversation.ConversationID, "latestMsg", conversation.LatestMsg)
 		}
 		if (!latestMsg.IsRead) && utils2.Contain(latestMsg.Seq, seqs...) {
@@ -235,8 +235,8 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 			return
 		}
 		if conversation.ConversationType == constant.SingleChatType {
-			var latestMsg *sdk_struct.MsgStruct
-			if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
+			latestMsg := &sdk_struct.MsgStruct{}
+			if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
 				log.ZError(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
 			}
 			var successMsgIDs []string
