@@ -305,7 +305,7 @@ func (u *LoginMgr) handlerSendingMsg(ctx context.Context, sendingMsg *model_stru
 	if err != nil {
 		return err
 	}
-	var latestMsg sdk_struct.MsgStruct
+	latestMsg := &sdk_struct.MsgStruct{}
 	if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
 		return err
 	}
