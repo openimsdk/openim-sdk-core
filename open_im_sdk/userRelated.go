@@ -305,7 +305,7 @@ func (u *LoginMgr) handlerSendingMsg(ctx context.Context, sendingMsg *model_stru
 	if err != nil {
 		return err
 	}
-	var latestMsg model_struct.LocalChatLog
+	var latestMsg sdk_struct.MsgStruct
 	if err := json.Unmarshal([]byte(conversation.LatestMsg), &latestMsg); err != nil {
 		return err
 	}
@@ -350,9 +350,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.friend, u.group, u.user, u.business, u.full, u.file)
 	u.setListener(ctx)
 	u.run(ctx)
-	if err := u.user.SyncLoginUserInfo(ctx); err != nil {
-		log.ZError(ctx, "SyncLoginUserInfo failed", err)
-	}
 	u.setLoginStatus(Logged)
 	log.ZDebug(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
