@@ -15,13 +15,25 @@
 package testv2
 
 import (
+	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"testing"
 	"time"
 )
 
+func Test_ChangeInputState(t *testing.T) {
+	for {
+		err := open_im_sdk.UserForSDK.Conversation().ChangeInputState(ctx, "sg_2309860938", true)
+		if err != nil {
+			log.ZError(ctx, "ChangeInputState", err)
+		}
+		time.Sleep(time.Second * 1)
+	}
+}
+
 func Test_Empty(t *testing.T) {
 	for {
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 1)
 	}
 }
 

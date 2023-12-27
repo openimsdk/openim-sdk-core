@@ -59,7 +59,7 @@ type entering struct {
 	platformIDSet map[int32]struct{}
 }
 
-func (e *entering) InputState(ctx context.Context, conversationID string, focus bool) error {
+func (e *entering) ChangeInputState(ctx context.Context, conversationID string, focus bool) error {
 	if conversationID == "" {
 		return errs.ErrArgs.Wrap("conversationID can't be empty")
 	}
@@ -146,8 +146,10 @@ func (e *entering) getStateKey(platformID int32, userID string, groupID string) 
 	return string(data)
 }
 
-func (e *entering) onNewMsg(ctx context.Context, msg *sdk_struct.MsgStruct) {
-	if msg.EnteringElem == nil {
+func (e *entering) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
+	var enteringElem sdk_struct.EnteringElem
+	if err := json.Unmarshal(msg.Content, &enteringElem); err != nil {
+		log.ZError(ctx, "entering onNewMsg Unmarshal failed", err, "message", msg)
 		return
 	}
 	if msg.SendID == e.conv.loginUserID {
@@ -162,7 +164,7 @@ func (e *entering) onNewMsg(ctx context.Context, msg *sdk_struct.MsgStruct) {
 		return
 	}
 	key := e.getStateKey(msg.SenderPlatformID, msg.SendID, msg.GroupID)
-	if msg.EnteringElem.Focus {
+	if enteringElem.Focus {
 		d := time.Duration(expirationTimestamp - now)
 		if v, t, ok := e.state.GetWithExpiration(key); ok {
 			if t.UnixMilli() >= expirationTimestamp {

@@ -387,6 +387,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}})
 	}
+
+	for _, msgs := range allMsg {
+		for _, msg := range msgs.Msgs {
+			if msg.ContentType == constant.Entering {
+				c.entering.onNewMsg(ctx, msg)
+			}
+		}
+	}
 	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b), "len", len(allMsg))
 }
 
@@ -667,10 +675,6 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 		}
 	} else {
 		for _, w := range newMessagesList {
-			if w.EnteringElem != nil {
-				c.entering.onNewMsg(ctx, w)
-				continue
-			}
 			c.msgListener().OnRecvNewMessage(utils.StructToJsonString(w))
 		}
 	}
@@ -1045,4 +1049,12 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 	}
 	c.user.UserBasicCache.Store(userID, &user.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
 	return users[0].FaceURL, users[0].Nickname, nil
+}
+
+func (c *Conversation) GetInputStatesInfo(ctx context.Context, userID string, groupID string) (*InputStatesChangedData, error) {
+	return c.entering.GetInputStatesInfo(userID, groupID), nil
+}
+
+func (c *Conversation) ChangeInputState(ctx context.Context, conversationID string, focus bool) error {
+	return c.entering.ChangeInputState(ctx, conversationID, focus)
 }
