@@ -258,15 +258,15 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 	case constant.FriendsInfoUpdateNotification:
 
-		var tips sdkws.UpdateFriendTips
+		var tips sdkws.FriendsInfoUpdateTips
 
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		if tips.UserID == f.loginUserID {
+		if tips.FromToUserID.ToUserID == f.loginUserID {
 			var friendIDs []string
 
-			for _, friendInfo := range tips.UpdateFriends {
+			for _, friendInfo := range tips.FriendsInfo {
 				friendIDs = append(friendIDs, friendInfo.FriendUser.UserID)
 			}
 			return f.SyncFriends(ctx, friendIDs)
