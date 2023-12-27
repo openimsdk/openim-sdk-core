@@ -264,12 +264,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		if tips.FromToUserID.ToUserID == f.loginUserID {
-			var friendIDs []string
-
-			for _, friendInfo := range tips.FriendsInfo {
-				friendIDs = append(friendIDs, friendInfo.FriendUser.UserID)
-			}
-			return f.SyncFriends(ctx, friendIDs)
+			return f.SyncFriends(ctx, tips.FriendIDs)
 		}
 	default:
 		return fmt.Errorf("type failed %d", msg.ContentType)
