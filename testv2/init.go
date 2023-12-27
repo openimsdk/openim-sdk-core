@@ -63,7 +63,7 @@ func init() {
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 2)
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
@@ -309,6 +309,10 @@ func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 
 type onUserListener struct {
 	ctx context.Context
+}
+
+func (o *onUserListener) OnUserInputStatusChanged(change string) {
+
 }
 
 func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {

@@ -66,6 +66,7 @@ const (
 	CustomMsgOnlineOnly             = 120
 	ReactionMessageModifier         = 121
 	ReactionMessageDeleter          = 122
+	Entering                        = 123
 
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
