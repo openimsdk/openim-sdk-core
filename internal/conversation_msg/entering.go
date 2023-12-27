@@ -30,7 +30,7 @@ func newEntering(c *Conversation) *entering {
 	e := &entering{
 		conv:  c,
 		send:  cache.New(intervalsTime, intervalsTime+intervalsTime/2),
-		state: cache.New(intervalsTime, intervalsTime),
+		state: cache.New(intervalsTime, intervalsTime+intervalsTime/2),
 	}
 	e.platformIDs = make([]int32, 0, len(constant.PlatformID2Name))
 	e.platformIDSet = make(map[int32]struct{})
@@ -189,17 +189,17 @@ type InputStatesChangedData struct {
 }
 
 func (e *entering) changes(userID string, groupID string) {
-	data := utils.StructToJsonString(e.GetInputStatesInfo(userID, groupID))
-	e.conv.userListener().OnUserInputStatusChanged(data)
+	data := InputStatesChangedData{UserID: userID, GroupID: groupID, PlatformIDs: e.GetInputStatesInfo(userID, groupID)}
+	e.conv.userListener().OnUserInputStatusChanged(utils.StructToJsonString(data))
 }
 
-func (e *entering) GetInputStatesInfo(userID string, groupID string) *InputStatesChangedData {
-	data := InputStatesChangedData{UserID: userID, GroupID: groupID}
+func (e *entering) GetInputStatesInfo(userID string, groupID string) []int32 {
+	platformIDs := make([]int32, 0, 1)
 	for _, platformID := range e.platformIDs {
 		key := e.getStateKey(platformID, userID, groupID)
 		if _, ok := e.state.Get(key); ok {
-			data.PlatformIDs = append(data.PlatformIDs, platformID)
+			platformIDs = append(platformIDs, platformID)
 		}
 	}
-	return &data
+	return platformIDs
 }
