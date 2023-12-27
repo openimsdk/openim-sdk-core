@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/ws_wrapper/utils"
 	"sort"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -544,11 +543,11 @@ func Uint32ListConvert(list []uint32) []int64 {
 
 func UnmarshalNotificationElem(bytes []byte, t interface{}) error {
 	var n sdk_struct.NotificationElem
-	err := utils.JsonStringToStruct(string(bytes), &n)
+	err := JsonStringToStruct(string(bytes), &n)
 	if err != nil {
 		return err
 	}
-	err = utils.JsonStringToStruct(n.Detail, t)
+	err = JsonStringToStruct(n.Detail, t)
 	if err != nil {
 		return err
 	}
