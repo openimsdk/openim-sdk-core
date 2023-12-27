@@ -59,7 +59,7 @@ type entering struct {
 	platformIDSet map[int32]struct{}
 }
 
-func (e *entering) ChangeInputState(ctx context.Context, conversationID string, focus bool) error {
+func (e *entering) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
 	if conversationID == "" {
 		return errs.ErrArgs.Wrap("conversationID can't be empty")
 	}

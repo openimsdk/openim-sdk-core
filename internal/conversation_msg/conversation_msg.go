@@ -1051,10 +1051,10 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 	return users[0].FaceURL, users[0].Nickname, nil
 }
 
-func (c *Conversation) GetInputStatesInfo(ctx context.Context, userID string, groupID string) (*InputStatesChangedData, error) {
+func (c *Conversation) GetInputStates(ctx context.Context, userID string, groupID string) ([]int32, error) {
 	return c.entering.GetInputStatesInfo(userID, groupID), nil
 }
 
-func (c *Conversation) ChangeInputState(ctx context.Context, conversationID string, focus bool) error {
-	return c.entering.ChangeInputState(ctx, conversationID, focus)
+func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
+	return c.entering.ChangeInputStates(ctx, conversationID, focus)
 }

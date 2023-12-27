@@ -247,3 +247,11 @@ func SetMessageLocalEx(callback open_im_sdk_callback.Base, operationID string, c
 func SearchConversation(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, UserForSDK.Conversation().SearchConversation, searchParam)
 }
+
+func ChangeInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, focus bool) {
+	call(callback, operationID, UserForSDK.Conversation().ChangeInputStates, conversationID, focus)
+}
+
+func GetInputStates(callback open_im_sdk_callback.Base, operationID string, userID string, groupID string) {
+	call(callback, operationID, UserForSDK.Conversation().GetInputStates, userID, groupID)
+}

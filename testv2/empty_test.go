@@ -23,9 +23,9 @@ import (
 
 func Test_ChangeInputState(t *testing.T) {
 	for {
-		err := open_im_sdk.UserForSDK.Conversation().ChangeInputState(ctx, "sg_2309860938", true)
+		err := open_im_sdk.UserForSDK.Conversation().ChangeInputStates(ctx, "sg_2309860938", true)
 		if err != nil {
-			log.ZError(ctx, "ChangeInputState", err)
+			log.ZError(ctx, "ChangeInputStates", err)
 		}
 		time.Sleep(time.Second * 1)
 	}
