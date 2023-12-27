@@ -68,7 +68,7 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string {
-	var msg sdkws.MsgData
+	var msg *sdk_struct.MsgStruct
 	if err := json.Unmarshal([]byte(latestMsg), &msg); err != nil {
 		log.ZError(context.Background(), "getConversationLatestMsgClientID", err, "latestMsg", latestMsg)
 	}
