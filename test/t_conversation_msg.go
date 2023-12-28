@@ -17,9 +17,9 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -65,7 +65,7 @@ import (
 func DoTestDeleteAllMsgFromLocalAndSvr() {
 	var deleteConversationCallback DeleteConversationCallBack
 	operationID := utils.OperationIDGenerator()
-	log.Info(operationID, utils.GetSelfFuncName(), "args ")
+	log.ZInfo(ctx, operationID, utils.GetSelfFuncName(), "args")
 	open_im_sdk.DeleteAllMsgFromLocalAndSvr(deleteConversationCallback, operationID)
 }
 func DoTestSearchLocalMessages() {
@@ -251,11 +251,11 @@ type TestGetAllConversationListCallBack struct {
 }
 
 func (t TestGetAllConversationListCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "TestGetAllConversationListCallBack ", errCode, errMsg)
+	log.ZInfo(ctx, "TestGetAllConversationListCallBack ", "operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (t TestGetAllConversationListCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "ConversationCallBack ", data)
+	log.ZInfo(ctx, "ConversationCallBack ", "operationID", t.OperationID, "data", data)
 }
 
 func DoTestGetAllConversation() {
@@ -281,17 +281,18 @@ type TestSetConversationPinnedCallback struct {
 }
 
 func (t TestSetConversationPinnedCallback) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "TestSetConversationPinnedCallback ", errCode, errMsg)
+	log.ZInfo(ctx, "TestSetConversationPinnedCallback ", "operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (t TestSetConversationPinnedCallback) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestSetConversationPinnedCallback ", data)
+	log.ZInfo(ctx, "TestSetConversationPinnedCallback ", "operationID", t.OperationID, "data", data)
 }
 
 func DoTestSetConversationRecvMessageOpt(conversationIDs []string, opt int) {
 	var callback testProcessGroupApplication
 	callback.OperationID = utils.OperationIDGenerator()
-	log.Info(callback.OperationID, utils.GetSelfFuncName(), "input: ")
+	log.ZInfo(ctx, "DoTestSetConversationRecvMessageOpt", "operationID", callback.OperationID, "funcName", utils.GetSelfFuncName(),
+		"conversationIDs: ", conversationIDs, "opt", opt)
 	s := utils.StructToJsonString(conversationIDs)
 	open_im_sdk.SetConversationRecvMessageOpt(callback, callback.OperationID, s, opt)
 }
@@ -343,11 +344,11 @@ type TestGetConversationListSplitCallBack struct {
 }
 
 func (t TestGetConversationListSplitCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "TestGetConversationListSplitCallBack err ", errCode, errMsg)
+	log.ZInfo(ctx, "TestGetConversationListSplitCallBack err ", "operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (t TestGetConversationListSplitCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestGetConversationListSplitCallBack  success", data)
+	log.ZInfo(ctx, "TestGetConversationListSplitCallBack  success", "operationID", t.OperationID, "data", data)
 }
 func DoTestGetConversationListSplit() {
 	var test TestGetConversationListSplitCallBack
@@ -428,12 +429,12 @@ type GetHistoryCallBack struct {
 }
 
 func (g GetHistoryCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "GetHistoryCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, "GetHistoryCallBack err", "operationID", g.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (g GetHistoryCallBack) OnSuccess(data string) {
 	g.Data = data
-	log.Info(g.OperationID, "get History success ", data)
+	log.ZInfo(ctx, "get History success ", "operationID", g.OperationID, "data", data)
 }
 
 type SetAppBadgeCallBack struct {
@@ -441,11 +442,11 @@ type SetAppBadgeCallBack struct {
 }
 
 func (g SetAppBadgeCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "SetAppBadgeCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, "SetAppBadgeCallBack err", "operationID", g.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (g SetAppBadgeCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "SetAppBadgeCallBack success ", data)
+	log.ZInfo(ctx, "SetAppBadgeCallBack success", "operationID", g.OperationID, "data", data)
 }
 
 type UpdateFcmTokenCallBack struct {
@@ -453,11 +454,11 @@ type UpdateFcmTokenCallBack struct {
 }
 
 func (g UpdateFcmTokenCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "UpdateFcmTokenCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, "UpdateFcmTokenCallBack err", "operationID", g.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (g UpdateFcmTokenCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "UpdateFcmTokenCallBack success ", data)
+	log.ZInfo(ctx, "UpdateFcmTokenCallBack success", "operationID", g.OperationID, "data", data)
 }
 
 type FindMessageListCallBack struct {
@@ -465,11 +466,11 @@ type FindMessageListCallBack struct {
 }
 
 func (g FindMessageListCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "FindMessageListCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, "FindMessageListCallBack err", "operationID", g.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (g FindMessageListCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "FindMessageListCallBack success ", data)
+	log.ZInfo(ctx, "FindMessageListCallBack success", "operationID", g.OperationID, "data", data)
 }
 
 type SetMessageReactionExtensionsCallBack struct {
@@ -477,11 +478,11 @@ type SetMessageReactionExtensionsCallBack struct {
 }
 
 func (g SetMessageReactionExtensionsCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "SetMessageReactionExtensionsCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, "SetMessageReactionExtensionsCallBack err", "operationID", g.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (g SetMessageReactionExtensionsCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "SetMessageReactionExtensionsCallBack success ", data)
+	log.ZInfo(ctx, "SetMessageReactionExtensionsCallBack success", "operationID", g.OperationID, "data", data)
 }
 
 type AddMessageReactionExtensionsCallBack struct {
@@ -489,11 +490,11 @@ type AddMessageReactionExtensionsCallBack struct {
 }
 
 func (g AddMessageReactionExtensionsCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "AddMessageReactionExtensionsCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, "AddMessageReactionExtensionsCallBack err", "operationID", g.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (g AddMessageReactionExtensionsCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "AddMessageReactionExtensionsCallBack success ", data)
+	log.ZInfo(ctx, "AddMessageReactionExtensionsCallBack success", "operationID", g.OperationID, "data", data)
 }
 
 type GetMessageListReactionExtensionsCallBack struct {
@@ -501,11 +502,11 @@ type GetMessageListReactionExtensionsCallBack struct {
 }
 
 func (g GetMessageListReactionExtensionsCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "GetMessageListReactionExtensionsCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, g.OperationID, "GetMessageListReactionExtensionsCallBack err", errCode, "errMsg", errMsg)
 }
 
 func (g GetMessageListReactionExtensionsCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "GetMessageListReactionExtensionsCallBack success ", data)
+	log.ZInfo(ctx, g.OperationID, "GetMessageListReactionExtensionsCallBack success", "data", data)
 }
 
 type GetHistoryReverseCallBack struct {
@@ -513,11 +514,11 @@ type GetHistoryReverseCallBack struct {
 }
 
 func (g GetHistoryReverseCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "GetHistoryReverseCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, g.OperationID, "GetHistoryReverseCallBack err", errCode, "errMsg", errMsg)
 }
 
 func (g GetHistoryReverseCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "GetHistoryReverseCallBack success ", data)
+	log.ZInfo(ctx, g.OperationID, "GetHistoryReverseCallBack success", "data", data)
 }
 
 type SearchLocalMessagesCallBack struct {
@@ -525,11 +526,11 @@ type SearchLocalMessagesCallBack struct {
 }
 
 func (g SearchLocalMessagesCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(g.OperationID, "SearchLocalMessagesCallBack err", errCode, errMsg)
+	log.ZInfo(ctx, g.OperationID, "SearchLocalMessagesCallBack err", errCode, "errMsg", errMsg)
 }
 
 func (g SearchLocalMessagesCallBack) OnSuccess(data string) {
-	fmt.Println(g.OperationID, "SearchLocalMessagesCallBack success ", data)
+	fmt.Println(g.OperationID, "SearchLocalMessagesCallBack success", "data", data)
 }
 
 type MsgListenerCallBak struct {
@@ -544,47 +545,47 @@ func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
 
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
 	fmt.Printf("OnRecvMessageExtensionsAdded", msgID, reactionExtensionList)
-	log.Info("internal", "OnRecvMessageExtensionsAdded ", msgID, reactionExtensionList)
-
+	log.ZInfo(ctx, "internal", "OnRecvMessageExtensionsAdded", "msgID", msgID, "reactionExtensionList", reactionExtensionList)
 }
 
 func (m *MsgListenerCallBak) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
 	//fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
 }
+
 func (m *MsgListenerCallBak) OnNewRecvMessageRevoked(messageRevoked string) {
 	//fmt.Println("OnNewRecvMessageRevoked , ", messageRevoked)
 }
 
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
-	log.Info("internal", "OnRecvMessageExtensionsChanged ", msgID, reactionExtensionList)
-
+	log.ZInfo(ctx, "internal", "OnRecvMessageExtensionsChanged", "msgID", msgID, "reactionExtensionList", reactionExtensionList)
 }
+
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
-	log.Info("internal", "OnRecvMessageExtensionsDeleted ", msgID, reactionExtensionKeyList)
+	log.ZInfo(ctx, "internal", "OnRecvMessageExtensionsDeleted", "msgID", msgID, "reactionExtensionKeyList", reactionExtensionKeyList)
 }
 
 type BatchMsg struct {
 }
 
 func (m *BatchMsg) OnRecvNewMessages(groupMsgReceiptList string) {
-	log.Info("OnRecvNewMessages , ", groupMsgReceiptList)
+	log.ZInfo(ctx, "OnRecvNewMessages", "groupMsgReceiptList", groupMsgReceiptList)
 }
 
 func (m *BatchMsg) OnRecvOfflineNewMessages(messageList string) {
-	log.Info("OnRecvOfflineNewMessages , ", messageList)
+	log.ZInfo(ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 }
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
 	if err != nil {
-		log.Error("", "Unmarshal failed", err.Error())
+		log.ZError(ctx, "Unmarshal failed", err, "msg", msg)
 	} else {
 		RecvMsgMapLock.Lock()
 		defer RecvMsgMapLock.Unlock()
 		t := SendRecvTime{SendIDRecvID: mm.SendID + mm.RecvID, RecvTime: utils.GetCurrentTimestampByMill()}
 		RecvAllMsg[mm.ClientMsgID] = &t
-		log.Info("", "OnRecvNewMessage  callback", mm.ClientMsgID, mm.SendID, mm.RecvID)
+		log.ZInfo(ctx, "", "OnRecvNewMessage callback", "ClientMsgID", mm.ClientMsgID, "SendID", mm.SendID, "RecvID", mm.RecvID)
 	}
 }
 
@@ -593,11 +594,11 @@ type TestSearchLocalMessages struct {
 }
 
 func (t TestSearchLocalMessages) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "SearchLocalMessages , OnError %v\n", errMsg)
+	log.ZInfo(ctx, t.OperationID, "SearchLocalMessages , OnError", "errCode", errCode, "errMsg", errMsg)
 }
 
 func (t TestSearchLocalMessages) OnSuccess(data string) {
-	log.Info(t.OperationID, "SearchLocalMessages , OnSuccess %v\n", data)
+	log.ZInfo(ctx, t.OperationID, "SearchLocalMessages , OnSuccess", "data", data)
 }
 
 //funcation DoTestSearchLocalMessages() {
@@ -617,11 +618,11 @@ type TestDeleteConversation struct {
 }
 
 func (t TestDeleteConversation) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "TestDeleteConversation , OnError %v\n", errMsg)
+	log.ZInfo(ctx, t.OperationID, "TestDeleteConversation , OnError", "errCode", errCode, "errMsg", errMsg)
 }
 
 func (t TestDeleteConversation) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestDeleteConversation , OnSuccess %v\n", data)
+	log.ZInfo(ctx, t.OperationID, "TestDeleteConversation , OnSuccess", "data", data)
 }
 
 func (m MsgListenerCallBak) OnRecvC2CReadReceipt(data string) {
@@ -643,9 +644,8 @@ func (c *conversationCallBack) OnRecvMessageExtensionsChanged(msgID string, reac
 func (c *conversationCallBack) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
 	panic("implement me")
 }
-
 func (c *conversationCallBack) OnSyncServerProgress(progress int) {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "progress", progress)
 }
 
 func (c *conversationCallBack) OnSyncServerStart() {
@@ -654,24 +654,23 @@ func (c *conversationCallBack) OnSyncServerStart() {
 
 func (c *conversationCallBack) OnSyncServerFinish() {
 	c.SyncFlag = 1
-	log.Info("", utils.GetSelfFuncName())
-
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (c *conversationCallBack) OnSyncServerFailed() {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (c *conversationCallBack) OnNewConversation(conversationList string) {
-	log.Info("", "OnNewConversation returnList is ", conversationList)
+	log.ZInfo(ctx, "OnNewConversation returnList is", conversationList)
 }
 
 func (c *conversationCallBack) OnConversationChanged(conversationList string) {
-	log.Info("", "OnConversationChanged returnList is", conversationList)
+	log.ZInfo(ctx, "OnConversationChanged returnList is", conversationList)
 }
 
 func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
+	log.ZInfo(ctx, "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is", totalUnreadCount)
 }
 
 type testMarkC2CMessageAsRead struct {
@@ -719,59 +718,59 @@ func DoTestSetAppBackgroundStatus(isBackground bool) {
 	operationID := utils.OperationIDGenerator()
 	open_im_sdk.SetAppBackgroundStatus(&testSendMsg, operationID, isBackground)
 }
-
 func DoTestSendMsg2(sendId, recvID string) {
 	m := "Single chat test" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
-	log.NewInfo(operationID, "send msg:", s)
+	log.ZInfo(ctx, "send msg:", "operationID", operationID, "message", s) // 修改此行
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success", sendId, recvID)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "success", "sendId", sendId, "recvID", recvID) // 修改此行
 }
 
 func DoTestSendMsg2Group(sendId, groupID string, index int) {
 	m := "test: " + sendId + " : " + groupID + " : " + utils.IntToString(index)
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
-	log.NewInfo(operationID, "send msg:", s)
+	log.ZInfo(ctx, "send msg:", "operationID", operationID, "message", s) // 修改此行
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "success") // 修改此行
 }
+
 func DoTestSendMsg2GroupWithMessage(sendId, groupID string, message string) {
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(message)
-	log.NewInfo(operationID, "send msg:", s)
+	log.ZInfo(ctx, "send msg:", "operationID", operationID, "message", s) // 修改此行
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "success") // 修改此行
 }
 
 func DoTestSendMsg2c2c(sendId, recvID string, index int) {
 	m := "test: " + sendId + " : " + recvID + " : " + utils.IntToString(index)
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
-	log.NewInfo(operationID, "send msg:", s)
+	log.ZInfo(ctx, "send msg:", "operationID", operationID, "message", s) // 修改此行
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "success") // 修改此行
 }
 
 type TestMarkGroupMessageAsRead struct {
@@ -779,11 +778,12 @@ type TestMarkGroupMessageAsRead struct {
 }
 
 func (t TestMarkGroupMessageAsRead) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnError %v\n", errMsg)
+
+	log.ZInfo(ctx, "TestMarkGroupMessageAsRead , OnError", "operationID", t.OperationID, "errMsg", errMsg) // 修改此行
 }
 
 func (t TestMarkGroupMessageAsRead) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnSuccess %v \n", data)
+	log.ZInfo(ctx, "TestMarkGroupMessageAsRead , OnSuccess", "operationID", t.OperationID, "data", data) // 修改此行
 }
 
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
@@ -792,7 +792,7 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 	ctx := mcontext.NewCtx(operationID)
 	s, err := allLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
 	if err != nil {
-		log.Error(operationID, "CreateTextMessage", err)
+		log.ZError(ctx, "CreateTextMessage", err, "operationID", operationID)
 		return
 	}
 
@@ -806,7 +806,8 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 	testSendMsg.recvID = recvID
 	testSendMsg.groupID = groupID
 	testSendMsg.msgID = s.ClientMsgID
-	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
+	log.ZInfo(ctx, "SendMessage", "operationID", operationID, "sendId", sendId, "recvID", recvID, "groupID", groupID, "msgID",
+		testSendMsg.msgID, "index", index)
 	if recvID != "" {
 		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, "", &o)
 	} else {
@@ -876,9 +877,8 @@ func DoTestSendVideo(sendId, recvID string) {
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
-	log.NewInfo(operationID, s)
+	log.ZInfo(ctx, "SendMessage", "operationID", operationID, "message", s)
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
-
 }
 
 type TestClearMsg struct {
@@ -886,11 +886,11 @@ type TestClearMsg struct {
 }
 
 func (t *TestClearMsg) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "TestClearMsg , OnError ", errMsg)
+	log.ZInfo(ctx, "TestClearMsg OnError", "operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (t *TestClearMsg) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestClearMsg , OnSuccess ", data)
+	log.ZInfo(ctx, "TestClearMsg OnSuccess", "operationID", t.OperationID, "data", data)
 }
 
 func DoTestClearMsg() {
@@ -905,11 +905,11 @@ type TestModifyGroupMessageReaction struct {
 }
 
 func (t *TestModifyGroupMessageReaction) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "TestModifyGroupMessageReaction , OnError ", errMsg)
+	log.ZInfo(ctx, "TestModifyGroupMessageReaction OnError", "operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func (t *TestModifyGroupMessageReaction) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestModifyGroupMessageReaction , OnSuccess ", data)
+	log.ZInfo(ctx, "TestModifyGroupMessageReaction OnSuccess", "operationID", t.OperationID, "data", data)
 }
 
 func DoTestGetSelfUserInfo() {
