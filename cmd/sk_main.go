@@ -131,7 +131,7 @@ func main() {
 		log.ZWarn(ctx, "", errors.New(""), "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 
-	log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
+	//log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
 	time.Sleep(100000 * time.Second)
 	return
 	i = 0

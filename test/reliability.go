@@ -222,7 +222,6 @@ func WorkGroupMsgDelayTest(msgNumOneClient int, intervalSleepMS int, randSleepMa
 func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	msgNumInOneClient = msgNumOneClient
 	//timeStamp := utils.Int64ToString(time.Now().Unix())
-	t1 := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
@@ -237,7 +236,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	//log.Warn("", "get all user token finish ", clientNum, " cost time: ", time.Since(t1))
 
 	//log.Warn("", "init and login begin ")
-	t1 = time.Now()
+
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
@@ -251,7 +250,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	//log.Warn("", "init and login end ", " cost time: ", time.Since(t1))
 
 	//log.Warn("", "send msg begin ")
-	t1 = time.Now()
+
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
@@ -272,7 +271,6 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 
 func WorkGroupPressTest(msgNumOneClient int, intervalSleepMS int, clientNum int, groupID string) {
 	msgNumInOneClient = msgNumOneClient
-	t1 := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
@@ -287,7 +285,7 @@ func WorkGroupPressTest(msgNumOneClient int, intervalSleepMS int, clientNum int,
 	//log.Warn("", "get all user token finish ", clientNum, " cost time: ", time.Since(t1))
 
 	//log.Warn("", "init and login begin ")
-	t1 = time.Now()
+
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
@@ -301,7 +299,7 @@ func WorkGroupPressTest(msgNumOneClient int, intervalSleepMS int, clientNum int,
 	//log.Warn("", "init and login end ", " cost time: ", time.Since(t1))
 
 	//log.Warn("", "send msg begin ")
-	t1 = time.Now()
+
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
@@ -327,7 +325,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	// 消息数量不一致说明出现丢失
 	if len(SendSuccAllMsg)+len(SendFailedAllMsg) != msgNumOneClient*clientNum {
 		//log.Warn("", utils.GetSelfFuncName(), " send msg success number: ", len(SendSuccAllMsg),
-			" send msg failed number: ", len(SendFailedAllMsg), " all: ", msgNumOneClient*clientNum)
+		//	" send msg failed number: ", len(SendFailedAllMsg), " all: ", msgNumOneClient*clientNum)
 		return false
 	}
 
@@ -339,7 +337,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 			// 埋点日志，第 ksend 个消息数据 本地和服务器不一致
 			//log.Error("", "check failed not in recv ", ksend)
 			//log.Error("", "send failed num: ", len(SendFailedAllMsg),
-				" send success num: ", len(SendSuccAllMsg), " recv num: ", len(RecvAllMsg))
+			//	" send success num: ", len(SendSuccAllMsg), " recv num: ", len(RecvAllMsg))
 			return false
 		}
 	}
@@ -360,7 +358,6 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	//		//	return false
 	//	}
 	//}
-	maxCostMsgID := ""
 	minCostTime := int64(1000000)
 	maxCostTime := int64(0)
 	totalCostTime := int64(0)
@@ -371,7 +368,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 			costTime := krecv.RecvTime - vsend.SendTime
 			totalCostTime += costTime
 			if costTime > maxCostTime {
-				maxCostMsgID = ksend
+
 				maxCostTime = costTime
 			}
 			if minCostTime > costTime {
@@ -385,7 +382,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	//log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
 	//log.Warn("", "recv msg succ num ", len(RecvAllMsg))
 	//log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ",
-		totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms", " maxCostMsgID: ", maxCostMsgID)
+	//	totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms", " maxCostMsgID: ", maxCostMsgID)
 
 	return true
 }
