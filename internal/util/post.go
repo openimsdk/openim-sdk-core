@@ -61,10 +61,11 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 
 	// Deferred function to log the result of the API call.
 	defer func(start time.Time) {
+		elapsed := time.Since(start).Milliseconds()
 		if err == nil {
-			log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", time.Since(start).Milliseconds())
+			log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", fmt.Sprintf("%dms", elapsed))
 		} else {
-			log.ZError(ctx, "CallApi", err, "api", api, "state", "failed", "cost time", time.Since(start).Milliseconds())
+			log.ZError(ctx, "CallApi", err, "api", api, "state", "failed", "cost time", fmt.Sprintf("%dms", elapsed))
 		}
 	}(time.Now())
 
