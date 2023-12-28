@@ -23,18 +23,23 @@ const (
 )
 
 const (
-	intervalsTime = time.Second * 10
+	inputStatesSendTime   = time.Second * 10                            // input status sending interval time
+	inputStatesTimeout    = inputStatesSendTime + inputStatesSendTime/2 // input status timeout
+	inputStatesMsgTimeout = inputStatesSendTime / 2                     // message sending timeout
 )
 
 func newEntering(c *Conversation) *entering {
 	e := &entering{
 		conv:  c,
-		send:  cache.New(intervalsTime, intervalsTime+intervalsTime/2),
-		state: cache.New(intervalsTime, intervalsTime+intervalsTime/2),
+		send:  cache.New(inputStatesSendTime, inputStatesTimeout),
+		state: cache.New(inputStatesTimeout, inputStatesTimeout),
 	}
 	e.platformIDs = make([]int32, 0, len(constant.PlatformID2Name))
 	e.platformIDSet = make(map[int32]struct{})
 	for id := range constant.PlatformID2Name {
+		if id != 7 {
+			continue
+		}
 		e.platformIDSet[int32(id)] = struct{}{}
 		e.platformIDs = append(e.platformIDs, int32(id))
 	}
@@ -44,7 +49,7 @@ func newEntering(c *Conversation) *entering {
 		if err := json.Unmarshal([]byte(key), &data); err != nil {
 			return
 		}
-		e.changes(data.UserID, data.GroupID)
+		e.changes(data.ConversationID, data.UserID)
 	})
 	return e
 }
@@ -88,7 +93,7 @@ func (e *entering) ChangeInputStates(ctx context.Context, conversationID string,
 			return nil
 		}
 	}
-	ctx, cancel := context.WithTimeout(ctx, intervalsTime/2)
+	ctx, cancel := context.WithTimeout(ctx, inputStatesMsgTimeout)
 	defer cancel()
 	if err := e.sendMsg(ctx, conversation, focus); err != nil {
 		e.send.Delete(key)
@@ -133,13 +138,13 @@ func (e *entering) sendMsg(ctx context.Context, conversation *model_struct.Local
 }
 
 type inputStatesKey struct {
-	UserID     string `json:"uid,omitempty"`
-	GroupID    string `json:"gid,omitempty"`
-	PlatformID int32  `json:"pid,omitempty"`
+	ConversationID string `json:"cid,omitempty"`
+	UserID         string `json:"uid,omitempty"`
+	PlatformID     int32  `json:"pid,omitempty"`
 }
 
-func (e *entering) getStateKey(platformID int32, userID string, groupID string) string {
-	data, err := json.Marshal(inputStatesKey{PlatformID: platformID, UserID: userID, GroupID: groupID})
+func (e *entering) getStateKey(conversationID string, userID string, platformID int32) string {
+	data, err := json.Marshal(inputStatesKey{ConversationID: conversationID, UserID: userID, PlatformID: platformID})
 	if err != nil {
 		panic(err)
 	}
@@ -159,13 +164,20 @@ func (e *entering) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
 		return
 	}
 	now := time.Now().UnixMilli()
-	expirationTimestamp := msg.SendTime + int64(intervalsTime/time.Millisecond)
+	expirationTimestamp := msg.SendTime + int64(inputStatesSendTime/time.Millisecond)
 	if msg.SendTime > now || expirationTimestamp <= now {
 		return
 	}
-	key := e.getStateKey(msg.SenderPlatformID, msg.SendID, msg.GroupID)
+	var sourceID string
+	if msg.GroupID == "" {
+		sourceID = msg.SendID
+	} else {
+		sourceID = msg.GroupID
+	}
+	conversationID := e.conv.getConversationIDBySessionType(sourceID, int(msg.SessionType))
+	key := e.getStateKey(conversationID, msg.SendID, msg.SenderPlatformID)
 	if enteringElem.Focus {
-		d := time.Duration(expirationTimestamp - now)
+		d := time.Duration(expirationTimestamp-now) * time.Millisecond
 		if v, t, ok := e.state.GetWithExpiration(key); ok {
 			if t.UnixMilli() >= expirationTimestamp {
 				return
@@ -173,8 +185,8 @@ func (e *entering) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
 			e.state.Set(key, v, d)
 		} else {
 			e.state.Set(key, struct{}{}, d)
+			e.changes(conversationID, msg.SendID)
 		}
-		e.changes(msg.SendID, msg.GroupID)
 	} else {
 		if _, ok := e.state.Get(key); ok {
 			e.state.Delete(key)
@@ -183,20 +195,20 @@ func (e *entering) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 type InputStatesChangedData struct {
-	UserID      string  `json:"userID"`
-	GroupID     string  `json:"groupID"`
-	PlatformIDs []int32 `json:"platformIDs"`
+	ConversationID string  `json:"conversationID"`
+	UserID         string  `json:"userID"`
+	PlatformIDs    []int32 `json:"platformIDs"`
 }
 
-func (e *entering) changes(userID string, groupID string) {
-	data := InputStatesChangedData{UserID: userID, GroupID: groupID, PlatformIDs: e.GetInputStatesInfo(userID, groupID)}
+func (e *entering) changes(conversationID string, userID string) {
+	data := InputStatesChangedData{ConversationID: conversationID, UserID: userID, PlatformIDs: e.GetInputStates(conversationID, userID)}
 	e.conv.userListener().OnUserInputStatusChanged(utils.StructToJsonString(data))
 }
 
-func (e *entering) GetInputStatesInfo(userID string, groupID string) []int32 {
+func (e *entering) GetInputStates(conversationID string, userID string) []int32 {
 	platformIDs := make([]int32, 0, 1)
 	for _, platformID := range e.platformIDs {
-		key := e.getStateKey(platformID, userID, groupID)
+		key := e.getStateKey(conversationID, userID, platformID)
 		if _, ok := e.state.Get(key); ok {
 			platformIDs = append(platformIDs, platformID)
 		}

@@ -1051,8 +1051,8 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 	return users[0].FaceURL, users[0].Nickname, nil
 }
 
-func (c *Conversation) GetInputStates(ctx context.Context, userID string, groupID string) ([]int32, error) {
-	return c.entering.GetInputStatesInfo(userID, groupID), nil
+func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {
+	return c.entering.GetInputStates(conversationID, userID), nil
 }
 
 func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
