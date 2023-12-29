@@ -93,6 +93,7 @@ type LongConnMgr struct {
 	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
+	reconnectStrategy  ReconnectStrategy
 
 	mutex        sync.Mutex
 	IsBackground bool
@@ -108,7 +109,8 @@ type Message struct {
 func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		loginMgrCh: loginMgrCh, IsCompression: true,
-		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
+		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor(),
+		reconnectStrategy: NewExponentialRetry()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
@@ -181,7 +183,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		}
 		if err != nil {
 			log.ZWarn(c.ctx, "reConn", err)
-			time.Sleep(time.Second * 1)
+			time.Sleep(c.reconnectStrategy.GetSleepInterval())
 			continue
 		}
 		c.conn.SetReadLimit(maxMessageSize)
@@ -481,6 +483,12 @@ func (c *LongConnMgr) GetConnectionStatus() int {
 	defer c.w.Unlock()
 	return c.connStatus
 }
+
+func (c *LongConnMgr) SetConnectionStatus(status int) {
+	c.w.Lock()
+	defer c.w.Unlock()
+	c.connStatus = status
+}
 func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err error) {
 	if c.IsConnected() {
 		return true, nil
@@ -489,9 +497,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	defer c.connWrite.Unlock()
 	log.ZDebug(ctx, "conn start")
 	c.listener.OnConnecting()
-	c.w.Lock()
-	c.connStatus = Connecting
-	c.w.Unlock()
+	c.SetConnectionStatus(Connecting)
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t",
 		ccontext.Info(ctx).WsAddr(), ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(),
 		ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.GetBackground())
@@ -500,9 +506,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	}
 	resp, err := c.conn.Dial(url, nil)
 	if err != nil {
-		c.w.Lock()
-		c.connStatus = Closed
-		c.w.Unlock()
+		c.SetConnectionStatus(Closed)
 		if resp != nil {
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
@@ -544,11 +548,10 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	c.listener.OnConnectSuccess()
 	c.ctx = newContext(c.conn.LocalAddr())
 	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)
-	c.w.Lock()
-	c.connStatus = Connected
-	c.w.Unlock()
+	c.SetConnectionStatus(Connected)
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
+	c.reconnectStrategy.Reset()
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return true, nil
 }
