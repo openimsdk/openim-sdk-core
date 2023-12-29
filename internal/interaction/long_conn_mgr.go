@@ -52,6 +52,9 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 1024
+
+	//Maximum number of reconnection attempts
+	maxReconnectAttempts = 300
 )
 
 const (
@@ -368,7 +371,7 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 	if c.GetConnectionStatus() != Connected && msg.ReqIdentifier == constant.GetNewestSeq {
 		return tempChan, sdkerrs.ErrNetwork.Wrap("connection closed,conning...")
 	}
-	for i := 0; i < 60; i++ {
+	for i := 0; i < maxReconnectAttempts; i++ {
 		err := c.writeBinaryMsg(*msg)
 		if err != nil {
 			log.ZError(c.ctx, "send binary message error", err, "message", msg)
