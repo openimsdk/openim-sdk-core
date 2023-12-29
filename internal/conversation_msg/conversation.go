@@ -311,27 +311,38 @@ func (c *Conversation) judgeMultipleSubString(keywordList []string, main string,
 	return true
 }
 
+// searchLocalMessages searches for local messages based on the given search parameters.
 func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk.SearchLocalMessagesParams) (*sdk.SearchLocalMessagesCallback, error) {
-	var r sdk.SearchLocalMessagesCallback
-	var startTime, endTime int64
-	var list []*model_struct.LocalChatLog
-	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
-	var err error
-	var conversationID string
+	var r sdk.SearchLocalMessagesCallback                                   // Initialize the result structure
+	var startTime, endTime int64                                            // Variables to hold start and end times for the search
+	var list []*model_struct.LocalChatLog                                   // Slice to store the search results
+	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10) // Map to store results grouped by conversation, with initial capacity of 10
+	var err error                                                           // Variable to store any errors encountered
+	var conversationID string                                               // Variable to store the current conversation ID
+
+	// Set the end time for the search; if SearchTimePosition is 0, use the current timestamp
 	if searchParam.SearchTimePosition == 0 {
 		endTime = utils.GetCurrentTimestampBySecond()
 	} else {
 		endTime = searchParam.SearchTimePosition
 	}
+
+	// Set the start time based on the specified time period
 	if searchParam.SearchTimePeriod != 0 {
 		startTime = endTime - searchParam.SearchTimePeriod
 	}
+	// Convert start and end times to milliseconds
 	startTime = utils.UnixSecondToTime(startTime).UnixNano() / 1e6
 	endTime = utils.UnixSecondToTime(endTime).UnixNano() / 1e6
+
+	// Validate that either keyword list or message type list is provided
 	if len(searchParam.KeywordList) == 0 && len(searchParam.MessageTypeList) == 0 {
 		return nil, errors.New("keywordlist and messageTypelist all null")
 	}
+
+	// Search in a specific conversation if ConversationID is provided
 	if searchParam.ConversationID != "" {
+		// Validate pagination parameters
 		if searchParam.PageIndex < 1 || searchParam.Count < 1 {
 			return nil, errors.New("page or count is null")
 		}
@@ -340,6 +351,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if err != nil {
 			return nil, err
 		}
+		// Search by content type or keyword based on provided parameters
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
 			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 		} else {
@@ -358,24 +370,19 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 				searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 		}
 	} else {
-		//Comprehensive search, search all
+		// Comprehensive search across all conversations
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
 		list, err = c.messageController.SearchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 	}
+
+	// Handle any errors encountered during the search
 	if err != nil {
 		return nil, err
 	}
-	//localChatLogToMsgStruct(&messageList, list)
 
-	//log.Debug("hahh",utils.KMP("SSSsdf3434","s"))
-	//log.Debug("hahh",utils.KMP("SSSsdf3434","g"))
-	//log.Debug("hahh",utils.KMP("SSSsdf3434","3434"))
-	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
-	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
-	// log.Debug("", "get raw data length is", len(list))
-	log.ZDebug(ctx, "get raw data length is", len(list))
+	// Logging and processing each message in the search results
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID
@@ -401,13 +408,13 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		temp.LocalEx = v.LocalEx
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
-			// log.Error("", "Parsing data error:", err.Error(), temp)
 			log.ZError(ctx, "Parsing data error:", err, "msg", temp)
 			continue
 		}
 		if c.filterMsg(&temp, searchParam) {
 			continue
 		}
+		// Determine the conversation ID based on the session type
 		switch temp.SessionType {
 		case constant.SingleChatType:
 			if temp.SendID == c.loginUserID {
@@ -424,11 +431,11 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			temp.RecvID = c.loginUserID
 			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.SuperGroupChatType)
 		}
+		// Populate the conversationMap with search results
 		if oldItem, ok := conversationMap[conversationID]; !ok {
 			searchResultItem := sdk.SearchByConversationResult{}
 			localConversation, err := c.db.GetConversation(ctx, conversationID)
 			if err != nil {
-				// log.Error("", "get conversation err ", err.Error(), conversationID)
 				continue
 			}
 			searchResultItem.ConversationID = conversationID
@@ -445,15 +452,19 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			conversationMap[conversationID] = oldItem
 		}
 	}
+
+	// Compile the results from the conversationMap into the response structure
 	for _, v := range conversationMap {
 		r.SearchResultItems = append(r.SearchResultItems, v)
 		r.TotalCount += v.MessageCount
-
 	}
+
+	// Sort the search results based on the latest message send time
 	sort.Slice(r.SearchResultItems, func(i, j int) bool {
 		return r.SearchResultItems[i].LatestMsgSendTime > r.SearchResultItems[j].LatestMsgSendTime
 	})
-	return &r, nil
+
+	return &r, nil // Return the final search results
 }
 
 // true is filter, false is not filter
