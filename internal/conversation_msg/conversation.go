@@ -418,6 +418,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		temp.LocalEx = v.LocalEx
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
+			// log.Error("", "Parsing data error:", err.Error(), temp)
 			log.ZError(ctx, "Parsing data error:", err, "msg", temp)
 			continue
 		}
@@ -446,6 +447,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			searchResultItem := sdk.SearchByConversationResult{}
 			localConversation, err := c.db.GetConversation(ctx, conversationID)
 			if err != nil {
+				// log.Error("", "get conversation err ", err.Error(), conversationID)
 				continue
 			}
 			searchResultItem.ConversationID = conversationID
