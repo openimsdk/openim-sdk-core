@@ -1,6 +1,8 @@
 package interaction
 
-import "time"
+import (
+	"time"
+)
 
 type ReconnectStrategy interface {
 	GetSleepInterval() time.Duration
@@ -20,7 +22,8 @@ func NewExponentialRetry() *ExponentialRetry {
 }
 
 func (rs *ExponentialRetry) GetSleepInterval() time.Duration {
-	interval := (rs.index + 1) % len(rs.attempts)
+	rs.index++
+	interval := rs.index % len(rs.attempts)
 	return time.Second * time.Duration(rs.attempts[interval])
 }
 
