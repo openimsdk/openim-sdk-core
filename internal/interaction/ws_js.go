@@ -109,6 +109,16 @@ func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error)
 	return httpResp, err
 }
 
+//func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error) {
+//	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+//	defer cancel()
+//	conn, httpResp, err := websocket.Dial(ctx, urlStr, nil)
+//	if err == nil {
+//		w.conn = conn
+//	}
+//	return httpResp, err
+//}
+
 func (w *JSWebSocket) IsNil() bool {
 	if w.conn != nil {
 		return false
