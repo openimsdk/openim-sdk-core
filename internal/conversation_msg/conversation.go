@@ -383,6 +383,16 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	}
 
 	// Logging and processing each message in the search results
+	//localChatLogToMsgStruct(&messageList, list)
+
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","s"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","g"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","3434"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
+	// log.Debug("", "get raw data length is", len(list))
+	log.ZDebug(ctx, "get raw data length is", len(list))
+	
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID
