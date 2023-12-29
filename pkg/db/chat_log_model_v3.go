@@ -32,6 +32,16 @@ import (
 func (d *DataBase) initChatLog(ctx context.Context, conversationID string) {
 	if !d.conn.Migrator().HasTable(utils.GetTableName(conversationID)) {
 		d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
+		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID,
+			utils.GetTableName(conversationID)))
+		if result.Error != nil {
+			log.ZError(ctx, "create table seq index failed", result.Error, "conversationID", conversationID)
+		}
+		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID,
+			utils.GetTableName(conversationID)))
+		if result.Error != nil {
+			log.ZError(ctx, "create table send_time index failed", result.Error, "conversationID", conversationID)
+		}
 	}
 }
 func (d *DataBase) UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
