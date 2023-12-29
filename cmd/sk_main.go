@@ -15,8 +15,9 @@
 package main
 
 import (
+	"errors"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/test"
 	"time"
@@ -127,10 +128,10 @@ func main() {
 		if i == 10000 {
 			break
 		}
-		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
+		log.ZWarn(ctx, "", errors.New(""), "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 
-	log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
+	//log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
 	time.Sleep(100000 * time.Second)
 	return
 	i = 0
@@ -141,7 +142,7 @@ func main() {
 		if i == 10 {
 			break
 		}
-		log.Warn("", "1000 * time.Millisecond ###################waiting... msg: ", i)
+		log.ZWarn(ctx, "", errors.New(""), "1000 * time.Millisecond ###################waiting... msg: ", i)
 	}
 
 	i = 0
@@ -149,7 +150,7 @@ func main() {
 		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
 		i++
 		time.Sleep(10000 * time.Millisecond)
-		log.Warn("", "10000 * time.Millisecond ###################waiting... msg: ", i)
+		log.ZWarn(ctx, "", errors.New(""), "10000 * time.Millisecond ###################waiting... msg: ", i)
 	}
 
 	//reliabilityTest()

@@ -16,11 +16,12 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -34,12 +35,12 @@ import (
 	authPB "github.com/OpenIMSDK/protocol/auth"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	userPB "github.com/OpenIMSDK/protocol/user"
-	imLog "github.com/OpenIMSDK/tools/log"
+	"github.com/OpenIMSDK/tools/log"
 )
 
 func GenUid(uid int, prefix string) string {
 	if getMyIP() == "" {
-		log.Error("", "getMyIP() failed, exit ")
+		log.ZError(ctx, "getMyIP() failed, exit ", errors.New("getMyIP() failed"))
 		os.Exit(1)
 	}
 	UidPrefix := getMyIP() + "_" + prefix + "_"
@@ -53,13 +54,13 @@ func RegisterOnlineAccounts(number int) {
 		go func(t int) {
 			userID := GenUid(t, "online")
 			register(userID)
-			log.Info("register ", userID)
+			log.ZInfo(ctx, "register ", userID)
 			wg.Done()
 		}(i)
 
 	}
 	wg.Wait()
-	log.Info("", "RegisterAccounts finish ", number)
+	log.ZInfo(ctx, "RegisterAccounts finish ", number)
 }
 
 type GetTokenReq struct {
@@ -89,13 +90,12 @@ var AdminToken = ""
 
 func init() {
 	AdminToken = getToken("openIM123456")
-	if err := imLog.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0, 24); err != nil {
+	if err := log.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0, 24); err != nil {
 		fmt.Println("123456", "log init failed ", err.Error())
 	}
 }
 
 var ctx context.Context
-var cctx context.Context
 
 func register(uid string) error {
 	ctx = ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
@@ -122,17 +122,20 @@ func register(uid string) error {
 		}
 		if len(getAccountCheckResp.Results) == 1 &&
 			getAccountCheckResp.Results[0].AccountStatus == "registered" {
-			log.Warn(getAccountCheckReq.CheckUserIDs[0], "Already registered ", uid, getAccountCheckResp)
+			log.ZWarn(ctx, "account already registered", errors.New("Already registered "), "userIDs", getAccountCheckReq.CheckUserIDs[0],
+				"uid", uid, "getAccountCheckResp", getAccountCheckResp)
 			userLock.Lock()
 			allUserID = append(allUserID, uid)
 			userLock.Unlock()
 			return nil
 		} else if len(getAccountCheckResp.Results) == 1 &&
 			getAccountCheckResp.Results[0].AccountStatus == "unregistered" {
-			log.Info(getAccountCheckReq.CheckUserIDs[0], "not registered ", uid, getAccountCheckResp)
+			log.ZInfo(ctx, "account not register", "userIDs", getAccountCheckReq.CheckUserIDs[0], "uid", uid, "getAccountCheckResp",
+				getAccountCheckResp)
 			break
 		} else {
-			log.Error(getAccountCheckReq.CheckUserIDs[0], " failed, continue ", err, REGISTERADDR, getAccountCheckReq)
+			log.ZError(ctx, " failed, continue ", err, "userIDs", getAccountCheckReq.CheckUserIDs[0], "register address",
+				REGISTERADDR, "getAccountCheckReq", getAccountCheckReq)
 			continue
 		}
 	}
@@ -143,11 +146,12 @@ func register(uid string) error {
 	for {
 		err := util.ApiPost(ctx, "/auth/user_register", &rreq, nil)
 		if err != nil {
-			log.Error("post failed ,continue ", err.Error(), REGISTERADDR, getAccountCheckReq)
+			log.ZError(ctx, "post failed ,continue ", errors.New("post failed ,continue"), "register address", REGISTERADDR,
+				"getAccountCheckReq", getAccountCheckReq)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		} else {
-			log.Info("register ok ", REGISTERADDR, getAccountCheckReq)
+			log.ZInfo(ctx, "register ok ", "register address", REGISTERADDR, "getAccountCheckReq", getAccountCheckReq)
 			userLock.Lock()
 			allUserID = append(allUserID, uid)
 			userLock.Unlock()
@@ -177,11 +181,11 @@ func getToken(uid string) string {
 	resp := authPB.UserTokenResp{}
 	err := util.ApiPost(ctx, "/auth/user_token", &req, &resp)
 	if err != nil {
-		log.Error(req.UserID, "Post2Api failed ", err.Error(), url, req)
+		log.ZError(ctx, "Post2Api failed ", errors.New("Post2Api failed "), "userID", req.UserID, "url", url, "req", req)
 		return ""
 	}
 
-	log.Info(req.UserID, "get token: ", resp.Token)
+	log.ZInfo(ctx, "get token: ", "userID", req.UserID, "token", resp.Token)
 	return resp.Token
 }
 
@@ -202,7 +206,7 @@ func RunGetToken(strMyUid string) string {
 func getMyIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Error("", "InterfaceAddrs failed ", err.Error())
+		log.ZError(ctx, "InterfaceAddrs failed ", errors.New("InterfaceAddrs failed "), "addrs", addrs)
 		os.Exit(1)
 		return ""
 	}
@@ -231,7 +235,7 @@ func WorkGroupRegisterReliabilityUser(id int) {
 	token := RunGetToken(userID)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
-	log.Info("", "WorkGroupRegisterReliabilityUser userID: ", userID, "token: ", token)
+	log.ZInfo(ctx, "WorkGroupRegisterReliabilityUser : ", "userID", userID, "token: ", token)
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
 
@@ -253,14 +257,14 @@ func GetGroupMemberNum(groupID string) uint32 {
 
 	r, err := network.Post2Api(GETGROUPSINFOROUTER, req, AdminToken)
 	if err != nil {
-		log.Error("", "post failed ", GETGROUPSINFOROUTER, req)
+		log.ZError(ctx, "post failed ", errors.New("post failed "), "get groups info", GETGROUPSINFOROUTER, "req", req)
 		return 0
 	}
 	err = common.CheckErrAndResp(nil, r, &groupInfoList, nil)
 	if err != nil {
-		log.Error("", "CheckErrAndResp failed ", err.Error(), string(r))
+		log.ZError(ctx, "CheckErrAndResp failed ", errors.New("CheckErrAndResp failed "), "response", string(r))
 		return 0
 	}
-	log.Warn("", "group info", groupInfoList)
+	log.ZWarn(ctx, "group info", errors.New("group info"), "group info list", groupInfoList)
 	return groupInfoList[0].MemberCount
 }
