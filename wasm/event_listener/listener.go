@@ -386,6 +386,10 @@ func (u UserCallback) OnUserStatusChanged(statusMap string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(statusMap).SendMessage()
 }
 
+func (u UserCallback) OnUserInputStatusChanged(change string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(change).SendMessage()
+}
+
 func NewUserCallback(callback *js.Value) *UserCallback {
 	return &UserCallback{CallbackWriter: NewEventData(callback)}
 }

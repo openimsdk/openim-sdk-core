@@ -41,6 +41,10 @@ func (c *conversationCallBack) OnSyncServerFinish() {
 type userCallback struct {
 }
 
+func (c userCallback) OnUserInputStatusChanged(change string) {
+
+}
+
 func (c userCallback) OnUserStatusChanged(statusMap string) {
 
 }
