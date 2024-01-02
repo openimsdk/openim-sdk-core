@@ -196,8 +196,13 @@ type AdvancedTextElem struct {
 	Text              string           `json:"text,omitempty"`
 	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
 }
+
 type TypingElem struct {
 	MsgTips string `json:"msgTips,omitempty"`
+}
+
+type EnteringElem struct {
+	Focus bool `json:"focus"`
 }
 
 type MsgStruct struct {
@@ -239,6 +244,7 @@ type MsgStruct struct {
 	NotificationElem     *NotificationElem      `json:"notificationElem,omitempty"`
 	AdvancedTextElem     *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
 	TypingElem           *TypingElem            `json:"typingElem,omitempty"`
+	EnteringElem         *EnteringElem          `json:"enteringElem,omitempty"`
 	AttachedInfoElem     *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
 }
 

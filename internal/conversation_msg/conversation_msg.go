@@ -56,6 +56,7 @@ type Conversation struct {
 	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
 	msgKvListener        func() open_im_sdk_callback.OnMessageKvInfoListener
 	batchMsgListener     func() open_im_sdk_callback.OnBatchMsgListener
+	userListener         func() open_im_sdk_callback.OnUserListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
@@ -72,6 +73,8 @@ type Conversation struct {
 	IsExternalExtensions bool
 
 	startTime time.Time
+
+	entering *entering
 }
 
 func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
@@ -84,6 +87,10 @@ func (c *Conversation) SetMsgKvListener(msgKvListener func() open_im_sdk_callbac
 
 func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
+}
+
+func (c *Conversation) SetOnUserListener(userListener func() open_im_sdk_callback.OnUserListener) {
+	c.userListener = userListener
 }
 
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
@@ -106,6 +113,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 	}
+	n.entering = newEntering(n)
 	n.initSyncer()
 	n.cache = cache.NewCache[string, *model_struct.LocalConversation]()
 	return n
@@ -378,6 +386,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}})
+	}
+
+	for _, msgs := range allMsg {
+		for _, msg := range msgs.Msgs {
+			if msg.ContentType == constant.Entering {
+				c.entering.onNewMsg(ctx, msg)
+			}
+		}
 	}
 	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b), "len", len(allMsg))
 }
@@ -821,6 +837,10 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		t := sdk_struct.CardElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.CardElem = &t
+	case constant.Entering:
+		t := sdk_struct.EnteringElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.EnteringElem = &t
 	default:
 		t := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
@@ -1029,4 +1049,12 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 	}
 	c.user.UserBasicCache.Store(userID, &user.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
 	return users[0].FaceURL, users[0].Nickname, nil
+}
+
+func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {
+	return c.entering.GetInputStates(conversationID, userID), nil
+}
+
+func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
+	return c.entering.ChangeInputStates(ctx, conversationID, focus)
 }
