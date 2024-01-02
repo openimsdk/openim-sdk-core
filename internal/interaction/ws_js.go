@@ -20,6 +20,7 @@ package interaction
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/OpenIMSDK/tools/log"
 	"io"
@@ -94,9 +95,21 @@ func (w *JSWebSocket) dial(ctx context.Context, urlStr string) (*websocket.Conn,
 		_ = conn.CloseNow()
 		return nil, nil, fmt.Errorf("read response error %w", err)
 	}
+	var apiResp struct {
+		ErrCode int    `json:"errCode"`
+		ErrMsg  string `json:"errMsg"`
+		ErrDlt  string `json:"errDlt"`
+	}
+	if err := json.Unmarshal(data, &apiResp); err != nil {
+		return nil, nil, fmt.Errorf("unmarshal response error %w", err)
+	}
+	if apiResp.ErrCode == 0 {
+		return conn, httpResp, nil
+	}
 	log.ZDebug(ctx, "ws msg read resp", "data", string(data))
 	httpResp.Body = io.NopCloser(bytes.NewReader(data))
-	return conn, httpResp, nil
+	return conn, httpResp, fmt.Errorf("read response error %d %s %s",
+		apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt)
 }
 
 func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error) {

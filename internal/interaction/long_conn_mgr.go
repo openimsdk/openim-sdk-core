@@ -177,13 +177,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 	//c.conn.SetPongHandler(function(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
-		select {
-		case <-ctx.Done():
-			log.ZDebug(ctx, "readPump stop by ctx done")
-			c.closedErr = ctx.Err()
-			return
-		default:
-		}
 		needRecon, err := c.reConn(ctx, &connNum)
 		if !needRecon {
 			c.closedErr = err
@@ -528,9 +521,6 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return true, err
-			}
-			if apiResp.ErrCode == 0 {
-				return true, nil
 			}
 			err = errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
