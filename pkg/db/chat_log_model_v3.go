@@ -32,6 +32,16 @@ import (
 func (d *DataBase) initChatLog(ctx context.Context, conversationID string) {
 	if !d.conn.Migrator().HasTable(utils.GetTableName(conversationID)) {
 		d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
+		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID,
+			utils.GetTableName(conversationID)))
+		if result.Error != nil {
+			log.ZError(ctx, "create table seq index failed", result.Error, "conversationID", conversationID)
+		}
+		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID,
+			utils.GetTableName(conversationID)))
+		if result.Error != nil {
+			log.ZError(ctx, "create table send_time index failed", result.Error, "conversationID", conversationID)
+		}
 	}
 }
 func (d *DataBase) UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
@@ -180,11 +190,14 @@ func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int
 	condition += subCondition
 	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "InsertMessage failed")
 	return result, err
-}
+} // SearchMessageByContentTypeAndKeyword searches for messages in the database that match specified content types and keywords within a given time range.
 func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	var condition string
 	var subCondition string
+
+	// Construct a sub-condition for SQL query based on keyword list and match type
 	if keywordListMatchType == constant.KeywordMatchOr {
+		// Use OR logic if keywordListMatchType is KeywordMatchOr
 		for i := 0; i < len(keywordList); i++ {
 			if i == 0 {
 				subCondition += "And ("
@@ -193,10 +206,10 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 				subCondition += "content like " + "'%" + keywordList[i] + "%') "
 			} else {
 				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "or "
-
 			}
 		}
 	} else {
+		// Use AND logic for other keywordListMatchType
 		for i := 0; i < len(keywordList); i++ {
 			if i == 0 {
 				subCondition += "And ("
@@ -208,9 +221,14 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 			}
 		}
 	}
+
+	// Construct the main SQL condition string
 	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
 	condition += subCondition
+
+	// Execute the query using the constructed condition and handle errors
 	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
+
 	return result, err
 }
 

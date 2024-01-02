@@ -109,7 +109,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		full:                 full,
 		business:             business,
 		file:                 file,
-		messageController:    NewMessageController(db),
+		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 	}
