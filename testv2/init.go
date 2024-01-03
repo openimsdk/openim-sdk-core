@@ -163,7 +163,7 @@ func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCou
 }
 
 func (o *onConversationListener) OnConversationUserInputStatusChanged(change string) {
-
+	log.ZInfo(o.ctx, "OnConversationUserInputStatusChanged", "change", change)
 }
 
 type onGroupListener struct {

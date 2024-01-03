@@ -37,9 +37,6 @@ func newTyping(c *Conversation) *typing {
 	e.platformIDs = make([]int32, 0, len(constant.PlatformID2Name))
 	e.platformIDSet = make(map[int32]struct{})
 	for id := range constant.PlatformID2Name {
-		if id != 7 {
-			continue
-		}
 		e.platformIDSet[int32(id)] = struct{}{}
 		e.platformIDs = append(e.platformIDs, int32(id))
 	}
