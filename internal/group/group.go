@@ -119,7 +119,7 @@ func (g *Group) initSyncer() {
 			//when a user kicked and invited to the group again, group member info will be updated
 			_ = common.TriggerCmdUpdateMessage(ctx,
 				common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL,
+					Args: common.UpdateMessageInfo{SessionType: constant.SuperGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 						Nickname: server.Nickname, GroupID: server.GroupID}}, g.conversationCh)
 		case syncer.Delete:
 			g.listener().OnGroupMemberDeleted(utils.StructToJsonString(local))
@@ -128,7 +128,7 @@ func (g *Group) initSyncer() {
 			if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
 				_ = common.TriggerCmdUpdateMessage(ctx,
 					common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-						Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL,
+						Args: common.UpdateMessageInfo{SessionType: constant.SuperGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 							Nickname: server.Nickname, GroupID: server.GroupID}}, g.conversationCh)
 			}
 		}
