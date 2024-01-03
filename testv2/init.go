@@ -219,7 +219,7 @@ type onAdvancedMsgListener struct {
 }
 
 func (o *onAdvancedMsgListener) OnRecvOnlineMessage(message string) {
-
+	log.ZDebug(o.ctx, "OnRecvOnlineMessage", "message", message)
 }
 
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
