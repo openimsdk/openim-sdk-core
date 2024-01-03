@@ -79,9 +79,9 @@ func (u *Full) GetUsersInfo(ctx context.Context, userIDs []string) ([]*api.FullU
 			log.ZDebug(ctx, "GetConversationByUserID", "conversation", conversation)
 			if conversation.ShowName != info.Nickname || conversation.FaceURL != info.FaceURL {
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
-					Args: common.SourceIDAndSessionType{SourceID: userID, SessionType: constant.SingleChatType, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
+					Args: common.SourceIDAndSessionType{SourceID: userID, SessionType: conversation.ConversationType, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
 				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{UserID: userID, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
+					Args: common.UpdateMessageInfo{SessionType: conversation.ConversationType, UserID: userID, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
 			}
 		}
 	}
@@ -189,9 +189,9 @@ func (u *Full) GetUsersInfoWithCache(ctx context.Context, userIDs []string, grou
 			log.ZDebug(ctx, "GetConversationByUserID", "conversation", conversation)
 			if conversation.ShowName != info.Nickname || conversation.FaceURL != info.FaceURL {
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
-					Args: common.SourceIDAndSessionType{SourceID: userID, SessionType: constant.SingleChatType, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
+					Args: common.SourceIDAndSessionType{SourceID: userID, SessionType: conversation.ConversationType, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
 				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{UserID: userID, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
+					Args: common.UpdateMessageInfo{SessionType: conversation.ConversationType, UserID: userID, FaceURL: info.FaceURL, Nickname: info.Nickname}}, u.ch)
 			}
 		}
 	}
