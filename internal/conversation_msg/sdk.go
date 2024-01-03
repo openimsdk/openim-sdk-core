@@ -371,7 +371,7 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 	case constant.SuperGroupChatType:
 		return "sg_" + sourceID // super group chat
 	case constant.NotificationChatType:
-		return "sn_" + sourceID // server notification chat
+		return "sn_" + sourceID + "_" + c.loginUserID // server notification chat
 	}
 	return ""
 }
