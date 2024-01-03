@@ -201,10 +201,6 @@ type TypingElem struct {
 	MsgTips string `json:"msgTips,omitempty"`
 }
 
-type EnteringElem struct {
-	Focus bool `json:"focus"`
-}
-
 type MsgStruct struct {
 	ClientMsgID          string                 `json:"clientMsgID,omitempty"`
 	ServerMsgID          string                 `json:"serverMsgID,omitempty"`
@@ -244,7 +240,6 @@ type MsgStruct struct {
 	NotificationElem     *NotificationElem      `json:"notificationElem,omitempty"`
 	AdvancedTextElem     *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
 	TypingElem           *TypingElem            `json:"typingElem,omitempty"`
-	EnteringElem         *EnteringElem          `json:"enteringElem,omitempty"`
 	AttachedInfoElem     *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
 }
 

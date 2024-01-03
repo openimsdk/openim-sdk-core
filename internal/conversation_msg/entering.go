@@ -28,8 +28,8 @@ const (
 	inputStatesMsgTimeout = inputStatesSendTime / 2                     // message sending timeout
 )
 
-func newEntering(c *Conversation) *entering {
-	e := &entering{
+func newTyping(c *Conversation) *typing {
+	e := &typing{
 		conv:  c,
 		send:  cache.New(inputStatesSendTime, inputStatesTimeout),
 		state: cache.New(inputStatesTimeout, inputStatesTimeout),
@@ -54,7 +54,7 @@ func newEntering(c *Conversation) *entering {
 	return e
 }
 
-type entering struct {
+type typing struct {
 	send  *cache.Cache
 	state *cache.Cache
 
@@ -64,7 +64,7 @@ type entering struct {
 	platformIDSet map[int32]struct{}
 }
 
-func (e *entering) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
+func (e *typing) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
 	if conversationID == "" {
 		return errs.ErrArgs.Wrap("conversationID can't be empty")
 	}
@@ -76,7 +76,7 @@ func (e *entering) ChangeInputStates(ctx context.Context, conversationID string,
 	if focus {
 		if val, ok := e.send.Get(key); ok {
 			if val.(int) == stateCodeSuccess {
-				log.ZDebug(ctx, "entering stateCodeSuccess", "conversationID", conversationID, "focus", focus)
+				log.ZDebug(ctx, "typing stateCodeSuccess", "conversationID", conversationID, "focus", focus)
 				return nil
 			}
 		}
@@ -84,12 +84,12 @@ func (e *entering) ChangeInputStates(ctx context.Context, conversationID string,
 	} else {
 		if val, ok := e.send.Get(key); ok {
 			if val.(int) == stateCodeEnd {
-				log.ZDebug(ctx, "entering stateCodeEnd", "conversationID", conversationID, "focus", focus)
+				log.ZDebug(ctx, "typing stateCodeEnd", "conversationID", conversationID, "focus", focus)
 				return nil
 			}
 			e.send.SetDefault(key, stateCodeEnd)
 		} else {
-			log.ZDebug(ctx, "entering send not found", "conversationID", conversationID, "focus", focus)
+			log.ZDebug(ctx, "typing send not found", "conversationID", conversationID, "focus", focus)
 			return nil
 		}
 	}
@@ -102,19 +102,22 @@ func (e *entering) ChangeInputStates(ctx context.Context, conversationID string,
 	return nil
 }
 
-func (e *entering) sendMsg(ctx context.Context, conversation *model_struct.LocalConversation, focus bool) error {
+func (e *typing) sendMsg(ctx context.Context, conversation *model_struct.LocalConversation, focus bool) error {
 	s := sdk_struct.MsgStruct{}
-	err := e.conv.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Entering)
+	err := e.conv.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Typing)
 	if err != nil {
 		return err
 	}
 	s.RecvID = conversation.UserID
 	s.GroupID = conversation.GroupID
 	s.SessionType = conversation.ConversationType
-	enteringElem := sdk_struct.EnteringElem{
-		Focus: focus,
+	var typingElem sdk_struct.TypingElem
+	if focus {
+		typingElem.MsgTips = "yes"
+	} else {
+		typingElem.MsgTips = "no"
 	}
-	s.Content = utils.StructToJsonString(enteringElem)
+	s.Content = utils.StructToJsonString(typingElem)
 	options := make(map[string]bool, 6)
 	utils.SetSwitchFromOptions(options, constant.IsHistory, false)
 	utils.SetSwitchFromOptions(options, constant.IsPersistent, false)
@@ -131,7 +134,7 @@ func (e *entering) sendMsg(ctx context.Context, conversation *model_struct.Local
 	var sendMsgResp sdkws.UserSendMsgResp
 	err = e.conv.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
 	if err != nil {
-		log.ZError(ctx, "entering msg to server failed", err, "message", s)
+		log.ZError(ctx, "typing msg to server failed", err, "message", s)
 		return err
 	}
 	return nil
@@ -143,7 +146,7 @@ type inputStatesKey struct {
 	PlatformID     int32  `json:"pid,omitempty"`
 }
 
-func (e *entering) getStateKey(conversationID string, userID string, platformID int32) string {
+func (e *typing) getStateKey(conversationID string, userID string, platformID int32) string {
 	data, err := json.Marshal(inputStatesKey{ConversationID: conversationID, UserID: userID, PlatformID: platformID})
 	if err != nil {
 		panic(err)
@@ -151,10 +154,10 @@ func (e *entering) getStateKey(conversationID string, userID string, platformID 
 	return string(data)
 }
 
-func (e *entering) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
-	var enteringElem sdk_struct.EnteringElem
+func (e *typing) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
+	var enteringElem sdk_struct.TypingElem
 	if err := json.Unmarshal(msg.Content, &enteringElem); err != nil {
-		log.ZError(ctx, "entering onNewMsg Unmarshal failed", err, "message", msg)
+		log.ZError(ctx, "typing onNewMsg Unmarshal failed", err, "message", msg)
 		return
 	}
 	if msg.SendID == e.conv.loginUserID {
@@ -176,7 +179,7 @@ func (e *entering) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
 	}
 	conversationID := e.conv.getConversationIDBySessionType(sourceID, int(msg.SessionType))
 	key := e.getStateKey(conversationID, msg.SendID, msg.SenderPlatformID)
-	if enteringElem.Focus {
+	if enteringElem.MsgTips == "yes" {
 		d := time.Duration(expirationTimestamp-now) * time.Millisecond
 		if v, t, ok := e.state.GetWithExpiration(key); ok {
 			if t.UnixMilli() >= expirationTimestamp {
@@ -200,12 +203,12 @@ type InputStatesChangedData struct {
 	PlatformIDs    []int32 `json:"platformIDs"`
 }
 
-func (e *entering) changes(conversationID string, userID string) {
+func (e *typing) changes(conversationID string, userID string) {
 	data := InputStatesChangedData{ConversationID: conversationID, UserID: userID, PlatformIDs: e.GetInputStates(conversationID, userID)}
-	e.conv.userListener().OnUserInputStatusChanged(utils.StructToJsonString(data))
+	e.conv.ConversationListener().OnConversationUserInputStatusChanged(utils.StructToJsonString(data))
 }
 
-func (e *entering) GetInputStates(conversationID string, userID string) []int32 {
+func (e *typing) GetInputStates(conversationID string, userID string) []int32 {
 	platformIDs := make([]int32, 0, 1)
 	for _, platformID := range e.platformIDs {
 		key := e.getStateKey(conversationID, userID, platformID)

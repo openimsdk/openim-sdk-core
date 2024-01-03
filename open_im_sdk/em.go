@@ -174,12 +174,20 @@ func (e *emptyConversationListener) OnTotalUnreadMessageCountChanged(totalUnread
 		"totalUnreadCount", totalUnreadCount)
 }
 
+func (e *emptyConversationListener) OnConversationUserInputStatusChanged(change string) {
+
+}
+
 type emptyAdvancedMsgListener struct {
 	ctx context.Context
 }
 
 func newEmptyAdvancedMsgListener(ctx context.Context) open_im_sdk_callback.OnAdvancedMsgListener {
 	return &emptyAdvancedMsgListener{ctx}
+}
+
+func (e *emptyAdvancedMsgListener) OnRecvOnlineMessage(message string) {
+
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvNewMessage(message string) {
@@ -240,10 +248,6 @@ func (e *emptyBatchMsgListener) OnRecvOfflineNewMessages(messageList string) {
 
 type emptyUserListener struct {
 	ctx context.Context
-}
-
-func (e *emptyUserListener) OnUserInputStatusChanged(change string) {
-	log.ZWarn(e.ctx, "UserListener OnUserInputStatusChanged is not implemented", nil, "change", change)
 }
 
 func newEmptyUserListener(ctx context.Context) open_im_sdk_callback.OnUserListener {
