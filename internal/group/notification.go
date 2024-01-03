@@ -137,6 +137,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				return err
 			}
 			g.listener().OnGroupInfoChanged(string(data))
+			g.listener().OnJoinedGroupDeleted(string(data))
 			return nil
 		} else {
 			var userIDs []string
