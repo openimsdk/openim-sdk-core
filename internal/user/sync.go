@@ -75,18 +75,6 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 	}
 }
 
-func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
-	processUserComamnd := userPb.ProcessUserCommandAddReq{
-		UserID: fromUserID,
-		Type:   Type,
-		Uuid:   uuid,
-		Value:  value,
-	}
-
-	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
-	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
-}
-
 type CommandInfoResponse struct {
 	KVArray []*userPb.CommandInfoResp `json:"KVArray"`
 }
@@ -106,15 +94,4 @@ func (u *User) SyncAllFavoriteList(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
 	return u.commandSyncer.Sync(ctx, util.Batch(ServerCommandToLocalCommand, serverData.KVArray), localData, nil)
-}
-func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
-	processUserComamnd := userPb.ProcessUserCommandAddReq{
-		UserID: fromUserID,
-		Type:   Type,
-		Uuid:   uuid,
-		Value:  value,
-	}
-
-	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
-	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 }

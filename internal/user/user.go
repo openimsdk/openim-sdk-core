@@ -131,11 +131,11 @@ func (u *User) initSyncer() {
 			}
 			switch state {
 			case syncer.Update:
-				u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
-				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
-					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-						Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
-				}
+				//u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
+				//if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
+				//	_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
+				//		Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
+				//}
 			}
 			return nil
 		},
