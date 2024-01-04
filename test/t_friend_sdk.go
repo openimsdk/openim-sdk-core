@@ -760,7 +760,7 @@ func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 func (testFriendListener) OnPinFriends(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnSuccess() {
