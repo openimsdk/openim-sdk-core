@@ -63,16 +63,28 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 				u.OnlineStatusCache.Delete(fromUserID)
 			}
 		}
-		u.listener.OnUserStatusChanged(utils.StructToJsonString(v))
+		u.listener().OnUserStatusChanged(utils.StructToJsonString(v))
 	} else {
 		if status == constant.Online {
 			u.OnlineStatusCache.Store(fromUserID, &userOnlineStatus)
-			u.listener.OnUserStatusChanged(utils.StructToJsonString(userOnlineStatus))
+			u.listener().OnUserStatusChanged(utils.StructToJsonString(userOnlineStatus))
 		} else {
 			log.ZWarn(ctx, "exception", errors.New("user not exist"), "fromUserID", fromUserID,
 				"status", status, "platformID", platformID)
 		}
 	}
+}
+
+func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
+	processUserComamnd := userPb.ProcessUserCommandAddReq{
+		UserID: fromUserID,
+		Type:   Type,
+		Uuid:   uuid,
+		Value:  value,
+	}
+
+	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
+	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 }
 
 type CommandInfoResponse struct {
@@ -94,4 +106,15 @@ func (u *User) SyncAllFavoriteList(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
 	return u.commandSyncer.Sync(ctx, util.Batch(ServerCommandToLocalCommand, serverData.KVArray), localData, nil)
+}
+func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
+	processUserComamnd := userPb.ProcessUserCommandAddReq{
+		UserID: fromUserID,
+		Type:   Type,
+		Uuid:   uuid,
+		Value:  value,
+	}
+
+	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
+	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 }

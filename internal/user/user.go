@@ -46,8 +46,7 @@ type BasicInfo struct {
 type User struct {
 	db_interface.DataBase
 	loginUserID       string
-	listener          open_im_sdk_callback.OnUserListener
-	loginTime         int64
+	listener          func() open_im_sdk_callback.OnUserListener
 	userSyncer        *syncer.Syncer[*model_struct.LocalUser, string]
 	commandSyncer     *syncer.Syncer[*model_struct.LocalUserCommand, string]
 	conversationCh    chan common.Cmd2Value
@@ -55,18 +54,8 @@ type User struct {
 	OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
 
-// LoginTime gets the login time of the user.
-func (u *User) LoginTime() int64 {
-	return u.loginTime
-}
-
-// SetLoginTime sets the login time of the user.
-func (u *User) SetLoginTime(loginTime int64) {
-	u.loginTime = loginTime
-}
-
 // SetListener sets the user's listener.
-func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
+func (u *User) SetListener(listener func() open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
@@ -95,6 +84,48 @@ func (u *User) initSyncer() {
 		},
 		nil,
 		func(ctx context.Context, state int, server, local *model_struct.LocalUser) error {
+			switch state {
+			case syncer.Update:
+				u.listener().OnSelfInfoUpdated(utils.StructToJsonString(server))
+				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
+					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
+						Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
+				}
+			}
+			return nil
+		},
+	)
+	u.commandSyncer = syncer.New(
+		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
+			// Logic to insert a command
+			return u.DataBase.ProcessUserCommandAdd(ctx, command.Type, command.Uuid, command.Value)
+		},
+		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
+			// Logic to delete a command
+			return u.DataBase.ProcessUserCommandDelete(ctx, command.Type, command.Uuid)
+		},
+		func(ctx context.Context, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
+			// Logic to update a command
+			if serverCommand == nil || localCommand == nil {
+				return fmt.Errorf("nil command reference")
+			}
+			return u.DataBase.ProcessUserCommandUpdate(ctx, serverCommand.Type, serverCommand.Uuid, serverCommand.Value)
+		},
+		func(command *model_struct.LocalUserCommand) string {
+			// Return a unique identifier for the command
+			if command == nil {
+				return ""
+			}
+			return strconv.FormatInt(command.ID, 10)
+		},
+		func(a *model_struct.LocalUserCommand, b *model_struct.LocalUserCommand) bool {
+			// Compare two commands to check if they are equal
+			if a == nil || b == nil {
+				return false
+			}
+			return a.Uuid == b.Uuid && a.Type == b.Type && a.Value == b.Value
+		},
+		func(ctx context.Context, state int, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
 			if u.listener == nil {
 				return nil
 			}
@@ -103,7 +134,7 @@ func (u *User) initSyncer() {
 				u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
 				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
 					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-						Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
+						Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
 				}
 			}
 			return nil
@@ -193,14 +224,6 @@ func (u *User) initSyncer() {
 // DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
-	if u.listener == nil {
-		// log.Error(operationID, "listener == nil")
-		return
-	}
-	if msg.SendTime < u.loginTime {
-		log.ZWarn(ctx, "ignore notification ", nil, "msg", *msg)
-		return
-	}
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:
@@ -292,10 +315,19 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo)
 	return nil
 }
 
-// ProcessUserCommandAdd add user's choice
-func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *userPb.ProcessUserCommandAddReq) error {
-	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID,
-		Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+// updateSelfUserInfoEx updates the user's information with Ex field.
+func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
+	userInfo.UserID = u.loginUserID
+	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoExRouter, userPb.UpdateUserInfoExReq{UserInfo: userInfo}, nil); err != nil {
+		return err
+	}
+	_ = u.SyncLoginUserInfo(ctx)
+	return nil
+}
+
+// CRUD user command
+func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
+	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
 		return err
 	}
 	return u.SyncAllFavoriteList(ctx)

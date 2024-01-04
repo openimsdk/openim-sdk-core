@@ -17,6 +17,7 @@ package open_im_sdk
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -86,12 +87,7 @@ func setNumeric(in interface{}, out interface{}) {
 }
 
 func call_(operationID string, fn any, args ...any) (res any, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
-			err = fmt.Errorf("call panic: %+v", r)
-		}
-	}()
+	t := time.Now()
 	funcPtr := reflect.ValueOf(fn).Pointer()
 	funcName := runtime.FuncForPC(funcPtr).Name()
 	if operationID == "" {
@@ -101,8 +97,22 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		return nil, sdkerrs.ErrResourceLoad.Wrap("not load resource")
 	}
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
-	log.ZInfo(ctx, "call function", "in sdk args", args)
+	defer func(start time.Time) {
+		if r := recover(); r != nil {
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			err = fmt.Errorf("call panic: %+v", r)
+		} else {
+			elapsed := time.Since(start).Milliseconds()
+			if err == nil {
+				log.ZInfo(ctx, "fn call success", "function name", funcName, "resp", res, "cost time", fmt.Sprintf("%d ms", elapsed))
+			} else {
+				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
 
+			}
+
+		}
+	}(t)
+	log.ZInfo(ctx, "func call req", "function name", funcName, "args", args)
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
 		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("call function fn is not function, is %T", fn))
@@ -112,8 +122,6 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	if len(args)+1 != nin {
 		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go code error: fn in args num is not match"))
 	}
-	t := time.Now()
-	log.ZInfo(ctx, "input req", "function name", funcName, "args", args)
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -162,7 +170,6 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	}
 	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
 		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
-			log.ZError(ctx, "fn call error", errValueOf.Interface().(error), "function name", funcName, "cost time", time.Since(t))
 			return nil, errValueOf.Interface().(error)
 		}
 		if len(outs) == 1 {
@@ -184,14 +191,12 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		}
 	}
 	if len(outs) == 1 {
-		log.ZInfo(ctx, "output resp", "function name", funcName, "resp", outs[0].Interface(), "cost time", time.Since(t))
 		return outs[0].Interface(), nil
 	}
 	val := make([]any, 0, len(outs))
 	for i := range outs {
 		val = append(val, outs[i].Interface())
 	}
-	log.ZInfo(ctx, "output resp", "function name", funcName, "resp", val, "cost time", time.Since(t))
 	return val, nil
 }
 
@@ -219,17 +224,17 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 	}()
 }
 
-func syncCall(operationID string, fn any, args ...any) string {
+func syncCall(operationID string, fn any, args ...any) (res string) {
+	err := error(nil)
 	if operationID == "" {
-		//callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
 		return ""
 	}
-	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
+	if err = CheckResourceLoad(UserForSDK, ""); err != nil {
 		return ""
 	}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
-		//callback.OnError(10000, "go code error: fn is not function")
+		err = errs.ErrRecordNotFound
 		return ""
 	}
 	funcPtr := reflect.ValueOf(fn).Pointer()
@@ -237,14 +242,27 @@ func syncCall(operationID string, fn any, args ...any) string {
 	fnt := fnv.Type()
 	numIn := fnt.NumIn()
 	if len(args)+1 != numIn {
-		//callback.OnError(10000, "go code error: fn in args num is not match")
+		err = errors.New("go code error: fn in args num is not match")
 		return ""
 	}
 	ins := make([]reflect.Value, 0, numIn)
 
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	t := time.Now()
-	log.ZInfo(ctx, "input req", "function name", funcName, "args", args)
+	defer func(start time.Time) {
+		if r := recover(); r != nil {
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+		} else {
+			elapsed := time.Since(start).Milliseconds()
+			if err == nil {
+				log.ZInfo(ctx, "fn call success", "function name", funcName, "resp", res, "cost time", fmt.Sprintf("%d ms", elapsed))
+			} else {
+				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
+			}
+
+		}
+	}(t)
+	log.ZInfo(ctx, "func call req", "function name", funcName, "args", args)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
 		tag := fnt.In(i + 1)
@@ -258,10 +276,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map, reflect.Ptr:
 				v := reflect.New(tag)
 				if args[i].(string) != "" {
-					if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-						log.ZWarn(ctx, "json.Unmarshal error", err, "function name", funcName,
-							"arg", args[i], "v", v.Interface())
-						//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+					if err = json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
 						return ""
 					}
 				}
@@ -276,17 +291,16 @@ func syncCall(operationID string, fn any, args ...any) string {
 			ins = append(ins, reflect.ValueOf(v))
 			continue
 		}
-		//callback.OnError(constant.ErrArgs.ErrCode, "go code error: fn in args type is not match")
+		err = errors.New("err args type")
 		return ""
 	}
 	var lastErr bool
 	if numOut := fnt.NumOut(); numOut > 0 {
 		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf((*error)(nil)).Elem())
 	}
-	fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
-		//callback.OnSuccess("")
+		err = errors.New("err res type")
 		return ""
 	}
 	outVals := make([]any, 0, len(outs))
@@ -296,6 +310,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 	if lastErr {
 		if last := outVals[len(outVals)-1]; last != nil {
 			//callback.OnError(10000, last.(error).Error())
+			err = last.(error)
 			return ""
 		}
 		if len(outs) == 1 {
@@ -325,10 +340,9 @@ func syncCall(operationID string, fn any, args ...any) string {
 	}
 	jsonData, err := json.Marshal(jsonVal)
 	if err != nil {
-		//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+		err = errors.New("json marshal error")
 		return ""
 	}
-	log.ZInfo(ctx, "output resp", "function name", funcName, "resp", jsonVal, "cost time", time.Since(t))
 	return string(jsonData)
 }
 func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
@@ -452,4 +466,19 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 	}
 	log.ZInfo(ctx, "output resp", "function name", funcName, "resp", jsonVal, "cost time", time.Since(t))
 	callback.OnSuccess(string(jsonData))
+}
+
+func listenerCall(fn any, listener any) {
+	ctx := context.Background()
+	if UserForSDK == nil {
+		log.ZWarn(ctx, "UserForSDK is nil,set listener is invalid", nil)
+		return
+	}
+	fnv := reflect.ValueOf(fn)
+	if fnv.Kind() != reflect.Func {
+		log.ZWarn(ctx, "fn is error,set listener is invalid", nil)
+		return
+	}
+	args := reflect.ValueOf(listener)
+	fnv.Call([]reflect.Value{args})
 }

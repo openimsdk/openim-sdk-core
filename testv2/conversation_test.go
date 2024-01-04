@@ -302,3 +302,18 @@ func Test_SendImgMsg(t *testing.T) {
 	}
 	t.Logf("send smg => %+v\n", res)
 }
+func Test_SetConversationEx(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().SetOneConversationEx(ctx, "si_1_2", "abc")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+func Test_SearchConversation(t *testing.T) {
+	result, err := open_im_sdk.UserForSDK.Conversation().SearchConversation(ctx, "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range result {
+		t.Log(v)
+	}
+}

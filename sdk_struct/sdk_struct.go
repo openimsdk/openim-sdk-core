@@ -196,6 +196,7 @@ type AdvancedTextElem struct {
 	Text              string           `json:"text,omitempty"`
 	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
 }
+
 type TypingElem struct {
 	MsgTips string `json:"msgTips,omitempty"`
 }
@@ -307,6 +308,7 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
+	SystemType           string `json:"systemType"`
 	PlatformID           int32  `json:"platformID"`
 	ApiAddr              string `json:"apiAddr"`
 	WsAddr               string `json:"wsAddr"`

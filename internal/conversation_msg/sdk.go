@@ -196,15 +196,16 @@ func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conve
 func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) error {
 	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{RecvMsgOpt: &wrapperspb.Int32Value{Value: int32(opt)}})
 }
-
+func (c *Conversation) SetOneConversationEx(ctx context.Context, conversationID string, ex string) error {
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{Ex: &wrapperspb.StringValue{
+		Value: ex,
+	}})
+}
 func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadCount int32, err error) {
 	return c.db.GetTotalUnreadMsgCountDB(ctx)
 }
 
-func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
-	if c.ConversationListener != nil {
-		return
-	}
+func (c *Conversation) SetConversationListener(listener func() open_im_sdk_callback.OnConversationListener) {
 	c.ConversationListener = listener
 }
 
@@ -370,7 +371,7 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 	case constant.SuperGroupChatType:
 		return "sg_" + sourceID // super group chat
 	case constant.NotificationChatType:
-		return "sn_" + sourceID // server notification chat
+		return "sn_" + sourceID + "_" + c.loginUserID // server notification chat
 	}
 	return ""
 }
@@ -841,9 +842,25 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 
 	err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
 	if err != nil {
-		log.ZError(ctx, "send msg to server failed", err, "message", s)
-		c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-		return s, err
+		//if send message network timeout need to double-check message has received by db.
+		if sdkerrs.ErrNetworkTimeOut.Is(err) {
+			oldMessage, _ := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
+			if oldMessage.Status == constant.MsgStatusSendSuccess {
+				sendMsgResp.SendTime = oldMessage.SendTime
+				sendMsgResp.ClientMsgID = oldMessage.ClientMsgID
+				sendMsgResp.ServerMsgID = oldMessage.ServerMsgID
+			} else {
+				log.ZError(ctx, "send msg to server failed", err, "message", s)
+				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime,
+					constant.MsgStatusSendFailed, s, lc)
+				return s, err
+			}
+		} else {
+			log.ZError(ctx, "send msg to server failed", err, "message", s)
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime,
+				constant.MsgStatusSendFailed, s, lc)
+			return s, err
+		}
 	}
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess

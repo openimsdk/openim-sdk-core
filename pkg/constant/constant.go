@@ -80,7 +80,7 @@ const (
 	BlackAddedNotification                = 1207 //add_black
 	BlackDeletedNotification              = 1208 //remove_black
 	FriendInfoUpdatedNotification         = 1209
-	FriendPinSetNotifiaction              = 1210
+	FriendsInfoUpdateNotification         = 1210
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 

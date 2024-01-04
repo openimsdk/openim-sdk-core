@@ -119,7 +119,7 @@ func (g *Group) syncGroupMembers(ctx context.Context, groupID string, members []
 				return err
 			}
 			log.ZInfo(ctx, "SyncGroupMember OnGroupInfoChanged", "groupID", groupID, "data", string(data))
-			g.listener.OnGroupInfoChanged(string(data))
+			g.listener().OnGroupInfoChanged(string(data))
 		}
 	}
 	//}
@@ -161,7 +161,7 @@ func (g *Group) deleteGroup(ctx context.Context, groupID string) error {
 	if err := g.db.DeleteGroup(ctx, groupID); err != nil {
 		return err
 	}
-	g.listener.OnJoinedGroupDeleted(utils.StructToJsonString(groupInfo))
+	g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(groupInfo))
 	return nil
 }
 

@@ -22,7 +22,7 @@ import (
 
 	//	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	//"open_im_sdk/internal/open_im_sdk"
 	//"open_im_sdk/pkg/utils"
@@ -47,67 +47,61 @@ type testGroupListener struct {
 }
 
 func (testGroupListener) OnJoinedGroupAdded(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
-func (testGroupListener) OnJoinedGroupDeleted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 
+func (testGroupListener) OnJoinedGroupDeleted(callbackInfo string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
 
 func (testGroupListener) OnGroupMemberAdded(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
-func (testGroupListener) OnGroupMemberDeleted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 
+func (testGroupListener) OnGroupMemberDeleted(callbackInfo string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
 
 func (testGroupListener) OnGroupApplicationAdded(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
-func (testGroupListener) OnGroupApplicationDeleted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 
+func (testGroupListener) OnGroupApplicationDeleted(callbackInfo string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
 
 func (testGroupListener) OnGroupInfoChanged(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
-func (testGroupListener) OnGroupMemberInfoChanged(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 
+func (testGroupListener) OnGroupMemberInfoChanged(callbackInfo string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
 
 func (testGroupListener) OnGroupApplicationAccepted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
-func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 
+func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
 
 func (testGroupListener) OnGroupDismissed(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo, "operationID", utils.OperationIDGenerator())
 }
 
 type testOrganizationListener struct {
 }
 
 func (testOrganizationListener) OnOrganizationUpdated() {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), "on listener callback ")
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "on listener callback", "operationID", utils.OperationIDGenerator())
 }
 
 type testWorkMomentsListener struct {
 }
 
 func (testWorkMomentsListener) OnRecvNewNotification() {
-	log.NewInfo(utils.OperationIDGenerator(), utils.GetSelfFuncName(), "on listener callback ")
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "on listener callback", "operationID", utils.OperationIDGenerator())
 }
 
 type testCreateGroup struct {
@@ -115,12 +109,11 @@ type testCreateGroup struct {
 }
 
 func (t testCreateGroup) OnSuccess(data string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "Data", data)
 }
 
 func (t testCreateGroup) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "ErrorCode", errCode, "ErrorMsg", errMsg)
 }
 
 func SetTestGroupID(groupID, memberID string) {
@@ -147,7 +140,7 @@ func DoTestCreateGroup() {
 	g1 := utils.StructToJsonString(groupInfo)
 	g2 := utils.StructToJsonString(memberlist)
 
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", g1, g2)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID: ", test.OperationID, "g1", g1, "g2", g2)
 	// open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
 }
 
@@ -156,17 +149,17 @@ type testSetGroupInfo struct {
 }
 
 func (t testSetGroupInfo) OnSuccess(data string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
-
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "data", data)
 }
 
 func (t testSetGroupInfo) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
 
 func DoSetGroupInfo() {
 	var test testSetGroupInfo
-	test.OperationID = utils.OperationIDGenerator()
+	operationID := utils.OperationIDGenerator()
+	test.OperationID = operationID
 	var input sdk_params_callback.SetGroupInfoParam
 	input.GroupName = "new group name 11111111"
 	input.Notification = "new notification 11111"
@@ -174,28 +167,32 @@ func DoSetGroupInfo() {
 	n = 1
 	input.NeedVerification = &n
 	setInfo := utils.StructToJsonString(input)
-	// open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", setInfo)
-
+	// open_im_sdk.SetGroupInfo(test, operationID, TestgroupID, setInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", operationID, "input: ", setInfo)
 }
 
 func DoSetGroupVerification() {
 	var test testSetGroupInfo
-	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetGroupVerification(test, test.OperationID, TestgroupID, 1)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 2)
+	operationID := utils.OperationIDGenerator()
+	test.OperationID = operationID
+	open_im_sdk.SetGroupVerification(test, operationID, TestgroupID, 1)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", operationID, "input: ", TestgroupID, 2)
 }
+
 func DoSetGroupLookMemberInfo() {
 	var test testSetGroupInfo
-	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetGroupLookMemberInfo(test, test.OperationID, TestgroupID, 0)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 1)
+	operationID := utils.OperationIDGenerator()
+	test.OperationID = operationID
+	open_im_sdk.SetGroupLookMemberInfo(test, operationID, TestgroupID, 0)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", operationID, "input: ", TestgroupID, 1)
 }
+
 func DoSetGroupApplyMemberFriend() {
 	var test testSetGroupInfo
-	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetGroupApplyMemberFriend(test, test.OperationID, TestgroupID, 1)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 1)
+	operationID := utils.OperationIDGenerator()
+	test.OperationID = operationID
+	open_im_sdk.SetGroupApplyMemberFriend(test, operationID, TestgroupID, 1)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", operationID, "input: ", TestgroupID, 1)
 }
 
 type testGetGroupsInfo struct {
@@ -203,11 +200,11 @@ type testGetGroupsInfo struct {
 }
 
 func (t testGetGroupsInfo) OnSuccess(data string) {
-	log.Info(t.OperationID, "testGetGroupsInfo,onSuccess", data)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "testGetGroupsInfo,onSuccess", data)
 }
 
 func (t testGetGroupsInfo) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "testGetGroupsInfo,onError", errCode, errMsg)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "testGetGroupsInfo,onError", errCode, errMsg)
 }
 
 type testSearchGroups struct {
@@ -215,20 +212,22 @@ type testSearchGroups struct {
 }
 
 func (t testSearchGroups) OnSuccess(data string) {
-	log.Info(t.OperationID, "testSearchGroups,onSuccess", data)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "data", data)
 }
 
 func (t testSearchGroups) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "testSearchGroups,onError", errCode, errMsg)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg)
 }
+
 func DoTestGetGroupsInfo() {
 	var test testGetGroupsInfo
 	groupIDList := []string{TestgroupID}
 	list := utils.StructToJsonString(groupIDList)
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, "test getGroupsInfo input", list)
+	log.ZInfo(ctx, "DoTestGetGroupsInfo", "operationID", test.OperationID, "input", list)
 	// open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
 }
+
 func DoTestSearchGroups() {
 	var test testGetGroupsInfo
 	var params sdk_params_callback.SearchGroupsParam
@@ -243,11 +242,11 @@ type testJoinGroup struct {
 }
 
 func (t testJoinGroup) OnSuccess(data string) {
-	log.Info(t.OperationID, "testJoinGroup,onSuccess", data)
+	log.ZInfo(ctx, "testJoinGroup", "operationID", t.OperationID, "onSuccess", data)
 }
 
 func (t testJoinGroup) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "testJoinGroup,onError", errCode, errMsg)
+	log.ZInfo(ctx, "testJoinGroup", "operationID", t.OperationID, "onError", errCode, errMsg)
 }
 
 func DoTestJoinGroup() {
@@ -255,8 +254,9 @@ func DoTestJoinGroup() {
 	test.OperationID = utils.OperationIDGenerator()
 	groupID := "1003105543"
 	reqMsg := "121212"
-	log.Info(test.OperationID, "test join group input", groupID, reqMsg)
-	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg, constant.JoinBySearch)
+	ex := "ex"
+	log.ZInfo(ctx, "testJoinGroup", "operationID", test.OperationID, "input", groupID, reqMsg, ex)
+	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg, constant.JoinBySearch, ex)
 }
 
 type testQuitGroup struct {
@@ -264,18 +264,17 @@ type testQuitGroup struct {
 }
 
 func (t testQuitGroup) OnSuccess(data string) {
-	log.Info(t.OperationID, "testQuitGroup,onSuccess", data)
+	log.ZInfo(ctx, "testQuitGroup", "operationID", t.OperationID, "onSuccess", data)
 }
 
 func (t testQuitGroup) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "testQuitGroup,onError", errCode, errMsg)
+	log.ZInfo(ctx, "testQuitGroup", "operationID", t.OperationID, "onError", errCode, errMsg)
 }
-
 func DoTestQuitGroup() {
 	var test testQuitGroup
 	test.OperationID = utils.OperationIDGenerator()
 	groupID := "19de93b442a1ca3b772aa0f12761939d"
-	log.Info(test.OperationID, "test quit group input", groupID)
+	log.ZInfo(ctx, "testQuitGroup", "operationID", test.OperationID, "input", groupID)
 	open_im_sdk.QuitGroup(test, test.OperationID, groupID)
 }
 
@@ -288,11 +287,11 @@ OnError(errCode int, errMsg string)
 OnSuccess(data string)
 */
 func (t testGetJoinedGroupList) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "testGetJoinedGroupList OnError", errCode, errMsg)
+	log.ZInfo(ctx, "testGetJoinedGroupList", "operationID", t.OperationID, "OnError", errCode, errMsg)
 }
 
 func (t testGetJoinedGroupList) OnSuccess(data string) {
-	log.Info(t.OperationID, "testGetJoinedGroupList OnSuccess, output", data)
+	log.ZInfo(ctx, "testGetJoinedGroupList", "operationID", t.OperationID, "OnSuccess", "output", data)
 }
 
 func DoTestGetJoinedGroupList() {
@@ -306,12 +305,11 @@ type testGetGroupMemberList struct {
 }
 
 func (t testGetGroupMemberList) OnSuccess(data string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "testGetGroupMemberList: ", data)
-
+	log.ZInfo(ctx, "testGetGroupMemberList", "operationID", t.OperationID, "function", utils.GetSelfFuncName(), "data", data)
 }
 
 func (t testGetGroupMemberList) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "testGetGroupMemberList", errCode, errMsg)
+	log.ZInfo(ctx, "testGetGroupMemberList", "operationID", t.OperationID, "function", utils.GetSelfFuncName(), "errCode", errCode, "errMsg", errMsg)
 }
 
 func DotestGetGroupMemberList() {
@@ -395,12 +393,11 @@ type baseCallback struct {
 }
 
 func (t baseCallback) OnSuccess(data string) {
-	log.Info(t.OperationID, t.callName, utils.GetSelfFuncName(), data)
-
+	log.ZInfo(ctx, t.callName, "operationID", t.OperationID, "function", utils.GetSelfFuncName(), "data", data)
 }
 
 func (t baseCallback) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, t.callName, utils.GetSelfFuncName(), errCode, errMsg)
+	log.ZInfo(ctx, t.callName, "operationID", t.OperationID, "function", utils.GetSelfFuncName(), "errCode", errCode, "errMsg", errMsg)
 }
 
 type testKickGroupMember struct {
@@ -415,16 +412,17 @@ func DotestGetGroupMemberListByJoinTimeFilter() {
 	test.OperationID = utils.OperationIDGenerator()
 	var memlist []string
 	jlist := utils.StructToJsonString(memlist)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
+	log.ZInfo(ctx, "DotestGetGroupMemberListByJoinTimeFilter", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", jlist)
 	open_im_sdk.GetGroupMemberListByJoinTimeFilter(test, test.OperationID, "3750066757", 1, 40, 0, 0, jlist)
 }
+
 func DotestKickGroupMember() {
 	var test testKickGroupMember
 	test.OperationID = utils.OperationIDGenerator()
 	var memlist []string
 	memlist = append(memlist, MemberUserID)
 	jlist := utils.StructToJsonString(memlist)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
+	log.ZInfo(ctx, "DotestKickGroupMember", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", jlist)
 	open_im_sdk.KickGroupMember(test, test.OperationID, TestgroupID, "kkk", jlist)
 }
 
@@ -438,7 +436,7 @@ func DotestInviteUserToGroup() {
 	var memlist []string
 	memlist = append(memlist, MemberUserID)
 	jlist := utils.StructToJsonString(memlist)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
+	log.ZInfo(ctx, "DotestInviteUserToGroup", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", jlist)
 	open_im_sdk.InviteUserToGroup(test, test.OperationID, TestgroupID, "come", string(jlist))
 }
 
@@ -449,7 +447,7 @@ type testGetGroupApplicationList struct {
 func DotestGetRecvGroupApplicationList() string {
 	var test testGetGroupApplicationList
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	log.ZInfo(ctx, "DotestGetRecvGroupApplicationList", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", "")
 	// open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 	return ""
 }
@@ -478,29 +476,28 @@ type testProcessGroupApplication struct {
 func DoTestAcceptGroupApplication(uid string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	log.ZInfo(ctx, "DoTestAcceptGroupApplication", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", "")
 	open_im_sdk.AcceptGroupApplication(test, test.OperationID, TestgroupID, MemberUserID, "ok")
 }
 
 func DoTestGetUserReqGroupApplicationList() {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	log.ZInfo(ctx, "DoTestGetUserReqGroupApplicationList", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", "")
 	// open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
 }
 
-// 提示
-
 func DoTestGetRecvGroupApplicationList() {
 	var test testProcessGroupApplication
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input:")
+	test.OperationID = utils.OperationIDGenerator()
+	log.ZInfo(ctx, "DoTestGetRecvGroupApplicationList", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", "")
 	// open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 }
 
 func DotestRefuseGroupApplication(uid string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	log.ZInfo(ctx, "DotestRefuseGroupApplication", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", "")
 	open_im_sdk.RefuseGroupApplication(test, test.OperationID, TestgroupID, MemberUserID, "no")
 }
 
@@ -511,9 +508,8 @@ type testSetGroupMemberNickname struct {
 func DotestSetGroupMemberNickname(myUserID string) {
 	var test testSetGroupMemberNickname
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	log.ZInfo(ctx, "DotestSetGroupMemberNickname", "operationID", test.OperationID, "function", utils.GetSelfFuncName(), "input", "")
 	open_im_sdk.SetGroupMemberNickname(test, test.OperationID, TestgroupID, myUserID, "")
-
 }
 
 func DoTestSetGroupMemberRoleLevel(groupID, userID string, roleLevel int) {

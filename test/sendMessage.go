@@ -15,12 +15,11 @@
 package test
 
 import (
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-
-	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 func init() {
@@ -129,7 +128,7 @@ func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID st
 	wsMsgData.Options = options
 	wsMsgData.OfflinePushInfo = nil
 	//timeout := 300
-	log.Info(operationID, "SendReqTest begin ", wsMsgData)
+	log.ZInfo(ctx, "SendReqTest begin ", "operationID", operationID, "wsMsgData", wsMsgData)
 	//flag := ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
 	//
 	//if flag != true {

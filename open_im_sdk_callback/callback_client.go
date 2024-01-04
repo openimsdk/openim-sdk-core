@@ -54,7 +54,7 @@ type OnFriendshipListener interface {
 	OnFriendInfoChanged(friendInfo string)
 	OnBlackAdded(blackInfo string)
 	OnBlackDeleted(blackInfo string)
-	OnFriendPin(friendInfo string)
+	OnPinFriends(friendInfo string)
 }
 type OnConversationListener interface {
 	OnSyncServerStart()
@@ -64,7 +64,9 @@ type OnConversationListener interface {
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
 	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
+	OnConversationUserInputStatusChanged(change string)
 }
+
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
@@ -76,6 +78,7 @@ type OnAdvancedMsgListener interface {
 	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
 	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
+	OnRecvOnlineOnlyMessage(message string)
 }
 
 type OnBatchMsgListener interface {
@@ -139,4 +142,8 @@ type UploadFileCallback interface {
 	UploadPartComplete(index int, partSize int64, partHash string)      // 上传分片进度
 	UploadComplete(fileSize int64, streamSize int64, storageSize int64) // 整体进度
 	Complete(size int64, url string, typ int)                           // 上传完成
+}
+
+type UploadLogProgress interface {
+	OnProgress(current int64, size int64)
 }

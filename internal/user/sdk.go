@@ -33,8 +33,12 @@ func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 	return u.getSelfUserInfo(ctx)
 }
 
+// Deprecated: user SetSelfInfoEx instead
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
 	return u.updateSelfUserInfo(ctx, userInfo)
+}
+func (u *User) SetSelfInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
+	return u.updateSelfUserInfoEx(ctx, userInfo)
 }
 func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
 	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter,

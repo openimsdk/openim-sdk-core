@@ -67,11 +67,15 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 }
 
-func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
-	if c.ConversationListener == nil {
-		// log.Error("internal", "not set conversationListener")
-		return
+func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string {
+	msg := &sdk_struct.MsgStruct{}
+	if err := json.Unmarshal([]byte(latestMsg), msg); err != nil {
+		log.ZError(context.Background(), "getConversationLatestMsgClientID", err, "latestMsg", latestMsg)
 	}
+	return msg.ClientMsgID
+}
+
+func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	node := c2v.Value.(common.UpdateConNode)
 	switch node.Action {
@@ -81,15 +85,15 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		oc, err := c.db.GetConversation(ctx, lc.ConversationID)
 		if err == nil {
 			// log.Info("this is old conversation", *oc)
-			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { // The session update of asynchronous messages is subject to the latest sending time
+			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime || c.getConversationLatestMsgClientID(lc.LatestMsg) == c.getConversationLatestMsgClientID(oc.LatestMsg) { // The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
-					// log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+					log.ZError(ctx, "updateConversationLatestMsgModel", err, "conversationID", node.ConID)
 				} else {
 					oc.LatestMsgSendTime = lc.LatestMsgSendTime
 					oc.LatestMsg = lc.LatestMsg
 					list = append(list, oc)
-					c.ConversationListener.OnConversationChanged(utils.StructToJsonString(list))
+					c.ConversationListener().OnConversationChanged(utils.StructToJsonString(list))
 				}
 			}
 		} else {
@@ -99,7 +103,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				// log.Error("internal", "insert new conversation err:", err4.Error())
 			} else {
 				list = append(list, &lc)
-				c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
+				c.ConversationListener().OnNewConversation(utils.StructToJsonString(list))
 			}
 		}
 
@@ -109,7 +113,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 			if err == nil {
-				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+				c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
 				log.ZError(ctx, "getTotalUnreadMsgCountDB err", err)
 			}
@@ -138,7 +142,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			// log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
-			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+			c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
 	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
@@ -152,12 +156,15 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		case constant.SuperGroupChatType:
 			conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, st.SourceID)
 			if err != nil {
-				// log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
 			}
 			lc.GroupID = st.SourceID
 			lc.ConversationID = conversationID
 			lc.ConversationType = conversationType
+		case constant.NotificationChatType:
+			lc.UserID = st.SourceID
+			lc.ConversationID = c.getConversationIDBySessionType(st.SourceID, constant.NotificationChatType)
+			lc.ConversationType = constant.NotificationChatType
 		default:
 			log.ZError(ctx, "not support sessionType", nil, "sessionType", st.SessionType)
 			return
@@ -202,7 +209,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 					newCList = append(newCList, v)
 				}
 			}
-			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
+			c.ConversationListener().OnConversationChanged(utils.StructToJsonStringDefault(newCList))
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
@@ -212,17 +219,17 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			if cLists != nil {
 				// log.Info("internal", "getMultipleConversationModel success :", cLists)
-				c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
+				c.ConversationListener().OnNewConversation(utils.StructToJsonString(cLists))
 			}
 		}
 	case constant.ConChangeDirect:
 		cidList := node.Args.(string)
-		c.ConversationListener.OnConversationChanged(cidList)
+		c.ConversationListener().OnConversationChanged(cidList)
 
 	case constant.NewConDirect:
 		cidList := node.Args.(string)
 		// log.Debug("internal", "NewConversation", cidList)
-		c.ConversationListener.OnNewConversation(cidList)
+		c.ConversationListener().OnNewConversation(cidList)
 
 	case constant.ConversationLatestMsgHasRead:
 		hasReadMsgList := node.Args.(map[string][]string)
@@ -256,7 +263,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 		if result != nil {
 			// log.Info("internal", "getMultipleConversationModel success :", result)
-			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
+			c.ConversationListener().OnNewConversation(utils.StructToJsonString(result))
 		}
 	case constant.SyncConversation:
 
@@ -264,17 +271,13 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
-	if c.ConversationListener == nil {
-		// log.Error("internal", "not set conversationListener")
-		return
-	}
-
 	node := c2v.Value.(common.UpdateMessageNode)
 	ctx := c2v.Ctx
 	switch node.Action {
 	case constant.UpdateMsgFaceUrlAndNickName:
 		args := node.Args.(common.UpdateMessageInfo)
-		if args.GroupID == "" {
+		switch args.SessionType {
+		case constant.SingleChatType:
 			if args.UserID == c.loginUserID {
 				conversationIDList, err := c.db.GetAllSingleConversationIDList(ctx)
 				if err != nil {
@@ -299,14 +302,22 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 				}
 
 			}
-		} else {
+		case constant.SuperGroupChatType:
 			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.SuperGroupChatType)
 			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
 			if err != nil {
 				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
 			}
+		case constant.NotificationChatType:
+			conversationID := c.getConversationIDBySessionType(args.UserID, constant.NotificationChatType)
+			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+			if err != nil {
+				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+			}
+		default:
+			log.ZError(ctx, "not support sessionType", nil, "args", args)
+			return
 		}
-
 	}
 
 }
@@ -574,16 +585,6 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 // }
 
 func (c *Conversation) DoConversationChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
-		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID",
-			msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType,
-			"sendTime", msg.SendTime, "loginTime", c.full.Group().LoginTime())
-		return
-	}
-	if c.msgListener == nil {
-		log.ZError(ctx, "msgListner is nil", nil)
-		return
-	}
 	//var notification sdkws.ConversationChangedNotification
 	tips := &sdkws.ConversationUpdateTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
@@ -596,16 +597,6 @@ func (c *Conversation) DoConversationChangedNotification(ctx context.Context, ms
 }
 
 func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
-		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID",
-			msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType,
-			"sendTime", msg.SendTime, "loginTime", c.full.Group().LoginTime())
-		return
-	}
-	if c.msgListener == nil {
-		log.ZError(ctx, "msgListner is nil", nil)
-		return
-	}
 	tips := &sdkws.ConversationSetPrivateTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
 		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
@@ -623,7 +614,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	switch syncFlag {
 	case constant.MsgSyncBegin:
 		c.startTime = time.Now()
-		c.ConversationListener.OnSyncServerStart()
+		c.ConversationListener().OnSyncServerStart()
 		if err := c.SyncAllConversationHashReadSeqs(ctx); err != nil {
 			log.ZError(ctx, "SyncConversationHashReadSeqs err", err)
 		}
@@ -639,10 +630,10 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 			}(syncFunc)
 		}
 	case constant.MsgSyncFailed:
-		c.ConversationListener.OnSyncServerFailed()
+		c.ConversationListener().OnSyncServerFailed()
 	case constant.MsgSyncEnd:
 		log.ZDebug(ctx, "MsgSyncEnd", "time", time.Since(c.startTime).Milliseconds())
-		defer c.ConversationListener.OnSyncServerFinish()
+		defer c.ConversationListener().OnSyncServerFinish()
 		go c.SyncAllConversations(ctx)
 	}
 

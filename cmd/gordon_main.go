@@ -15,8 +15,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"errors"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -40,6 +42,7 @@ var (
 	//SECRET       = "4zbF9Y6Fs1QJ0hsmpC3B676txZcCnjcZ"
 	SENDINTERVAL = 20
 )
+var ctx context.Context
 
 const PlatformID = 3
 
@@ -62,16 +65,17 @@ func ggetToken(uid string) string {
 	req.OperationID = utils.OperationIDGenerator()
 	r, err := network.Post2Api(url, req, "a")
 	if err != nil {
-		log.Error(req.OperationID, "Post2Api failed ", err.Error(), url, req)
+		log.ZError(ctx, "Post2Api failed ", errors.New("Post2Api failed "), "operationID", req.OperationID, "url", url, "req", req)
 		return ""
 	}
 	var stcResp ResToken
 	err = json.Unmarshal(r, &stcResp)
 	if stcResp.ErrCode != 0 {
-		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrCode, stcResp.ErrMsg, url, req)
+		log.ZError(ctx, "ErrCode failed ", errors.New("ErrCode failed "), "operationID", req.OperationID,
+			"errorCode", stcResp.ErrCode, "errMsg", stcResp.ErrMsg, "url", url, "req", req)
 		return ""
 	}
-	log.Info(req.OperationID, "get token: ", stcResp.Data.Token)
+	log.ZInfo(ctx, "get token: ", "operationID", req.OperationID, "token", stcResp.Data.Token)
 	return stcResp.Data.Token
 }
 

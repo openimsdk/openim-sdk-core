@@ -16,7 +16,9 @@ package conversation_msg
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -190,6 +192,15 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 				log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
 			}
 		}
+		latestMsg := &sdk_struct.MsgStruct{}
+		if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
+			log.ZError(ctx, "Unmarshal err", err, "conversationID", conversation.ConversationID, "latestMsg", conversation.LatestMsg)
+		}
+		if (!latestMsg.IsRead) && utils2.Contain(latestMsg.Seq, seqs...) {
+			latestMsg.IsRead = true
+			conversation.LatestMsg = utils.StructToJsonString(&latestMsg)
+			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
+		}
 	} else {
 		if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"unread_count": 0}); err != nil {
 			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
@@ -224,6 +235,10 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 			return
 		}
 		if conversation.ConversationType == constant.SingleChatType {
+			latestMsg := &sdk_struct.MsgStruct{}
+			if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
+				log.ZError(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
+			}
 			var successMsgIDs []string
 			for _, message := range messages {
 				attachInfo := sdk_struct.AttachedInfoElem{}
@@ -234,12 +249,18 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 				if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
 					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
 				} else {
+					if latestMsg.ClientMsgID == message.ClientMsgID {
+						latestMsg.IsRead = message.IsRead
+						conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
+
+					}
 					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
 				}
 			}
 			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
 				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
-			c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+			c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 		}
 		//else if conversation.ConversationType == constant.SuperGroupChatType {
 		//	var successMsgIDs []string
