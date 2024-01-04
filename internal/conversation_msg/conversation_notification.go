@@ -68,8 +68,8 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string {
-	var msg sdkws.MsgData
-	if err := json.Unmarshal([]byte(latestMsg), &msg); err != nil {
+	msg := &sdk_struct.MsgStruct{}
+	if err := json.Unmarshal([]byte(latestMsg), msg); err != nil {
 		log.ZError(context.Background(), "getConversationLatestMsgClientID", err, "latestMsg", latestMsg)
 	}
 	return msg.ClientMsgID
@@ -156,12 +156,15 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		case constant.SuperGroupChatType:
 			conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, st.SourceID)
 			if err != nil {
-				// log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
 			}
 			lc.GroupID = st.SourceID
 			lc.ConversationID = conversationID
 			lc.ConversationType = conversationType
+		case constant.NotificationChatType:
+			lc.UserID = st.SourceID
+			lc.ConversationID = c.getConversationIDBySessionType(st.SourceID, constant.NotificationChatType)
+			lc.ConversationType = constant.NotificationChatType
 		default:
 			log.ZError(ctx, "not support sessionType", nil, "sessionType", st.SessionType)
 			return
@@ -273,7 +276,8 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 	switch node.Action {
 	case constant.UpdateMsgFaceUrlAndNickName:
 		args := node.Args.(common.UpdateMessageInfo)
-		if args.GroupID == "" {
+		switch args.SessionType {
+		case constant.SingleChatType:
 			if args.UserID == c.loginUserID {
 				conversationIDList, err := c.db.GetAllSingleConversationIDList(ctx)
 				if err != nil {
@@ -298,14 +302,22 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 				}
 
 			}
-		} else {
+		case constant.SuperGroupChatType:
 			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.SuperGroupChatType)
 			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
 			if err != nil {
 				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
 			}
+		case constant.NotificationChatType:
+			conversationID := c.getConversationIDBySessionType(args.UserID, constant.NotificationChatType)
+			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+			if err != nil {
+				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+			}
+		default:
+			log.ZError(ctx, "not support sessionType", nil, "args", args)
+			return
 		}
-
 	}
 
 }

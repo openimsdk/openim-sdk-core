@@ -18,8 +18,14 @@
 package interaction
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/OpenIMSDK/tools/log"
+	"io"
 	"net/http"
+	"net/url"
 	"nhooyr.io/websocket"
 	"time"
 )
@@ -67,15 +73,64 @@ func (w *JSWebSocket) ReadMessage() (int, []byte, error) {
 	return int(messageType), b, err
 }
 
+func (w *JSWebSocket) dial(ctx context.Context, urlStr string) (*websocket.Conn, *http.Response, error) {
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, nil, err
+	}
+	query := u.Query()
+	query.Set("isMsgResp", "true")
+	u.RawQuery = query.Encode()
+	conn, httpResp, err := websocket.Dial(ctx, u.String(), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	if httpResp == nil {
+		httpResp = &http.Response{
+			StatusCode: http.StatusSwitchingProtocols,
+		}
+	}
+	_, data, err := conn.Read(ctx)
+	if err != nil {
+		_ = conn.CloseNow()
+		return nil, nil, fmt.Errorf("read response error %w", err)
+	}
+	var apiResp struct {
+		ErrCode int    `json:"errCode"`
+		ErrMsg  string `json:"errMsg"`
+		ErrDlt  string `json:"errDlt"`
+	}
+	if err := json.Unmarshal(data, &apiResp); err != nil {
+		return nil, nil, fmt.Errorf("unmarshal response error %w", err)
+	}
+	if apiResp.ErrCode == 0 {
+		return conn, httpResp, nil
+	}
+	log.ZDebug(ctx, "ws msg read resp", "data", string(data))
+	httpResp.Body = io.NopCloser(bytes.NewReader(data))
+	return conn, httpResp, fmt.Errorf("read response error %d %s %s",
+		apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt)
+}
+
 func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	conn, httpResp, err := websocket.Dial(ctx, urlStr, nil)
+	conn, httpResp, err := w.dial(ctx, urlStr)
 	if err == nil {
 		w.conn = conn
 	}
 	return httpResp, err
 }
+
+//func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error) {
+//	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+//	defer cancel()
+//	conn, httpResp, err := websocket.Dial(ctx, urlStr, nil)
+//	if err == nil {
+//		w.conn = conn
+//	}
+//	return httpResp, err
+//}
 
 func (w *JSWebSocket) IsNil() bool {
 	if w.conn != nil {

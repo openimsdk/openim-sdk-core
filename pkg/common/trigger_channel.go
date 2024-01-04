@@ -181,15 +181,16 @@ type UpdateConInfo struct {
 	GroupID string
 }
 type UpdateMessageInfo struct {
-	UserID   string
-	FaceURL  string
-	Nickname string
-	GroupID  string
+	SessionType int32
+	UserID      string
+	FaceURL     string
+	Nickname    string
+	GroupID     string
 }
 
 type SourceIDAndSessionType struct {
 	SourceID    string
-	SessionType int
+	SessionType int32
 	FaceURL     string
 	Nickname    string
 }

@@ -178,12 +178,20 @@ func (e *emptyConversationListener) OnTotalUnreadMessageCountChanged(totalUnread
 		"totalUnreadCount", totalUnreadCount)
 }
 
+func (e *emptyConversationListener) OnConversationUserInputStatusChanged(change string) {
+
+}
+
 type emptyAdvancedMsgListener struct {
 	ctx context.Context
 }
 
 func newEmptyAdvancedMsgListener(ctx context.Context) open_im_sdk_callback.OnAdvancedMsgListener {
 	return &emptyAdvancedMsgListener{ctx}
+}
+
+func (e *emptyAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
+
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvNewMessage(message string) {

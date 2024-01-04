@@ -24,8 +24,8 @@ func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupRe
 	call(callback, operationID, UserForSDK.Group().CreateGroup, groupReqInfo)
 }
 
-func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID string, reqMsg string, joinSource int32) {
-	call(callback, operationID, UserForSDK.Group().JoinGroup, groupID, reqMsg, joinSource)
+func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID string, reqMsg string, joinSource int32, ex string) {
+	call(callback, operationID, UserForSDK.Group().JoinGroup, groupID, reqMsg, joinSource, ex)
 }
 
 func QuitGroup(callback open_im_sdk_callback.Base, operationID string, groupID string) {

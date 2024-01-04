@@ -26,11 +26,11 @@ import (
 
 func Test_CreateGroupV2(t *testing.T) {
 	req := &group.CreateGroupReq{
-		MemberUserIDs: []string{},
-		AdminUserIDs:  []string{},
+		MemberUserIDs: []string{"7299270930"},
+		AdminUserIDs:  []string{"1"},
 		OwnerUserID:   UserID,
 		GroupInfo: &sdkws.GroupInfo{
-			GroupName: "test-gro2up",
+			GroupName: "test",
 			GroupType: 2,
 		},
 	}
@@ -42,7 +42,7 @@ func Test_CreateGroupV2(t *testing.T) {
 }
 
 func Test_JoinGroup(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().JoinGroup(ctx, "1728503199", "1234", 1)
+	err := open_im_sdk.UserForSDK.Group().JoinGroup(ctx, "3889561099", "1234", 3, "ex")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,10 +117,11 @@ func Test_SetGroupMemberNickname(t *testing.T) {
 func Test_SetGroupMemberInfo(t *testing.T) {
 	// 1:普通成员 2:群主 3:管理员
 	err := open_im_sdk.UserForSDK.Group().SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{
-		GroupID:  "3459296007",
+		GroupID:  "3889561099",
 		UserID:   UserID,
 		FaceURL:  wrapperspb.String("https://doc.rentsoft.cn/images/logo.png"),
 		Nickname: wrapperspb.String("testupdatename"),
+		Ex:       wrapperspb.String("a"),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -140,7 +141,7 @@ func Test_GetJoinedGroupList(t *testing.T) {
 }
 
 func Test_GetSpecifiedGroupsInfo(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetSpecifiedGroupsInfo(ctx, []string{"2344707053"})
+	info, err := open_im_sdk.UserForSDK.Group().GetSpecifiedGroupsInfo(ctx, []string{"test"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,10 +259,20 @@ func Test_GetGroup(t *testing.T) {
 	}
 	// time.Sleep(time.Second * 100000)
 }
-
+func Test_GetGroupApplicantsList(t *testing.T) {
+	t.Log("--------------------------")
+	infos, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsRecipient(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, info := range infos {
+		t.Logf("%d: %#v", i, info)
+	}
+	// time.Sleep(time.Second * 100000)
+}
 func Test_IsJoinGroup(t *testing.T) {
 	t.Log("--------------------------")
-	join, err := open_im_sdk.UserForSDK.Group().IsJoinGroup(ctx, "1875806101")
+	join, err := open_im_sdk.UserForSDK.Group().IsJoinGroup(ctx, "3889561099")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -276,7 +287,7 @@ func Test_GetGroupMemberList(t *testing.T) {
 		constant.GroupOrdinaryUsers: "成员",
 	}
 
-	members, err := open_im_sdk.UserForSDK.Group().GetGroupMemberList(ctx, "2246086342", 0, 0, 9999999)
+	members, err := open_im_sdk.UserForSDK.Group().GetGroupMemberList(ctx, "3889561099", 0, 0, 9999999)
 	if err != nil {
 		panic(err)
 	}
@@ -289,7 +300,16 @@ func Test_GetGroupMemberList(t *testing.T) {
 }
 
 func Test_SyncAllGroupMember(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SyncAllGroupMember(ctx, "2527303509")
+	err := open_im_sdk.UserForSDK.Group().SyncAllGroupMember(ctx, "3889561099")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+func Test_SetGroupInfo(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
+		GroupID: "3889561099",
+		Ex:      &wrapperspb.StringValue{Value: "groupex"},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -42,7 +42,9 @@ func SetConversationMsgDestructTime(callback open_im_sdk_callback.Base, operatio
 func SetConversationIsMsgDestruct(callback open_im_sdk_callback.Base, operationID string, conversationID string, isMsgDestruct bool) {
 	call(callback, operationID, UserForSDK.Conversation().SetConversationIsMsgDestruct, conversationID, isMsgDestruct)
 }
-
+func SetConversationEx(callback open_im_sdk_callback.Base, operationID string, conversationID string, ex string) {
+	call(callback, operationID, UserForSDK.Conversation().SetOneConversationEx, conversationID, ex)
+}
 func HideConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	call(callback, operationID, UserForSDK.Conversation().HideConversation, conversationID)
 }
@@ -244,4 +246,12 @@ func SetMessageLocalEx(callback open_im_sdk_callback.Base, operationID string, c
 
 func SearchConversation(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, UserForSDK.Conversation().SearchConversation, searchParam)
+}
+
+func ChangeInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, focus bool) {
+	call(callback, operationID, UserForSDK.Conversation().ChangeInputStates, conversationID, focus)
+}
+
+func GetInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, userID string) {
+	call(callback, operationID, UserForSDK.Conversation().GetInputStates, conversationID, userID)
 }

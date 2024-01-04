@@ -16,10 +16,11 @@ package test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
@@ -36,14 +37,14 @@ type BaseSuccessFailed struct {
 func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
-	log.Error("login failed", errCode, errMsg)
+	log.ZError(ctx, "login failed", errors.New("login failed"), "errCode", errCode, "errMsg", errMsg)
 
 }
 
 func (b *BaseSuccessFailed) OnSuccess(data string) {
 	b.errCode = 1
 	b.successData = data
-	log.Info("login success", data, time.Since(b.time))
+	log.ZInfo(ctx, "login success", "data", data, "time since", time.Since(b.time))
 }
 
 func InOutDoTest(uid, tk, ws, api string) {

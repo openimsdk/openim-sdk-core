@@ -48,7 +48,21 @@ func Test_GetUsersInfo(t *testing.T) {
 		t.Log(userInfo[0].PublicInfo)
 	}
 }
-
+func Test_GetUsersInfoWithCache(t *testing.T) {
+	userInfo, err := open_im_sdk.UserForSDK.Full().GetUsersInfoWithCache(ctx, []string{"1"}, "")
+	if err != nil {
+		t.Error(err)
+	}
+	if userInfo[0].BlackInfo != nil {
+		t.Log(userInfo[0].BlackInfo)
+	}
+	if userInfo[0].FriendInfo != nil {
+		t.Log(userInfo[0].FriendInfo)
+	}
+	if userInfo[0].PublicInfo != nil {
+		t.Log(userInfo[0].PublicInfo)
+	}
+}
 func Test_SetSelfInfo(t *testing.T) {
 	newNickName := "test"
 	//newFaceURL := "http://test.com"
@@ -78,7 +92,7 @@ func Test_SetSelfInfoEx(t *testing.T) {
 		Nickname: newNickName,
 		//FaceURL:  newFaceURL,
 		Ex: &wrapperspb.StringValue{
-			Value: "",
+			Value: "ASD",
 		},
 	})
 	newFaceURL := "http://test.com"

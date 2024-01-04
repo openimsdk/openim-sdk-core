@@ -93,6 +93,10 @@ func (c ConversationCallback) OnTotalUnreadMessageCountChanged(totalUnreadCount 
 	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(totalUnreadCount).SendMessage()
 }
 
+func (c ConversationCallback) OnConversationUserInputStatusChanged(change string) {
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(change).SendMessage()
+}
+
 type AdvancedMsgCallback struct {
 	CallbackWriter
 }
@@ -146,6 +150,10 @@ func (a AdvancedMsgCallback) OnRecvOfflineNewMessage(message string) {
 }
 
 func (a AdvancedMsgCallback) OnMsgDeleted(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnRecvOnlineOnlyMessage(message string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }
 
@@ -388,6 +396,10 @@ type UserCallback struct {
 
 func (u UserCallback) OnUserStatusChanged(statusMap string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(statusMap).SendMessage()
+}
+
+func (u UserCallback) OnUserInputStatusChanged(change string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(change).SendMessage()
 }
 
 func NewUserCallback(callback *js.Value) *UserCallback {

@@ -75,12 +75,12 @@ func (f *Friend) initSyncer() {
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
 					Args: common.SourceIDAndSessionType{SourceID: server.FriendUserID, SessionType: constant.SingleChatType, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
+					Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 			}
 
-			}
-			return nil
-		})
+		}
+		return nil
+	})
 	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
@@ -256,18 +256,15 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncAllBlackList(ctx)
 		}
-	case constant.FriendPinSetNotifiaction:
-		var tips sdkws.PinFriendTips
+	case constant.FriendsInfoUpdateNotification:
+
+		var tips sdkws.FriendsInfoUpdateTips
+
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		if tips.UserID == f.loginUserID {
-			var friendIDs []string
-
-			for _, friendInfo := range tips.UpdateFriends {
-				friendIDs = append(friendIDs, friendInfo.FriendUser.UserID)
-			}
-			return f.SyncFriends(ctx, friendIDs)
+		if tips.FromToUserID.ToUserID == f.loginUserID {
+			return f.SyncFriends(ctx, tips.FriendIDs)
 		}
 	default:
 		return fmt.Errorf("type failed %d", msg.ContentType)

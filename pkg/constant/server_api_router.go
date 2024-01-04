@@ -43,7 +43,7 @@ const (
 	GetDesignatedFriendsRouter      = "/friend/get_designated_friends"
 	AddFriendResponse               = "/friend/add_friend_response"
 	SetFriendRemark                 = "/friend/set_friend_remark"
-	SetFriendPin                    = "/friend/set_pin_friend"
+	UpdateFriends                   = "/friend/update_friends"
 
 	AddBlackRouter     = "/friend/add_black"
 	RemoveBlackRouter  = "/friend/remove_black"
