@@ -22,8 +22,10 @@ func (c *apiErrCallback) OnError(ctx context.Context, err error) {
 	}
 	codeErr, ok := errs.Unwrap(err).(errs.CodeError)
 	if !ok {
+		log.ZError(ctx, "OnError callback not CodeError", err)
 		return
 	}
+	log.ZError(ctx, "OnError callback CodeError", err, "code", codeErr.Code(), "msg", codeErr.Msg(), "detail", codeErr.Detail())
 	switch codeErr.Code() {
 	case
 		errs.TokenExpiredError,
