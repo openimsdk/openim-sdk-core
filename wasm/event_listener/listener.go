@@ -306,10 +306,6 @@ type FriendCallback struct {
 	CallbackWriter
 }
 
-func (f *FriendCallback) OnPinFriends(friendInfo string) {
-	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendInfo).SendMessage()
-}
-
 func NewFriendCallback(callback *js.Value) *FriendCallback {
 	return &FriendCallback{CallbackWriter: NewEventData(callback)}
 }
