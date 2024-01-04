@@ -185,17 +185,12 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 	if err != nil {
 		return nil, err
 	}
-	superGroupList, err := g.db.GetJoinedSuperGroupList(ctx)
-	if err != nil {
-		return nil, err
-	}
 	groupIDMap := utils.SliceSet(groupIDs)
-	groups := append(groupList, superGroupList...)
 	res := make([]*model_struct.LocalGroup, 0, len(groupIDs))
-	for i, v := range groups {
+	for i, v := range groupList {
 		if _, ok := groupIDMap[v.GroupID]; ok {
 			delete(groupIDMap, v.GroupID)
-			res = append(res, groups[i])
+			res = append(res, groupList[i])
 		}
 	}
 	if len(groupIDMap) > 0 {
@@ -345,15 +340,6 @@ func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
 		return false, err
 	}
 	for _, localGroup := range groupList {
-		if localGroup.GroupID == groupID {
-			return true, nil
-		}
-	}
-	superGroupList, err := g.db.GetJoinedSuperGroupList(ctx)
-	if err != nil {
-		return false, err
-	}
-	for _, localGroup := range superGroupList {
 		if localGroup.GroupID == groupID {
 			return true, nil
 		}
