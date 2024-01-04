@@ -133,10 +133,6 @@ func (e *emptyFriendshipListener) OnBlackDeleted(blackInfo string) {
 	log.ZWarn(e.ctx, "FriendshipListener is not implemented", nil,
 		"blackInfo", blackInfo)
 }
-func (e *emptyFriendshipListener) OnPinFriends(friendInfo string) {
-	log.ZWarn(e.ctx, "FriendshipListener is not implemented", nil,
-		"friendInfo", friendInfo)
-}
 
 type emptyConversationListener struct {
 	ctx context.Context
