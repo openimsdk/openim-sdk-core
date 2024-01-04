@@ -18,12 +18,14 @@
 package interaction
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/OpenIMSDK/tools/log"
 	"io"
 	"net/http"
+	"net/url"
 	"nhooyr.io/websocket"
 	"time"
 )
