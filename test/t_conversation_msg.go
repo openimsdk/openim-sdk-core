@@ -564,6 +564,10 @@ func (m *MsgListenerCallBak) OnRecvMessageExtensionsDeleted(msgID string, reacti
 	log.ZInfo(ctx, "internal", "OnRecvMessageExtensionsDeleted", "msgID", msgID, "reactionExtensionKeyList", reactionExtensionKeyList)
 }
 
+func (m *MsgListenerCallBak) OnRecvOnlineOnlyMessage(message string) {
+
+}
+
 type BatchMsg struct {
 }
 
@@ -671,6 +675,10 @@ func (c *conversationCallBack) OnConversationChanged(conversationList string) {
 
 func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
 	log.ZInfo(ctx, "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is", totalUnreadCount)
+}
+
+func (c *conversationCallBack) OnConversationUserInputStatusChanged(change string) {
+
 }
 
 type testMarkC2CMessageAsRead struct {
