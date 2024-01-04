@@ -666,10 +666,6 @@ func InOutDoTestSendMsg(sendId, receiverID string) {
 type userCallback struct {
 }
 
-func (c userCallback) OnUserInputStatusChanged(change string) {
-
-}
-
 func (c userCallback) OnUserStatusChanged(statusMap string) {
 	log.ZInfo(ctx, "User Status Changed", "statusMap", statusMap)
 }

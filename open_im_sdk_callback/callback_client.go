@@ -63,7 +63,9 @@ type OnConversationListener interface {
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
 	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
+	OnConversationUserInputStatusChanged(change string)
 }
+
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
@@ -75,6 +77,7 @@ type OnAdvancedMsgListener interface {
 	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
 	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
+	OnRecvOnlineOnlyMessage(message string)
 }
 
 type OnBatchMsgListener interface {
@@ -85,7 +88,6 @@ type OnBatchMsgListener interface {
 type OnUserListener interface {
 	OnSelfInfoUpdated(userInfo string)
 	OnUserStatusChanged(userOnlineStatus string)
-	OnUserInputStatusChanged(change string)
 }
 
 type OnCustomBusinessListener interface {
