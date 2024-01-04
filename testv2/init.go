@@ -162,6 +162,10 @@ func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCou
 	log.ZInfo(o.ctx, "OnTotalUnreadMessageCountChanged", "totalUnreadCount", totalUnreadCount)
 }
 
+func (o *onConversationListener) OnConversationUserInputStatusChanged(change string) {
+	log.ZInfo(o.ctx, "OnConversationUserInputStatusChanged", "change", change)
+}
+
 type onGroupListener struct {
 	ctx context.Context
 }
@@ -212,6 +216,10 @@ func (o *onGroupListener) OnGroupApplicationRejected(groupApplication string) {
 
 type onAdvancedMsgListener struct {
 	ctx context.Context
+}
+
+func (o *onAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
+	log.ZDebug(o.ctx, "OnRecvOnlineOnlyMessage", "message", message)
 }
 
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
@@ -309,10 +317,6 @@ func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 
 type onUserListener struct {
 	ctx context.Context
-}
-
-func (o *onUserListener) OnUserInputStatusChanged(change string) {
-
 }
 
 func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {

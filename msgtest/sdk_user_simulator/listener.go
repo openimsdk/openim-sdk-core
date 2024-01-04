@@ -38,11 +38,11 @@ func (c *conversationCallBack) OnSyncServerFinish() {
 
 }
 
-type userCallback struct {
+func (c *conversationCallBack) OnConversationUserInputStatusChanged(change string) {
+
 }
 
-func (c userCallback) OnUserInputStatusChanged(change string) {
-
+type userCallback struct {
 }
 
 func (c userCallback) OnUserStatusChanged(statusMap string) {
@@ -106,6 +106,10 @@ func (m *MsgListenerCallBak) OnRecvMessageExtensionsChanged(msgID string, reacti
 
 }
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
+}
+
+func (m *MsgListenerCallBak) OnRecvOnlineOnlyMessage(message string) {
+
 }
 
 type testFriendListener struct {

@@ -56,7 +56,6 @@ type Conversation struct {
 	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
 	msgKvListener        func() open_im_sdk_callback.OnMessageKvInfoListener
 	batchMsgListener     func() open_im_sdk_callback.OnBatchMsgListener
-	userListener         func() open_im_sdk_callback.OnUserListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
@@ -74,7 +73,7 @@ type Conversation struct {
 
 	startTime time.Time
 
-	entering *entering
+	typing *typing
 }
 
 func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
@@ -87,10 +86,6 @@ func (c *Conversation) SetMsgKvListener(msgKvListener func() open_im_sdk_callbac
 
 func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
-}
-
-func (c *Conversation) SetOnUserListener(userListener func() open_im_sdk_callback.OnUserListener) {
-	c.userListener = userListener
 }
 
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
@@ -113,7 +108,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 	}
-	n.entering = newEntering(n)
+	n.typing = newTyping(n)
 	n.initSyncer()
 	n.cache = cache.NewCache[string, *model_struct.LocalConversation]()
 	return n
@@ -167,6 +162,11 @@ func (c *Conversation) GetCh() chan common.Cmd2Value {
 	return c.recvCH
 }
 
+type onlineMsgKey struct {
+	ClientMsgID string
+	ServerMsgID string
+}
+
 func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 	ctx := c2v.Ctx
@@ -185,6 +185,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
 	log.ZDebug(ctx, "message come here conversation ch", "conversation length", len(allMsg))
 	b := time.Now()
+	onlineMap := make(map[onlineMsgKey]struct{})
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
 			conversationID, "message length", len(msgs.Msgs))
@@ -193,6 +194,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		for _, v := range msgs.Msgs {
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
+			if !isHistory {
+				onlineMap[onlineMsgKey{ClientMsgID: v.ClientMsgID, ServerMsgID: v.ServerMsgID}] = struct{}{}
+			}
 			isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 			isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 			isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
@@ -375,7 +379,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if c.batchMsgListener() != nil {
 		c.batchNewMessages(ctx, newMessages)
 	} else {
-		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet)
+		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
 	}
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -390,8 +394,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 	for _, msgs := range allMsg {
 		for _, msg := range msgs.Msgs {
-			if msg.ContentType == constant.Entering {
-				c.entering.onNewMsg(ctx, msg)
+			if msg.ContentType == constant.Typing {
+				c.typing.onNewMsg(ctx, msg)
 			}
 		}
 	}
@@ -653,7 +657,7 @@ func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (boo
 	return false, nil
 }
 
-func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation) {
+func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
 	sort.Sort(newMessagesList)
 	if c.GetBackground() {
 		u, err := c.user.GetSelfUserInfo(ctx)
@@ -675,11 +679,18 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 		}
 	} else {
 		for _, w := range newMessagesList {
-			c.msgListener().OnRecvNewMessage(utils.StructToJsonString(w))
+			if w.ContentType == constant.Typing {
+				continue
+			}
+			if _, ok := onlineMsg[onlineMsgKey{ClientMsgID: w.ClientMsgID, ServerMsgID: w.ServerMsgID}]; ok {
+				c.msgListener().OnRecvOnlineOnlyMessage(utils.StructToJsonString(w))
+			} else {
+				c.msgListener().OnRecvNewMessage(utils.StructToJsonString(w))
+			}
 		}
 	}
-
 }
+
 func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	if len(newMessagesList) > 0 {
@@ -837,10 +848,6 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		t := sdk_struct.CardElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.CardElem = &t
-	case constant.Entering:
-		t := sdk_struct.EnteringElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.EnteringElem = &t
 	default:
 		t := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
@@ -1052,9 +1059,9 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 }
 
 func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {
-	return c.entering.GetInputStates(conversationID, userID), nil
+	return c.typing.GetInputStates(conversationID, userID), nil
 }
 
 func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
-	return c.entering.ChangeInputStates(ctx, conversationID, focus)
+	return c.typing.ChangeInputStates(ctx, conversationID, focus)
 }
