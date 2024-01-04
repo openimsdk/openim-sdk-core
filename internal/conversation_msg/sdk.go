@@ -553,7 +553,9 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 				putErrs = err
 			}
-			s.VideoElem.VideoURL = res.URL
+			if res != nil {
+				s.VideoElem.VideoURL = res.URL
+			}
 		}()
 		wg.Wait()
 		if err := putErrs; err != nil {
