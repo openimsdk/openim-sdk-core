@@ -186,7 +186,7 @@ func newEmptyAdvancedMsgListener(ctx context.Context) open_im_sdk_callback.OnAdv
 	return &emptyAdvancedMsgListener{ctx}
 }
 
-func (e *emptyAdvancedMsgListener) OnRecvOnlineMessage(message string) {
+func (e *emptyAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
 
 }
 

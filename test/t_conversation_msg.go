@@ -564,7 +564,7 @@ func (m *MsgListenerCallBak) OnRecvMessageExtensionsDeleted(msgID string, reacti
 	log.ZInfo(ctx, "internal", "OnRecvMessageExtensionsDeleted", "msgID", msgID, "reactionExtensionKeyList", reactionExtensionKeyList)
 }
 
-func (m *MsgListenerCallBak) OnRecvOnlineMessage(message string) {
+func (m *MsgListenerCallBak) OnRecvOnlineOnlyMessage(message string) {
 
 }
 

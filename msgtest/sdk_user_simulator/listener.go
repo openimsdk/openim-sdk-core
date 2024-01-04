@@ -108,7 +108,7 @@ func (m *MsgListenerCallBak) OnRecvMessageExtensionsChanged(msgID string, reacti
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
 }
 
-func (m *MsgListenerCallBak) OnRecvOnlineMessage(message string) {
+func (m *MsgListenerCallBak) OnRecvOnlineOnlyMessage(message string) {
 
 }
 

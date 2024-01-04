@@ -683,7 +683,7 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 				continue
 			}
 			if _, ok := onlineMsg[onlineMsgKey{ClientMsgID: w.ClientMsgID, ServerMsgID: w.ServerMsgID}]; ok {
-				c.msgListener().OnRecvOnlineMessage(utils.StructToJsonString(w))
+				c.msgListener().OnRecvOnlineOnlyMessage(utils.StructToJsonString(w))
 			} else {
 				c.msgListener().OnRecvNewMessage(utils.StructToJsonString(w))
 			}
