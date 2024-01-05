@@ -75,15 +75,15 @@ func (w *WrapperUser) GetUserStatus(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetUserStatus, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperUser) FavoriteAdd(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperUser) UserCommandAdd(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.FavoriteAdd, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.UserCommandAdd, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperUser) FavoriteDelete(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperUser) UserCommandDelete(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.FavoriteDelete, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.UserCommandDelete, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperUser) FavoriteGet(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperUser) UserCommandGet(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.FavoriteGet, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.UserCommandGet, callback, &args).AsyncCallWithCallback()
 }

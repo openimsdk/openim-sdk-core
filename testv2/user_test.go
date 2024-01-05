@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"github.com/OpenIMSDK/protocol/user"
 	"github.com/OpenIMSDK/protocol/wrapperspb"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"testing"
 	"time"
 
@@ -92,7 +91,9 @@ func Test_SetSelfInfoEx(t *testing.T) {
 	newNickName := "test"
 	//newFaceURL := "http://test.com"
 	err := open_im_sdk.UserForSDK.User().SetSelfInfoEx(ctx, &sdkws.UserInfoWithEx{
-		Nickname: newNickName,
+		Nickname: &wrapperspb.StringValue{
+			Value: newNickName,
+		},
 		//FaceURL:  newFaceURL,
 		Ex: &wrapperspb.StringValue{
 			Value: "ASD",
@@ -176,11 +177,11 @@ func Test_UnSub(t *testing.T) {
 	}
 }
 
-func Test_FavoriteAdd(t *testing.T) {
+func Test_UserCommandAdd(t *testing.T) {
 	// Creating a request with a pointer
 	req := &user.ProcessUserCommandAddReq{
 		UserID: "3",
-		Type:   constant.Favorite,
+		Type:   8,
 		Uuid:   "1",
 		Value:  "2132",
 	}
@@ -192,26 +193,22 @@ func Test_FavoriteAdd(t *testing.T) {
 		t.Errorf("Failed to add favorite: %v", err)
 	}
 }
-func Test_FavoriteGet(t *testing.T) {
+func Test_UserCommandGet(t *testing.T) {
 	// Creating a request with a pointer
-	req := &user.ProcessUserCommandGetReq{
-		UserID: "3",
-		Type:   constant.Favorite,
-	}
 
 	// Passing the pointer to the function
-	result, err := open_im_sdk.UserForSDK.User().ProcessUserCommandGet(ctx, req)
+	result, err := open_im_sdk.UserForSDK.User().ProcessUserCommandGetAll(ctx)
 	if err != nil {
 		// Handle the error
 		t.Errorf("Failed to add favorite: %v", err)
 	}
 	fmt.Printf("%v\n", result)
 }
-func Test_FavoriteDelete(t *testing.T) {
+func Test_UserCommandDelete(t *testing.T) {
 	// Creating a request with a pointer
 	req := &user.ProcessUserCommandDeleteReq{
 		UserID: "3",
-		Type:   constant.Favorite,
+		Type:   8,
 		Uuid:   "1",
 	}
 

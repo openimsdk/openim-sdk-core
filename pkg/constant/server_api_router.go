@@ -24,6 +24,7 @@ const (
 	ProcessUserCommandDelete      = "/user/process_user_command_delete"
 	ProcessUserCommandUpdate      = "/user/process_user_command_update"
 	ProcessUserCommandGet         = "/user/process_user_command_get"
+	ProcessUserCommandGetAll      = "/user/process_user_command_get_all"
 
 	GetUsersInfoFromCacheRouter   = "/user/get_users_info_from_cache"
 	AccountCheck                  = "/user/account_check"

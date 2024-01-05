@@ -56,44 +56,45 @@ func (d *DataBase) InsertLoginUser(ctx context.Context, user *model_struct.Local
 }
 
 // ProcessUserCommandAdd adds a new user command to the database.
-func (d *DataBase) ProcessUserCommandAdd(ctx context.Context, Type int32, uuid string, value string) error {
+func (d *DataBase) ProcessUserCommandAdd(ctx context.Context, command *model_struct.LocalUserCommand) error {
 	d.userMtx.Lock()
 	defer d.userMtx.Unlock()
 
-	// Assuming you have a struct for user commands
 	userCommand := model_struct.LocalUserCommand{
-		Type:  Type,
-		Uuid:  uuid,
-		Value: value,
+		UserID:     command.UserID,
+		CreateTime: command.CreateTime,
+		Type:       command.Type,
+		Uuid:       command.Uuid,
+		Value:      command.Value,
 	}
 
 	return utils.Wrap(d.conn.WithContext(ctx).Create(&userCommand).Error, "ProcessUserCommandAdd failed")
 }
 
 // ProcessUserCommandUpdate updates an existing user command in the database.
-func (d *DataBase) ProcessUserCommandUpdate(ctx context.Context, Type int32, uuid string, value string) error {
+func (d *DataBase) ProcessUserCommandUpdate(ctx context.Context, command *model_struct.LocalUserCommand) error {
 	d.userMtx.Lock()
 	defer d.userMtx.Unlock()
 
 	return utils.Wrap(d.conn.WithContext(ctx).Model(&model_struct.LocalUserCommand{}).Where("type = ? AND uuid = ?",
-		Type, uuid).Update("value", value).Error, "ProcessUserCommandUpdate failed")
+		command.Type, command.Uuid).Update("value", command.Value).Error, "ProcessUserCommandUpdate failed")
 }
 
 // ProcessUserCommandDelete deletes a user command from the database.
-func (d *DataBase) ProcessUserCommandDelete(ctx context.Context, Type int32, uuid string) error {
+func (d *DataBase) ProcessUserCommandDelete(ctx context.Context, command *model_struct.LocalUserCommand) error {
 	d.userMtx.Lock()
 	defer d.userMtx.Unlock()
 
-	return utils.Wrap(d.conn.WithContext(ctx).Where("type = ? AND uuid = ?", Type, uuid).Delete(&model_struct.LocalUserCommand{}).Error,
+	return utils.Wrap(d.conn.WithContext(ctx).Where("type = ? AND uuid = ?", command.Type, command.Uuid).Delete(&model_struct.LocalUserCommand{}).Error,
 		"ProcessUserCommandDelete failed")
 }
 
-// ProcessUserCommandGet retrieves user commands from the database.
-func (d *DataBase) ProcessUserCommandGet(ctx context.Context, Type int32) ([]*model_struct.LocalUserCommand, error) {
+// ProcessUserCommandGetAll retrieves user commands from the database.
+func (d *DataBase) ProcessUserCommandGetAll(ctx context.Context) ([]*model_struct.LocalUserCommand, error) {
 	d.userMtx.RLock()
 	defer d.userMtx.RUnlock()
 
 	var commands []*model_struct.LocalUserCommand
-	err := d.conn.WithContext(ctx).Where("type = ?", Type).Find(&commands).Error
-	return commands, utils.Wrap(err, "ProcessUserCommandGet failed")
+	err := d.conn.WithContext(ctx).Find(&commands).Error
+	return commands, utils.Wrap(err, "ProcessUserCommandGetAll failed")
 }

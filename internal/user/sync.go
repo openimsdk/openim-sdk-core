@@ -76,22 +76,21 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 }
 
 type CommandInfoResponse struct {
-	KVArray []*userPb.CommandInfoResp `json:"KVArray"`
+	CommandResp []*userPb.AllCommandInfoResp `json:"CommandResp"`
 }
 
-func (u *User) SyncAllFavoriteList(ctx context.Context) error {
+func (u *User) SyncAllCommand(ctx context.Context) error {
 	var serverData CommandInfoResponse
-	err := util.ApiPost(ctx, constant.ProcessUserCommandGet, userPb.ProcessUserCommandAddReq{
+	err := util.ApiPost(ctx, constant.ProcessUserCommandGetAll, userPb.ProcessUserCommandGetAllReq{
 		UserID: u.loginUserID,
-		Type:   constant.Favorite,
 	}, &serverData)
 	if err != nil {
 		return err
 	}
-	localData, err := u.DataBase.ProcessUserCommandGet(ctx, constant.Favorite)
+	localData, err := u.DataBase.ProcessUserCommandGetAll(ctx)
 	if err != nil {
 		return err
 	}
 	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
-	return u.commandSyncer.Sync(ctx, util.Batch(ServerCommandToLocalCommand, serverData.KVArray), localData, nil)
+	return u.commandSyncer.Sync(ctx, util.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
 }

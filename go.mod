@@ -41,3 +41,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect
 	google.golang.org/grpc v1.56.2 // indirect
 )
+
+replace github.com/OpenIMSDK/protocol v0.0.40 => github.com/AndrewZuo01/protocol v0.0.0-20240105021040-57f7d4a07674

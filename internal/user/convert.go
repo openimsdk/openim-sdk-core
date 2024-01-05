@@ -33,7 +33,7 @@ func ServerUserToLocalUser(user *sdkws.UserInfo) *model_struct.LocalUser {
 		//AttachedInfo: user.AttachedInfo,
 	}
 }
-func ServerCommandToLocalCommand(data *user.CommandInfoResp) *model_struct.LocalUserCommand {
+func ServerCommandToLocalCommand(data *user.AllCommandInfoResp) *model_struct.LocalUserCommand {
 	return &model_struct.LocalUserCommand{
 		Type:       data.Type,
 		CreateTime: data.CreateTime,

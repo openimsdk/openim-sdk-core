@@ -84,11 +84,15 @@ const (
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
-	UserNotificationBegin        = 1301
-	UserInfoUpdatedNotification  = 1303 //SetSelfInfoTip             = 204
-	UserStatusChangeNotification = 1304
-	UserNotificationEnd          = 1399
-	OANotification               = 1400
+	UserNotificationBegin         = 1301
+	UserInfoUpdatedNotification   = 1303 //SetSelfInfoTip             = 204
+	UserStatusChangeNotification  = 1304
+	UserCommandAddNotification    = 1305
+	UserCommandDeleteNotification = 1306
+	UserCommandUpdateNotification = 1307
+
+	UserNotificationEnd = 1399
+	OANotification      = 1400
 
 	GroupNotificationBegin = 1500
 
@@ -261,6 +265,7 @@ const (
 	SyncConversation                  = 15
 	SyncMessageListReactionExtensions = 16
 	SyncMessageListTypeKeyInfo        = 17
+	UpdateUserCommand                 = 18
 
 	HasRead = 1
 	NotRead = 0
@@ -420,9 +425,4 @@ const (
 	NoNetwork        = 1 //有网络->无网络
 	NetworkAvailable = 2 //无网络->有网络
 	NetworkVariation = 3 //有网络，但状态有变化
-)
-
-// UserCommand
-const (
-	Favorite = 1
 )

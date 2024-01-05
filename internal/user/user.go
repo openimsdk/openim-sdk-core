@@ -98,18 +98,18 @@ func (u *User) initSyncer() {
 	u.commandSyncer = syncer.New(
 		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
 			// Logic to insert a command
-			return u.DataBase.ProcessUserCommandAdd(ctx, command.Type, command.Uuid, command.Value)
+			return u.DataBase.ProcessUserCommandAdd(ctx, command)
 		},
 		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
 			// Logic to delete a command
-			return u.DataBase.ProcessUserCommandDelete(ctx, command.Type, command.Uuid)
+			return u.DataBase.ProcessUserCommandDelete(ctx, command)
 		},
 		func(ctx context.Context, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
 			// Logic to update a command
 			if serverCommand == nil || localCommand == nil {
 				return fmt.Errorf("nil command reference")
 			}
-			return u.DataBase.ProcessUserCommandUpdate(ctx, serverCommand.Type, serverCommand.Uuid, serverCommand.Value)
+			return u.DataBase.ProcessUserCommandUpdate(ctx, serverCommand)
 		},
 		func(command *model_struct.LocalUserCommand) string {
 			// Return a unique identifier for the command
@@ -130,60 +130,12 @@ func (u *User) initSyncer() {
 				return nil
 			}
 			switch state {
-			case syncer.Update:
-				//u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
-				//if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
-				//	_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-				//		Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
-				//}
-			}
-			return nil
-		},
-	)
-	u.commandSyncer = syncer.New(
-		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
-			// Logic to insert a command
-			return u.DataBase.ProcessUserCommandAdd(ctx, command.Type, command.Uuid, command.Value)
-		},
-		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
-			// Logic to delete a command
-			return u.DataBase.ProcessUserCommandDelete(ctx, command.Type, command.Uuid)
-		},
-		func(ctx context.Context, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
-			// Logic to update a command
-			if serverCommand == nil || localCommand == nil {
-				return fmt.Errorf("nil command reference")
-			}
-			return u.DataBase.ProcessUserCommandUpdate(ctx, serverCommand.Type, serverCommand.Uuid, serverCommand.Value)
-		},
-		func(command *model_struct.LocalUserCommand) string {
-			// Return a unique identifier for the command
-			if command == nil {
-				return ""
-			}
-			return strconv.FormatInt(command.ID, 10)
-		},
-		func(a *model_struct.LocalUserCommand, b *model_struct.LocalUserCommand) bool {
-			// Compare two commands to check if they are equal
-			if a == nil || b == nil {
-				return false
-			}
-			return a.Uuid == b.Uuid && a.Type == b.Type && a.Value == b.Value
-		},
-		func(ctx context.Context, state int, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
-			if u.listener == nil {
-				return nil
-			}
-			switch state {
-			case syncer.Update:
-				//u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
-				//if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
-				//	_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-				//		Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
-				//}
-			case syncer.Insert:
 			case syncer.Delete:
-
+				u.listener().OnUserCommandDelete(utils.StructToJsonString(serverCommand))
+			case syncer.Update:
+				u.listener().OnUserCommandUpdate(utils.StructToJsonString(serverCommand))
+			case syncer.Insert:
+				u.listener().OnUserCommandAdd(utils.StructToJsonString(serverCommand))
 			}
 			return nil
 		},
@@ -230,6 +182,12 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 			u.userInfoUpdatedNotification(ctx, msg)
 		case constant.UserStatusChangeNotification:
 			u.userStatusChangeNotification(ctx, msg)
+		case constant.UserCommandAddNotification:
+			u.userCommandAddNotification(ctx, msg)
+		case constant.UserCommandDeleteNotification:
+			u.userCommandDeleteNotification(ctx, msg)
+		case constant.UserCommandUpdateNotification:
+			u.userCommandUpdateNotification(ctx, msg)
 		default:
 			// log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
@@ -265,6 +223,39 @@ func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgD
 		return
 	}
 	u.SyncUserStatus(ctx, tips.FromUserID, tips.Status, tips.PlatformID)
+}
+
+// userCommandAddNotification handle notification when user add favorite
+func (u *User) userCommandAddNotification(ctx context.Context, msg *sdkws.MsgData) {
+	log.ZDebug(ctx, "userCommandAddNotification", "msg", *msg)
+	tip := sdkws.UserCommandAddTips{}
+	if tip.ToUserID == u.loginUserID {
+		u.SyncAllCommand(ctx)
+	} else {
+		log.ZDebug(ctx, "ToUserID != u.loginUserID, do nothing", "detail.UserID", tip.ToUserID, "u.loginUserID", u.loginUserID)
+	}
+}
+
+// userCommandDeleteNotification handle notification when user delete favorite
+func (u *User) userCommandDeleteNotification(ctx context.Context, msg *sdkws.MsgData) {
+	log.ZDebug(ctx, "userCommandAddNotification", "msg", *msg)
+	tip := sdkws.UserCommandDeleteTips{}
+	if tip.ToUserID == u.loginUserID {
+		u.SyncAllCommand(ctx)
+	} else {
+		log.ZDebug(ctx, "ToUserID != u.loginUserID, do nothing", "detail.UserID", tip.ToUserID, "u.loginUserID", u.loginUserID)
+	}
+}
+
+// userCommandUpdateNotification handle notification when user update favorite
+func (u *User) userCommandUpdateNotification(ctx context.Context, msg *sdkws.MsgData) {
+	log.ZDebug(ctx, "userCommandAddNotification", "msg", *msg)
+	tip := sdkws.UserCommandUpdateTips{}
+	if tip.ToUserID == u.loginUserID {
+		u.SyncAllCommand(ctx)
+	} else {
+		log.ZDebug(ctx, "ToUserID != u.loginUserID, do nothing", "detail.UserID", tip.ToUserID, "u.loginUserID", u.loginUserID)
+	}
 }
 
 // GetUsersInfoFromSvr retrieves user information from the server.
@@ -326,11 +317,11 @@ func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInf
 }
 
 // CRUD user command
-func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
+func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *userPb.ProcessUserCommandAddReq) error {
 	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
 		return err
 	}
-	return u.SyncAllFavoriteList(ctx)
+	return u.SyncAllCommand(ctx)
 
 }
 
@@ -340,7 +331,7 @@ func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *userPb
 		Type: userCommand.Type, Uuid: userCommand.Uuid}, nil); err != nil {
 		return err
 	}
-	return u.SyncAllFavoriteList(ctx)
+	return u.SyncAllCommand(ctx)
 }
 
 // ProcessUserCommandUpdate update user's choice
@@ -349,12 +340,12 @@ func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb
 		Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
 		return err
 	}
-	return u.SyncAllFavoriteList(ctx)
+	return u.SyncAllCommand(ctx)
 }
 
 // ProcessUserCommandGet get user's choice
-func (u *User) ProcessUserCommandGet(ctx context.Context, userCommand *userPb.ProcessUserCommandGetReq) ([]*userPb.CommandInfoResp, error) {
-	localCommands, err := u.DataBase.ProcessUserCommandGet(ctx, userCommand.Type)
+func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandInfoResp, error) {
+	localCommands, err := u.DataBase.ProcessUserCommandGetAll(ctx)
 	if err != nil {
 		return nil, err // Handle the error appropriately
 	}
