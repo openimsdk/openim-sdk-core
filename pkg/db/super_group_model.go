@@ -25,31 +25,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
-func (d *DataBase) GetJoinedSuperGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
-	d.superGroupMtx.Lock()
-	defer d.superGroupMtx.Unlock()
-	var groupList []model_struct.LocalGroup
-	err := d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Find(&groupList).Error
-	var transfer []*model_struct.LocalGroup
-	for _, v := range groupList {
-		v1 := v
-		transfer = append(transfer, &v1)
-	}
-	return transfer, utils.Wrap(err, "GetJoinedSuperGroupList failed ")
-}
-
-func (d *DataBase) GetJoinedSuperGroupIDList(ctx context.Context) ([]string, error) {
-	groupList, err := d.GetJoinedSuperGroupList(ctx)
-	if err != nil {
-		return nil, utils.Wrap(err, "")
-	}
-	var groupIDList []string
-	for _, v := range groupList {
-		groupIDList = append(groupIDList, v.GroupID)
-	}
-	return groupIDList, nil
-}
-
 func (d *DataBase) InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
@@ -85,16 +60,4 @@ func (d *DataBase) DeleteSuperGroup(ctx context.Context, groupID string) error {
 	defer d.superGroupMtx.Unlock()
 	localGroup := model_struct.LocalGroup{GroupID: groupID}
 	return utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
-}
-
-func (d *DataBase) GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error) {
-	sg, err := d.GetJoinedSuperGroupIDList(ctx)
-	if err != nil {
-		return nil, err
-	}
-	wg, err := d.GetJoinedWorkingGroupIDList(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return append(sg, wg...), err
 }
