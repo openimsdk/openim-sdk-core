@@ -435,17 +435,20 @@ func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUpload
 			} else {
 				bitmap = ParseBitmap(bitmapBytes, partNum)
 			}
+			tUpInfo := &third.UploadInfo{
+				PartSize: req.PartSize,
+				Sign:     &third.AuthSignParts{},
+			}
+			if dbUpload != nil {
+				tUpInfo.UploadID = dbUpload.UploadID
+				tUpInfo.ExpireTime = dbUpload.ExpireTime
+			}
 			return &UploadInfo{
 				PartNum: partNum,
 				Bitmap:  bitmap,
 				DBInfo:  dbUpload,
 				Resp: &third.InitiateMultipartUploadResp{
-					Upload: &third.UploadInfo{
-						UploadID:   dbUpload.UploadID,
-						PartSize:   req.PartSize,
-						ExpireTime: dbUpload.ExpireTime,
-						Sign:       &third.AuthSignParts{},
-					},
+					Upload: tUpInfo,
 				},
 				BatchSignNum: req.MaxParts,
 				f:            f,
