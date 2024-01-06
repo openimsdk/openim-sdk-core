@@ -17,18 +17,16 @@ package user
 import (
 	"context"
 	"fmt"
+	authPb "github.com/OpenIMSDK/protocol/auth"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	userPb "github.com/OpenIMSDK/protocol/user"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-	"strconv"
-
-	authPb "github.com/OpenIMSDK/protocol/auth"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	userPb "github.com/OpenIMSDK/protocol/user"
-	"github.com/OpenIMSDK/tools/log"
 
 	PbConstant "github.com/OpenIMSDK/protocol/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -116,7 +114,7 @@ func (u *User) initSyncer() {
 			if command == nil {
 				return ""
 			}
-			return strconv.FormatInt(command.ID, 10)
+			return command.Uuid
 		},
 		func(a *model_struct.LocalUserCommand, b *model_struct.LocalUserCommand) bool {
 			// Compare two commands to check if they are equal
