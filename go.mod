@@ -43,4 +43,3 @@ require (
 )
 
 replace github.com/OpenIMSDK/protocol v0.0.40 => github.com/AndrewZuo01/protocol v0.0.0-20240105092304-a4b5e4c67152
-

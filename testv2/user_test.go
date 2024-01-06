@@ -183,7 +183,12 @@ func Test_UserCommandAdd(t *testing.T) {
 		UserID: "3",
 		Type:   8,
 		Uuid:   "1",
-		Value:  "2132",
+		Value: &wrapperspb.StringValue{
+			Value: "ASD",
+		},
+		Ex: &wrapperspb.StringValue{
+			Value: "ASD",
+		},
 	}
 
 	// Passing the pointer to the function

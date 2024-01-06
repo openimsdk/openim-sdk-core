@@ -524,12 +524,12 @@ func (LocalSendingMessages) TableName() string {
 }
 
 type LocalUserCommand struct {
-	ID         int64  `gorm:"column:id;primary_key;auto_increment" json:"id"`
-	UserID     string `gorm:"column:user_id;type:char(128)" json:"userID"`
-	Type       int32  `gorm:"column:type" json:"type"`
+	UserID     string `gorm:"column:user_id;type:char(128);primary_key" json:"userID"`
+	Type       int32  `gorm:"column:type;primary_key" json:"type"`
+	Uuid       string `gorm:"column:uuid;type:varchar(255);primary_key" json:"uuid"`
 	CreateTime int64  `gorm:"column:create_time" json:"createTime"`
-	Uuid       string `gorm:"column:uuid;type:varchar(255)" json:"uuid"`
 	Value      string `gorm:"column:value;type:varchar(255)" json:"value"`
+	Ex         string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 func (LocalUserCommand) TableName() string {

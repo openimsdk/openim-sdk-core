@@ -43,7 +43,7 @@ type IndexDB struct {
 	LocalGroupRequest
 	LocalCacheMessage
 	LocalStrangers
-	//LocalUserCommand
+	LocalUserCommand
 	*FriendRequest
 	*Black
 	*Friend
