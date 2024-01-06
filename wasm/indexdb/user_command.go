@@ -30,18 +30,18 @@ func NewLocalUserCommand() *LocalUserCommand {
 	return &LocalUserCommand{}
 }
 
-func (i *LocalUserCommand) ProcessUserCommandGetAll(ctx context.Context) (*model_struct.LocalUserCommand, error) {
+func (i *LocalUserCommand) ProcessUserCommandGetAll(ctx context.Context) ([]*model_struct.LocalUserCommand, error) {
 	c, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
 		if v, ok := c.(string); ok {
-			result := model_struct.LocalUserCommand{}
+			result := []*model_struct.LocalUserCommand{}
 			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
 			}
-			return &result, err
+			return result, err
 		} else {
 			return nil, exec.ErrType
 		}
