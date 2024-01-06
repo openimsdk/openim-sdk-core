@@ -30,7 +30,7 @@ func NewLocalUserCommand() *LocalUserCommand {
 	return &LocalUserCommand{}
 }
 
-func (i *LocalUserCommand) GetUpload(ctx context.Context, Type string) (*model_struct.LocalUserCommand, error) {
+func (i *LocalUserCommand) ProcessUserCommandGetAll(ctx context.Context, Type string) (*model_struct.LocalUserCommand, error) {
 	c, err := exec.Exec(Type)
 	if err != nil {
 		return nil, err
@@ -48,16 +48,16 @@ func (i *LocalUserCommand) GetUpload(ctx context.Context, Type string) (*model_s
 	}
 }
 
-func (i *LocalUserCommand) InsertUpload(ctx context.Context, command *model_struct.LocalUserCommand) error {
+func (i *LocalUserCommand) ProcessUserCommandAdd(ctx context.Context, command *model_struct.LocalUserCommand) error {
 	_, err := exec.Exec(utils.StructToJsonString(command))
 	return err
 }
 
-func (i *LocalUserCommand) DeleteUpload(ctx context.Context, command *model_struct.LocalUserCommand) error {
+func (i *LocalUserCommand) ProcessUserCommandUpdate(ctx context.Context, command *model_struct.LocalUserCommand) error {
 	_, err := exec.Exec(utils.StructToJsonString(command))
 	return err
 }
-func (i *LocalUserCommand) UpdateUpload(ctx context.Context, command *model_struct.LocalUserCommand) error {
+func (i *LocalUserCommand) ProcessUserCommandDelete(ctx context.Context, command *model_struct.LocalUserCommand) error {
 	_, err := exec.Exec(utils.StructToJsonString(command))
 	return err
 }
