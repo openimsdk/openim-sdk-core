@@ -30,8 +30,8 @@ func NewLocalUserCommand() *LocalUserCommand {
 	return &LocalUserCommand{}
 }
 
-func (i *LocalUserCommand) ProcessUserCommandGetAll(ctx context.Context, Type string) (*model_struct.LocalUserCommand, error) {
-	c, err := exec.Exec(Type)
+func (i *LocalUserCommand) ProcessUserCommandGetAll(ctx context.Context) (*model_struct.LocalUserCommand, error) {
+	c, err := exec.Exec()
 	if err != nil {
 		return nil, err
 	} else {
