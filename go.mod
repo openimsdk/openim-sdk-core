@@ -18,7 +18,7 @@ require (
 require golang.org/x/net v0.19.0
 
 require (
-	github.com/OpenIMSDK/protocol v0.0.40
+	github.com/OpenIMSDK/protocol v0.0.45
 	github.com/OpenIMSDK/tools v0.0.5
 	github.com/google/go-cmp v0.5.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -41,5 +41,3 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230717213848-3f92550aa753 // indirect
 	google.golang.org/grpc v1.56.2 // indirect
 )
-
-replace github.com/OpenIMSDK/protocol v0.0.40 => github.com/AndrewZuo01/protocol v0.0.0-20240105092304-a4b5e4c67152
