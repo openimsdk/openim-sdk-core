@@ -83,10 +83,6 @@ func (w *WrapperUser) UserCommandDelete(_ js.Value, args []js.Value) interface{}
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.UserCommandDelete, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperUser) UserCommandGet(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.UserCommandGet, callback, &args).AsyncCallWithCallback()
-}
 func (w *WrapperUser) UserCommandGetAll(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.UserCommandGetAll, callback, &args).AsyncCallWithCallback()
