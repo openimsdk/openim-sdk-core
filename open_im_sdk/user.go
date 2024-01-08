@@ -75,17 +75,17 @@ func GetUserStatus(callback open_im_sdk_callback.Base, operationID string, userI
 	call(callback, operationID, UserForSDK.User().GetUserStatus, userIDs)
 }
 
-// UserCommandAdd add to user's favorite
-func UserCommandAdd(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string, value string) {
+// AddUserCommand add to user's favorite
+func AddUserCommand(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string, value string) {
 	call(callback, operationID, UserForSDK.User().ProcessUserCommandAdd, Type, uuid, value)
 }
 
-// UserCommandDelete delete from user's favorite
-func UserCommandDelete(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string) {
+// DeleteUserCommand delete from user's favorite
+func DeleteUserCommand(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string) {
 	call(callback, operationID, UserForSDK.User().ProcessUserCommandDelete, Type, uuid)
 }
 
-// UserCommandGetAll get user's favorite
-func UserCommandGetAll(callback open_im_sdk_callback.Base, operationID string, Type int32) {
+// GetAllUserCommands get user's favorite
+func GetAllUserCommands(callback open_im_sdk_callback.Base, operationID string, Type int32) {
 	call(callback, operationID, UserForSDK.User().ProcessUserCommandGetAll, Type)
 }
