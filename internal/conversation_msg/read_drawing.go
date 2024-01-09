@@ -23,6 +23,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
@@ -65,9 +66,12 @@ func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, c
 
 // mark a conversation's all message as read
 func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conversationID string) error {
-	_, err := c.db.GetConversation(ctx, conversationID)
+	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
+	}
+	if conversation.UnreadCount == 0 {
+		return sdkerrs.ErrUnreadCount
 	}
 	// get the maximum sequence number of messages in the table that are not sent by oneself
 	peerUserMaxSeq, err := c.db.GetConversationPeerNormalMsgSeq(ctx, conversationID)
@@ -79,25 +83,34 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 	if err != nil {
 		return err
 	}
-	msgs, err := c.db.GetUnreadMessage(ctx, conversationID)
-	if err != nil {
-		return err
+	switch conversation.ConversationType {
+	case constant.SingleChatType:
+		msgs, err := c.db.GetUnreadMessage(ctx, conversationID)
+		if err != nil {
+			return err
+		}
+		log.ZDebug(ctx, "get unread message", "msgs", len(msgs))
+		msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
+		if len(seqs) == 0 {
+			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
+			return nil
+		}
+		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
+			seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
+		if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+			return err
+		}
+		_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
+		if err != nil {
+			log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
+		}
+	case constant.SuperGroupChatType, constant.NotificationChatType:
+		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
+		if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, nil); err != nil {
+			return err
+		}
 	}
-	log.ZDebug(ctx, "get unread message", "msgs", len(msgs))
-	msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
-	if len(seqs) == 0 {
-		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
-		return nil
-	}
-	log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
-		seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
-		return err
-	}
-	_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
-	if err != nil {
-		log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
-	}
+
 	if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": 0}); err != nil {
 		log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 	}
