@@ -227,11 +227,11 @@ func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFrien
 	return f.SyncFriends(ctx, []string{userIDRemark.ToUserID})
 }
 
-func (f *Friend) UpdateFriends(ctx context.Context, friends *friend.UpdateFriendsReq) error {
-	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friends.FriendUserIDs, IsPinned: friends.IsPinned, Remark: friends.Remark, Ex: friends.Ex}, nil); err != nil {
+func (f *Friend) PinFriends(ctx context.Context, friends *sdk.SetFriendPinParams) error {
+	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friends.ToUserIDs, IsPinned: friends.IsPinned}, nil); err != nil {
 		return err
 	}
-	return f.SyncFriends(ctx, friends.FriendUserIDs)
+	return f.SyncFriends(ctx, friends.ToUserIDs)
 }
 func (f *Friend) AddBlack(ctx context.Context, blackUserID string, ex string) error {
 	if err := util.ApiPost(ctx, constant.AddBlackRouter, &friend.AddBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID, Ex: ex}, nil); err != nil {

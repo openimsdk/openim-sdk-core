@@ -15,6 +15,7 @@
 package sdk_params_callback
 
 import (
+	"github.com/OpenIMSDK/protocol/wrapperspb"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
@@ -82,6 +83,10 @@ type SearchFriendItem struct {
 type SetFriendRemarkParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
 	Remark   string `json:"remark" validate:"required"`
+}
+type SetFriendPinParams struct {
+	ToUserIDs []string              `json:"toUserIDs" validate:"required"`
+	IsPinned  *wrapperspb.BoolValue `json:"isPinned" validate:"required"`
 }
 
 // type SetFriendRemarkCallback struct{}

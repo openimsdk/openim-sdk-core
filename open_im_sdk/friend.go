@@ -43,8 +43,8 @@ func AddFriend(callback open_im_sdk_callback.Base, operationID string, userIDReq
 func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, userIDRemark string) {
 	call(callback, operationID, UserForSDK.Friend().SetFriendRemark, userIDRemark)
 }
-func UpdateFriends(callback open_im_sdk_callback.Base, operationID string, updateFriendsParams string) {
-	call(callback, operationID, UserForSDK.Friend().UpdateFriends, updateFriendsParams)
+func PinFriends(callback open_im_sdk_callback.Base, operationID string, pinFriendsParams string) {
+	call(callback, operationID, UserForSDK.Friend().PinFriends, pinFriendsParams)
 }
 func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friendUserID string) {
 	call(callback, operationID, UserForSDK.Friend().DeleteFriend, friendUserID)
