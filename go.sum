@@ -1,5 +1,5 @@
-github.com/OpenIMSDK/protocol v0.0.40 h1:1/Oij6RSAaePCPrWGwp9Cyz976/8Uxr94hM5M5FXzlg=
-github.com/OpenIMSDK/protocol v0.0.40/go.mod h1:F25dFrwrIx3lkNoiuf6FkCfxuwf8L4Z8UIsdTHP/r0Y=
+github.com/OpenIMSDK/protocol v0.0.45 h1:0MxdGddw09k17xgR6Kn6ZLtcTrEosTCWXA/rhgSmbQQ=
+github.com/OpenIMSDK/protocol v0.0.45/go.mod h1:F25dFrwrIx3lkNoiuf6FkCfxuwf8L4Z8UIsdTHP/r0Y=
 github.com/OpenIMSDK/tools v0.0.5 h1:yBVHJ3EpIDcp8VFKPjuGr6MQvFa3t4JByZ+vmeC06/Q=
 github.com/OpenIMSDK/tools v0.0.5/go.mod h1:eg+q4A34Qmu73xkY0mt37FHGMCMfC6CtmOnm0kFEGFI=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=

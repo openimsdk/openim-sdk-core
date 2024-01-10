@@ -177,7 +177,8 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
+		return f.SyncBothFriendRequest(ctx,
+			tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
 	case constant.FriendApplicationApprovedNotification:
 		var tips sdkws.FriendApplicationApprovedTips
 		err := utils.UnmarshalNotificationElem(msg.Content, &tips)

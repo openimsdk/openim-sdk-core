@@ -169,10 +169,10 @@ type LocalUser struct {
 	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt,omitempty"`
 }
 
-//type LocalUserCommand struct {
-//	UserID     string `json:"userID,omitempty"`
-//	Type       int32  `json:"type,omitempty"`
-//	CreateTime int64  `json:"createTime,omitempty"`
-//	Uuid       string `json:"uuid,omitempty"`
-//	Value      string `json:"value,omitempty"`
-//}
+type LocalUserCommand struct {
+	UserID     string `json:"userID,omitempty"`
+	Type       int32  `json:"type,omitempty"`
+	CreateTime int64  `json:"createTime,omitempty"`
+	Uuid       string `json:"uuid,omitempty"`
+	Value      string `json:"value,omitempty"`
+}
