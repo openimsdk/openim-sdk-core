@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	userPb "github.com/OpenIMSDK/protocol/user"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -74,14 +75,22 @@ func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int
 	}
 }
 
-//func (u *User) SyncUserCommand(ctx context.Context, fromUserID string, Type int32, uuid string, value string) error {
-//	processUserComamnd := userPb.ProcessUserCommandAddReq{
-//		UserID: fromUserID,
-//		Type:   Type,
-//		Uuid:   uuid,
-//		Value:  value,
-//	}
-//
-//	log.ZDebug(ctx, "SyncUserCommand", "remoteUser", processUserComamnd, "localUser", localUser)
-//	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
-//}
+type CommandInfoResponse struct {
+	CommandResp []*userPb.AllCommandInfoResp `json:"CommandResp"`
+}
+
+func (u *User) SyncAllCommand(ctx context.Context) error {
+	var serverData CommandInfoResponse
+	err := util.ApiPost(ctx, constant.ProcessUserCommandGetAll, userPb.ProcessUserCommandGetAllReq{
+		UserID: u.loginUserID,
+	}, &serverData)
+	if err != nil {
+		return err
+	}
+	localData, err := u.DataBase.ProcessUserCommandGetAll(ctx)
+	if err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
+	return u.commandSyncer.Sync(ctx, util.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
+}

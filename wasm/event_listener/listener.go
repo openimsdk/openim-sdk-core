@@ -57,6 +57,15 @@ func (i *ConnCallback) OnUserTokenExpired() {
 func (i *ConnCallback) OnSelfInfoUpdated(userInfo string) {
 	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
 }
+func (i *ConnCallback) OnUserCommandAdd(userInfo string) {
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
+func (i *ConnCallback) OnUserCommandDelete(userInfo string) {
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
+func (i *ConnCallback) OnUserCommandUpdate(userInfo string) {
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
 
 type ConversationCallback struct {
 	uid string
@@ -402,6 +411,15 @@ func NewUserCallback(callback *js.Value) *UserCallback {
 	return &UserCallback{CallbackWriter: NewEventData(callback)}
 }
 func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
+func (u UserCallback) OnUserCommandAdd(userInfo string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
+func (u UserCallback) OnUserCommandDelete(userInfo string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
+func (u UserCallback) OnUserCommandUpdate(userInfo string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
 }
 

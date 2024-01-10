@@ -52,6 +52,15 @@ func (c userCallback) OnUserStatusChanged(statusMap string) {
 func (userCallback) OnSelfInfoUpdated(callbackData string) {
 
 }
+func (userCallback) OnUserCommandAdd(callbackData string) {
+
+}
+func (userCallback) OnUserCommandUpdate(callbackData string) {
+
+}
+func (userCallback) OnUserCommandDelete(callbackData string) {
+
+}
 
 type SingleMessage struct {
 	SendID      string
@@ -223,7 +232,15 @@ func (t *testConnListener) OnKickedOffline() {
 func (t *testConnListener) OnSelfInfoUpdated(info string) {
 
 }
+func (t *testConnListener) OnUserCommandAdd(info string) {
 
+}
+func (t *testConnListener) OnUserCommandUpdate(info string) {
+
+}
+func (t *testConnListener) OnUserCommandDelete(info string) {
+
+}
 func (t *testConnListener) OnSuccess() {
 
 }

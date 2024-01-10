@@ -392,7 +392,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
 	// log.Debug("", "get raw data length is", len(list))
 	log.ZDebug(ctx, "get raw data length is", len(list))
-	
+
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID

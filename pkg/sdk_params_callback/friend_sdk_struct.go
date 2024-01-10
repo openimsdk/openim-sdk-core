@@ -84,9 +84,8 @@ type SetFriendRemarkParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
 	Remark   string `json:"remark" validate:"required"`
 }
-
 type SetFriendPinParams struct {
-	ToUserIDs []string              `json:"toUserID" validate:"required"`
+	ToUserIDs []string              `json:"toUserIDs" validate:"required"`
 	IsPinned  *wrapperspb.BoolValue `json:"isPinned" validate:"required"`
 }
 
