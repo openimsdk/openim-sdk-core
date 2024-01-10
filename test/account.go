@@ -20,10 +20,6 @@ import (
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
-
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"net"
@@ -246,25 +242,4 @@ func RegisterPressUser(id int) {
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
-}
-
-func GetGroupMemberNum(groupID string) uint32 {
-	var req server_api_params.GetGroupInfoReq
-	req.OperationID = utils.OperationIDGenerator()
-	req.GroupIDList = []string{groupID}
-
-	var groupInfoList []*sdkws.GroupInfo
-
-	r, err := network.Post2Api(GETGROUPSINFOROUTER, req, AdminToken)
-	if err != nil {
-		log.ZError(ctx, "post failed ", errors.New("post failed "), "get groups info", GETGROUPSINFOROUTER, "req", req)
-		return 0
-	}
-	err = common.CheckErrAndResp(nil, r, &groupInfoList, nil)
-	if err != nil {
-		log.ZError(ctx, "CheckErrAndResp failed ", errors.New("CheckErrAndResp failed "), "response", string(r))
-		return 0
-	}
-	log.ZWarn(ctx, "group info", errors.New("group info"), "group info list", groupInfoList)
-	return groupInfoList[0].MemberCount
 }
