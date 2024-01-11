@@ -66,13 +66,10 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		if detail.OpUser.UserID == g.loginUserID {
+		if msg.SendID == g.loginUserID {
 			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
 		}
-		if detail.ReceiverAs == 1 {
-			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
-		}
-		return g.SyncGroups(ctx, detail.Group.GroupID)
+		return g.SyncAllSelfGroupApplication(ctx)
 	case constant.GroupApplicationRejectedNotification: // 1506
 		var detail sdkws.GroupApplicationRejectedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
