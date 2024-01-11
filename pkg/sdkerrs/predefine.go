@@ -38,7 +38,9 @@ var (
 	ErrMsgHasNoSeq              = errs.NewCodeError(MsgHasNoSeqError, "msg has no seq")                                 // msg 	// msg
 
 	//会话相关
-	ErrNotSupportOpt = errs.NewCodeError(NotSupportOptError, "super group not support this opt")
+	ErrNotSupportOpt  = errs.NewCodeError(NotSupportOptError, "super group not support this opt")
+	ErrNotSupportType = errs.NewCodeError(NotSupportTypeError, "only support super group type type")
+	ErrUnreadCount    = errs.NewCodeError(UnreadCountError, "unread count has zero")
 	//群组相关
 
 	ErrGroupType = errs.NewCodeError(GroupTypeErr, "group type error")
