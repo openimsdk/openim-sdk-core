@@ -66,25 +66,27 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		if detail.OpUser.UserID == g.loginUserID {
+		switch detail.ReceiverAs {
+		case 0:
+			return g.SyncAllSelfGroupApplication(ctx)
+		case 1:
 			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
+		default:
+			return fmt.Errorf("GroupApplicationAcceptedNotification ReceiverAs unknown %d", detail.ReceiverAs)
 		}
-		if detail.ReceiverAs == 1 {
-			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
-		}
-		return g.SyncGroups(ctx, detail.Group.GroupID)
 	case constant.GroupApplicationRejectedNotification: // 1506
 		var detail sdkws.GroupApplicationRejectedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		if detail.OpUser.UserID == g.loginUserID {
+		switch detail.ReceiverAs {
+		case 0:
+			return g.SyncAllSelfGroupApplication(ctx)
+		case 1:
 			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
+		default:
+			return fmt.Errorf("GroupApplicationRejectedNotification ReceiverAs unknown %d", detail.ReceiverAs)
 		}
-		if detail.ReceiverAs == 1 {
-			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
-		}
-		return g.SyncSelfGroupApplications(ctx, detail.Group.GroupID)
 	case constant.GroupOwnerTransferredNotification: // 1507
 		var detail sdkws.GroupOwnerTransferredTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
