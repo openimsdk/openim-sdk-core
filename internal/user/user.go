@@ -211,17 +211,7 @@ func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 }
 
 // updateSelfUserInfo updates the user's information.
-func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-	userInfo.UserID = u.loginUserID
-	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoRouter, userPb.UpdateUserInfoReq{UserInfo: userInfo}, nil); err != nil {
-		return err
-	}
-	_ = u.SyncLoginUserInfo(ctx)
-	return nil
-}
-
-// updateSelfUserInfoEx updates the user's information with Ex field.
-func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
+func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
 	userInfo.UserID = u.loginUserID
 	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoExRouter, userPb.UpdateUserInfoExReq{UserInfo: userInfo}, nil); err != nil {
 		return err
