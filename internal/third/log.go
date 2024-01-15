@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/OpenIMSDK/protocol/third"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -51,6 +52,32 @@ func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
 	}
 	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, reqLog)
 	return err
+}
+
+// RemoveAllLogFiles delete all log files
+func (c *Third) RemoveAllLogFiles(ctx context.Context) error {
+	entries, err := os.ReadDir(c.LogFilePath)
+	if err != nil {
+		return err
+	}
+	var filePaths []string
+	for _, entry := range entries {
+		if (!entry.IsDir()) && (!strings.HasSuffix(entry.Name(), ".zip")) && checkLogPath(entry.Name()) {
+			filePaths = append(filePaths, filepath.Join(c.LogFilePath, entry.Name()))
+		} else {
+			log.ZWarn(ctx, "removeLogFiles failed", nil, "entry", entry)
+		}
+	}
+	for _, filePath := range filePaths {
+		err := os.Remove(filePath)
+		if err != nil {
+			log.ZWarn(ctx, "removeLogFiles failed", err, "filePath", filePath)
+			continue
+		} else {
+			log.ZDebug(ctx, "removeLogFiles success", "filePath", filePath)
+		}
+	}
+	return nil
 }
 
 func checkLogPath(logPath string) bool {
