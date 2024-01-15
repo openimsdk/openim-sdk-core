@@ -32,15 +32,10 @@ func GetUsersInfoFromSrv(callback open_im_sdk_callback.Base, operationID string,
 }
 
 // SetSelfInfo sets the user's own information.
-// Deprecated: user SetSelfInfoEx instead
 func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
 	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
 }
 
-// SetSelfInfoEx sets the user's own information with Ex field.
-func SetSelfInfoEx(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
-	call(callback, operationID, UserForSDK.User().SetSelfInfoEx, userInfo)
-}
 func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, opt int) {
 	call(callback, operationID, UserForSDK.User().SetGlobalRecvMessageOpt, opt)
 }
