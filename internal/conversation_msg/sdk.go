@@ -1012,6 +1012,7 @@ func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conver
 	return c.markConversationMessageAsRead(ctx, conversationID)
 }
 
+// deprecated
 func (c *Conversation) MarkMessagesAsReadByMsgID(ctx context.Context, conversationID string, clientMsgIDs []string) error {
 	return c.markMessagesAsReadByMsgID(ctx, conversationID, clientMsgIDs)
 }
