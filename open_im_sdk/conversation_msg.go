@@ -244,8 +244,8 @@ func SetMessageLocalEx(callback open_im_sdk_callback.Base, operationID string, c
 	call(callback, operationID, UserForSDK.Conversation().SetMessageLocalEx, conversationID, clientMsgID, localEx)
 }
 
-func SearchConversation(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
-	call(callback, operationID, UserForSDK.Conversation().SearchConversation, searchParam)
+func SearchConversations(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
+	call(callback, operationID, UserForSDK.Conversation().SearchConversations, searchParam)
 }
 
 func ChangeInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, focus bool) {

@@ -88,7 +88,7 @@ func Test_RefuseFriendApplication(t *testing.T) {
 }
 
 func Test_CheckFriend(t *testing.T) {
-	res, err := open_im_sdk.UserForSDK.Friend().CheckFriend(ctx, []string{"863454357", "45644221123"})
+	res, err := open_im_sdk.UserForSDK.Friend().CheckFriend(ctx, []string{"3", "1"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func Test_CheckFriend(t *testing.T) {
 }
 func Test_PinFriend(t *testing.T) {
 	pinParams := &sdk_params_callback.SetFriendPinParams{
-		ToUserIDs: []string{"2", "3"},
+		ToUserIDs: []string{"1"},
 		IsPinned:  &wrapperspb.BoolValue{Value: false},
 	}
 

@@ -206,9 +206,9 @@ func (w *WrapperConMsg) SetConversationRecvMessageOpt(_ js.Value, args []js.Valu
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversationRecvMessageOpt, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperConMsg) SearchConversation(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperConMsg) SearchConversations(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SearchConversation, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.SearchConversations, callback, &args).AsyncCallWithCallback()
 }
 func (w *WrapperConMsg) SetGlobalRecvMessageOpt(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)

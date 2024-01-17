@@ -207,7 +207,7 @@ type ConversationModel interface {
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) ([]*model_struct.LocalChatLog, error)
 	SuperGroupSearchAllMessageByContentType(ctx context.Context, superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
-	SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error)
+	SearchConversations(ctx context.Context, searchParam string, IsSearchID, IsSearchName bool) ([]*model_struct.LocalConversation, error)
 }
 
 type UserModel interface {

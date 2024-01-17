@@ -42,6 +42,7 @@ import (
 	pbConversation "github.com/OpenIMSDK/protocol/conversation"
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/protocol/wrapperspb"
+	sdks "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 
 	"github.com/jinzhu/copier"
 )
@@ -1210,15 +1211,15 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 	return c.getMessageListReactionExtensions(ctx, conversationID, messageList)
 
 }
-func (c *Conversation) SearchConversation(ctx context.Context, searchParam string) ([]*server_api_params.Conversation, error) {
+func (c *Conversation) SearchConversations(ctx context.Context, searchParam *sdks.SearchConversationsParam) ([]*server_api_params.Conversation, error) {
 	// Check if search parameter is empty
-	if searchParam == "" {
-		return nil, sdkerrs.ErrArgs.Wrap("search parameter cannot be empty")
+	if len(searchParam.KeywordList) == 0 || (!searchParam.IsSearchID && !searchParam.IsSearchName) {
+		return nil, sdkerrs.ErrArgs.Wrap("keyword is null or search field all false")
 	}
 
 	// Perform the search in your database or data source
 	// This is a placeholder for the actual database call
-	conversations, err := c.db.SearchConversations(ctx, searchParam)
+	conversations, err := c.db.SearchConversations(ctx, searchParam.KeywordList[0], searchParam.IsSearchID, searchParam.IsSearchName)
 	if err != nil {
 		// Handle any errors that occurred during the search
 		return nil, err

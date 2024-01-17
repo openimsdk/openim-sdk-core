@@ -16,12 +16,12 @@ package testv2
 
 import (
 	"context"
+	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	sdks "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"testing"
-
-	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 func Test_GetAllConversationList(t *testing.T) {
@@ -309,7 +309,8 @@ func Test_SetConversationEx(t *testing.T) {
 	}
 }
 func Test_SearchConversation(t *testing.T) {
-	result, err := open_im_sdk.UserForSDK.Conversation().SearchConversation(ctx, "a")
+	result, err := open_im_sdk.UserForSDK.Conversation().SearchConversations(ctx,
+		&sdks.SearchConversationsParam{KeywordList: []string{"a"}, IsSearchID: false, IsSearchName: true})
 	if err != nil {
 		t.Fatal(err)
 	}
