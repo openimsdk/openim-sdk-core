@@ -169,6 +169,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 		&model_struct.LocalUpload{},
 		&model_struct.LocalStranger{},
 		&model_struct.LocalSendingMessages{},
+		&model_struct.LocalUserCommand{},
 	)
 	if err != nil {
 		return err

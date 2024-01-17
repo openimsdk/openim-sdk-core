@@ -88,6 +88,9 @@ type OnBatchMsgListener interface {
 type OnUserListener interface {
 	OnSelfInfoUpdated(userInfo string)
 	OnUserStatusChanged(userOnlineStatus string)
+	OnUserCommandAdd(userCommand string)
+	OnUserCommandDelete(userCommand string)
+	OnUserCommandUpdate(userCommand string)
 }
 
 type OnCustomBusinessListener interface {

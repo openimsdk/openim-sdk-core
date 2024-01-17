@@ -250,6 +250,18 @@ type emptyUserListener struct {
 	ctx context.Context
 }
 
+func (e *emptyUserListener) OnUserCommandAdd(userCommand string) {
+	log.ZWarn(e.ctx, "UserListener is not implemented", nil, "userCommand", userCommand)
+}
+
+func (e *emptyUserListener) OnUserCommandDelete(userCommand string) {
+	log.ZWarn(e.ctx, "UserListener is not implemented", nil, "userCommand", userCommand)
+}
+
+func (e *emptyUserListener) OnUserCommandUpdate(userCommand string) {
+	log.ZWarn(e.ctx, "UserListener is not implemented", nil, "userCommand", userCommand)
+}
+
 func newEmptyUserListener(ctx context.Context) open_im_sdk_callback.OnUserListener {
 	return &emptyUserListener{ctx: ctx}
 }

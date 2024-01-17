@@ -255,3 +255,11 @@ func ChangeInputStates(callback open_im_sdk_callback.Base, operationID string, c
 func GetInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, userID string) {
 	call(callback, operationID, UserForSDK.Conversation().GetInputStates, conversationID, userID)
 }
+
+func ChangeInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, focus bool) {
+	call(callback, operationID, UserForSDK.Conversation().ChangeInputStates, conversationID, focus)
+}
+
+func GetInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, userID string) {
+	call(callback, operationID, UserForSDK.Conversation().GetInputStates, conversationID, userID)
+}

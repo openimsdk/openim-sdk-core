@@ -17,17 +17,16 @@ package user
 import (
 	"context"
 	"fmt"
+	authPb "github.com/OpenIMSDK/protocol/auth"
+	"github.com/OpenIMSDK/protocol/sdkws"
+	userPb "github.com/OpenIMSDK/protocol/user"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-
-	authPb "github.com/OpenIMSDK/protocol/auth"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	userPb "github.com/OpenIMSDK/protocol/user"
-	"github.com/OpenIMSDK/tools/log"
 
 	PbConstant "github.com/OpenIMSDK/protocol/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -47,6 +46,7 @@ type User struct {
 	loginUserID       string
 	listener          func() open_im_sdk_callback.OnUserListener
 	userSyncer        *syncer.Syncer[*model_struct.LocalUser, string]
+	commandSyncer     *syncer.Syncer[*model_struct.LocalUserCommand, string]
 	conversationCh    chan common.Cmd2Value
 	UserBasicCache    *cache.Cache[string, *BasicInfo]
 	OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
@@ -93,6 +93,51 @@ func (u *User) initSyncer() {
 			return nil
 		},
 	)
+	u.commandSyncer = syncer.New(
+		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
+			// Logic to insert a command
+			return u.DataBase.ProcessUserCommandAdd(ctx, command)
+		},
+		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
+			// Logic to delete a command
+			return u.DataBase.ProcessUserCommandDelete(ctx, command)
+		},
+		func(ctx context.Context, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
+			// Logic to update a command
+			if serverCommand == nil || localCommand == nil {
+				return fmt.Errorf("nil command reference")
+			}
+			return u.DataBase.ProcessUserCommandUpdate(ctx, serverCommand)
+		},
+		func(command *model_struct.LocalUserCommand) string {
+			// Return a unique identifier for the command
+			if command == nil {
+				return ""
+			}
+			return command.Uuid
+		},
+		func(a *model_struct.LocalUserCommand, b *model_struct.LocalUserCommand) bool {
+			// Compare two commands to check if they are equal
+			if a == nil || b == nil {
+				return false
+			}
+			return a.Uuid == b.Uuid && a.Type == b.Type && a.Value == b.Value
+		},
+		func(ctx context.Context, state int, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
+			if u.listener == nil {
+				return nil
+			}
+			switch state {
+			case syncer.Delete:
+				u.listener().OnUserCommandDelete(utils.StructToJsonString(serverCommand))
+			case syncer.Update:
+				u.listener().OnUserCommandUpdate(utils.StructToJsonString(serverCommand))
+			case syncer.Insert:
+				u.listener().OnUserCommandAdd(utils.StructToJsonString(serverCommand))
+			}
+			return nil
+		},
+	)
 }
 
 //func (u *User) equal(a, b *model_struct.LocalUser) bool {
@@ -135,6 +180,12 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 			u.userInfoUpdatedNotification(ctx, msg)
 		case constant.UserStatusChangeNotification:
 			u.userStatusChangeNotification(ctx, msg)
+		case constant.UserCommandAddNotification:
+			u.userCommandAddNotification(ctx, msg)
+		case constant.UserCommandDeleteNotification:
+			u.userCommandDeleteNotification(ctx, msg)
+		case constant.UserCommandUpdateNotification:
+			u.userCommandUpdateNotification(ctx, msg)
 		default:
 			// log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
@@ -170,6 +221,39 @@ func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgD
 		return
 	}
 	u.SyncUserStatus(ctx, tips.FromUserID, tips.Status, tips.PlatformID)
+}
+
+// userCommandAddNotification handle notification when user add favorite
+func (u *User) userCommandAddNotification(ctx context.Context, msg *sdkws.MsgData) {
+	log.ZDebug(ctx, "userCommandAddNotification", "msg", *msg)
+	tip := sdkws.UserCommandAddTips{}
+	if tip.ToUserID == u.loginUserID {
+		u.SyncAllCommand(ctx)
+	} else {
+		log.ZDebug(ctx, "ToUserID != u.loginUserID, do nothing", "detail.UserID", tip.ToUserID, "u.loginUserID", u.loginUserID)
+	}
+}
+
+// userCommandDeleteNotification handle notification when user delete favorite
+func (u *User) userCommandDeleteNotification(ctx context.Context, msg *sdkws.MsgData) {
+	log.ZDebug(ctx, "userCommandAddNotification", "msg", *msg)
+	tip := sdkws.UserCommandDeleteTips{}
+	if tip.ToUserID == u.loginUserID {
+		u.SyncAllCommand(ctx)
+	} else {
+		log.ZDebug(ctx, "ToUserID != u.loginUserID, do nothing", "detail.UserID", tip.ToUserID, "u.loginUserID", u.loginUserID)
+	}
+}
+
+// userCommandUpdateNotification handle notification when user update favorite
+func (u *User) userCommandUpdateNotification(ctx context.Context, msg *sdkws.MsgData) {
+	log.ZDebug(ctx, "userCommandAddNotification", "msg", *msg)
+	tip := sdkws.UserCommandUpdateTips{}
+	if tip.ToUserID == u.loginUserID {
+		u.SyncAllCommand(ctx)
+	} else {
+		log.ZDebug(ctx, "ToUserID != u.loginUserID, do nothing", "detail.UserID", tip.ToUserID, "u.loginUserID", u.loginUserID)
+	}
 }
 
 // GetUsersInfoFromSvr retrieves user information from the server.
@@ -221,30 +305,51 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoW
 }
 
 // CRUD user command
-//func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
-//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
-//		return err
-//	}
-//	return nil
-//}
-//func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
-//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandDeleteReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
-//		return err
-//	}
-//	return nil
-//}
-//func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
-//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandUpdateReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
-//		return err
-//	}
-//	return nil
-//}
-//func (u *User) ProcessUserCommandGet(ctx context.Context, userCommand *sdkws.ProcessUserCommand) error {
-//	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandGetReq{UserID: u.loginUserID, Type: userCommand.Type}, nil); err != nil {
-//		return err
-//	}
-//	return nil
-//}
+func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *userPb.ProcessUserCommandAddReq) error {
+	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+		return err
+	}
+	return u.SyncAllCommand(ctx)
+
+}
+
+// ProcessUserCommandDelete delete user's choice
+func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *userPb.ProcessUserCommandDeleteReq) error {
+	if err := util.ApiPost(ctx, constant.ProcessUserCommandDelete, userPb.ProcessUserCommandDeleteReq{UserID: u.loginUserID,
+		Type: userCommand.Type, Uuid: userCommand.Uuid}, nil); err != nil {
+		return err
+	}
+	return u.SyncAllCommand(ctx)
+}
+
+// ProcessUserCommandUpdate update user's choice
+func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb.ProcessUserCommandUpdateReq) error {
+	if err := util.ApiPost(ctx, constant.ProcessUserCommandUpdate, userPb.ProcessUserCommandUpdateReq{UserID: u.loginUserID,
+		Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+		return err
+	}
+	return u.SyncAllCommand(ctx)
+}
+
+// ProcessUserCommandGet get user's choice
+func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandInfoResp, error) {
+	localCommands, err := u.DataBase.ProcessUserCommandGetAll(ctx)
+	if err != nil {
+		return nil, err // Handle the error appropriately
+	}
+
+	var result []*userPb.CommandInfoResp
+	for _, localCommand := range localCommands {
+		result = append(result, &userPb.CommandInfoResp{
+			Type:       localCommand.Type,
+			CreateTime: localCommand.CreateTime,
+			Uuid:       localCommand.Uuid,
+			Value:      localCommand.Value,
+		})
+	}
+
+	return result, nil
+}
 
 // ParseTokenFromSvr parses a token from the server.
 func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {

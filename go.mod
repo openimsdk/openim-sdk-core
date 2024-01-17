@@ -16,7 +16,7 @@ require (
 require golang.org/x/net v0.19.0
 
 require (
-	github.com/OpenIMSDK/protocol v0.0.40
+	github.com/OpenIMSDK/protocol v0.0.45
 	github.com/OpenIMSDK/tools v0.0.24
 	github.com/google/go-cmp v0.5.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
