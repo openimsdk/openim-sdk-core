@@ -42,7 +42,6 @@ type GroupModel interface {
 	DeleteGroupRequest(ctx context.Context, groupID, userID string) error
 	UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
 	GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error)
-	GetJoinedSuperGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error)
 	InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	DeleteAllSuperGroup(ctx context.Context) error
 	GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
@@ -218,10 +217,10 @@ type UserModel interface {
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error)
 	SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error
-	//ProcessUserCommandAdd(ctx context.Context, Type int32, uuid string, value string) error
-	//ProcessUserCommandUpdate(ctx context.Context, Type int32, uuid string, value string) error
-	//ProcessUserCommandDelete(ctx context.Context, Type int32, uuid string) error
-	//ProcessUserCommandGet(ctx context.Context, Type int32) ([]*model_struct.LocalUserCommand, error)
+	ProcessUserCommandAdd(ctx context.Context, command *model_struct.LocalUserCommand) error
+	ProcessUserCommandUpdate(ctx context.Context, command *model_struct.LocalUserCommand) error
+	ProcessUserCommandDelete(ctx context.Context, command *model_struct.LocalUserCommand) error
+	ProcessUserCommandGetAll(ctx context.Context) ([]*model_struct.LocalUserCommand, error)
 }
 
 type FriendModel interface {

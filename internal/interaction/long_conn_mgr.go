@@ -522,26 +522,21 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return true, err
 			}
-			//switch apiResp.ErrCode {
-			//case
-			//	errs.TokenExpiredError,
-			//	errs.TokenInvalidError,
-			//	errs.TokenMalformedError,
-			//	errs.TokenNotValidYetError,
-			//	errs.TokenUnknownError,
-			//	errs.TokenNotExistError:
-			//	c.listener.OnUserTokenExpired()
-			//	_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
-			//case errs.TokenKickedError:
-			//	c.listener.OnKickedOffline()
-			//	_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
-			//default:
-			//	c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
-			//}
-			//log.ZWarn(ctx, "long conn establish failed", sdkerrs.New(apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt))
 			err = errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
-			return false, err
+			switch apiResp.ErrCode {
+			case
+				errs.TokenExpiredError,
+				errs.TokenInvalidError,
+				errs.TokenMalformedError,
+				errs.TokenNotValidYetError,
+				errs.TokenUnknownError,
+				errs.TokenNotExistError,
+				errs.TokenKickedError:
+				return false, err
+			default:
+				return true, err
+			}
 		}
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return true, err

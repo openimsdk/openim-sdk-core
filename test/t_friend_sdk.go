@@ -673,6 +673,15 @@ func (c userCallback) OnUserStatusChanged(statusMap string) {
 func (userCallback) OnSelfInfoUpdated(callbackData string) {
 	log.ZInfo(ctx, "Self Info Updated", "callbackData", callbackData)
 }
+func (userCallback) OnUserCommandAdd(callbackData string) {
+	log.ZInfo(ctx, "User Command Added", "callbackData", callbackData)
+}
+func (userCallback) OnUserCommandUpdate(callbackData string) {
+	log.ZInfo(ctx, "User Command Updated", "callbackData", callbackData)
+}
+func (userCallback) OnUserCommandDelete(callbackData string) {
+	log.ZInfo(ctx, "User Command Deleted", "callbackData", callbackData)
+}
 
 // //////////////////////////////////////////////////////////////////
 type testInitLister struct {
@@ -698,6 +707,16 @@ func (t *testInitLister) OnKickedOffline() {
 }
 
 func (t *testInitLister) OnSelfInfoUpdated(info string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName())
+}
+
+func (t *testInitLister) OnUserCommandAdd(info string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName())
+}
+func (t *testInitLister) OnUserCommandDelete(info string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName())
+}
+func (t *testInitLister) OnUserCommandUpdates(info string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 

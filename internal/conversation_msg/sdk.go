@@ -371,7 +371,7 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 	case constant.SuperGroupChatType:
 		return "sg_" + sourceID // super group chat
 	case constant.NotificationChatType:
-		return "sn_" + sourceID // server notification chat
+		return "sn_" + sourceID + "_" + c.loginUserID // server notification chat
 	}
 	return ""
 }
@@ -554,7 +554,9 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 				putErrs = err
 			}
-			s.VideoElem.VideoURL = res.URL
+			if res != nil {
+				s.VideoElem.VideoURL = res.URL
+			}
 		}()
 		wg.Wait()
 		if err := putErrs; err != nil {
@@ -922,6 +924,7 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 				temp.Status = message.Status
 				temp.AttachedInfo = message.AttachedInfo
 				temp.Ex = message.Ex
+				temp.LocalEx = message.LocalEx
 				err := c.msgHandleByContentType(&temp)
 				if err != nil {
 					log.ZError(ctx, "msgHandleByContentType err", err, "message", temp)
