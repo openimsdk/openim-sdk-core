@@ -41,7 +41,9 @@ const (
 	MsgHasNoSeqError              = 10206 //消息没有seq
 
 	//会话相关
-	NotSupportOptError = 10301 //不支持的操作
+	NotSupportOptError  = 10301 //不支持的操作
+	NotSupportTypeError = 10302 //not support type
+	UnreadCountError    = 10303 //unread count has zero
 
 	//群组相关
 	GroupIDNotFoundError = 10400 //GroupID不存在

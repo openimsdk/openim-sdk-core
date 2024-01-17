@@ -42,7 +42,6 @@ type GroupModel interface {
 	DeleteGroupRequest(ctx context.Context, groupID, userID string) error
 	UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
 	GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error)
-	GetJoinedSuperGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error)
 	InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	DeleteAllSuperGroup(ctx context.Context) error
 	GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
@@ -208,7 +207,7 @@ type ConversationModel interface {
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) ([]*model_struct.LocalChatLog, error)
 	SuperGroupSearchAllMessageByContentType(ctx context.Context, superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
-	SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error)
+	SearchConversations(ctx context.Context, searchParam string, IsSearchID, IsSearchName bool) ([]*model_struct.LocalConversation, error)
 }
 
 type UserModel interface {

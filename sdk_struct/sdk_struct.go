@@ -196,6 +196,7 @@ type AdvancedTextElem struct {
 	Text              string           `json:"text,omitempty"`
 	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
 }
+
 type TypingElem struct {
 	MsgTips string `json:"msgTips,omitempty"`
 }

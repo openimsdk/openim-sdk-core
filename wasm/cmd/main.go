@@ -102,7 +102,7 @@ func registerFunc() {
 	js.Global().Set("setGlobalRecvMessageOpt", js.FuncOf(wrapperConMsg.SetGlobalRecvMessageOpt))
 	js.Global().Set("hideConversation", js.FuncOf(wrapperConMsg.HideConversation))
 	js.Global().Set("setConversationDraft", js.FuncOf(wrapperConMsg.SetConversationDraft))
-	js.Global().Set("searchConversation", js.FuncOf(wrapperConMsg.SearchConversation))
+	js.Global().Set("searchConversations", js.FuncOf(wrapperConMsg.SearchConversations))
 	js.Global().Set("resetConversationGroupAtType", js.FuncOf(wrapperConMsg.ResetConversationGroupAtType))
 	js.Global().Set("pinConversation", js.FuncOf(wrapperConMsg.PinConversation))
 	js.Global().Set("getTotalUnreadMsgCount", js.FuncOf(wrapperConMsg.GetTotalUnreadMsgCount))
@@ -122,6 +122,9 @@ func registerFunc() {
 	js.Global().Set("insertGroupMessageToLocalStorage", js.FuncOf(wrapperConMsg.InsertGroupMessageToLocalStorage))
 	js.Global().Set("searchLocalMessages", js.FuncOf(wrapperConMsg.SearchLocalMessages))
 	js.Global().Set("setMessageLocalEx", js.FuncOf(wrapperConMsg.SetMessageLocalEx))
+
+	js.Global().Set("changeInputStates", js.FuncOf(wrapperConMsg.ChangeInputStates))
+	js.Global().Set("getInputStates", js.FuncOf(wrapperConMsg.GetInputStates))
 
 	//register group funcation
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)
@@ -158,7 +161,6 @@ func registerFunc() {
 	wrapperUser := wasm_wrapper.NewWrapperUser(globalFuc)
 	js.Global().Set("getSelfUserInfo", js.FuncOf(wrapperUser.GetSelfUserInfo))
 	js.Global().Set("setSelfInfo", js.FuncOf(wrapperUser.SetSelfInfo))
-	js.Global().Set("setSelfInfoEx", js.FuncOf(wrapperUser.SetSelfInfoEx))
 	js.Global().Set("getUsersInfo", js.FuncOf(wrapperUser.GetUsersInfo))
 	js.Global().Set("getUsersInfoWithCache", js.FuncOf(wrapperUser.GetUsersInfoWithCache))
 	js.Global().Set("subscribeUsersStatus", js.FuncOf(wrapperUser.SubscribeUsersStatus))

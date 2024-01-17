@@ -206,9 +206,9 @@ func (w *WrapperConMsg) SetConversationRecvMessageOpt(_ js.Value, args []js.Valu
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversationRecvMessageOpt, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperConMsg) SearchConversation(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperConMsg) SearchConversations(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SearchConversation, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.SearchConversations, callback, &args).AsyncCallWithCallback()
 }
 func (w *WrapperConMsg) SetGlobalRecvMessageOpt(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
@@ -316,4 +316,14 @@ func (w *WrapperConMsg) GetTotalUnreadMsgCount(_ js.Value, args []js.Value) inte
 func (w *WrapperConMsg) SetConversationBurnDuration(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversationBurnDuration, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperConMsg) ChangeInputStates(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.ChangeInputStates, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperConMsg) GetInputStates(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetInputStates, callback, &args).AsyncCallWithCallback()
 }

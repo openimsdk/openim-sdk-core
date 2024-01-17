@@ -118,3 +118,8 @@ type Info struct {
 	UserID string `json:"userID"`
 	Ex     string `json:"ex"`
 }
+type SearchConversationsParam struct {
+	KeywordList  []string `json:"keywordList"`
+	IsSearchID   bool     `json:"isSearchID"`
+	IsSearchName bool     `json:"isSearchName"`
+}
