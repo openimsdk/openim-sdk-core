@@ -123,6 +123,9 @@ func registerFunc() {
 	js.Global().Set("searchLocalMessages", js.FuncOf(wrapperConMsg.SearchLocalMessages))
 	js.Global().Set("setMessageLocalEx", js.FuncOf(wrapperConMsg.SetMessageLocalEx))
 
+	js.Global().Set("changeInputStates", js.FuncOf(wrapperConMsg.ChangeInputStates))
+	js.Global().Set("getInputStates", js.FuncOf(wrapperConMsg.GetInputStates))
+
 	//register group funcation
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)
 	js.Global().Set("createGroup", js.FuncOf(wrapperGroup.CreateGroup))
@@ -165,6 +168,9 @@ func registerFunc() {
 	js.Global().Set("unsubscribeUsersStatus", js.FuncOf(wrapperUser.UnsubscribeUsersStatus))
 	js.Global().Set("getSubscribeUsersStatus", js.FuncOf(wrapperUser.GetSubscribeUsersStatus))
 	js.Global().Set("getUserStatus", js.FuncOf(wrapperUser.GetUserStatus))
+	js.Global().Set("addUserCommand", js.FuncOf(wrapperUser.AddUserCommand))
+	js.Global().Set("deleteUserCommand", js.FuncOf(wrapperUser.DeleteUserCommand))
+	js.Global().Set("getAllUserCommands", js.FuncOf(wrapperUser.GetAllUserCommands))
 
 	wrapperFriend := wasm_wrapper.NewWrapperFriend(globalFuc)
 	js.Global().Set("getSpecifiedFriendsInfo", js.FuncOf(wrapperFriend.GetSpecifiedFriendsInfo))
@@ -173,6 +179,7 @@ func registerFunc() {
 	js.Global().Set("checkFriend", js.FuncOf(wrapperFriend.CheckFriend))
 	js.Global().Set("addFriend", js.FuncOf(wrapperFriend.AddFriend))
 	js.Global().Set("setFriendRemark", js.FuncOf(wrapperFriend.SetFriendRemark))
+	js.Global().Set("pinFriends", js.FuncOf(wrapperFriend.PinFriends))
 	js.Global().Set("deleteFriend", js.FuncOf(wrapperFriend.DeleteFriend))
 	js.Global().Set("getFriendApplicationListAsRecipient", js.FuncOf(wrapperFriend.GetFriendApplicationListAsRecipient))
 	js.Global().Set("getFriendApplicationListAsApplicant", js.FuncOf(wrapperFriend.GetFriendApplicationListAsApplicant))
@@ -182,7 +189,6 @@ func registerFunc() {
 	js.Global().Set("removeBlack", js.FuncOf(wrapperFriend.RemoveBlack))
 	js.Global().Set("addBlack", js.FuncOf(wrapperFriend.AddBlack))
 	js.Global().Set("setFriendsEx", js.FuncOf(wrapperFriend.SetFriendsEx))
-	js.Global().Set("pinFriends", js.FuncOf(wrapperFriend.PinFriends))
 
 	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
 	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))

@@ -15,8 +15,9 @@
 package main
 
 import (
+	"errors"
 	"flag"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/test"
 )
 
@@ -30,8 +31,8 @@ func main() {
 	flag.Parse()
 	// test.InitMgr(*senderNum)
 
-	log.NewPrivateLog("", uint32(test.LogLevel))
-	log.Warn("", "press test begin, sender num: ", *senderNum, " single sender msg num: ", *singleSenderMsgNum, " send msg total num: ", *senderNum**singleSenderMsgNum)
+	log.ZInfo(ctx, "logLevel", uint32(test.LogLevel))
+	log.ZWarn(ctx, "press test begin ", errors.New(""), "sender num", *senderNum, " single sender msg num", *singleSenderMsgNum, " send msg total num ", *senderNum**singleSenderMsgNum)
 	test.PressTest(*singleSenderMsgNum, *intervalTime, *senderNum)
 	select {}
 }

@@ -75,7 +75,7 @@ func (f *Friend) initSyncer() {
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
 					Args: common.SourceIDAndSessionType{SourceID: server.FriendUserID, SessionType: constant.SingleChatType, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
+					Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 			}
 
 		}
@@ -177,7 +177,8 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
+		return f.SyncBothFriendRequest(ctx,
+			tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
 	case constant.FriendApplicationApprovedNotification:
 		var tips sdkws.FriendApplicationApprovedTips
 		err := utils.UnmarshalNotificationElem(msg.Content, &tips)
@@ -256,20 +257,15 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncAllBlackList(ctx)
 		}
-	case constant.FriendPinSetNotifiaction:
+	case constant.FriendsInfoUpdateNotification:
 
-		var tips sdkws.UpdateFriendTips
+		var tips sdkws.FriendsInfoUpdateTips
 
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		if tips.UserID == f.loginUserID {
-			var friendIDs []string
-
-			for _, friendInfo := range tips.UpdateFriends {
-				friendIDs = append(friendIDs, friendInfo.FriendUser.UserID)
-			}
-			return f.SyncFriends(ctx, friendIDs)
+		if tips.FromToUserID.ToUserID == f.loginUserID {
+			return f.SyncFriends(ctx, tips.FriendIDs)
 		}
 	default:
 		return fmt.Errorf("type failed %d", msg.ContentType)

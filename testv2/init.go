@@ -63,7 +63,7 @@ func init() {
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 2)
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
@@ -162,6 +162,10 @@ func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCou
 	log.ZInfo(o.ctx, "OnTotalUnreadMessageCountChanged", "totalUnreadCount", totalUnreadCount)
 }
 
+func (o *onConversationListener) OnConversationUserInputStatusChanged(change string) {
+	log.ZInfo(o.ctx, "OnConversationUserInputStatusChanged", "change", change)
+}
+
 type onGroupListener struct {
 	ctx context.Context
 }
@@ -212,6 +216,10 @@ func (o *onGroupListener) OnGroupApplicationRejected(groupApplication string) {
 
 type onAdvancedMsgListener struct {
 	ctx context.Context
+}
+
+func (o *onAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
+	log.ZDebug(o.ctx, "OnRecvOnlineOnlyMessage", "message", message)
 }
 
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
@@ -312,7 +320,16 @@ type onUserListener struct {
 }
 
 func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
-	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", userInfo)
+	log.ZDebug(context.Background(), "OnSelfInfoUpdated", "userInfo", userInfo)
+}
+func (o *onUserListener) OnUserCommandAdd(userInfo string) {
+	log.ZDebug(context.Background(), "OnUserCommandAdd", "blackInfo", userInfo)
+}
+func (o *onUserListener) OnUserCommandDelete(userInfo string) {
+	log.ZDebug(context.Background(), "OnUserCommandDelete", "blackInfo", userInfo)
+}
+func (o *onUserListener) OnUserCommandUpdate(userInfo string) {
+	log.ZDebug(context.Background(), "OnUserCommandUpdate", "blackInfo", userInfo)
 }
 func (o *onUserListener) OnUserStatusChanged(statusMap string) {
 	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)

@@ -16,15 +16,14 @@ package conversation_msg
 
 import (
 	"context"
+	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"time"
 
-	"github.com/OpenIMSDK/tools/errs"
 	"github.com/OpenIMSDK/tools/log"
-	"gorm.io/gorm"
 )
 
 func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, conversationsOnServer []*model_struct.LocalConversation) error {
@@ -73,52 +72,74 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	if len(seqs) == 0 {
 		return nil
 	}
-	var conversations []*model_struct.LocalConversation
 	var conversationChangedIDs []string
 	var conversationIDsNeedSync []string
+
+	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
+	if err != nil {
+		log.ZWarn(ctx, "get all conversations err", err)
+		return err
+	}
+	conversationsOnLocalMap := utils2.SliceToMap(conversationsOnLocal, func(e *model_struct.LocalConversation) string {
+		return e.ConversationID
+	})
 	for conversationID, v := range seqs {
 		var unreadCount int32
 		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
 		if v.MaxSeq-v.HasReadSeq < 0 {
 			unreadCount = 0
+			log.ZWarn(ctx, "unread count is less than 0", nil, "conversationID",
+				conversationID, "maxSeq", v.MaxSeq, "hasReadSeq", v.HasReadSeq)
 		} else {
 			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 		}
-		conversation, err := c.db.GetConversation(ctx, conversationID)
-		if err != nil {
-			if errs.Unwrap(err) == errs.ErrRecordNotFound || errs.Unwrap(err) == gorm.ErrRecordNotFound {
-				conversationIDsNeedSync = append(conversationIDsNeedSync, conversationID)
-			}
-			continue
-		}
-		if conversation.UnreadCount != unreadCount || conversation.HasReadSeq != v.HasReadSeq {
-			if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
-				log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
-				continue
-			}
-			conversationChangedIDs = append(conversationChangedIDs, conversationID)
-		}
-	}
-	if len(conversationIDsNeedSync) > 0 {
-		if err := c.SyncConversations(ctx, conversationIDsNeedSync); err != nil {
-			log.ZWarn(ctx, "sync new conversations failed", nil, "conversationIDs", conversationIDsNeedSync)
-		} else {
-			for _, conversationID := range conversationIDsNeedSync {
-				v, ok := seqs[conversationID]
-				if !ok {
+		if conversation, ok := conversationsOnLocalMap[conversationID]; ok {
+			if conversation.UnreadCount != unreadCount || conversation.HasReadSeq != v.HasReadSeq {
+				if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
+					log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 					continue
 				}
-				unreadCount := int32(v.MaxSeq - v.HasReadSeq)
-				if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
-					log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID, "unreadCount", unreadCount, "hasReadSeq", v.HasReadSeq)
-				} else {
-					conversationChangedIDs = append(conversationChangedIDs, conversationID)
-				}
+				conversationChangedIDs = append(conversationChangedIDs, conversationID)
 			}
+		} else {
+			conversationIDsNeedSync = append(conversationIDsNeedSync, conversationID)
 		}
+
+	}
+	if len(conversationIDsNeedSync) > 0 {
+		conversationsOnServer, err := c.getServerConversationsByIDs(ctx, conversationIDsNeedSync)
+		if err != nil {
+			log.ZWarn(ctx, "getServerConversationsByIDs err", err, "conversationIDs", conversationIDsNeedSync)
+			return err
+		}
+		if err := c.batchAddFaceURLAndName(ctx, conversationsOnServer...); err != nil {
+			log.ZWarn(ctx, "batchAddFaceURLAndName err", err, "conversationsOnServer", conversationsOnServer)
+			return err
+		}
+
+		for _, conversation := range conversationsOnServer {
+			var unreadCount int32
+			v, ok := seqs[conversation.ConversationID]
+			if !ok {
+				continue
+			}
+			if v.MaxSeq-v.HasReadSeq < 0 {
+				unreadCount = 0
+				log.ZWarn(ctx, "unread count is less than 0", nil, "server seq", v, "conversation", conversation)
+			} else {
+				unreadCount = int32(v.MaxSeq - v.HasReadSeq)
+			}
+			conversation.UnreadCount = unreadCount
+			conversation.HasReadSeq = v.HasReadSeq
+		}
+		err = c.db.BatchInsertConversationList(ctx, conversationsOnServer)
+		if err != nil {
+			log.ZWarn(ctx, "BatchInsertConversationList err", err, "conversationsOnServer", conversationsOnServer)
+		}
+
 	}
 
-	log.ZDebug(ctx, "update conversations", "conversations", conversations)
+	log.ZDebug(ctx, "update conversations", "conversations", conversationChangedIDs)
 	if len(conversationChangedIDs) > 0 {
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.GetCh())
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.GetCh())

@@ -16,10 +16,11 @@ package test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/log"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -76,9 +77,8 @@ type testGetFriendApplicationList struct {
 func DoTestGetFriendApplicationList() {
 	var test testGetFriendApplicationList
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ")
+	log.ZInfo(ctx, test.OperationID, utils.GetSelfFuncName(), "input ")
 	// open_im_sdk.GetRecvFriendApplicationList(test, test.OperationID)
-
 }
 
 // ////////////////////////////////////////////////////////`
@@ -138,11 +138,11 @@ type testAddToBlackList struct {
 }
 
 func (t testAddToBlackList) OnSuccess(string) {
-	log.Info(t.OperationID, "testAddToBlackList, OnSuccess")
+	log.ZInfo(ctx, t.OperationID, "testAddToBlackList, OnSuccess")
 }
 
 func (t testAddToBlackList) OnError(code int32, msg string) {
-	log.Info(t.OperationID, "testAddToBlackList, OnError, ", code, msg)
+	log.ZInfo(ctx, t.OperationID, "testAddToBlackList, OnError, ", code, msg)
 }
 
 func DoTestAddToBlackList(userID string) {
@@ -168,10 +168,10 @@ type testGetBlackList struct {
 }
 
 func (t testGetBlackList) OnSuccess(data string) {
-	log.Info(t.OperationID, "testGetBlackList, OnSuccess, output: ", data)
+	log.ZInfo(ctx, t.OperationID, "testGetBlackList, OnSuccess, output: ", data)
 }
 func (t testGetBlackList) OnError(code int32, msg string) {
-	log.Info(t.OperationID, "testGetBlackList, OnError, ", code, msg)
+	log.ZInfo(ctx, t.OperationID, "testGetBlackList, OnError, ", code, msg)
 }
 func DoTestGetBlackList() {
 	var test testGetBlackList
@@ -186,10 +186,10 @@ type testCheckFriend struct {
 }
 
 func (t testCheckFriend) OnSuccess(data string) {
-	log.Info(t.OperationID, "testCheckFriend, OnSuccess, output: ", data)
+	log.ZInfo(ctx, t.OperationID, "testCheckFriend, OnSuccess, output: ", data)
 }
 func (t testCheckFriend) OnError(code int32, msg string) {
-	log.Info(t.OperationID, "testCheckFriend, OnError, ", code, msg)
+	log.ZInfo(ctx, t.OperationID, "testCheckFriend, OnError, ", code, msg)
 }
 func DoTestCheckFriend() {
 	var test testCheckFriend
@@ -213,7 +213,7 @@ func DotestSetFriendRemark() {
 	param.ToUserID = Friend_uid
 	param.Remark = "4444 "
 	jsontest := utils.StructToJsonString(param)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jsontest)
+	log.ZInfo(ctx, test.OperationID, utils.GetSelfFuncName(), "input ", jsontest)
 	open_im_sdk.SetFriendRemark(test, test.OperationID, jsontest)
 }
 
@@ -237,10 +237,10 @@ type testaddFriend struct {
 }
 
 func (t testaddFriend) OnSuccess(data string) {
-	log.Info(t.OperationID, "testaddFriend, OnSuccess", data)
+	log.ZInfo(ctx, t.OperationID, "testaddFriend, OnSuccess", data)
 }
 func (t testaddFriend) OnError(code int32, msg string) {
-	log.Info(t.OperationID, "testaddFriend, OnError", code, msg)
+	log.ZInfo(ctx, t.OperationID, "testaddFriend, OnError", code, msg)
 }
 
 func DoTestAddFriend() {
@@ -251,7 +251,7 @@ func DoTestAddFriend() {
 		ReqMsg:   "777777777777777777777777",
 	}
 	jsontestaddFriend := utils.StructToJsonString(params)
-	log.Info(test.OperationID, "addFriend input:", jsontestaddFriend)
+	log.ZInfo(ctx, test.OperationID, "addFriend input:", jsontestaddFriend)
 	open_im_sdk.AddFriend(test, test.OperationID, jsontestaddFriend)
 }
 
@@ -263,16 +263,16 @@ type testGetSendFriendApplicationList struct {
 }
 
 func (t testGetSendFriendApplicationList) OnSuccess(data string) {
-	log.Info(t.OperationID, "testGetSendFriendApplicationList, OnSuccess", data)
+	log.ZInfo(ctx, t.OperationID, "testGetSendFriendApplicationList, OnSuccess", data)
 }
 func (t testGetSendFriendApplicationList) OnError(code int32, msg string) {
-	log.Info(t.OperationID, "testGetSendFriendApplicationList, OnError", code, msg)
+	log.ZInfo(ctx, t.OperationID, "testGetSendFriendApplicationList, OnError", code, msg)
 }
 
 func DoTestGetSendFriendApplicationList() {
 	var test testGetSendFriendApplicationList
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, "GetSendFriendApplicationList input:")
+	log.ZInfo(ctx, test.OperationID, "GetSendFriendApplicationList input:")
 	// open_im_sdk.GetSendFriendApplicationList(test, test.OperationID)
 }
 
@@ -285,7 +285,7 @@ type testGetFriendList struct {
 func DotestGetFriendList() {
 	var test testGetFriendList
 	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ")
+	log.ZInfo(ctx, test.OperationID, utils.GetSelfFuncName(), "input ")
 	open_im_sdk.GetFriendList(test, test.OperationID)
 }
 
@@ -302,7 +302,7 @@ func DotestSearchFriends() {
 	params.IsSearchUserID = true
 	params.IsSearchNickname = true
 	params.IsSearchRemark = true
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", params)
+	log.ZInfo(ctx, test.OperationID, utils.GetSelfFuncName(), "input ", params)
 	open_im_sdk.SearchFriends(test, test.OperationID, utils.StructToJsonString(params))
 }
 
@@ -415,7 +415,7 @@ func SetListenerAndLogin(uid, tk string) {
 
 	//InOutlllogin(uid, tk)
 
-	log.Warn("", "SetListenerAndLogin fin")
+	log.ZWarn(ctx, "SetListenerAndLogin fin", errors.New(""))
 }
 
 func lllogin(uid, tk string) bool {
@@ -439,7 +439,6 @@ func lllogin(uid, tk string) bool {
 	}
 	return true
 }
-
 func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
@@ -449,20 +448,20 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	cf.IsLogStandardOutput = true
 	cf.LogLevel = uint32(LogLevel)
 
-	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 	operationID := utils.OperationIDGenerator()
 
 	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
 	lg := new(open_im_sdk.LoginMgr)
-	log.Info(operationID, "new login ", lg)
+	log.ZInfo(ctx, "DoReliabilityTest", "UID", uid, "Token", tk, "WS", ws, "API", api)
+	log.ZInfo(ctx, "New login manager ", "OperationID", operationID)
 
 	allLoginMgr[index].mgr = lg
 	lg.InitSDK(cf, &testinit)
 
 	ctx = ccontext.WithOperationID(lg.Context(), operationID)
 
-	log.Info(operationID, "InitSDK ", cf)
+	log.ZInfo(ctx, "Initialized SDK with config", "Config", cf)
 
 	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
@@ -488,7 +487,6 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			return
 		}
 	}
-
 }
 
 func PressInitAndLogin(index int, uid, tk, ws, api string) {
@@ -498,18 +496,19 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	cf.PlatformID = 1
 	cf.DataDir = "./"
 	cf.LogLevel = uint32(LogLevel)
-	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()
 	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
 	lg := new(open_im_sdk.LoginMgr)
-	log.Info(operationID, "new login ", lg)
+	log.ZInfo(ctx, "DoReliabilityTest", "UID", uid, "Token", tk, "WS", ws, "API", api)
+
+	log.ZInfo(ctx, "New login manager ", "OperationID", operationID)
 
 	allLoginMgr[index].mgr = lg
 	lg.InitSDK(cf, &testinit)
 
-	log.Info(operationID, "InitSDK ", cf)
+	log.ZInfo(ctx, "Initialized SDK with config", "Config", cf)
 
 	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
@@ -528,7 +527,7 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 
 	err := lg.Login(ctx, uid, tk)
 	if err != nil {
-		log.Error(operationID, "login failed", err)
+		log.ZError(ctx, "Login failed", err, "OperationID", operationID)
 	}
 }
 
@@ -546,7 +545,7 @@ func DoTest(uid, tk, ws, api string) {
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
 	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
-		log.Error("", "InitSDK failed")
+		log.ZError(ctx, "InitSDK failed", errors.New("InitSDK failed"))
 		return
 	}
 
@@ -588,7 +587,8 @@ type TestSendMsgCallBack struct {
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Error(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	log.ZError(ctx, "test_openim: send msg failed: ", errors.New("test_openim: send msg failed: "),
+		"operationID", t.OperationID, "errCode", errCode, "errMsg", errMsg, "msgID", t.msgID, "msg", t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID
@@ -596,7 +596,8 @@ func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
 }
 
 func (t *TestSendMsgCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg, data)
+	log.ZInfo(ctx, "test_openim: send msg success: |", "operationID", t.OperationID,
+		"msgID", t.msgID, "msg", t.msg, "data", data)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	//k, _ := SendSuccAllMsg[t.msgID]
@@ -617,11 +618,12 @@ type TestSendMsgCallBackPress struct {
 }
 
 func (t *TestSendMsgCallBackPress) OnError(errCode int32, errMsg string) {
-	log.Warn(t.OperationID, "TestSendMsgCallBackPress: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	log.ZWarn(ctx, "TestSendMsgCallBackPress: send msg failed: |", errors.New(""), "operationID", t.OperationID, "errCode",
+		errCode, "errMsg", errMsg, "msgID", t.msgID, "msg", t.msg)
 }
 
 func (t *TestSendMsgCallBackPress) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestSendMsgCallBackPress: send msg success: |", t.msgID, t.msg)
+	log.ZInfo(ctx, "TestSendMsgCallBackPress: send msg success: |", "operationID", t.OperationID, "msgID", t.msgID, "msg", t.msg)
 }
 
 func (t *TestSendMsgCallBackPress) OnProgress(progress int) {
@@ -665,11 +667,20 @@ type userCallback struct {
 }
 
 func (c userCallback) OnUserStatusChanged(statusMap string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), statusMap)
+	log.ZInfo(ctx, "User Status Changed", "statusMap", statusMap)
 }
 
 func (userCallback) OnSelfInfoUpdated(callbackData string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackData)
+	log.ZInfo(ctx, "Self Info Updated", "callbackData", callbackData)
+}
+func (userCallback) OnUserCommandAdd(callbackData string) {
+	log.ZInfo(ctx, "User Command Added", "callbackData", callbackData)
+}
+func (userCallback) OnUserCommandUpdate(callbackData string) {
+	log.ZInfo(ctx, "User Command Updated", "callbackData", callbackData)
+}
+func (userCallback) OnUserCommandDelete(callbackData string) {
+	log.ZInfo(ctx, "User Command Deleted", "callbackData", callbackData)
 }
 
 // //////////////////////////////////////////////////////////////////
@@ -677,34 +688,44 @@ type testInitLister struct {
 }
 
 func (t *testInitLister) OnUserTokenExpired() {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 func (t *testInitLister) OnConnecting() {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (t *testInitLister) OnConnectSuccess() {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (t *testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
-	log.Info("", utils.GetSelfFuncName(), ErrCode, ErrMsg)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "errCode", ErrCode, "errMsg", ErrMsg)
 }
 
 func (t *testInitLister) OnKickedOffline() {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (t *testInitLister) OnSelfInfoUpdated(info string) {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
+}
+
+func (t *testInitLister) OnUserCommandAdd(info string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName())
+}
+func (t *testInitLister) OnUserCommandDelete(info string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName())
+}
+func (t *testInitLister) OnUserCommandUpdates(info string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (t *testInitLister) OnSuccess() {
-	log.Info("", utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (t *testInitLister) OnError(code int32, msg string) {
-	log.Info("", utils.GetSelfFuncName(), code, msg)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "code", code, "msg", msg)
 }
 
 type testLogin struct {
@@ -723,43 +744,45 @@ type testFriendListener struct {
 }
 
 func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
+
 func (testFriendListener) OnFriendApplicationDeleted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnFriendApplicationAccepted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnFriendApplicationRejected(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnFriendAdded(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnFriendDeleted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnBlackAdded(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
+
 func (testFriendListener) OnBlackDeleted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
 func (testFriendListener) OnSuccess() {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName())
+	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
 func (testFriendListener) OnError(code int32, msg string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), code, msg)
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "Code", code, "Message", msg)
 }

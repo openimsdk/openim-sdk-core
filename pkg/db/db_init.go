@@ -20,7 +20,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
@@ -150,13 +149,10 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	sqlDB.SetConnMaxIdleTime(time.Minute * 10)
 	d.conn = db
 
-	superGroup := &model_struct.LocalGroup{}
-	localGroup := &model_struct.LocalGroup{}
-
 	err = db.AutoMigrate(
 		&model_struct.LocalFriend{},
 		&model_struct.LocalFriendRequest{},
-		localGroup,
+		&model_struct.LocalGroup{},
 		&model_struct.LocalGroupMember{},
 		&model_struct.LocalGroupRequest{},
 		&model_struct.LocalErrChatLog{},
@@ -173,38 +169,25 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 		&model_struct.LocalUpload{},
 		&model_struct.LocalStranger{},
 		&model_struct.LocalSendingMessages{},
+		&model_struct.LocalUserCommand{},
 	)
 	if err != nil {
 		return err
 	}
-	if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
-		return err
-	}
-	conversationIDs, err := d.FindAllConversationConversationID(ctx)
-	if err != nil {
-		log.ZError(ctx, "FindAllConversationConversationID err", err)
-	}
-	for _, conversationID := range conversationIDs {
-		d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
-		var count int64
-		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
-			"index_seq_"+conversationID, utils.GetTableName(conversationID))).Row().Scan(&count)
-		if count == 0 {
-			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID, utils.GetTableName(conversationID)))
-			if result.Error != nil {
-				log.ZError(ctx, "create table seq index failed", result.Error, "conversationID", conversationID)
-			}
-		}
-		var count2 int64
-		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
-			"index_send_time_"+conversationID, utils.GetTableName(conversationID))).Row().Scan(&count)
-		if count2 == 0 {
-			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID, utils.GetTableName(conversationID)))
-			if result.Error != nil {
-				log.ZError(ctx, "create table send_time index failed", result.Error, "conversationID", conversationID)
-			}
-		}
+	//if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
+	//	return err
+	//}
 
-	}
 	return nil
+}
+
+func (d *DataBase) versionDataFix(ctx context.Context) {
+	//todo some model auto migrate data conversion
+	//conversationIDs, err := d.FindAllConversationConversationID(ctx)
+	//if err != nil {
+	//	log.ZError(ctx, "FindAllConversationConversationID err", err)
+	//}
+	//for _, conversationID := range conversationIDs {
+	//	d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
+	//}
 }

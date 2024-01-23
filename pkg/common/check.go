@@ -16,11 +16,8 @@ package common
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/mitchellh/mapstructure"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"runtime"
 )
@@ -112,56 +109,6 @@ func CheckArgsErrCallback(callback open_im_sdk_callback.Base, err error, operati
 //	}
 //	return nil
 //}
-
-func CheckErrAndResp(err error, resp []byte, output interface{}, code *int32) error {
-	if err != nil {
-		return utils.Wrap(err, "api resp failed")
-	}
-	var c server_api_params.CommDataResp
-	err = json.Unmarshal(resp, &c)
-	if err == nil {
-		if c.ErrCode != 0 {
-			if code != nil {
-				*code = c.ErrCode
-			}
-			return utils.Wrap(errors.New(c.ErrMsg), "")
-		}
-		if output != nil {
-			err = mapstructure.Decode(c.Data, output)
-			if err != nil {
-				//	log.Error("mapstructure.Decode failed ", "err: ", err.Error(), c.Data)
-				goto one
-			}
-			return nil
-		}
-		return nil
-	} else {
-		//	log.Error("json.Unmarshal failed ", string(resp), "err: ", err.Error())
-	}
-
-one:
-	var c2 server_api_params.CommDataRespOne
-
-	err = json.Unmarshal(resp, &c2)
-	if err != nil {
-		//log.Error("json.Unmarshal failed ", string(resp), "err: ", err.Error())
-		return utils.Wrap(err, "")
-	}
-	if c2.ErrCode != 0 {
-		if code != nil {
-			*code = c.ErrCode
-		}
-		return utils.Wrap(errors.New(c2.ErrMsg), "")
-	}
-	if output != nil {
-		err = mapstructure.Decode(c2.Data, output)
-		if err != nil {
-			return utils.Wrap(err, "")
-		}
-		return nil
-	}
-	return nil
-}
 
 func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback open_im_sdk_callback.Base, operationID string) error {
 	err := json.Unmarshal([]byte(s), args)

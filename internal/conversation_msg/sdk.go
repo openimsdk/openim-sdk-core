@@ -371,7 +371,7 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 	case constant.SuperGroupChatType:
 		return "sg_" + sourceID // super group chat
 	case constant.NotificationChatType:
-		return "sn_" + sourceID // server notification chat
+		return "sn_" + sourceID + "_" + c.loginUserID // server notification chat
 	}
 	return ""
 }
@@ -559,7 +559,9 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 				putErrs = err
 			}
-			s.VideoElem.VideoURL = res.URL
+			if res != nil {
+				s.VideoElem.VideoURL = res.URL
+			}
 		}()
 		wg.Wait()
 		if err := putErrs; err != nil {
@@ -847,9 +849,25 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 
 	err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
 	if err != nil {
-		log.ZError(ctx, "send msg to server failed", err, "message", s)
-		c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-		return s, err
+		//if send message network timeout need to double-check message has received by db.
+		if sdkerrs.ErrNetworkTimeOut.Is(err) {
+			oldMessage, _ := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
+			if oldMessage.Status == constant.MsgStatusSendSuccess {
+				sendMsgResp.SendTime = oldMessage.SendTime
+				sendMsgResp.ClientMsgID = oldMessage.ClientMsgID
+				sendMsgResp.ServerMsgID = oldMessage.ServerMsgID
+			} else {
+				log.ZError(ctx, "send msg to server failed", err, "message", s)
+				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime,
+					constant.MsgStatusSendFailed, s, lc)
+				return s, err
+			}
+		} else {
+			log.ZError(ctx, "send msg to server failed", err, "message", s)
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime,
+				constant.MsgStatusSendFailed, s, lc)
+			return s, err
+		}
 	}
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess
@@ -911,6 +929,7 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 				temp.Status = message.Status
 				temp.AttachedInfo = message.AttachedInfo
 				temp.Ex = message.Ex
+				temp.LocalEx = message.LocalEx
 				err := c.msgHandleByContentType(&temp)
 				if err != nil {
 					log.ZError(ctx, "msgHandleByContentType err", err, "message", temp)

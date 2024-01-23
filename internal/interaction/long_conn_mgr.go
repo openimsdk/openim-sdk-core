@@ -52,6 +52,9 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 1024
+
+	//Maximum number of reconnection attempts
+	maxReconnectAttempts = 300
 )
 
 const (
@@ -93,6 +96,7 @@ type LongConnMgr struct {
 	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
+	reconnectStrategy  ReconnectStrategy
 
 	mutex        sync.Mutex
 	IsBackground bool
@@ -108,7 +112,8 @@ type Message struct {
 func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		loginMgrCh: loginMgrCh, IsCompression: true,
-		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
+		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor(),
+		reconnectStrategy: NewExponentialRetry()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
@@ -153,8 +158,6 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 			return sdkerrs.ErrArgs
 		}
 		return nil
-	case <-time.After(time.Second * 20):
-		return errs.ErrNetwork.Wrap("send message timeout")
 	}
 }
 
@@ -181,11 +184,11 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		}
 		if err != nil {
 			log.ZWarn(c.ctx, "reConn", err)
-			time.Sleep(time.Second * 1)
+			time.Sleep(c.reconnectStrategy.GetSleepInterval())
 			continue
 		}
 		c.conn.SetReadLimit(maxMessageSize)
-		//_ = c.conn.SetReadDeadline(pongWait)
+		_ = c.conn.SetReadDeadline(pongWait)
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
 			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -213,7 +216,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
-
 		default:
 		}
 
@@ -277,9 +279,6 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
-		if r := recover(); r != nil {
-
-		}
 		ticker.Stop()
 		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat", "heartbeat done sdk logout.....")
 	}()
@@ -389,7 +388,7 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 	if c.GetConnectionStatus() != Connected && msg.ReqIdentifier == constant.GetNewestSeq {
 		return tempChan, sdkerrs.ErrNetwork.Wrap("connection closed,conning...")
 	}
-	for i := 0; i < 60; i++ {
+	for i := 0; i < maxReconnectAttempts; i++ {
 		err := c.writeBinaryMsg(*msg)
 		if err != nil {
 			log.ZError(c.ctx, "send binary message error", err, "message", msg)
@@ -502,6 +501,12 @@ func (c *LongConnMgr) GetConnectionStatus() int {
 	defer c.w.Unlock()
 	return c.connStatus
 }
+
+func (c *LongConnMgr) SetConnectionStatus(status int) {
+	c.w.Lock()
+	defer c.w.Unlock()
+	c.connStatus = status
+}
 func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err error) {
 	if c.IsConnected() {
 		return true, nil
@@ -510,9 +515,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	defer c.connWrite.Unlock()
 	log.ZDebug(ctx, "conn start")
 	c.listener.OnConnecting()
-	c.w.Lock()
-	c.connStatus = Connecting
-	c.w.Unlock()
+	c.SetConnectionStatus(Connecting)
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t",
 		ccontext.Info(ctx).WsAddr(), ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(),
 		ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.GetBackground())
@@ -521,9 +524,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	}
 	resp, err := c.conn.Dial(url, nil)
 	if err != nil {
-		c.w.Lock()
-		c.connStatus = Closed
-		c.w.Unlock()
+		c.SetConnectionStatus(Closed)
 		if resp != nil {
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
@@ -538,26 +539,21 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return true, err
 			}
-			//switch apiResp.ErrCode {
-			//case
-			//	errs.TokenExpiredError,
-			//	errs.TokenInvalidError,
-			//	errs.TokenMalformedError,
-			//	errs.TokenNotValidYetError,
-			//	errs.TokenUnknownError,
-			//	errs.TokenNotExistError:
-			//	c.listener.OnUserTokenExpired()
-			//	_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
-			//case errs.TokenKickedError:
-			//	c.listener.OnKickedOffline()
-			//	_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
-			//default:
-			//	c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
-			//}
-			//log.ZWarn(ctx, "long conn establish failed", sdkerrs.New(apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt))
 			err = errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
-			return false, err
+			switch apiResp.ErrCode {
+			case
+				errs.TokenExpiredError,
+				errs.TokenInvalidError,
+				errs.TokenMalformedError,
+				errs.TokenNotValidYetError,
+				errs.TokenUnknownError,
+				errs.TokenNotExistError,
+				errs.TokenKickedError:
+				return false, err
+			default:
+				return true, err
+			}
 		}
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return true, err
@@ -565,12 +561,11 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	c.listener.OnConnectSuccess()
 	c.ctx = newContext(c.conn.LocalAddr())
 	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)
-	c.w.Lock()
-	c.connStatus = Connected
-	c.w.Unlock()
+	c.SetConnectionStatus(Connected)
 	c.conn.SetPongHandler(c.pongHandler)
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
+	c.reconnectStrategy.Reset()
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return true, nil
 }
