@@ -229,9 +229,6 @@ func syncCall(operationID string, fn any, args ...any) (res string) {
 	if operationID == "" {
 		return ""
 	}
-	if err = CheckResourceLoad(UserForSDK, ""); err != nil {
-		return ""
-	}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
 		err = errs.ErrRecordNotFound
@@ -239,6 +236,9 @@ func syncCall(operationID string, fn any, args ...any) (res string) {
 	}
 	funcPtr := reflect.ValueOf(fn).Pointer()
 	funcName := runtime.FuncForPC(funcPtr).Name()
+	if err = CheckResourceLoad(UserForSDK, funcName); err != nil {
+		return ""
+	}
 	fnt := fnv.Type()
 	numIn := fnt.NumIn()
 	if len(args)+1 != numIn {
