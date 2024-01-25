@@ -41,6 +41,7 @@ var (
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser  bool // 是否注册用户
 	onlineUsersOnly bool
+	pprofEnable     bool
 
 	hundredThousandGroupNum int //
 	tenThousandGroupNum     int
@@ -71,6 +72,7 @@ func InitWithFlag() {
 
 	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
 	flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
+	flag.BoolVar(&pprofEnable, "pp", false, "enable pprof")
 }
 
 func PrintQPS() {
@@ -90,11 +92,12 @@ func main() {
 		"singleSamplingRate", singleSamplingRate, "start", start, "end", end, "count", count, "sendInterval", sendInterval,
 		"onlineUsersOnly", onlineUsersOnly, "isRegisterUser", isRegisterUser, "groupSenderRate", GroupSenderRate,
 		"hundredThousandGroupNum", hundredThousandGroupNum, "tenThousandGroupNum", tenThousandGroupNum, "thousandGroupNum", thousandGroupNum,
-		"hundredGroupNum", hundredGroupNum, "fiftyGroupNum", fiftyGroupNum, "tenGroupNum", tenGroupNum)
-
-	go func() {
-		log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
-	}()
+		"hundredGroupNum", hundredGroupNum, "fiftyGroupNum", fiftyGroupNum, "tenGroupNum", tenGroupNum, "pprofEnable", pprofEnable)
+	if pprofEnable {
+		go func() {
+			log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+		}()
+	}
 	p := module.NewPressureTester()
 	var f, r []string
 	var err error
