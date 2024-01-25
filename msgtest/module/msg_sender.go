@@ -66,7 +66,12 @@ type errorValue struct {
 	SendID      string `json:"send_id"`
 	RecvID      string `json:"recv_id"`
 	MsgID       string `json:"msg_id"`
+	GroupID     string `json:"group_id"`
 	OperationID string `json:"operation_id"`
+}
+type groupMessageValue struct {
+	num        int   `json:"num"`
+	LatencySum int64 `json:"latency_sum"`
 }
 
 func (e *errorValue) String() string {
@@ -74,19 +79,23 @@ func (e *errorValue) String() string {
 }
 
 type SendMsgUser struct {
-	timeOffset          int64
-	longConnMgr         *interaction.LongConnMgr
-	userID              string
-	pushMsgAndMaxSeqCh  chan common.Cmd2Value
-	recvPushMsgCallback func(msg *sdkws.MsgData)
-	failedMessageMap    map[string]*errorValue
-	cancelFunc          context.CancelFunc
-	ctx                 context.Context
-	sendSampleMessage   map[string]*msgValue
-	recvSampleMessage   map[string]*msgValue
+	timeOffset              int64
+	longConnMgr             *interaction.LongConnMgr
+	userID                  string
+	pushMsgAndMaxSeqCh      chan common.Cmd2Value
+	recvPushMsgCallback     func(msg *sdkws.MsgData)
+	p                       *PressureTester
+	singleFailedMessageMap  map[string]*errorValue
+	groupFailedMessageMap   map[string]*errorValue
+	cancelFunc              context.CancelFunc
+	ctx                     context.Context
+	singleSendSampleMessage map[string]*msgValue
+	singleRecvSampleMessage map[string]*msgValue
+	groupSendSampleNum      map[string]int
+	groupRecvSampleInfo     map[string]*groupMessageValue
 }
 
-func (b SendMsgUser) GetUserID() string {
+func (b *SendMsgUser) GetUserID() string {
 	return b.userID
 }
 
@@ -111,19 +120,23 @@ func newUserCtx(userID, token string, imConfig sdk_struct.IMConfig) context.Cont
 		IMConfig: imConfig})
 }
 
-func NewUser(userID, token string, timeOffset int64, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
+func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ctx := newUserCtx(userID, token, imConfig)
 	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListner{}, nil, pushMsgAndMaxSeqCh, nil)
 	core := &SendMsgUser{
-		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
-		longConnMgr:        longConnMgr,
-		userID:             userID,
-		failedMessageMap:   make(map[string]*errorValue),
-		sendSampleMessage:  make(map[string]*msgValue),
-		recvSampleMessage:  make(map[string]*msgValue),
-		timeOffset:         timeOffset,
-		ctx:                ctx,
+		pushMsgAndMaxSeqCh:      pushMsgAndMaxSeqCh,
+		longConnMgr:             longConnMgr,
+		userID:                  userID,
+		p:                       p,
+		singleFailedMessageMap:  make(map[string]*errorValue),
+		groupFailedMessageMap:   make(map[string]*errorValue),
+		singleSendSampleMessage: make(map[string]*msgValue),
+		singleRecvSampleMessage: make(map[string]*msgValue),
+		groupSendSampleNum:      make(map[string]int),
+		groupRecvSampleInfo:     make(map[string]*groupMessageValue),
+		timeOffset:              timeOffset,
+		ctx:                     ctx,
 	}
 	for _, opt := range opts {
 		opt(core)
@@ -160,7 +173,7 @@ func (b *SendMsgUser) BatchSendSingleMsg(ctx context.Context, userID string, ind
 	err := b.sendMsg(ctx, userID, "", index, constant.SingleChatType, content)
 	if err != nil {
 		log.ZError(ctx, "send msg failed", err, "userID", userID, "index", index, "content", content)
-		//b.failedMessageMap[content] = err
+		//b.singleFailedMessageMap[content] = err
 	}
 	return nil
 }
@@ -174,12 +187,12 @@ func (b *SendMsgUser) BatchSendGroupMsg(ctx context.Context, groupID string, ind
 	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
 	if err != nil {
 		log.ZError(ctx, "send msg failed", err, "groupID", groupID, "index", index, "content", content)
-		//b.failedMessageMap[content] = err
+		//b.singleFailedMessageMap[content] = err
 	}
 	return nil
 }
 
-func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index int, sesstionType int32, content string) error {
+func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index int, sessionType int32, content string) error {
 	var resp sdkws.UserSendMsgResp
 	text := sdk_struct.TextElem{Content: content}
 	clientMsgID := utils.GetMsgID(b.userID)
@@ -187,7 +200,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 		SendID:           b.userID,
 		GroupID:          groupID,
 		RecvID:           userID,
-		SessionType:      sesstionType,
+		SessionType:      sessionType,
 		ContentType:      constant.Text,
 		SenderNickname:   b.userID,
 		Content:          []byte(utils.StructToJsonString(text)),
@@ -198,20 +211,34 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	// IncrementQPS()
 	now := time.Now().UnixMilli()
 	if err := b.longConnMgr.SendReqWaitResp(ctx, msg, constant.SendMsg, &resp); err != nil {
-		b.failedMessageMap[clientMsgID] = &errorValue{err: err,
-			SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
-		log.ZError(ctx, "send msg failed", err, "userID", userID, "index", index, "content", content)
+		switch sessionType {
+		case constant.SingleChatType:
+			b.singleFailedMessageMap[clientMsgID] = &errorValue{err: err,
+				SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
+			log.ZError(ctx, "send single msg failed", err, "userID", userID, "index", index, "content", content)
+		case constant.SuperGroupChatType:
+			b.groupFailedMessageMap[clientMsgID] = &errorValue{err: err,
+				SendID: b.userID, RecvID: groupID, MsgID: clientMsgID, GroupID: groupID, OperationID: mcontext.GetOperationID(ctx)}
+			log.ZError(ctx, "send group msg failed", err, "groupID", groupID, "index", index, "content", content)
+		}
+
 		return err
 	}
-	if utils.IsContain(userID, SampleUserList) {
-		b.sendSampleMessage[msg.ClientMsgID] = &msgValue{
-			SendID:      msg.SendID,
-			RecvID:      msg.RecvID,
-			MsgID:       msg.ClientMsgID,
-			OperationID: mcontext.GetOperationID(ctx),
-			sendTime:    msg.SendTime,
+	switch sessionType {
+	case constant.SingleChatType:
+		if utils.IsContain(userID, SampleUserList) {
+			b.singleSendSampleMessage[msg.ClientMsgID] = &msgValue{
+				SendID:      msg.SendID,
+				RecvID:      msg.RecvID,
+				MsgID:       msg.ClientMsgID,
+				OperationID: mcontext.GetOperationID(ctx),
+				sendTime:    msg.SendTime,
+			}
 		}
+	case constant.SuperGroupChatType:
+		b.groupSendSampleNum[groupID]++
 	}
+
 	if resp.SendTime-now > 1500 {
 		log.ZWarn(ctx, "msg recv resp is too slow", nil, "sendTime", resp.SendTime, "now", now)
 	}
@@ -242,15 +269,27 @@ func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 }
 
 func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws.MsgData) {
-	if utils.IsContain(msg.RecvID, SampleUserList) && b.userID != msg.SendID {
-		b.recvSampleMessage[msg.ClientMsgID] = &msgValue{
-			SendID:      msg.SendID,
-			RecvID:      msg.RecvID,
-			MsgID:       msg.ClientMsgID,
-			OperationID: mcontext.GetOperationID(ctx),
-			sendTime:    msg.SendTime,
-			Latency:     b.GetRelativeServerTime() - msg.SendTime,
+	switch msg.SessionType {
+	case constant.SingleChatType:
+		if utils.IsContain(msg.RecvID, SampleUserList) && b.userID != msg.SendID {
+			b.singleRecvSampleMessage[msg.ClientMsgID] = &msgValue{
+				SendID:      msg.SendID,
+				RecvID:      msg.RecvID,
+				MsgID:       msg.ClientMsgID,
+				OperationID: mcontext.GetOperationID(ctx),
+				sendTime:    msg.SendTime,
+				Latency:     b.GetRelativeServerTime() - msg.SendTime,
+			}
 		}
+	case constant.SuperGroupChatType:
+		if b.userID == b.p.groupOwnerUserID[msg.GroupID] {
+			if b.groupRecvSampleInfo[msg.GroupID] == nil {
+				b.groupRecvSampleInfo[msg.GroupID] = &groupMessageValue{}
+			}
+			b.groupRecvSampleInfo[msg.GroupID].num++
+			b.groupRecvSampleInfo[msg.GroupID].LatencySum += b.GetRelativeServerTime() - msg.SendTime
+		}
+
 	}
 
 }

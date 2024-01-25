@@ -29,11 +29,10 @@ var (
 	totalOnlineUserNum    int     // 总在线用户数
 	randomSender          int     // 随机发送者数
 	randomReceiver        int     // 随机接收者数
-	samplingRate          float64 // 抽样率
+	singleSamplingRate    float64 // 单聊抽样率
+	GroupSenderRate       float64 // 群聊随机的发送者比例
 	NotFriendMsgSenderNum int     // 非好友消息发送者数
-	groupMsgSenderNum     int     // 群消息发送者数
-	msgSenderNumEvreyUser int     // 每个用户的消息数
-	fastenedUserNum       int     // 固定用户数
+	msgSenderNumEveryUser int     // 每个用户的消息数
 	start                 int
 	end                   int
 	count                 int
@@ -42,20 +41,33 @@ var (
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser  bool // 是否注册用户
 	onlineUsersOnly bool
+
+	hundredThousandGroupNum int //
+	tenThousandGroupNum     int
+	thousandGroupNum        int
+	hundredGroupNum         int
+	fiftyGroupNum           int
+	tenGroupNum             int
 )
 
 func InitWithFlag() {
 	flag.IntVar(&totalOnlineUserNum, "o", 20000, "total online user num")
-	flag.IntVar(&randomSender, "rs", 100, "random sender num")
-	flag.IntVar(&randomReceiver, "rr", 100, "random receiver num")
+	flag.IntVar(&randomSender, "rs", 0, "random sender num")
+	flag.IntVar(&randomReceiver, "rr", 0, "random receiver num")
 	flag.IntVar(&start, "s", 0, "start user")
+
 	flag.IntVar(&end, "e", 0, "end user")
-	flag.Float64Var(&samplingRate, "f", 0.01, "sampling rate")
+	flag.Float64Var(&singleSamplingRate, "sr", 0.01, "single chat sampling rate")
+	flag.Float64Var(&GroupSenderRate, "gsr", 0.1, "group chat sender rate")
 	flag.IntVar(&count, "c", 200, "number of messages per user")
 	flag.IntVar(&sendInterval, "i", 1000, "send message interval per user(milliseconds)")
 	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
-	flag.IntVar(&groupMsgSenderNum, "g", 100, "group msg sender num")
-	flag.IntVar(&msgSenderNumEvreyUser, "m", 100, "msg sender num evrey user")
+	flag.IntVar(&hundredThousandGroupNum, "htg", 0, "quantity of 100k user groups")
+	flag.IntVar(&tenThousandGroupNum, "ttg", 0, "quantity of 10k user groups")
+	flag.IntVar(&thousandGroupNum, "otg", 0, "quantity of 1k user groups")
+	flag.IntVar(&hundredGroupNum, "hog", 0, "quantity of 100 user groups")
+	flag.IntVar(&fiftyGroupNum, "fog", 0, "quantity of 50 user groups")
+	flag.IntVar(&tenGroupNum, "teg", 0, "quantity of 10 user groups")
 
 	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
 	flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
@@ -75,8 +87,10 @@ func main() {
 	fmt.Println("1111:::", onlineUsersOnly)
 	log.ZWarn(ctx, "flag args", nil, "totalOnlineUserNum", totalOnlineUserNum,
 		"randomSender", randomSender, "randomReceiver", randomReceiver,
-		"samplingRate", samplingRate, "start", start, "end", end, "count", count, "sendInterval", sendInterval,
-		"onlineUsersOnly", onlineUsersOnly, "isRegisterUser", isRegisterUser)
+		"singleSamplingRate", singleSamplingRate, "start", start, "end", end, "count", count, "sendInterval", sendInterval,
+		"onlineUsersOnly", onlineUsersOnly, "isRegisterUser", isRegisterUser, "groupSenderRate", GroupSenderRate,
+		"hundredThousandGroupNum", hundredThousandGroupNum, "tenThousandGroupNum", tenThousandGroupNum, "thousandGroupNum", thousandGroupNum,
+		"hundredGroupNum", hundredGroupNum, "fiftyGroupNum", fiftyGroupNum, "tenGroupNum", tenGroupNum)
 
 	go func() {
 		log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
@@ -85,15 +99,19 @@ func main() {
 	var f, r []string
 	var err error
 	if start != 0 {
-		f, r, err = p.SelectSampleFromStarEnd(start, end, samplingRate)
+		f, r, err = p.SelectSampleFromStarEnd(start, end, singleSamplingRate)
 	} else {
-		f, r, err = p.SelectSample(totalOnlineUserNum, samplingRate)
+		f, r, err = p.SelectSample(totalOnlineUserNum, singleSamplingRate)
 	}
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
 	}
+	p.CreateTestGroups(f, totalOnlineUserNum, GroupSenderRate, hundredThousandGroupNum,
+		tenThousandGroupNum, thousandGroupNum, hundredGroupNum, fiftyGroupNum, tenGroupNum)
+
 	log.ZWarn(ctx, "Sample UserID", nil, "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
+	p.FormatGroupInfo(ctx)
 	time.Sleep(10 * time.Second)
 	//
 	if isRegisterUser {
@@ -120,8 +138,9 @@ func main() {
 	}
 
 	time.Sleep(10 * time.Second)
-	p.SendSingleMessages2(f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
-	log.ZWarn(ctx, "send over", nil, "num", p.GetSendNum())
+	p.SendSingleMessages(ctx, f, p.Shuffle(f, randomSender), randomReceiver, count, time.Millisecond*time.Duration(sendInterval))
+	p.SendGroupMessage(ctx, count, time.Millisecond*time.Duration(sendInterval))
+	log.ZWarn(ctx, "send all message over", nil, "singleNum", p.GetSingleSendNum())
 	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
 	time.Sleep(1 * time.Minute)
