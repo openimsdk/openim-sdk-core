@@ -19,7 +19,11 @@ import (
 
 func init() {
 	_ = runtime.GOMAXPROCS(7)
-
+	InitWithFlag()
+	if err := log.InitFromConfig("sdk.log", "sdk", 3,
+		true, false, "./", 2, 24); err != nil {
+		panic(err)
+	}
 }
 
 var (
@@ -67,6 +71,7 @@ func InitWithFlag() {
 	flag.IntVar(&fiftyGroupNum, "fog", 0, "quantity of 50 user groups")
 	flag.IntVar(&tenGroupNum, "teg", 0, "quantity of 10 user groups")
 
+	//note: in go, bool flag do not set -r true,must set (-r=true or -r) that means true
 	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
 	flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
 	flag.BoolVar(&pprofEnable, "pp", false, "enable pprof")
@@ -81,11 +86,7 @@ func PrintQPS() {
 }
 
 func main() {
-	InitWithFlag()
-	if err := log.InitFromConfig("sdk.log", "sdk", 3,
-		true, false, "./", 2, 24); err != nil {
-		panic(err)
-	}
+
 	flag.Parse()
 	ctx := context.Background()
 	fmt.Println("1111:::", onlineUsersOnly)
