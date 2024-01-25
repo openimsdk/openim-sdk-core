@@ -122,7 +122,6 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
-	//fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
 	go c.readPump(ctx)
 	go c.writePump(ctx)
 	go c.heartbeat(ctx)
@@ -188,7 +187,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			continue
 		}
 		c.conn.SetReadLimit(maxMessageSize)
-		_ = c.conn.SetReadDeadline(pongWait)
+		//_ = c.conn.SetReadDeadline(pongWait)
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
 			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
