@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -17,12 +18,8 @@ import (
 )
 
 func init() {
-	//_ = runtime.GOMAXPROCS(7)
-	InitWithFlag()
-	if err := log.InitFromConfig("sdk.log", "sdk", 3,
-		true, false, "./", 2, 24); err != nil {
-		panic(err)
-	}
+	_ = runtime.GOMAXPROCS(7)
+
 }
 
 var (
@@ -84,6 +81,11 @@ func PrintQPS() {
 }
 
 func main() {
+	InitWithFlag()
+	if err := log.InitFromConfig("sdk.log", "sdk", 3,
+		true, false, "./", 2, 24); err != nil {
+		panic(err)
+	}
 	flag.Parse()
 	ctx := context.Background()
 	fmt.Println("1111:::", onlineUsersOnly)
