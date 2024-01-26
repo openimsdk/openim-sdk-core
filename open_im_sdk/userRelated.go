@@ -429,7 +429,10 @@ func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
 		}
 	}
 	u.Exit()
-	_ = u.db.Close(u.ctx)
+	err := u.db.Close(u.ctx)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdLogout db recycle resources failed...", err)
+	}
 	// user object must be rest  when user logout
 	u.initResources()
 	log.ZDebug(ctx, "TriggerCmdLogout client success...", "isTokenValid", isTokenValid)
