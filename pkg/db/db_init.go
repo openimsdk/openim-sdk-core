@@ -34,16 +34,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-//"github.com/glebarez/sqlite"
-
-var UserDBMap map[string]*DataBase
-
-var UserDBLock sync.RWMutex
-
-func init() {
-	UserDBMap = make(map[string]*DataBase, 0)
-}
-
 type DataBase struct {
 	loginUserID   string
 	dbDir         string
@@ -77,37 +67,25 @@ func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) er
 }
 
 func (d *DataBase) Close(ctx context.Context) error {
-	UserDBLock.Lock()
 	dbConn, err := d.conn.WithContext(ctx).DB()
 	if err != nil {
-		// log.Error("", "get db conn failed ", err.Error())
+		return err
 	} else {
 		if dbConn != nil {
-			// log.Info("", "close db finished")
 			err := dbConn.Close()
 			if err != nil {
-				// log.Error("", "close db failed ", err.Error())
+				return err
 			}
 		}
 	}
-	// log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
-	delete(UserDBMap, d.loginUserID)
-	UserDBLock.Unlock()
 	return nil
 }
 
 func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel int) (*DataBase, error) {
-	UserDBLock.Lock()
-	defer UserDBLock.Unlock()
-	dataBase, ok := UserDBMap[loginUserID]
-	if !ok {
-		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
-		err := dataBase.initDB(ctx, logLevel)
-		if err != nil {
-			return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
-		}
-		UserDBMap[loginUserID] = dataBase
-		//log.Info(operationID, "open db", loginUserID)
+	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
+	err := dataBase.initDB(ctx, logLevel)
+	if err != nil {
+		return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
 	}
 	return dataBase, nil
 }
