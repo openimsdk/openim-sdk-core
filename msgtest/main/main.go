@@ -107,14 +107,8 @@ func main() {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
 	}
-	err = p.CreateTestGroups(f, totalOnlineUserNum, GroupSenderRate, hundredThousandGroupNum,
-		tenThousandGroupNum, thousandGroupNum, hundredGroupNum, fiftyGroupNum, tenGroupNum)
-	if err != nil {
-		log.ZError(ctx, "CreateTestGroups failed", err)
-	}
 
 	log.ZWarn(ctx, "Sample UserID", nil, "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
-	p.FormatGroupInfo(ctx)
 	time.Sleep(10 * time.Second)
 	//
 	if isRegisterUser {
@@ -123,6 +117,13 @@ func main() {
 			return
 		}
 	}
+	err = p.CreateTestGroups(f, totalOnlineUserNum, GroupSenderRate, hundredThousandGroupNum,
+		tenThousandGroupNum, thousandGroupNum, hundredGroupNum, fiftyGroupNum, tenGroupNum)
+	if err != nil {
+		log.ZError(ctx, "CreateTestGroups failed", err)
+		return
+	}
+	p.FormatGroupInfo(ctx)
 
 	//go PrintQPS()
 	// init users
