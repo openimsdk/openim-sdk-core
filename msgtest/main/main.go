@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	log2 "log"
 	"net/http"
 	_ "net/http/pprof"
@@ -27,17 +26,15 @@ func init() {
 }
 
 var (
-	totalOnlineUserNum    int     // 总在线用户数
-	randomSender          int     // 随机发送者数
-	randomReceiver        int     // 随机接收者数
-	singleSamplingRate    float64 // 单聊抽样率
-	GroupSenderRate       float64 // 群聊随机的发送者比例
-	NotFriendMsgSenderNum int     // 非好友消息发送者数
-	msgSenderNumEveryUser int     // 每个用户的消息数
-	start                 int
-	end                   int
-	count                 int
-	sendInterval          int
+	totalOnlineUserNum int     // 总在线用户数
+	randomSender       int     // 随机发送者数
+	randomReceiver     int     // 随机接收者数
+	singleSamplingRate float64 // 单聊抽样率
+	GroupSenderRate    float64 // 群聊随机的发送者比例
+	start              int
+	end                int
+	count              int
+	sendInterval       int
 
 	//recvMsgUserNum int // 消息接收者数, 抽样账号
 	isRegisterUser  bool // 是否注册用户
@@ -63,7 +60,6 @@ func InitWithFlag() {
 	flag.Float64Var(&GroupSenderRate, "gsr", 0.1, "group chat sender rate")
 	flag.IntVar(&count, "c", 200, "number of messages per user")
 	flag.IntVar(&sendInterval, "i", 1000, "send message interval per user(milliseconds)")
-	flag.IntVar(&NotFriendMsgSenderNum, "n", 100, "not friend msg sender num")
 	flag.IntVar(&hundredThousandGroupNum, "htg", 0, "quantity of 100k user groups")
 	flag.IntVar(&tenThousandGroupNum, "ttg", 0, "quantity of 10k user groups")
 	flag.IntVar(&thousandGroupNum, "otg", 0, "quantity of 1k user groups")
@@ -86,10 +82,8 @@ func PrintQPS() {
 }
 
 func main() {
-
 	flag.Parse()
 	ctx := context.Background()
-	fmt.Println("1111:::", onlineUsersOnly)
 	log.ZWarn(ctx, "flag args", nil, "totalOnlineUserNum", totalOnlineUserNum,
 		"randomSender", randomSender, "randomReceiver", randomReceiver,
 		"singleSamplingRate", singleSamplingRate, "start", start, "end", end, "count", count, "sendInterval", sendInterval,
@@ -113,8 +107,11 @@ func main() {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
 	}
-	p.CreateTestGroups(f, totalOnlineUserNum, GroupSenderRate, hundredThousandGroupNum,
+	err = p.CreateTestGroups(f, totalOnlineUserNum, GroupSenderRate, hundredThousandGroupNum,
 		tenThousandGroupNum, thousandGroupNum, hundredGroupNum, fiftyGroupNum, tenGroupNum)
+	if err != nil {
+		log.ZError(ctx, "CreateTestGroups failed", err)
+	}
 
 	log.ZWarn(ctx, "Sample UserID", nil, "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
 	p.FormatGroupInfo(ctx)

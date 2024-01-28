@@ -296,7 +296,7 @@ func (p *PressureTester) CreateTestGroups(fastenedUserIDs []string, total int, g
 func (p *PressureTester) SendGroupMessage(ctx context.Context, num int, duration time.Duration) {
 	var wg sync.WaitGroup
 	log.ZWarn(ctx, "send group message start", nil, "groupNum", len(p.groupOwnerUserID))
-	if len(p.groupOwnerUserID) == 0 {
+	if len(p.groupOwnerUserID) == 0 || num == 0 {
 		log.ZWarn(ctx, "send group message over,do not need to send group message", nil)
 	}
 	log.ZWarn(ctx, "send group message over", nil, "groupNum", len(p.groupOwnerUserID))
