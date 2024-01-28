@@ -58,7 +58,7 @@ func InitWithFlag() {
 	flag.IntVar(&end, "e", 0, "end user")
 	flag.Float64Var(&singleSamplingRate, "sr", 0.01, "single chat sampling rate")
 	flag.Float64Var(&GroupSenderRate, "gsr", 0.1, "group chat sender rate")
-	flag.IntVar(&count, "c", 200, "number of messages per user")
+	flag.IntVar(&count, "c", 0, "number of messages per user")
 	flag.IntVar(&sendInterval, "i", 1000, "send message interval per user(milliseconds)")
 	flag.IntVar(&hundredThousandGroupNum, "htg", 0, "quantity of 100k user groups")
 	flag.IntVar(&tenThousandGroupNum, "ttg", 0, "quantity of 10k user groups")
