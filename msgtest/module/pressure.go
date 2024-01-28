@@ -91,9 +91,7 @@ func (p *PressureTester) FormatGroupInfo(ctx context.Context) {
 		log.ZWarn(ctx, "no group created", nil)
 		return
 	}
-	log.ZWarn(ctx, "Groups by Member Number:", nil)
 	for memberNum, groupIDs := range groupsByMemberNum {
-		fmt.Printf("Member Count: %d\n", memberNum)
 		log.ZWarn(ctx, "Member Count", nil, "memberNum", memberNum)
 		log.ZWarn(ctx, "Group Num", nil, "groupNum", len(groupIDs))
 		fmt.Println("---------------------------")
