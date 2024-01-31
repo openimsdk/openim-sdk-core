@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	TESTIP        = "127.0.0.1"
+	TESTIP        = "172.19.26.147"
 	APIADDR       = fmt.Sprintf("http://%v:20002", TESTIP)
 	WSADDR        = fmt.Sprintf("ws://%v:20001", TESTIP)
 	SECRET        = "openIM123"
@@ -297,7 +297,7 @@ func (p *PressureTester) SendGroupMessage(ctx context.Context, num int, duration
 	if len(p.groupOwnerUserID) == 0 || num == 0 {
 		log.ZWarn(ctx, "send group message over,do not need to send group message", nil)
 	}
-	log.ZWarn(ctx, "send group message over", nil, "groupNum", len(p.groupOwnerUserID))
+	defer log.ZWarn(ctx, "send group message over", nil, "groupNum", len(p.groupOwnerUserID))
 	for groupID, _ := range p.groupOwnerUserID {
 		wg.Add(1)
 		go func(groupID string) {
@@ -480,7 +480,7 @@ func (p *PressureTester) importFriends(friendSenderUserIDs, recvMsgUserIDs []str
 }
 
 func (p *PressureTester) CheckMsg(ctx context.Context) {
-	log.ZWarn(ctx, "message send finished start to check message", nil)
+	log.ZWarn(ctx, "message send finished checking", nil)
 	var max, min, latencySum int64
 	samepleReceiverFailedMap := make(map[string]*errorValue)
 	failedMessageAllMap := make(map[string]*errorValue)
