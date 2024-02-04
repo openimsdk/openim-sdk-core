@@ -70,8 +70,11 @@ type errorValue struct {
 	OperationID string `json:"operation_id"`
 }
 type groupMessageValue struct {
-	num        int   `json:"num"`
+	Num        int64 `json:"num"`
 	LatencySum int64 `json:"latency_sum"`
+	Max        int64 `json:"max"`
+	Min        int64 `json:"min"`
+	Latency    int64 `json:"latency"`
 }
 
 func (e *errorValue) String() string {
@@ -86,7 +89,7 @@ type SendMsgUser struct {
 	recvPushMsgCallback     func(msg *sdkws.MsgData)
 	p                       *PressureTester
 	singleFailedMessageMap  map[string]*errorValue
-	groupFailedMessageMap   map[string]*errorValue
+	groupFailedMessageMap   map[string][]*errorValue
 	cancelFunc              context.CancelFunc
 	ctx                     context.Context
 	singleSendSampleMessage map[string]*msgValue
@@ -130,7 +133,7 @@ func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig
 		userID:                  userID,
 		p:                       p,
 		singleFailedMessageMap:  make(map[string]*errorValue),
-		groupFailedMessageMap:   make(map[string]*errorValue),
+		groupFailedMessageMap:   make(map[string][]*errorValue),
 		singleSendSampleMessage: make(map[string]*msgValue),
 		singleRecvSampleMessage: make(map[string]*msgValue),
 		groupSendSampleNum:      make(map[string]int),
@@ -217,8 +220,8 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 				SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
 			log.ZError(ctx, "send single msg failed", err, "userID", userID, "index", index, "content", content)
 		case constant.SuperGroupChatType:
-			b.groupFailedMessageMap[clientMsgID] = &errorValue{err: err,
-				SendID: b.userID, RecvID: groupID, MsgID: clientMsgID, GroupID: groupID, OperationID: mcontext.GetOperationID(ctx)}
+			b.groupFailedMessageMap[groupID] = append(b.groupFailedMessageMap[groupID], &errorValue{err: err,
+				SendID: b.userID, RecvID: groupID, MsgID: clientMsgID, GroupID: groupID, OperationID: mcontext.GetOperationID(ctx)})
 			log.ZError(ctx, "send group msg failed", err, "groupID", groupID, "index", index, "content", content)
 		}
 
@@ -226,7 +229,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 	}
 	switch sessionType {
 	case constant.SingleChatType:
-		if utils.IsContain(userID, SampleUserList) {
+		if utils.IsContain(userID, singleSampleUserList) {
 			b.singleSendSampleMessage[msg.ClientMsgID] = &msgValue{
 				SendID:      msg.SendID,
 				RecvID:      msg.RecvID,
@@ -271,7 +274,7 @@ func (b *SendMsgUser) recvPushMsg(ctx context.Context) {
 func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws.MsgData) {
 	switch msg.SessionType {
 	case constant.SingleChatType:
-		if utils.IsContain(msg.RecvID, SampleUserList) && b.userID != msg.SendID {
+		if utils.IsContain(msg.RecvID, singleSampleUserList) && b.userID != msg.SendID {
 			b.singleRecvSampleMessage[msg.ClientMsgID] = &msgValue{
 				SendID:      msg.SendID,
 				RecvID:      msg.RecvID,
@@ -286,8 +289,19 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 			if b.groupRecvSampleInfo[msg.GroupID] == nil {
 				b.groupRecvSampleInfo[msg.GroupID] = &groupMessageValue{}
 			}
-			b.groupRecvSampleInfo[msg.GroupID].num++
-			b.groupRecvSampleInfo[msg.GroupID].LatencySum += b.GetRelativeServerTime() - msg.SendTime
+			latency := b.GetRelativeServerTime() - msg.SendTime
+			b.groupRecvSampleInfo[msg.GroupID].Num++
+			b.groupRecvSampleInfo[msg.GroupID].LatencySum += latency
+			if b.groupRecvSampleInfo[msg.GroupID].Min == 0 && b.groupRecvSampleInfo[msg.GroupID].Max == 0 {
+				b.groupRecvSampleInfo[msg.GroupID].Min = latency
+				b.groupRecvSampleInfo[msg.GroupID].Max = latency
+			}
+			if latency < b.groupRecvSampleInfo[msg.GroupID].Min {
+				b.groupRecvSampleInfo[msg.GroupID].Min = latency
+			}
+			if latency > b.groupRecvSampleInfo[msg.GroupID].Max {
+				b.groupRecvSampleInfo[msg.GroupID].Max = latency
+			}
 		}
 
 	}

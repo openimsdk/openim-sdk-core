@@ -31,6 +31,7 @@ var (
 	randomReceiver     int     // 随机接收者数
 	singleSamplingRate float64 // 单聊抽样率
 	GroupSenderRate    float64 // 群聊随机的发送者比例
+	GroupOnlineRate    float64 //group chat online user rate
 	start              int
 	end                int
 	count              int
@@ -58,6 +59,7 @@ func InitWithFlag() {
 	flag.IntVar(&end, "e", 0, "end user")
 	flag.Float64Var(&singleSamplingRate, "sr", 0.01, "single chat sampling rate")
 	flag.Float64Var(&GroupSenderRate, "gsr", 0.1, "group chat sender rate")
+	flag.Float64Var(&GroupOnlineRate, "gor", 0.0, "group online rate")
 	flag.IntVar(&count, "c", 0, "number of messages per user")
 	flag.IntVar(&sendInterval, "i", 1000, "send message interval per user(milliseconds)")
 	flag.IntVar(&hundredThousandGroupNum, "htg", 0, "quantity of 100k user groups")
@@ -87,7 +89,7 @@ func main() {
 	log.ZWarn(ctx, "flag args", nil, "totalOnlineUserNum", totalOnlineUserNum,
 		"randomSender", randomSender, "randomReceiver", randomReceiver,
 		"singleSamplingRate", singleSamplingRate, "start", start, "end", end, "count", count, "sendInterval", sendInterval,
-		"onlineUsersOnly", onlineUsersOnly, "isRegisterUser", isRegisterUser, "groupSenderRate", GroupSenderRate,
+		"onlineUsersOnly", onlineUsersOnly, "isRegisterUser", isRegisterUser, "groupSenderRate", GroupSenderRate, "groupOnlineRate", GroupOnlineRate,
 		"hundredThousandGroupNum", hundredThousandGroupNum, "tenThousandGroupNum", tenThousandGroupNum, "thousandGroupNum", thousandGroupNum,
 		"hundredGroupNum", hundredGroupNum, "fiftyGroupNum", fiftyGroupNum, "tenGroupNum", tenGroupNum, "pprofEnable", pprofEnable)
 	if pprofEnable {
@@ -96,28 +98,28 @@ func main() {
 		}()
 	}
 	p := module.NewPressureTester()
-	var f, r []string
+	var f, r, o []string
 	var err error
 	if start != 0 {
-		f, r, err = p.SelectSampleFromStarEnd(start, end, singleSamplingRate)
+		f, r, o, err = p.SelectSampleFromStarEnd(start, end, singleSamplingRate)
 	} else {
-		f, r, err = p.SelectSample(totalOnlineUserNum, singleSamplingRate)
+		f, r, o, err = p.SelectSample(totalOnlineUserNum, singleSamplingRate)
 	}
 	if err != nil {
 		log.ZError(ctx, "Sample UserID failed", err)
 		return
 	}
-
+	p.SetOfflineUserIDs(o)
 	log.ZWarn(ctx, "Sample UserID", nil, "sampleUserLength", len(r), "sampleUserID", r, "length", len(f))
 	time.Sleep(10 * time.Second)
 	//
 	if isRegisterUser {
-		if err := p.RegisterUsers(f, nil, nil); err != nil {
+		if err := p.RegisterUsers(append(f, o...), nil, nil); err != nil {
 			log.ZError(ctx, "Sample UserID failed", err)
 			return
 		}
 	}
-	err = p.CreateTestGroups(f, totalOnlineUserNum, GroupSenderRate, hundredThousandGroupNum,
+	err = p.CreateTestGroups(f, totalOnlineUserNum, GroupSenderRate, GroupOnlineRate, hundredThousandGroupNum,
 		tenThousandGroupNum, thousandGroupNum, hundredGroupNum, fiftyGroupNum, tenGroupNum)
 	if err != nil {
 		log.ZError(ctx, "CreateTestGroups failed", err)

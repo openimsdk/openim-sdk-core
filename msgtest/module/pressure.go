@@ -37,8 +37,8 @@ var (
 	msgSenderNumEvreyUser = 100    // 每个用户的消息数
 	fastenedUserNum       = 600    // 固定用户数
 
-	recvMsgUserNum = 20 // 消息接收者数, 抽样账号
-	SampleUserList []string
+	recvMsgUserNum       = 20 // 消息接收者数, 抽样账号
+	singleSampleUserList []string
 )
 
 const (
@@ -57,26 +57,33 @@ const (
 	TenGroupNum             = 1000
 
 	FastenedUserPrefix  = "f"
+	OfflineUserPrefix   = "o"
 	RecvMsgPrefix       = "recv_msg_prefix"
 	singleMsgRecvPrefix = "single_msg_recv_prefix"
 )
 
 type PressureTester struct {
-	friendManager     *TestFriendManager
-	userManager       *TestUserManager
-	groupManager      *TestGroupManager
-	msgSender         map[string]*SendMsgUser
-	rw                sync.RWMutex
-	groupRandomSender map[string][]string
-	groupOwnerUserID  map[string]string
-	groupMemberNum    map[string]int
-	timeOffset        int64
-	singleSendNum     atomic.Int64
+	friendManager          *TestFriendManager
+	userManager            *TestUserManager
+	groupManager           *TestGroupManager
+	msgSender              map[string]*SendMsgUser
+	rw                     sync.RWMutex
+	groupRandomSender      map[string][]string
+	groupRandomOnlineUsers map[string][]string
+	groupOwnerUserID       map[string]string
+	groupMemberNum         map[string]int
+	timeOffset             int64
+	singleSendNum          atomic.Int64
 
 	groupSenderUserIDs, friendSenderUserIDs, notfriendSenderUserIDs []string
 	recvMsgUserIDs                                                  []string
+	offlineUserIDs                                                  []string
 
 	tenThousandGroupIDs, thousandGroupIDs, hundredGroupUserIDs, fiftyGroupUserIDs []string
+}
+
+func (p *PressureTester) SetOfflineUserIDs(offlineUserIDs []string) {
+	p.offlineUserIDs = offlineUserIDs
 }
 
 func (p *PressureTester) FormatGroupInfo(ctx context.Context) {
@@ -128,32 +135,34 @@ func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs 
 
 // selectSample
 func (p *PressureTester) SelectSample(total int, percentage float64) (fastenedUserIDs []string,
-	sampleReceiver []string, err error) {
+	sampleReceiver, offlineUserIDs []string, err error) {
 	if percentage < 0 || percentage > 1 {
-		return nil, nil, fmt.Errorf("percentage must be between 0 and 1")
+		return nil, nil, nil, fmt.Errorf("percentage must be between 0 and 1")
 	}
 
 	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(total, FastenedUserPrefix)
+	offlineUserIDs = p.userManager.GenSEUserIDsWithPrefix(total, 2*total, OfflineUserPrefix)
 	step := int(1.0 / percentage)
 	for i := 0; i < total; i += step {
 		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3_%d", FastenedUserPrefix, i))
 	}
-	SampleUserList = sampleReceiver
-	return fastenedUserIDs, sampleReceiver, nil
+	singleSampleUserList = sampleReceiver
+	return fastenedUserIDs, sampleReceiver, offlineUserIDs, nil
 
 }
 func (p *PressureTester) SelectSampleFromStarEnd(start, end int, percentage float64) (fastenedUserIDs []string,
-	sampleReceiver []string, err error) {
+	sampleReceiver, offlineUserIDs []string, err error) {
 	if percentage < 0 || percentage > 1 {
-		return nil, nil, fmt.Errorf("percentage must be between 0 and 1")
+		return nil, nil, nil, fmt.Errorf("percentage must be between 0 and 1")
 	}
 	fastenedUserIDs = p.userManager.GenSEUserIDsWithPrefix(start, end, FastenedUserPrefix)
+	offlineUserIDs = p.userManager.GenSEUserIDsWithPrefix(end, 2*end-start, OfflineUserPrefix)
 	step := int(1.0 / percentage)
 	for i := start; i < end; i += step {
 		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3_%d", FastenedUserPrefix, i))
 	}
-	SampleUserList = sampleReceiver
-	return fastenedUserIDs, sampleReceiver, nil
+	singleSampleUserList = sampleReceiver
+	return fastenedUserIDs, sampleReceiver, offlineUserIDs, nil
 
 }
 func (p *PressureTester) SelectStartAndEnd(start, end int) (fastenedUserIDs []string) {
@@ -201,15 +210,20 @@ func (p *PressureTester) InitUserConns(userIDs []string) {
 
 }
 
-func (p *PressureTester) getGroup(fastenedUserIDs []string, groupMemberNum int, groupSenderRate float64) (ownerUserID string,
+func (p *PressureTester) getGroup(fastenedUserIDs []string, groupMemberNum int, groupSenderRate, groupOnlineRate float64) (ownerUserID string,
 	userIDs []string, randomSender []string) {
-	userIDs = p.Shuffle(fastenedUserIDs, groupMemberNum)
+	//get the group online users
+	olineUserIDNum := int(float64(groupMemberNum) * groupOnlineRate)
+
+	userIDs = p.Shuffle(fastenedUserIDs, olineUserIDNum)
+	//get the group offline users
+	offlineUserID := p.Shuffle(p.offlineUserIDs, groupMemberNum-olineUserIDNum)
 	ownerUserID = p.Shuffle(userIDs, 1)[0]
 	randomSender = p.Shuffle(userIDs, int(float64(groupMemberNum)*groupSenderRate))
-	return ownerUserID, utils.RemoveOneInList(userIDs, ownerUserID), randomSender
+	return ownerUserID, append(utils.RemoveOneInList(userIDs, ownerUserID), offlineUserID...), randomSender
 }
 
-func (p *PressureTester) CreateTestGroups(fastenedUserIDs []string, total int, groupSenderRate float64, hundredThousandGroupNum, tenThousandGroupNum, thousandGroupNum,
+func (p *PressureTester) CreateTestGroups(fastenedUserIDs []string, total int, groupSenderRate, groupOnlineRate float64, hundredThousandGroupNum, tenThousandGroupNum, thousandGroupNum,
 	hundredGroupNum, fiftyGroupNum, tenGroupNum int) (err error) {
 	// create ten thousand group
 	if hundredThousandGroupNum != 0 {
@@ -248,9 +262,12 @@ func (p *PressureTester) CreateTestGroups(fastenedUserIDs []string, total int, g
 
 	}
 
-	f := func(GroupNum int, GroupUserNum int, groupSenderRate float64, groupIDAndNameString string) (err error) {
+	f := func(GroupNum int, GroupUserNum int, groupSenderRate, groupOnlineRate float64, groupIDAndNameString string) (err error) {
 		for i := 1; i <= GroupNum; i++ {
-			ownerUserID, memberUserIDs, randomSenderUserIDs := p.getGroup(fastenedUserIDs, GroupUserNum, groupSenderRate)
+			if groupOnlineRate < groupSenderRate {
+				return fmt.Errorf("group online rate must > group sender rate")
+			}
+			ownerUserID, memberUserIDs, randomSenderUserIDs := p.getGroup(fastenedUserIDs, GroupUserNum, groupSenderRate, groupOnlineRate)
 			groupID := p.groupManager.GenGroupID(fmt.Sprintf(groupIDAndNameString+"_%d", i))
 			err = p.groupManager.CreateGroup(groupID, fmt.Sprintf(groupIDAndNameString+"_%d", i), ownerUserID,
 				memberUserIDs)
@@ -263,27 +280,27 @@ func (p *PressureTester) CreateTestGroups(fastenedUserIDs []string, total int, g
 		}
 		return nil
 	}
-	err = f(hundredThousandGroupNum, HundredThousandGroupUserNum, groupSenderRate, "hundredThousandGroupUserNum")
+	err = f(hundredThousandGroupNum, HundredThousandGroupUserNum, groupSenderRate, groupOnlineRate, "hundredThousandGroupUserNum")
 	if err != nil {
 		return err
 	}
-	err = f(tenThousandGroupNum, TenThousandGroupUserNum, groupSenderRate, "tenThousandGroupUserNum")
+	err = f(tenThousandGroupNum, TenThousandGroupUserNum, groupSenderRate, groupOnlineRate, "tenThousandGroupUserNum")
 	if err != nil {
 		return err
 	}
-	err = f(thousandGroupNum, ThousandGroupUserNum, groupSenderRate, "thousandGroupUserNum")
+	err = f(thousandGroupNum, ThousandGroupUserNum, groupSenderRate, groupOnlineRate, "thousandGroupUserNum")
 	if err != nil {
 		return err
 	}
-	err = f(hundredGroupNum, HundredGroupUserNum, groupSenderRate, "hundredGroupUserNum")
+	err = f(hundredGroupNum, HundredGroupUserNum, groupSenderRate, groupOnlineRate, "hundredGroupUserNum")
 	if err != nil {
 		return err
 	}
-	err = f(fiftyGroupNum, FiftyGroupUserNum, groupSenderRate, "fiftyGroupUserNum")
+	err = f(fiftyGroupNum, FiftyGroupUserNum, groupSenderRate, groupOnlineRate, "fiftyGroupUserNum")
 	if err != nil {
 		return err
 	}
-	err = f(tenGroupNum, TenGroupUserNum, groupSenderRate, "tenGroupUserNum")
+	err = f(tenGroupNum, TenGroupUserNum, groupSenderRate, groupOnlineRate, "tenGroupUserNum")
 	if err != nil {
 		return err
 	}
@@ -486,13 +503,16 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 	failedMessageAllMap := make(map[string]*errorValue)
 	sendSampleMessageAllMap := make(map[string]*msgValue)
 	recvSampleMessageAllMap := make(map[string]*msgValue)
+	groupSendSampleNum := make(map[string]int)
+	groupSendFailedNum := make(map[string]int)
+	groupRecvSampleInfo := make(map[string]*groupMessageValue)
 	var sampleSendLength, sampleRecvLength, failedMessageLength int
 	for _, user := range p.msgSender {
 		if len(user.singleFailedMessageMap) != 0 {
 			failedMessageLength += len(user.singleFailedMessageMap)
 			for s, value := range user.singleFailedMessageMap {
 				failedMessageAllMap[s] = value
-				if utils.IsContain(value.RecvID, SampleUserList) {
+				if utils.IsContain(value.RecvID, singleSampleUserList) {
 					samepleReceiverFailedMap[s] = value
 				}
 			}
@@ -522,11 +542,35 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 				recvSampleMessageAllMap[s] = value
 			}
 		}
+
+		//group check
+		if len(user.groupSendSampleNum) != 0 {
+			for group, num := range user.groupSendSampleNum {
+				groupSendSampleNum[group] += num
+			}
+		}
+		if len(user.groupFailedMessageMap) != 0 {
+			for groupID, errInfo := range user.groupFailedMessageMap {
+				groupSendFailedNum[groupID] += len(errInfo)
+			}
+		}
 	}
-	log.ZWarn(context.Background(), "check result", nil, "failedMessageLength", failedMessageLength,
+	for groupID, ownerUserID := range p.groupOwnerUserID {
+		if s, ok := p.msgSender[ownerUserID]; ok {
+			if info, ok := s.groupRecvSampleInfo[groupID]; ok {
+				info.Latency = info.LatencySum / info.Num
+				groupRecvSampleInfo[groupID] = info
+			}
+		}
+	}
+	log.ZWarn(context.Background(), "single message check result", nil, "failedMessageLength", failedMessageLength,
 		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "Average of message latency",
 		utils.Int64ToString(latencySum/int64(sampleRecvLength))+" ms", "max", utils.Int64ToString(max)+" ms",
 		"min", utils.Int64ToString(min)+" ms")
+	if len(groupSendSampleNum) > 0 {
+		log.ZWarn(context.Background(), "group message check result", nil, "failedMessageLength", groupSendFailedNum,
+			"sampleSendLength", groupSendSampleNum, "sampleRecvLength", groupRecvSampleInfo)
+	}
 	if len(failedMessageAllMap) > 0 {
 		err := p.saveFailedMessageToFile(failedMessageAllMap, "failedMessageAllMap")
 		if err != nil {
