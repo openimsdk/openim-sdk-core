@@ -69,7 +69,7 @@ func InitWithFlag() {
 	flag.IntVar(&fiftyGroupNum, "fog", 0, "quantity of 50 user groups")
 	flag.IntVar(&tenGroupNum, "teg", 0, "quantity of 10 user groups")
 
-	//note: in go, bool flag do not set -r true,must set (-r=true or -r) that means true
+	//note: in go, bool flag do not set -r true(can not to use),must set (-r=true or -r) that means true
 	flag.BoolVar(&isRegisterUser, "r", false, "register user to IM system")
 	flag.BoolVar(&onlineUsersOnly, "u", false, "consider only online users")
 	flag.BoolVar(&pprofEnable, "pp", false, "enable pprof")
