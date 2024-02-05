@@ -567,6 +567,8 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 	var latency string
 	if sampleRecvLength != 0 {
 		latency = utils.Int64ToString(latencySum/int64(sampleRecvLength)) + " ms"
+	} else {
+		latency = "0 ms"
 	}
 	log.ZWarn(context.Background(), "single message check result", nil, "failedMessageLength", failedMessageLength,
 		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "Average of message latency", latency,
