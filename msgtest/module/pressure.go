@@ -98,9 +98,10 @@ func (p *PressureTester) FormatGroupInfo(ctx context.Context) {
 		log.ZWarn(ctx, "no group created", nil)
 		return
 	}
+	fmt.Println("---------------------------")
 	for memberNum, groupIDs := range groupsByMemberNum {
-		log.ZWarn(ctx, "Member Count", nil, "memberNum", memberNum)
-		log.ZWarn(ctx, "Group Num", nil, "groupNum", len(groupIDs))
+		log.ZWarn(ctx, "member count", nil, "memberNum", memberNum)
+		log.ZWarn(ctx, "group num", nil, "groupNum", len(groupIDs))
 		fmt.Println("---------------------------")
 	}
 }
@@ -563,9 +564,13 @@ func (p *PressureTester) CheckMsg(ctx context.Context) {
 			}
 		}
 	}
+	var latency string
+	if sampleRecvLength != 0 {
+		latency = utils.Int64ToString(latencySum/int64(sampleRecvLength)) + " ms"
+	}
 	log.ZWarn(context.Background(), "single message check result", nil, "failedMessageLength", failedMessageLength,
-		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "Average of message latency",
-		utils.Int64ToString(latencySum/int64(sampleRecvLength))+" ms", "max", utils.Int64ToString(max)+" ms",
+		"sampleSendLength", sampleSendLength, "sampleRecvLength", sampleRecvLength, "Average of message latency", latency,
+		"max", utils.Int64ToString(max)+" ms",
 		"min", utils.Int64ToString(min)+" ms")
 	if len(groupSendSampleNum) > 0 {
 		log.ZWarn(context.Background(), "group message check result", nil, "failedMessageLength", groupSendFailedNum,
