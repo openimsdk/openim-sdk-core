@@ -288,7 +288,7 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 	case constant.SuperGroupChatType:
 		if b.userID == b.p.groupOwnerUserID[msg.GroupID] {
 			b.groupMessage++
-			log.ZWarn(ctx, "recv message", nil, "userID", b.userID,
+			log.ZWarn(context.Background(), "recv message", nil, "userID", b.userID,
 				"groupOwnerID", b.p.groupOwnerUserID[msg.GroupID], "groupMessage", b.groupMessage)
 			if b.groupRecvSampleInfo[msg.GroupID] == nil {
 				b.groupRecvSampleInfo[msg.GroupID] = &groupMessageValue{}

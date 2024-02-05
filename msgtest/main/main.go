@@ -149,7 +149,7 @@ func main() {
 	log.ZWarn(ctx, "send all message over", nil, "singleNum", p.GetSingleSendNum())
 	//p.SendSingleMessagesTo(f, 20000, time.Millisecond*1)
 	//p.SendMessages("fastened_user_prefix_testv3new_0", "fastened_user_prefix_testv3new_1", 100000)
-	time.Sleep(1 * time.Minute)
+	time.Sleep(3 * time.Minute)
 	p.CheckMsg(ctx)
 
 	time.Sleep(time.Hour * 60)
