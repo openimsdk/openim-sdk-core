@@ -289,7 +289,8 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 		if b.userID == b.p.groupOwnerUserID[msg.GroupID] {
 			b.groupMessage++
 			log.ZWarn(context.Background(), "recv message", nil, "userID", b.userID,
-				"groupOwnerID", b.p.groupOwnerUserID[msg.GroupID], "groupMessage", b.groupMessage)
+				"groupOwnerID", b.p.groupOwnerUserID[msg.GroupID], "groupMessage", b.groupMessage, "clientMsgID",
+				msg.ClientMsgID)
 			if b.groupRecvSampleInfo[msg.GroupID] == nil {
 				b.groupRecvSampleInfo[msg.GroupID] = &groupMessageValue{}
 			}
