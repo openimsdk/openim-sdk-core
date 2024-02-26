@@ -133,10 +133,6 @@ func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return event_listener.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperConMsg) SendMessageByBuffer(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
-	return event_listener.NewCaller(open_im_sdk.SendMessageByBuffer, callback, &args).AsyncCallWithCallback()
-}
 
 //funcation (w *WrapperConMsg) SetMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
