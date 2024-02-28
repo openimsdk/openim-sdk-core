@@ -736,7 +736,7 @@ func DoTestSendMsg2(sendId, recvID string) {
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
-	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o), false)
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "success", "sendId", sendId, "recvID", recvID) // 修改此行
 }
 
@@ -750,7 +750,7 @@ func DoTestSendMsg2Group(sendId, groupID string, index int) {
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
-	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o), false)
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "success") // 修改此行
 }
 
@@ -763,7 +763,7 @@ func DoTestSendMsg2GroupWithMessage(sendId, groupID string, message string) {
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
-	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o), false)
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "success") // 修改此行
 }
 
@@ -777,7 +777,7 @@ func DoTestSendMsg2c2c(sendId, recvID string, index int) {
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
-	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o), false)
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "success") // 修改此行
 }
 
@@ -817,9 +817,9 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 	log.ZInfo(ctx, "SendMessage", "operationID", operationID, "sendId", sendId, "recvID", recvID, "groupID", groupID, "msgID",
 		testSendMsg.msgID, "index", index)
 	if recvID != "" {
-		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, "", &o)
+		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, "", &o, false)
 	} else {
-		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, "", groupID, &o)
+		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, "", groupID, &o, false)
 	}
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
@@ -857,7 +857,7 @@ func DoTestSendImageMsg(recvID string) {
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
-	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o), false)
 }
 
 //funcation DotestUploadFile() {
@@ -874,7 +874,7 @@ func DoTestSendOtherMsg(sendId, recvID string) {
 	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
-	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o), false)
 }
 
 func DoTestSendVideo(sendId, recvID string) {
@@ -886,7 +886,7 @@ func DoTestSendVideo(sendId, recvID string) {
 	o.Title = "121313"
 	o.Desc = "45464"
 	log.ZInfo(ctx, "SendMessage", "operationID", operationID, "message", s)
-	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o), false)
 }
 
 type TestClearMsg struct {
