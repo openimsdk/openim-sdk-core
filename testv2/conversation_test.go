@@ -20,8 +20,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"testing"
-
-	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 func Test_GetAllConversationList(t *testing.T) {
@@ -148,7 +146,7 @@ func Test_GetTotalUnreadMsgCount(t *testing.T) {
 func Test_SendMessage(t *testing.T) {
 	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
 	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "3411008330", "", nil)
+	_, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "3411008330", "", nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,16 +155,7 @@ func Test_SendMessage(t *testing.T) {
 func Test_SendMessageNotOss(t *testing.T) {
 	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
 	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageNotOss(ctx, msg, "3411008330", "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SendMessageByBuffer(t *testing.T) {
-	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
-	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageByBuffer(ctx, msg, "3411008330", "", &sdkws.OfflinePushInfo{}, nil, nil)
+	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageNotOss(ctx, msg, "3411008330", "", nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -296,7 +285,7 @@ func Test_SendImgMsg(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "1919501984", "", nil)
+	res, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "1919501984", "", nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
