@@ -687,6 +687,10 @@ func (userCallback) OnUserCommandDelete(callbackData string) {
 type testInitLister struct {
 }
 
+func (t *testInitLister) OnUserTokenInvalid(errMsg string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "errMsg", errMsg)
+}
+
 func (t *testInitLister) OnUserTokenExpired() {
 	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
