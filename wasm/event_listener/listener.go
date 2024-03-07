@@ -54,8 +54,8 @@ func (i *ConnCallback) OnUserTokenExpired() {
 	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
 
-func (i *ConnCallback) OnSelfInfoUpdated(userInfo string) {
-	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+func (i *ConnCallback) OnUserTokenInvalid(errMsg string) {
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(errMsg).SendMessage()
 }
 func (i *ConnCallback) OnUserCommandAdd(userInfo string) {
 	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
