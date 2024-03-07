@@ -290,7 +290,23 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-c.heartbeatCh:
 			c.sendPingToServer(ctx)
 		case <-ticker.C:
-			c.sendPingToServer(ctx)
+			c.sendPingMessage(ctx)
+		}
+	}
+
+}
+
+func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
+	log.ZInfo(ctx, "ping message tart", "goroutine ID:", getGoroutineID())
+	if c.IsConnected() {
+		err := c.conn.SetWriteDeadline(writeWait)
+		if err != nil {
+			return
+		}
+		if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
+			return
 		}
 	}
 
