@@ -84,7 +84,6 @@ func registerFunc() {
 	js.Global().Set("markMessagesAsReadByMsgID", js.FuncOf(wrapperConMsg.MarkMessagesAsReadByMsgID))
 	js.Global().Set("sendMessage", js.FuncOf(wrapperConMsg.SendMessage))
 	js.Global().Set("sendMessageNotOss", js.FuncOf(wrapperConMsg.SendMessageNotOss))
-	js.Global().Set("sendMessageByBuffer", js.FuncOf(wrapperConMsg.SendMessageByBuffer))
 	//js.Global().Set("setMessageReactionExtensions", js.FuncOf(wrapperConMsg.SetMessageReactionExtensions))
 	//js.Global().Set("addMessageReactionExtensions", js.FuncOf(wrapperConMsg.AddMessageReactionExtensions))
 	//js.Global().Set("deleteMessageReactionExtensions", js.FuncOf(wrapperConMsg.DeleteMessageReactionExtensions))
