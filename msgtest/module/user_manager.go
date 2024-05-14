@@ -5,8 +5,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	userPB "github.com/OpenIMSDK/protocol/user"
+	"github.com/openimsdk/protocol/sdkws"
+	userPB "github.com/openimsdk/protocol/user"
 )
 
 type TestUserManager struct {

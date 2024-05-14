@@ -34,7 +34,7 @@ The [Makefile](./Makefile) is for every developer, even if you don't know how to
 
 #### Code and doc contribution
 
-Every action to make project OpenIM better is encouraged. On GitHub, every improvement for OpenIM could be via a [PR](https://github.com/OpenIMSDK/openim-sdk-core/pulls) (short for pull request).
+Every action to make project OpenIM better is encouraged. On GitHub, every improvement for OpenIM could be via a [PR](https://github.com/openimsdk/openim-sdk-core/pulls) (short for pull request).
 
 + If you find a typo, try to fix it!
 + If you find a bug, try to fix it!
@@ -49,22 +49,22 @@ Every action to make project OpenIM better is encouraged. On GitHub, every impro
 
 #### Where should I start?
 
-Getting good at GitHub is the first step, we have a [list of labes](https://github.com/OpenIMSDK/openim-sdk-core/labels) and reading some of the [common tags](https://github.com/OpenIMSDK/openim-sdk-core/labels?sort=count-desc) helps us get involved in the community quickly.GitHub allows you to filter out types of issues and pull requests,  which helps you discover items in need of triaging. This table includes some predetermined searches for convenience:
+Getting good at GitHub is the first step, we have a [list of labes](https://github.com/openimsdk/openim-sdk-core/labels) and reading some of the [common tags](https://github.com/openimsdk/openim-sdk-core/labels?sort=count-desc) helps us get involved in the community quickly.GitHub allows you to filter out types of issues and pull requests,  which helps you discover items in need of triaging. This table includes some predetermined searches for convenience:
 
 | Search                                                       | What it sorts                                           |
 | ------------------------------------------------------------ | ------------------------------------------------------- |
-| [created-asc](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Acreated-asc) | Untriaged issues by age                                 |
-| [needs-triage](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+no%3Alabel) | Issues that need to be assigned to a Labels             |
-| [`is:open is:issue`](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aopen+is%3Aissue+sort%3Aupdated-desc) | Newest incoming issues                                  |
-| [comments-desc](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Acomments-desc) | Busiest untriaged issues, sorted by # of comments       |
-| [comments-asc](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Acomments-asc) | Issues that need more attention, based on # of comments |
+| [created-asc](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Acreated-asc) | Untriaged issues by age                                 |
+| [needs-triage](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+no%3Alabel) | Issues that need to be assigned to a Labels             |
+| [`is:open is:issue`](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aopen+is%3Aissue+sort%3Aupdated-desc) | Newest incoming issues                                  |
+| [comments-desc](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Acomments-desc) | Busiest untriaged issues, sorted by # of comments       |
+| [comments-asc](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Acomments-asc) | Issues that need more attention, based on # of comments |
 
 We suggest preparing your triage by filtering out the oldest, unlabelled issues and pull requests first.
 
-1. If you are new to the project, don't know how to contribute OpenIM, please check out the [good first issue](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aopen+label%3A"good+first+issue"+sort%3Aupdated-desc) label and  [help wanted](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aopen+is%3Aissue+label%3A"help+wanted"+sort%3Aupdated-desc).
-2. You should be good at filtering the OpenIM issue tags and finding the ones you like, such as [RFC](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+RFC+label%3ARFC) for big initiatives, features for [feature](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+label%3Akind%2Ffeature+sort%3Aupdated-desc+) proposals, and [bug](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+label%3Akind%2Fbug+sort%3Aupdated-desc+) fixes.
-3. If you are looking for something to work on, check out our [open issues](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc).
-4. If you have an idea for a new feature, please [open an issue](https://github.com/OpenIMSDK/openim-sdk-core/issues/new/choose), and we can discuss it.
+1. If you are new to the project, don't know how to contribute OpenIM, please check out the [good first issue](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aopen+label%3A"good+first+issue"+sort%3Aupdated-desc) label and  [help wanted](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aopen+is%3Aissue+label%3A"help+wanted"+sort%3Aupdated-desc).
+2. You should be good at filtering the OpenIM issue tags and finding the ones you like, such as [RFC](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+RFC+label%3ARFC) for big initiatives, features for [feature](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+label%3Akind%2Ffeature+sort%3Aupdated-desc+) proposals, and [bug](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+label%3Akind%2Fbug+sort%3Aupdated-desc+) fixes.
+3. If you are looking for something to work on, check out our [open issues](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc).
+4. If you have an idea for a new feature, please [open an issue](https://github.com/openimsdk/openim-sdk-core/issues/new/choose), and we can discuss it.
 
 > **Note**
 > Reply to `/assign` or `/assign @yourself` with a question you wish to resolve, and we'll assign the question to you and your name will be listed under `Assignees`
@@ -73,7 +73,7 @@ We suggest preparing your triage by filtering out the oldest, unlabelled issues 
 
 #### Design documents
 
-For any substantial design, there should be a well-crafted design document. This document is not just a simple record, but also a detailed description and manifestation, which can help team members better understand the design thinking and grasp the design direction. In the process of writing the design document, we can choose to use tools such as `Google Docs` or `Notion`, and even mark **RFC** in [issues](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+RFC+label%3ARFC) or [discussions](https://github.com/OpenIMSDK/openim-sdk-core/discussions) for better collaboration. Of course, after completing the design document, we should also add it to our [Shared Drive](https://drive.google.com/drive/) and notify the appropriate working group to let everyone know of its existence. Only by doing so can we maximize the effectiveness of the design document and provide strong support for the smooth progress of the project.
+For any substantial design, there should be a well-crafted design document. This document is not just a simple record, but also a detailed description and manifestation, which can help team members better understand the design thinking and grasp the design direction. In the process of writing the design document, we can choose to use tools such as `Google Docs` or `Notion`, and even mark **RFC** in [issues](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+RFC+label%3ARFC) or [discussions](https://github.com/openimsdk/openim-sdk-core/discussions) for better collaboration. Of course, after completing the design document, we should also add it to our [Shared Drive](https://drive.google.com/drive/) and notify the appropriate working group to let everyone know of its existence. Only by doing so can we maximize the effectiveness of the design document and provide strong support for the smooth progress of the project.
 
 Anybody can access the shared Drive for reading. To get access to comment. Once you've done that, head to the [shared Drive](https://drive.google.com/) and behold all the docs.
 
@@ -104,10 +104,10 @@ To propose PR for the OpenIM item, we assume you have registered a GitHub ID. Th
 
 2. **CLONE** your own repository to master locally. Use `git clone https://github.com/<your-username>/OpenIM.git` to clone repository to your local machine. Then you can create new branches to finish the change you wish to make.
 
-3. **Set Remote** upstream to be `https://github.com/OpenIMSDK/openim-sdk-core.git` using the following two commands:
+3. **Set Remote** upstream to be `https://github.com/openimsdk/openim-sdk-core.git` using the following two commands:
 
    ```bash
-   ❯ git remote add upstream https://github.com/OpenIMSDK/openim-sdk-core.git
+   ❯ git remote add upstream https://github.com/openimsdk/openim-sdk-core.git
    ❯ git remote set-url --push upstream no-pushing
    ```
 
@@ -117,7 +117,7 @@ To propose PR for the OpenIM item, we assume you have registered a GitHub ID. Th
    ❯ git remote -v
    origin     https://github.com/<your-username>/OpenIM.git (fetch)
    origin     https://github.com/<your-username>/OpenIM.git (push)
-   upstream   https://github.com/OpenIMSDK/openim-sdk-core.git (fetch)
+   upstream   https://github.com/openimsdk/openim-sdk-core.git (fetch)
    upstream   no-pushing (push)
    ```
 
@@ -201,11 +201,11 @@ Instead we encourage you to send us a private email to 📮[winxu81@gmail.com](h
 
 #### Reporting general issues
 
-To be honest, we regard every user of OpenIMas a very kind contributor. After experiencing OpenIM, you may have some feedback for the project. Then feel free to open an issue via [NEW ISSUE](https://github.com/OpenIMSDK/openim-sdk-core/issues/new/choose).
+To be honest, we regard every user of OpenIMas a very kind contributor. After experiencing OpenIM, you may have some feedback for the project. Then feel free to open an issue via [NEW ISSUE](https://github.com/openimsdk/openim-sdk-core/issues/new/choose).
 
 Since we collaborate project OpenIM in a distributed way, we appreciate **WELL-WRITTEN**, **DETAILED**, **EXPLICIT** issue reports. To make the communication more efficient, we wish everyone could search if your issue is an existing one in the searching list. If you find it existing, please add your details in comments under the existing issue instead of opening a brand new one.
 
-To make the issue details as standard as possible, we setup an [ISSUE TEMPLATE](https://github.com/OpenIMSDK/.github/tree/main/.github/ISSUE_TEMPLATE) for issue reporters. You can find three kinds of issue templates there: question, bug report and feature request. Please **BE SURE** to follow the instructions to fill fields in template.
+To make the issue details as standard as possible, we setup an [ISSUE TEMPLATE](https://github.com/openimsdk/.github/tree/main/.github/ISSUE_TEMPLATE) for issue reporters. You can find three kinds of issue templates there: question, bug report and feature request. Please **BE SURE** to follow the instructions to fill fields in template.
 
 **There are a lot of cases when you could open an issue:**
 
@@ -270,9 +270,9 @@ An example for this could be:
 
 #### PR Description
 
-PR is the only way to make change to OpenIM project files. To help reviewers better get your purpose, **PR** description could not be too detailed. We encourage contributors to follow the [PR template](https://github.com/OpenIMSDK/.github/tree/main/.github/PULL_REQUEST_TEMPLATE.md) to finish the pull request.
+PR is the only way to make change to OpenIM project files. To help reviewers better get your purpose, **PR** description could not be too detailed. We encourage contributors to follow the [PR template](https://github.com/openimsdk/.github/tree/main/.github/PULL_REQUEST_TEMPLATE.md) to finish the pull request.
 
-You can find some very formal PR in [RFC](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+RFC+label%3ARFC) issues and learn about them.
+You can find some very formal PR in [RFC](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+RFC+label%3ARFC) issues and learn about them.
 
 **📖 Opening PRs:**
 
@@ -330,11 +330,11 @@ git() {
 
 #### CI actions
 
-We host CI on [GitHub Actions](https://github.com/OpenIMSDK/openim-sdk-core/actions), we will make sure PR pass tests before we can merge it.
+We host CI on [GitHub Actions](https://github.com/openimsdk/openim-sdk-core/actions), we will make sure PR pass tests before we can merge it.
 
 These two kind of tests: `lint` and `unit test`
 
-`lint` tests if your code matches our code conventions, please consult [golangci-lint](https://golangci-lint.run/) and [lint config](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/.golangci.yml)
+`lint` tests if your code matches our code conventions, please consult [golangci-lint](https://golangci-lint.run/) and [lint config](https://github.com/openimsdk/openim-sdk-core/blob/main/.golangci.yml)
 
 > **Note**
 > 
@@ -354,9 +354,9 @@ Try your best to keep every function has been tested, it keeps the function beha
 
 **The documentation for OpenIM includes:**
 
-+ [README.md](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/README.md): This file includes the basic information and instructions for getting started with OpenIM.
-+ [README_zh-CN.md](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/README_zh-CN.md): This file includes the basic information and instructions for getting started with OpenIM in Chinese.
-+ [CONTRIBUTING.md](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/CONTRIBUTING.md): This file contains guidelines for contributing to OpenIM's codebase, such as how to submit issues, pull requests, and code reviews.
++ [README.md](https://github.com/openimsdk/openim-sdk-core/blob/main/README.md): This file includes the basic information and instructions for getting started with OpenIM.
++ [README_zh-CN.md](https://github.com/openimsdk/openim-sdk-core/blob/main/README_zh-CN.md): This file includes the basic information and instructions for getting started with OpenIM in Chinese.
++ [CONTRIBUTING.md](https://github.com/openimsdk/openim-sdk-core/blob/main/CONTRIBUTING.md): This file contains guidelines for contributing to OpenIM's codebase, such as how to submit issues, pull requests, and code reviews.
 + [Official Documentation](https://doc.rentsoft.cn): This is the official documentation for OpenIM, which includes comprehensive information on all of its features, configuration options, and troubleshooting tips.
 
 **Please obey the following rules to better format the docs, which would greatly improve the reading experience.**
@@ -380,9 +380,9 @@ We integrated in the CICD actions [markdownlint](https://github.com/markdownlint
 
 We choose GitHub as the primary place for OpenIM to collaborate. So the latest updates of OpenIM are always here. Although contributions via **PR** is an explicit way to help, we still call for any other ways.
 
-+ reply to other's [issues](https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) if you could;
++ reply to other's [issues](https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) if you could;
 + help solve other user's problems;
-+ help review other's [PR](https://github.com/OpenIMSDK/openim-sdk-core/pulls?q=is%3Apr+is%3Aopen+sort%3Aupdated-desc) design; 
++ help review other's [PR](https://github.com/openimsdk/openim-sdk-core/pulls?q=is%3Apr+is%3Aopen+sort%3Aupdated-desc) design; 
 + discuss about OpenIM to make things clearer;
 + advocate [OpenIM](https://google.com/search?q=OpenIM) technology beyond GitHub;
 + write blogs on OpenIM and so on.
@@ -430,6 +430,6 @@ In addition to Slack, we also offer the following ways to get in touch:
 + <a href="https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg" target="_blank"><img src="https://img.shields.io/badge/Slack-OpenIM%2B-blueviolet?logo=slack&amp;logoColor=white"></a> We also have Slack channels for you to communicate and discuss. To join, visit https://slack.com/ and join our [👀 openim-sdk-core slack](https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg) team channel.
 + <a href="https://mail.google.com/mail/u/0/?fs=1&tf=cm&to=winxu81@gmail.com" target="_blank"><img src="https://img.shields.io/badge/gmail-%40OOpenIMSDKCore?style=social&logo=gmail"></a> Get in touch with us on [Gmail](https://mail.google.com/mail/u/0/?fs=1&tf=cm&to=winxu81@gmail.com). If you have any questions or issues that need resolving, or any suggestions and feedback for our open source projects, please feel free to contact us via email.
 + <a href="https://doc.rentsoft.cn/" target="_blank"><img src="https://img.shields.io/badge/%E5%8D%9A%E5%AE%A2-%40OpenIMSDKCore-blue?style=social&logo=Octopus%20Deploy"></a> Read our [blog](https://doc.rentsoft.cn/). Our blog is a great place to stay up-to-date with openim-sdk-core projects and trends. On the blog, we share our latest developments, tech trends, and other interesting information.
-+ <a href="https://github.com/OpenIMSDK/OpenIM-Docs/blob/main/docs/images/WechatIMG20.jpeg" target="_blank"><img src="https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1-OpenIMSDKCore-brightgreen?logo=wechat&style=flat-square"></a> Add [Wechat](https://github.com/OpenIMSDK/OpenIM-Docs/blob/main/docs/images/WechatIMG20.jpeg) and indicate that you are a user or developer of openim-sdk-core. We will process your request as soon as possible.
++ <a href="https://github.com/openimsdk/OpenIM-Docs/blob/main/docs/images/WechatIMG20.jpeg" target="_blank"><img src="https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1-OpenIMSDKCore-brightgreen?logo=wechat&style=flat-square"></a> Add [Wechat](https://github.com/openimsdk/OpenIM-Docs/blob/main/docs/images/WechatIMG20.jpeg) and indicate that you are a user or developer of openim-sdk-core. We will process your request as soon as possible.
 
 Whether you're looking to join our community or have any questions or suggestions, we welcome you to get in touch with us.

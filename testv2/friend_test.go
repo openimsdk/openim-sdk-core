@@ -15,13 +15,13 @@
 package testv2
 
 import (
-	"github.com/OpenIMSDK/protocol/wrapperspb"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/protocol/wrapperspb"
 	"testing"
 	"time"
 
-	friend2 "github.com/OpenIMSDK/protocol/friend"
+	friend2 "github.com/openimsdk/protocol/friend"
 )
 
 func Test_GetSpecifiedFriendsInfo(t *testing.T) {

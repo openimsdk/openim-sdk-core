@@ -20,22 +20,22 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
-	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 	"sync"
 )
 
 func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
-	userIDs := utils2.Slice(members, func(member *model_struct.LocalGroupMember) string {
+	userIDs := datautil.Slice(members, func(member *model_struct.LocalGroupMember) string {
 		return member.UserID
 	})
-	utils2.Sort(userIDs, true)
+	datautil.Sort(userIDs, true)
 	memberMap := make(map[string]*sdkws.GroupMemberFullInfo)
 	for _, member := range members {
 		memberMap[member.UserID] = &sdkws.GroupMemberFullInfo{
