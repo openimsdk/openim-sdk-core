@@ -19,7 +19,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-
+	pconstant "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/friend"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -115,6 +115,32 @@ func (f *Friend) SyncFriends(ctx context.Context, friendIDs []string) error {
 	}
 	log.ZDebug(ctx, "sync friend", "data from server", resp.FriendsInfo, "data from local", localData)
 	return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo), localData, nil)
+}
+
+func (f *Friend) SyncFriendPart(ctx context.Context) error {
+	hashResp, err := util.CallApi[friend.GetFriendHashResp](ctx, constant.GetFriendHash, &friend.GetFriendHashReq{UserID: f.loginUserID})
+	if err != nil {
+		return err
+	}
+	friends, err := f.db.GetAllFriendList(ctx)
+	if err != nil {
+		return err
+	}
+	hashCode := f.CalculateHash(friends)
+	log.ZDebug(ctx, "SyncFriendPart", "serverHash", hashResp.Hash, "serverTotal", hashResp.Total, "localHash", hashCode, "localTotal", len(friends))
+	if hashCode == hashResp.Hash {
+		return nil
+	}
+	req := &friend.GetPaginationFriendsReq{
+		UserID:     f.loginUserID,
+		Pagination: &sdkws.RequestPagination{PageNumber: pconstant.FirstPageNumber, ShowNumber: pconstant.MaxSyncPullNumber},
+	}
+	resp, err := util.CallApi[friend.GetPaginationFriendsResp](ctx, constant.GetFriendListRouter, req)
+	if err != nil {
+		return err
+	}
+	serverFriends := util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
+	return f.friendSyncer.Sync(ctx, serverFriends, friends, nil)
 }
 
 func (f *Friend) SyncAllBlackList(ctx context.Context) error {
