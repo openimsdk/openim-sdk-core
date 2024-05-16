@@ -70,6 +70,7 @@ func (m *MessageController) BatchUpdateMessageList(ctx context.Context, updateMs
 				latestMsg.ServerMsgID = v.ServerMsgID
 				latestMsg.Seq = v.Seq
 				latestMsg.SendTime = v.SendTime
+				latestMsg.Status = v.Status
 				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID,
 					Action: constant.AddConOrUpLatMsg, Args: *conversation}, m.ch)
