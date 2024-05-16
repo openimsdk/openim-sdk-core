@@ -6,8 +6,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 type TestGroupManager struct {

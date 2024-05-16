@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"github.com/openimsdk/tools/utils/datautil"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
@@ -23,13 +24,12 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	pconstant "github.com/openimsdk/protocol/constant"
+	"github.com/openimsdk/tools/log"
 
-	"github.com/OpenIMSDK/tools/log"
-
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/protocol/wrapperspb"
-	"github.com/OpenIMSDK/tools/utils"
+	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/protocol/wrapperspb"
 )
 
 // // deprecated use CreateGroup
@@ -185,7 +185,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 	if err != nil {
 		return nil, err
 	}
-	groupIDMap := utils.SliceSet(groupIDs)
+	groupIDMap := datautil.SliceSet(groupIDs)
 	res := make([]*model_struct.LocalGroup, 0, len(groupIDs))
 	for i, v := range groupList {
 		if _, ok := groupIDMap[v.GroupID]; ok {
@@ -194,7 +194,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 		}
 	}
 	if len(groupIDMap) > 0 {
-		groups, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: utils.Keys(groupIDMap)})
+		groups, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: datautil.Keys(groupIDMap)})
 		if err != nil {
 			log.ZError(ctx, "Call GetGroupsInfoRouter", err)
 		}
@@ -210,7 +210,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
-		return nil, sdkerrs.ErrArgs.Wrap("keyword is null or search field all false")
+		return nil, sdkerrs.ErrArgs.WrapMsg("keyword is null or search field all false")
 	}
 	groups, err := g.db.GetAllGroupInfoByGroupIDOrGroupName(ctx, param.KeywordList[0], param.IsSearchGroupID, param.IsSearchGroupName) // todo	param.KeywordList[0]
 	if err != nil {
@@ -345,4 +345,40 @@ func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (g *Group) SearchGroupMembersV2(ctx context.Context, req *group.SearchGroupMemberReq) ([]*model_struct.LocalGroupMember, error) {
+	if err := req.Check(); err != nil {
+		return nil, err
+	}
+	info, err := g.db.GetGroupInfoByGroupID(ctx, req.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	if info.MemberCount <= pconstant.MaxSyncPullNumber {
+		return g.db.SearchGroupMembersDB(ctx, req.Keyword, req.GroupID, true, false,
+			int((req.Pagination.PageNumber-1)*req.Pagination.ShowNumber), int(req.Pagination.ShowNumber))
+	}
+	resp, err := util.CallApi[group.SearchGroupMemberResp](ctx, constant.SearchGroupMember, req)
+	if err != nil {
+		return nil, err
+	}
+	return datautil.Slice(resp.Members, g.pbGroupMemberToLocal), nil
+}
+
+func (g *Group) pbGroupMemberToLocal(pb *sdkws.GroupMemberFullInfo) *model_struct.LocalGroupMember {
+	return &model_struct.LocalGroupMember{
+		GroupID:        pb.GroupID,
+		UserID:         pb.UserID,
+		Nickname:       pb.Nickname,
+		FaceURL:        pb.FaceURL,
+		RoleLevel:      pb.RoleLevel,
+		JoinTime:       pb.JoinTime,
+		JoinSource:     pb.JoinSource,
+		InviterUserID:  pb.InviterUserID,
+		MuteEndTime:    pb.MuteEndTime,
+		OperatorUserID: pb.OperatorUserID,
+		Ex:             pb.Ex,
+		//AttachedInfo:   pb.AttachedInfo,
+	}
 }

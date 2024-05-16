@@ -13,7 +13,7 @@
 
 All notable changes to this project will be documented in this file.
 
-+ [https://github.com/OpenIMSDK/Open-IM-Server/releases](https://github.com/OpenIMSDK/Open-IM-Server/releases)
++ [https://github.com/openimsdk/Open-IM-Server/releases](https://github.com/openimsdk/Open-IM-Server/releases)
 
 ## command
 

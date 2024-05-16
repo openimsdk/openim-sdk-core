@@ -12,9 +12,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/OpenIMSDK/tools/mcontext"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 type SendMsgUser struct {

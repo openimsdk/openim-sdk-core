@@ -16,14 +16,14 @@ package testv2
 
 import (
 	"fmt"
-	"github.com/OpenIMSDK/protocol/user"
-	"github.com/OpenIMSDK/protocol/wrapperspb"
+	"github.com/openimsdk/protocol/user"
+	"github.com/openimsdk/protocol/wrapperspb"
 	"testing"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 func Test_GetSelfUserInfo(t *testing.T) {

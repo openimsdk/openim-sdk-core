@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 )
 
 const (

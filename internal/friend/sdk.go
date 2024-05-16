@@ -16,17 +16,17 @@ package friend
 
 import (
 	"context"
-	"github.com/OpenIMSDK/protocol/wrapperspb"
-	"github.com/OpenIMSDK/tools/errs"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
+	"github.com/openimsdk/protocol/wrapperspb"
+	"github.com/openimsdk/tools/errs"
 
-	"github.com/OpenIMSDK/protocol/friend"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/protocol/friend"
+	"github.com/openimsdk/tools/log"
 )
 
 func (f *Friend) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
@@ -190,7 +190,7 @@ func (f *Friend) GetFriendListPage(ctx context.Context, offset, count int32) ([]
 
 func (f *Friend) SearchFriends(ctx context.Context, param *sdk.SearchFriendsParam) ([]*sdk.SearchFriendItem, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchNickname && !param.IsSearchUserID && !param.IsSearchRemark) {
-		return nil, sdkerrs.ErrArgs.Wrap("keyword is null or search field all false")
+		return nil, sdkerrs.ErrArgs.WrapMsg("keyword is null or search field all false")
 	}
 	localFriendList, err := f.db.SearchFriendList(ctx, param.KeywordList[0], param.IsSearchUserID, param.IsSearchNickname, param.IsSearchRemark)
 	if err != nil {
@@ -259,7 +259,7 @@ func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex string
 	// Check if the specified ID is a friend
 	friendResults, err := f.CheckFriend(ctx, friendIDs)
 	if err != nil {
-		return errs.Wrap(err, "Error checking friend status")
+		return errs.WrapMsg(err, "Error checking friend status")
 	}
 
 	// Determine if friendID is indeed a friend
@@ -277,7 +277,7 @@ func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex string
 
 		// If this friendID is not a friend, return an error
 		if !isFriend {
-			return errs.ErrRecordNotFound.Wrap("Not friend")
+			return errs.ErrRecordNotFound.WrapMsg("Not friend")
 		}
 	}
 
@@ -286,7 +286,7 @@ func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex string
 
 	updateErr := f.db.UpdateColumnsFriend(ctx, friendIDs, map[string]interface{}{"Ex": ex})
 	if updateErr != nil {
-		return errs.Wrap(updateErr, "Error updating friend information")
+		return errs.WrapMsg(updateErr, "Error updating friend information")
 	}
 	return nil
 }

@@ -15,10 +15,10 @@
 package user
 
 import (
-	"github.com/OpenIMSDK/protocol/user"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/protocol/user"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 func ServerUserToLocalUser(user *sdkws.UserInfo) *model_struct.LocalUser {

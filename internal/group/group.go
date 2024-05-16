@@ -16,10 +16,6 @@ package group
 
 import (
 	"context"
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
-	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -29,6 +25,10 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
@@ -217,7 +217,7 @@ func (g *Group) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (
 		return nil, err
 	}
 	if len(svrGroup) == 0 {
-		return nil, sdkerrs.ErrGroupIDNotFound.Wrap("server not this group")
+		return nil, sdkerrs.ErrGroupIDNotFound.WrapMsg("server not this group")
 	}
 	return ServerGroupToLocalGroup(svrGroup[0]), nil
 }
@@ -232,11 +232,11 @@ func (g *Group) GetGroupsInfoFromLocal2Svr(ctx context.Context, groupIDs ...stri
 		return nil, err
 	}
 	var groupIDsNeedSync []string
-	localGroupIDs := utils2.Slice(groups, func(group *model_struct.LocalGroup) string {
+	localGroupIDs := datautil.Slice(groups, func(group *model_struct.LocalGroup) string {
 		return group.GroupID
 	})
 	for _, groupID := range groupIDs {
-		if !utils2.Contain(groupID, localGroupIDs...) {
+		if !datautil.Contain(groupID, localGroupIDs...) {
 			groupIDsNeedSync = append(groupIDsNeedSync, groupID)
 		}
 	}

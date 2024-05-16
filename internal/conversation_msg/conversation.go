@@ -33,12 +33,12 @@ import (
 
 	"github.com/jinzhu/copier"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 
-	"github.com/OpenIMSDK/protocol/msg"
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/msg"
+	"github.com/openimsdk/protocol/sdkws"
 
-	pbConversation "github.com/OpenIMSDK/protocol/conversation"
+	pbConversation "github.com/openimsdk/protocol/conversation"
 )
 
 func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq, localConversation *model_struct.LocalConversation) error {

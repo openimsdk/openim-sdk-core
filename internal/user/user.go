@@ -17,22 +17,22 @@ package user
 import (
 	"context"
 	"fmt"
-	authPb "github.com/OpenIMSDK/protocol/auth"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	userPb "github.com/OpenIMSDK/protocol/user"
-	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
+	authPb "github.com/openimsdk/protocol/auth"
+	"github.com/openimsdk/protocol/sdkws"
+	userPb "github.com/openimsdk/protocol/user"
+	"github.com/openimsdk/tools/log"
 
-	PbConstant "github.com/OpenIMSDK/protocol/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	PbConstant "github.com/openimsdk/protocol/constant"
 )
 
 type BasicInfo struct {
@@ -260,7 +260,7 @@ func (u *User) userCommandUpdateNotification(ctx context.Context, msg *sdkws.Msg
 func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
 	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, userPb.GetDesignateUsersReq{UserIDs: userIDs})
 	if err != nil {
-		return nil, sdkerrs.Warp(err, "GetUsersInfoFromSvr failed")
+		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromSvr failed")
 	}
 	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
 }
@@ -274,7 +274,7 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 	if len(users) > 0 {
 		return users[0], nil
 	}
-	return nil, sdkerrs.ErrUserIDNotFound.Wrap(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
+	return nil, sdkerrs.ErrUserIDNotFound.WrapMsg(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
 }
 
 // getSelfUserInfo retrieves the user's information.

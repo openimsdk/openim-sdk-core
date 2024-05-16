@@ -15,7 +15,7 @@
 package server_api_params
 
 import (
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 type GetUsersInfoReq struct {

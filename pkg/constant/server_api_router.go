@@ -45,6 +45,7 @@ const (
 	AddFriendResponse               = "/friend/add_friend_response"
 	SetFriendRemark                 = "/friend/set_friend_remark"
 	UpdateFriends                   = "/friend/update_friends"
+	GetFriendHash                   = "/friend/friend_hash"
 
 	AddBlackRouter     = "/friend/add_black"
 	RemoveBlackRouter  = "/friend/remove_black"
@@ -103,6 +104,7 @@ const (
 	SetGroupMemberNicknameRouter      = RouterGroup + "/set_group_member_nickname"
 	SetGroupMemberInfoRouter          = RouterGroup + "/set_group_member_info"
 	GetGroupAbstractInfoRouter        = RouterGroup + "/get_group_abstract_info"
+	SearchGroupMember                 = RouterGroup + "/search_group_member"
 
 	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
 	GetReceiveMessageOptRouter         = "/conversation/get_receive_message_opt"

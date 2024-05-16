@@ -22,8 +22,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"strings"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
 )
 
 const (

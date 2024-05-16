@@ -17,14 +17,14 @@ package user
 import (
 	"context"
 	"errors"
-	userPb "github.com/OpenIMSDK/protocol/user"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	userPb "github.com/openimsdk/protocol/user"
 
-	"github.com/OpenIMSDK/tools/errs"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 	"gorm.io/gorm"
 )
 
