@@ -16,6 +16,10 @@ package testv2
 
 type OnConnListener struct{}
 
+func (c *OnConnListener) OnUserTokenInvalid(errMsg string) {
+
+}
+
 func (c *OnConnListener) OnConnecting() {
 	// fmt.Println("OnConnecting")
 }
