@@ -58,6 +58,7 @@ type LocalFriend struct {
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	IsPinned     bool   `gorm:"column:is_pinned;" json:"isPinned"`
+	SortValue    int32  `gorm:"column:sort_value" json:"sortValue"`
 }
 
 // message FriendRequest{
@@ -534,4 +535,17 @@ type LocalUserCommand struct {
 
 func (LocalUserCommand) TableName() string {
 	return "local_user_command"
+}
+
+type LocalVersionSync struct {
+	Key        string `gorm:"column:key;type:varchar(255);primary_key" json:"key"`
+	VersionID  string `gorm:"column:version_id" json:"versionID"`
+	Version    uint64 `gorm:"column:version" json:"version"`
+	IDHash     uint64 `gorm:"column:id_hash" json:"idHash"`
+	Ex         string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	CreateTime int64  `gorm:"column:create_time" json:"createTime"`
+}
+
+func (LocalVersionSync) TableName() string {
+	return "local_sync_version"
 }

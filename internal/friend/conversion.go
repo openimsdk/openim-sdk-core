@@ -16,6 +16,7 @@ package friend
 
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/protocol/friend"
 
 	"github.com/openimsdk/protocol/sdkws"
 )
@@ -69,4 +70,29 @@ func ServerBlackToLocalBlack(info *sdkws.BlackInfo) *model_struct.LocalBlack {
 		Ex:             info.Ex,
 		//AttachedInfo:   info.FriendUser.AttachedInfo,
 	}
+}
+
+func ServerFriendToLocalFriendV2(info *friend.FriendInfo) *model_struct.LocalFriend {
+	return &model_struct.LocalFriend{
+		OwnerUserID:    info.OwnerUserID,
+		FriendUserID:   info.FriendUserID,
+		Remark:         info.Remark,
+		CreateTime:     info.CreateTime,
+		AddSource:      info.AddSource,
+		OperatorUserID: info.OperatorUserID,
+		Nickname:       info.FriendNickname,
+		FaceURL:        info.FriendFaceURL,
+		Ex:             info.Ex,
+		//AttachedInfo:   info.FriendUser.AttachedInfo,
+		IsPinned: info.IsPinned,
+	}
+}
+
+func BatchServerFriendToLocalFriend(infos []*friend.FriendInfo) []*model_struct.LocalFriend {
+	res := make([]*model_struct.LocalFriend, 0, len(infos))
+	for i, info := range infos {
+		elem := ServerFriendToLocalFriendV2(info)
+		elem.SortValue = int32(i)
+	}
+	return res
 }

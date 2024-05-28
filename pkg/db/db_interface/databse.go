@@ -273,6 +273,11 @@ type SendingMessagesModel interface {
 	GetAllSendingMessages(ctx context.Context) (friendRequests []*model_struct.LocalSendingMessages, err error)
 }
 
+type VersionSyncModel interface {
+	GetVersionSync(ctx context.Context, key string) (*model_struct.LocalVersionSync, error)
+	SetVersionSync(ctx context.Context, version *model_struct.LocalVersionSync) error
+}
+
 type DataBase interface {
 	Close(ctx context.Context) error
 	InitDB(ctx context.Context, userID string, dataDir string) error
@@ -284,4 +289,5 @@ type DataBase interface {
 	ReactionModel
 	S3Model
 	SendingMessagesModel
+	VersionSyncModel
 }
