@@ -15,26 +15,16 @@
 package testv2
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"github.com/openimsdk/protocol/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"testing"
 )
 
-const (
-	APIADDR      = "http://172.16.8.48:10002"
-	WSADDR       = "ws://172.16.8.48:10001"
-	UserID       = "6864873394"
-	friendUserID = "3281432310"
-)
-
-func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
-	var cf sdk_struct.IMConfig
-	cf.ApiAddr = APIADDR
-	cf.WsAddr = WSADDR
-	cf.DataDir = "../"
-	cf.LogLevel = 6
-	cf.IsExternalExtensions = true
-	cf.PlatformID = constant.LinuxPlatformID
-	cf.LogFilePath = ""
-	cf.IsLogStandardOutput = true
-	return cf
+func TestSyncFriend2(t *testing.T) {
+	for i := 0; ; i++ {
+		if err := open_im_sdk.UserForSDK.Friend().IncrSyncFriends(ctx); err != nil {
+			t.Log("error-->", err)
+			//panic(err)
+		}
+	}
+	//select {}
 }

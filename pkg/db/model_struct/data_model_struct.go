@@ -51,14 +51,9 @@ type LocalFriend struct {
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Nickname       string `gorm:"column:name;type:varchar;type:varchar(255)" json:"nickname"`
 	FaceURL        string `gorm:"column:face_url;type:varchar;type:varchar(255)" json:"faceURL"`
-	//Gender         int32  `gorm:"column:gender" json:"gender"`
-	//PhoneNumber    string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	//Birth          uint32 `gorm:"column:birth" json:"birth"`
-	//Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
-	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-	IsPinned     bool   `gorm:"column:is_pinned;" json:"isPinned"`
-	SortValue    int32  `gorm:"column:sort_value" json:"sortValue"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	IsPinned       bool   `gorm:"column:is_pinned;" json:"isPinned"`
 }
 
 // message FriendRequest{
@@ -541,8 +536,6 @@ type LocalVersionSync struct {
 	Key        string `gorm:"column:key;type:varchar(255);primary_key" json:"key"`
 	VersionID  string `gorm:"column:version_id" json:"versionID"`
 	Version    uint64 `gorm:"column:version" json:"version"`
-	IDHash     uint64 `gorm:"column:id_hash" json:"idHash"`
-	Ex         string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	CreateTime int64  `gorm:"column:create_time" json:"createTime"`
 }
 

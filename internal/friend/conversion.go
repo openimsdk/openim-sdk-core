@@ -87,12 +87,3 @@ func ServerFriendToLocalFriendV2(info *friend.FriendInfo) *model_struct.LocalFri
 		IsPinned: info.IsPinned,
 	}
 }
-
-func BatchServerFriendToLocalFriend(infos []*friend.FriendInfo) []*model_struct.LocalFriend {
-	res := make([]*model_struct.LocalFriend, 0, len(infos))
-	for i, info := range infos {
-		elem := ServerFriendToLocalFriendV2(info)
-		elem.SortValue = int32(i)
-	}
-	return res
-}

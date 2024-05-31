@@ -42,6 +42,7 @@ type DataBase struct {
 	groupMtx      sync.RWMutex
 	friendMtx     sync.RWMutex
 	userMtx       sync.RWMutex
+	versionMtx    sync.RWMutex
 	superGroupMtx sync.RWMutex
 }
 
@@ -148,6 +149,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 		&model_struct.LocalStranger{},
 		&model_struct.LocalSendingMessages{},
 		&model_struct.LocalUserCommand{},
+		&model_struct.LocalVersionSync{},
 	)
 	if err != nil {
 		return err
