@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/protocol/friend"
 	"github.com/openimsdk/tools/log"
@@ -11,87 +12,112 @@ import (
 	"time"
 )
 
-func (f *Friend) getVersionFriendKey() string {
-	return "friend:" + f.loginUserID
+func (f *Friend) IncrSyncFriends(ctx context.Context) error {
+	opt := Option[*model_struct.LocalFriend, *friend.GetIncrementalFriendsResp]{
+		Ctx: ctx,
+		DB:  f.db,
+		Key: func(localFriend *model_struct.LocalFriend) string {
+			return localFriend.FriendUserID
+		},
+		SyncKey: func() string {
+			return "friend:" + f.loginUserID
+		},
+		Local: func() ([]*model_struct.LocalFriend, error) {
+			return f.db.GetAllFriendList(ctx)
+		},
+		Server: func(version *model_struct.LocalVersionSync) (*friend.GetIncrementalFriendsResp, error) {
+			return util.CallApi[friend.GetIncrementalFriendsResp](ctx, constant.GetIncrementalFriends, &friend.GetIncrementalFriendsReq{
+				UserID:    f.loginUserID,
+				Version:   version.Version,
+				VersionID: version.VersionID,
+			})
+		},
+		Full: func(resp *friend.GetIncrementalFriendsResp) bool {
+			return resp.Full
+		},
+		Version: func(resp *friend.GetIncrementalFriendsResp) (string, uint64) {
+			return resp.VersionID, resp.Version
+		},
+		DeleteIDs: func(resp *friend.GetIncrementalFriendsResp) []string {
+			return resp.DeleteUserIds
+		},
+		Changes: func(resp *friend.GetIncrementalFriendsResp) []*model_struct.LocalFriend {
+			return util.Batch(ServerFriendToLocalFriendV2, resp.Changes)
+		},
+		Syncer: func(server, local []*model_struct.LocalFriend) error {
+			return f.friendSyncer.Sync(ctx, server, local, nil)
+		},
+	}
+	return opt.Sync()
 }
 
-func (f *Friend) IncrSyncFriends(ctx context.Context) error {
-	req := &friend.GetIncrementalFriendsReq{
-		UserID: f.loginUserID,
+type Option[V, R any] struct {
+	Ctx       context.Context
+	DB        db_interface.VersionSyncModel
+	Key       func(V) string
+	SyncKey   func() string
+	Local     func() ([]V, error)
+	Server    func(version *model_struct.LocalVersionSync) (R, error)
+	Full      func(resp R) bool
+	Version   func(resp R) (string, uint64)
+	DeleteIDs func(resp R) []string
+	Changes   func(resp R) []V
+	Syncer    func(server, local []V) error
+}
+
+func (o *Option[V, R]) getVersionInfo() *model_struct.LocalVersionSync {
+	key := o.SyncKey()
+	versionInfo, err := o.DB.GetVersionSync(o.Ctx, key)
+	if err != nil {
+		log.ZInfo(o.Ctx, "get version info", "error", err)
+		return &model_struct.LocalVersionSync{
+			Key: key,
+		}
 	}
-	key := f.getVersionFriendKey()
-	if res, err := f.db.GetVersionSync(ctx, key); err == nil {
-		req.VersionID = res.VersionID
-		req.Version = res.Version
-	} else {
-		log.ZWarn(ctx, "get version sync failed", err, "key", key)
-	}
-	resp, err := util.CallApi[friend.GetIncrementalFriendsResp](ctx, constant.GetIncrementalFriends, req)
+	return versionInfo
+}
+
+func (o *Option[V, R]) Sync() error {
+	versionInfo := o.getVersionInfo()
+	resp, err := o.Server(versionInfo)
 	if err != nil {
 		return err
 	}
-	if NotChange(resp.DeleteUserIds, resp.Changes) {
-		lv := model_struct.LocalVersionSync{
-			Key:        key,
-			VersionID:  resp.VersionID,
-			Version:    resp.Version,
+	delIDs := o.DeleteIDs(resp)
+	changes := o.Changes(resp)
+	updateVersionInfo := func() error {
+		lvs := &model_struct.LocalVersionSync{
+			Key:        versionInfo.Key,
 			CreateTime: time.Now().UnixMilli(),
 		}
-		return f.db.SetVersionSync(ctx, &lv)
+		lvs.VersionID, lvs.Version = o.Version(resp)
+		return o.DB.SetVersionSync(o.Ctx, lvs)
 	}
-	local, err := f.db.GetAllFriendList(ctx)
+	if len(delIDs)+len(changes) == 0 {
+		return updateVersionInfo()
+	}
+	local, err := o.Local()
 	if err != nil {
 		return err
 	}
-	b := Builder[string, *model_struct.LocalFriend]{
-		Local: local,
-		Key: func(v *model_struct.LocalFriend) string {
-			return v.FriendUserID
-		},
-		Full:       resp.Full,
-		DeleteKeys: resp.DeleteUserIds,
-		Changes:    util.Batch(ServerFriendToLocalFriendV2, resp.Changes),
-	}
-	if err := f.friendSyncer.Sync(ctx, b.Build(), local, nil); err != nil {
-		return err
-	}
-	lv := model_struct.LocalVersionSync{
-		Key:        key,
-		VersionID:  resp.VersionID,
-		Version:    resp.Version,
-		CreateTime: time.Now().UnixMilli(),
-	}
-	if err := f.db.SetVersionSync(ctx, &lv); err != nil {
-		return err
-	}
-	return nil
-}
-
-type Builder[K comparable, V any] struct {
-	Local      []V
-	Key        func(V) K
-	Full       bool
-	DeleteKeys []K
-	Changes    []V
-}
-
-func (b *Builder[K, V]) Build() []V {
-	if b.Full {
-		return b.Changes
-	}
-	res := make([]V, 0, len(b.Local)+len(b.Changes))
-	var delSet map[K]struct{}
-	if len(b.Local)+len(b.DeleteKeys) > 0 {
-		delSet = datautil.SliceSet(b.DeleteKeys)
-	}
-	for i, v := range b.Local {
-		if _, ok := delSet[b.Key(v)]; !ok {
-			res = append(res, b.Local[i])
+	var server []V
+	if o.Full(resp) {
+		server = changes
+	} else {
+		kv := datautil.SliceToMapAny(local, func(v V) (string, V) {
+			return o.Key(v), v
+		})
+		for i, change := range changes {
+			key := o.Key(change)
+			kv[key] = changes[i]
 		}
+		for _, id := range delIDs {
+			delete(kv, id)
+		}
+		server = datautil.Values(kv)
 	}
-	return append(res, b.Changes...)
-}
-
-func NotChange[K comparable, V any](delKeys []K, changes []V) bool {
-	return len(delKeys)+len(changes) == 0
+	if err := o.Syncer(server, local); err != nil {
+		return err
+	}
+	return updateVersionInfo()
 }
