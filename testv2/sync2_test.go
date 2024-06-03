@@ -15,16 +15,57 @@
 package testv2
 
 import (
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/protocol/constant"
+	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
 	"testing"
+	"time"
 )
 
 func TestSyncFriend2(t *testing.T) {
 	for i := 0; ; i++ {
 		if err := open_im_sdk.UserForSDK.Friend().IncrSyncFriends(ctx); err != nil {
-			t.Log("error-->", err)
-			//panic(err)
+			t.Log("IncrSyncFriends error-->", err)
+			continue
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+func TestSyncJoinGroup2(t *testing.T) {
+	for i := 0; ; i++ {
+		if err := open_im_sdk.UserForSDK.Group().IncrSyncJoinGroup(ctx); err != nil {
+			t.Log("IncrSyncJoinGroup error-->", err)
+			continue
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+func TestSyncGroupMember2(t *testing.T) {
+	for i := 0; ; i++ {
+		if err := open_im_sdk.UserForSDK.Group().IncrSyncJoinGroupMember(ctx); err != nil {
+			t.Log("IncrSyncGroupMember error-->", err)
+			continue
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+func TestName(t *testing.T) {
+	for i := 1; i <= 600; i++ {
+		_, err := open_im_sdk.UserForSDK.Group().CreateGroup(ctx, &group.CreateGroupReq{
+			GroupInfo: &sdkws.GroupInfo{
+				GroupType: constant.WorkingGroup,
+				GroupName: fmt.Sprintf("group_%d", i),
+			},
+			MemberUserIDs: []string{"9556972319", "9719689061", "3872159645"},
+		})
+		if err != nil {
+			log.ZError(ctx, "group create failed", err, "index", i)
 		}
 	}
-	//select {}
 }

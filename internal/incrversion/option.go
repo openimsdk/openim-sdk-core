@@ -10,17 +10,18 @@ import (
 )
 
 type Option[V, R any] struct {
-	Ctx       context.Context
-	DB        db_interface.VersionSyncModel
-	Key       func(V) string
-	SyncKey   func() string
-	Local     func() ([]V, error)
-	Server    func(version *model_struct.LocalVersionSync) (R, error)
-	Full      func(resp R) bool
-	Version   func(resp R) (string, uint64)
-	DeleteIDs func(resp R) []string
-	Changes   func(resp R) []V
-	Syncer    func(server, local []V) error
+	Ctx           context.Context
+	DB            db_interface.VersionSyncModel
+	Key           func(V) string
+	SyncKey       func() string
+	Local         func() ([]V, error)
+	ServerVersion func() R
+	Server        func(version *model_struct.LocalVersionSync) (R, error)
+	Full          func(resp R) bool
+	Version       func(resp R) (string, uint64)
+	DeleteIDs     func(resp R) []string
+	Changes       func(resp R) []V
+	Syncer        func(server, local []V) error
 }
 
 func (o *Option[V, R]) getVersionInfo() *model_struct.LocalVersionSync {
@@ -36,16 +37,22 @@ func (o *Option[V, R]) getVersionInfo() *model_struct.LocalVersionSync {
 }
 
 func (o *Option[V, R]) Sync() error {
-	versionInfo := o.getVersionInfo()
-	resp, err := o.Server(versionInfo)
-	if err != nil {
-		return err
+	var resp R
+	if o.ServerVersion == nil {
+		version := o.getVersionInfo()
+		var err error
+		resp, err = o.Server(version)
+		if err != nil {
+			return err
+		}
+	} else {
+		resp = o.ServerVersion()
 	}
 	delIDs := o.DeleteIDs(resp)
 	changes := o.Changes(resp)
 	updateVersionInfo := func() error {
 		lvs := &model_struct.LocalVersionSync{
-			Key:        versionInfo.Key,
+			Key:        o.SyncKey(),
 			CreateTime: time.Now().UnixMilli(),
 		}
 		lvs.VersionID, lvs.Version = o.Version(resp)

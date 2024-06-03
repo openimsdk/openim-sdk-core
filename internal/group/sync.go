@@ -166,6 +166,7 @@ func (g *Group) deleteGroup(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
+	return nil
 	_, err := g.syncAllJoinedGroups(ctx)
 	if err != nil {
 		return err

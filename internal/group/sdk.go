@@ -24,7 +24,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	pconstant "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/tools/log"
 
 	"github.com/openimsdk/protocol/group"
@@ -347,24 +346,24 @@ func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
 	return false, nil
 }
 
-func (g *Group) SearchGroupMembersV2(ctx context.Context, req *group.SearchGroupMemberReq) ([]*model_struct.LocalGroupMember, error) {
-	if err := req.Check(); err != nil {
-		return nil, err
-	}
-	info, err := g.db.GetGroupInfoByGroupID(ctx, req.GroupID)
-	if err != nil {
-		return nil, err
-	}
-	if info.MemberCount <= pconstant.MaxSyncPullNumber {
-		return g.db.SearchGroupMembersDB(ctx, req.Keyword, req.GroupID, true, false,
-			int((req.Pagination.PageNumber-1)*req.Pagination.ShowNumber), int(req.Pagination.ShowNumber))
-	}
-	resp, err := util.CallApi[group.SearchGroupMemberResp](ctx, constant.SearchGroupMember, req)
-	if err != nil {
-		return nil, err
-	}
-	return datautil.Slice(resp.Members, g.pbGroupMemberToLocal), nil
-}
+//func (g *Group) SearchGroupMembersV2(ctx context.Context, req *group.SearchGroupMemberReq) ([]*model_struct.LocalGroupMember, error) {
+//	if err := req.Check(); err != nil {
+//		return nil, err
+//	}
+//	info, err := g.db.GetGroupInfoByGroupID(ctx, req.GroupID)
+//	if err != nil {
+//		return nil, err
+//	}
+//	if info.MemberCount <= pconstant.MaxSyncPullNumber {
+//		return g.db.SearchGroupMembersDB(ctx, req.Keyword, req.GroupID, true, false,
+//			int((req.Pagination.PageNumber-1)*req.Pagination.ShowNumber), int(req.Pagination.ShowNumber))
+//	}
+//	resp, err := util.CallApi[group.SearchGroupMemberResp](ctx, constant.SearchGroupMember, req)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return datautil.Slice(resp.Members, g.pbGroupMemberToLocal), nil
+//}
 
 func (g *Group) pbGroupMemberToLocal(pb *sdkws.GroupMemberFullInfo) *model_struct.LocalGroupMember {
 	return &model_struct.LocalGroupMember{
