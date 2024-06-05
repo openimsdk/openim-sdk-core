@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	friend2 "github.com/openimsdk/protocol/friend"
+	friend2 "github.com/openimsdk/protocol/relation"
 )
 
 func Test_GetSpecifiedFriendsInfo(t *testing.T) {

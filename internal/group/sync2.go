@@ -6,6 +6,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	pconstant "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
@@ -38,14 +39,14 @@ func (g *Group) IncrSyncJoinGroupMember(ctx context.Context) error {
 	groupIDs := datautil.Slice(groups, func(e *model_struct.LocalGroup) string {
 		return e.GroupID
 	})
-	return g.IncrSyncGroupMember(ctx, groupIDs)
+	return g.IncrSyncGroupMember(ctx, groupIDs...)
 }
 
-func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs []string) error {
+func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs ...string) error {
 	if len(groupIDs) == 0 {
 		return nil
 	}
-	const maxSyncNum = 500
+	const maxSyncNum = pconstant.MaxSyncPullNumber
 	groupIDSet := datautil.SliceSet(groupIDs)
 	var groups []*group.GetIncrementalGroupMemberReq
 	if len(groupIDs) > maxSyncNum {
@@ -84,6 +85,8 @@ func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs []string) erro
 			}
 			delete(groupIDSet, groupID)
 		}
+		num := len(groupIDSet)
+		_ = num
 	}
 }
 

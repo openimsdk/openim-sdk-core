@@ -22,10 +22,10 @@ import (
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
+	friend "github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/protocol/wrapperspb"
 	"github.com/openimsdk/tools/errs"
 
-	"github.com/openimsdk/protocol/friend"
 	"github.com/openimsdk/tools/log"
 )
 

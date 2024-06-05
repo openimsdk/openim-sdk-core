@@ -18,8 +18,7 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/protocol/friend"
+	friend "github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
@@ -74,46 +73,49 @@ func (f *Friend) SyncAllFriendApplication(ctx context.Context) error {
 }
 
 func (f *Friend) SyncAllFriendList(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	fn := func(resp *friend.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
-	friends, err := util.GetPageAll(ctx, constant.GetFriendListRouter, req, fn)
-	if err != nil {
-		return err
-	}
-	localData, err := f.db.GetAllFriendList(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "sync friend", "data from server", friends, "data from local", localData)
-	return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, friends), localData, nil)
+	return f.IncrSyncFriends(ctx)
+	//req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	//fn := func(resp *friend.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
+	//friends, err := util.GetPageAll(ctx, constant.GetFriendListRouter, req, fn)
+	//if err != nil {
+	//	return err
+	//}
+	//localData, err := f.db.GetAllFriendList(ctx)
+	//if err != nil {
+	//	return err
+	//}
+	//log.ZDebug(ctx, "sync friend", "data from server", friends, "data from local", localData)
+	//return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, friends), localData, nil)
 }
 
 func (f *Friend) deleteFriend(ctx context.Context, friendUserID string) error {
-	friends, err := f.db.GetFriendInfoList(ctx, []string{friendUserID})
-	if err != nil {
-		return err
-	}
-	if len(friends) == 0 {
-		return sdkerrs.ErrUserIDNotFound.WrapMsg("friendUserID not found")
-	}
-	if err := f.db.DeleteFriendDB(ctx, friendUserID); err != nil {
-		return err
-	}
-	f.friendListener.OnFriendDeleted(*friends[0])
-	return nil
+	return f.IncrSyncFriends(ctx)
+	//friends, err := f.db.GetFriendInfoList(ctx, []string{friendUserID})
+	//if err != nil {
+	//	return err
+	//}
+	//if len(friends) == 0 {
+	//	return sdkerrs.ErrUserIDNotFound.WrapMsg("friendUserID not found")
+	//}
+	//if err := f.db.DeleteFriendDB(ctx, friendUserID); err != nil {
+	//	return err
+	//}
+	//f.friendListener.OnFriendDeleted(*friends[0])
+	//return nil
 }
 
 func (f *Friend) SyncFriends(ctx context.Context, friendIDs []string) error {
-	var resp friend.GetDesignatedFriendsResp
-	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsRouter, &friend.GetDesignatedFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs}, &resp); err != nil {
-		return err
-	}
-	localData, err := f.db.GetFriendInfoList(ctx, friendIDs)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "sync friend", "data from server", resp.FriendsInfo, "data from local", localData)
-	return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo), localData, nil)
+	return f.IncrSyncFriends(ctx)
+	//var resp friend.GetDesignatedFriendsResp
+	//if err := util.ApiPost(ctx, constant.GetDesignatedFriendsRouter, &friend.GetDesignatedFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs}, &resp); err != nil {
+	//	return err
+	//}
+	//localData, err := f.db.GetFriendInfoList(ctx, friendIDs)
+	//if err != nil {
+	//	return err
+	//}
+	//log.ZDebug(ctx, "sync friend", "data from server", resp.FriendsInfo, "data from local", localData)
+	//return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo), localData, nil)
 }
 
 //func (f *Friend) SyncFriendPart(ctx context.Context) error {

@@ -2,8 +2,6 @@ module github.com/openimsdk/openim-sdk-core/v3
 
 go 1.21
 
-toolchain go1.22.0
-
 require (
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.4.2
@@ -19,7 +17,7 @@ require golang.org/x/net v0.22.0
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/openimsdk/protocol v0.0.69-alpha.3
+	github.com/openimsdk/protocol v0.0.69-alpha.6
 	github.com/openimsdk/tools v0.0.49-alpha.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	go.etcd.io/etcd/api/v3 v3.5.13
@@ -42,6 +40,4 @@ require (
 	google.golang.org/grpc v1.62.1 // indirect
 )
 
-//replace (
-//	github.com/openimsdk/protocol => /Users/chao/Desktop/project/protocol
-//)
+//replace github.com/openimsdk/protocol => /Users/chao/Desktop/project/protocol

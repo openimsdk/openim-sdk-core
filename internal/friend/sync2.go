@@ -6,7 +6,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/protocol/friend"
+	friend "github.com/openimsdk/protocol/relation"
 )
 
 func (f *Friend) IncrSyncFriends(ctx context.Context) error {
@@ -39,7 +39,7 @@ func (f *Friend) IncrSyncFriends(ctx context.Context) error {
 			return resp.DeleteUserIds
 		},
 		Changes: func(resp *friend.GetIncrementalFriendsResp) []*model_struct.LocalFriend {
-			return util.Batch(ServerFriendToLocalFriendV2, resp.Changes)
+			return util.Batch(ServerFriendToLocalFriend, resp.Changes)
 		},
 		Syncer: func(server, local []*model_struct.LocalFriend) error {
 			return f.friendSyncer.Sync(ctx, server, local, nil)

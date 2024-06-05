@@ -2,8 +2,6 @@ package module
 
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-
-	"github.com/openimsdk/protocol/friend"
 )
 
 type TestFriendManager struct {
