@@ -53,8 +53,12 @@ const (
 	Logged
 )
 
+const (
+	LogoutTips = "js sdk socket close"
+)
+
 var (
-	// Client-independent user class
+	// UserForSDK Client-independent user class
 	UserForSDK *LoginMgr
 )
 
@@ -418,6 +422,9 @@ func (u *LoginMgr) UnInitSDK() {
 
 // token error recycle recourse, kicked not recycle
 func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
+	if ccontext.Info(ctx).OperationID() == LogoutTips {
+		isTokenValid = true
+	}
 	if !isTokenValid {
 		ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 		defer cancel()
@@ -429,7 +436,10 @@ func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
 		}
 	}
 	u.Exit()
-	_ = u.db.Close(u.ctx)
+	err := u.db.Close(u.ctx)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdLogout db recycle resources failed...", err)
+	}
 	// user object must be rest  when user logout
 	u.initResources()
 	log.ZDebug(ctx, "TriggerCmdLogout client success...", "isTokenValid", isTokenValid)

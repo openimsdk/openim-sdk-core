@@ -29,6 +29,7 @@ type OnConnListener interface {
 	OnConnectFailed(errCode int32, errMsg string)
 	OnKickedOffline()
 	OnUserTokenExpired()
+	OnUserTokenInvalid(errMsg string)
 }
 
 type OnGroupListener interface {

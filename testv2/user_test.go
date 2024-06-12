@@ -15,7 +15,6 @@
 package testv2
 
 import (
-	"github.com/OpenIMSDK/protocol/wrapperspb"
 	"testing"
 	"time"
 
@@ -66,34 +65,9 @@ func Test_GetUsersInfoWithCache(t *testing.T) {
 func Test_SetSelfInfo(t *testing.T) {
 	newNickName := "test"
 	//newFaceURL := "http://test.com"
-	err := open_im_sdk.UserForSDK.User().SetSelfInfo(ctx, &sdkws.UserInfo{
+	err := open_im_sdk.UserForSDK.User().SetSelfInfo(ctx, &sdkws.UserInfoWithEx{
 		Nickname: newNickName,
 		//FaceURL:  newFaceURL,
-	})
-	newFaceURL := "http://test.com"
-
-	if err != nil {
-		t.Error(err)
-	}
-	userInfo, err := open_im_sdk.UserForSDK.User().GetSelfUserInfo(ctx)
-	if err != nil {
-		t.Error(err)
-	}
-	if userInfo.UserID != UserID && userInfo.Nickname != newNickName && userInfo.FaceURL != newFaceURL {
-		t.Error("user id not match")
-	}
-	t.Log(userInfo)
-	time.Sleep(time.Second * 10)
-}
-func Test_SetSelfInfoEx(t *testing.T) {
-	newNickName := "test"
-	//newFaceURL := "http://test.com"
-	err := open_im_sdk.UserForSDK.User().SetSelfInfoEx(ctx, &sdkws.UserInfoWithEx{
-		Nickname: newNickName,
-		//FaceURL:  newFaceURL,
-		Ex: &wrapperspb.StringValue{
-			Value: "ASD",
-		},
 	})
 	newFaceURL := "http://test.com"
 

@@ -194,9 +194,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		for _, v := range msgs.Msgs {
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
-			if !isHistory {
-				onlineMap[onlineMsgKey{ClientMsgID: v.ClientMsgID, ServerMsgID: v.ServerMsgID}] = struct{}{}
-			}
 			isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 			isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 			isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
@@ -231,6 +228,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			if conversationID == "" {
 				log.ZError(ctx, "conversationID is empty", errors.New("conversationID is empty"), "msg", msg)
 				continue
+			}
+			if !isHistory {
+				onlineMap[onlineMsgKey{ClientMsgID: v.ClientMsgID, ServerMsgID: v.ServerMsgID}] = struct{}{}
+				newMessages = append(newMessages, msg)
+
 			}
 			log.ZDebug(ctx, "decode message", "msg", msg)
 			if v.SendID == c.loginUserID { //seq
@@ -303,11 +305,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					}
 					if isHistory {
 						othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
-					}
-					switch msg.ContentType {
-					case constant.Typing:
-						newMessages = append(newMessages, msg)
-					default:
 					}
 
 				} else {

@@ -20,8 +20,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"testing"
-
-	"github.com/OpenIMSDK/protocol/sdkws"
 )
 
 func Test_GetAllConversationList(t *testing.T) {
@@ -148,7 +146,7 @@ func Test_GetTotalUnreadMsgCount(t *testing.T) {
 func Test_SendMessage(t *testing.T) {
 	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
 	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "3411008330", "", nil)
+	_, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "3411008330", "", nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,16 +155,7 @@ func Test_SendMessage(t *testing.T) {
 func Test_SendMessageNotOss(t *testing.T) {
 	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
 	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageNotOss(ctx, msg, "3411008330", "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SendMessageByBuffer(t *testing.T) {
-	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
-	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageByBuffer(ctx, msg, "3411008330", "", &sdkws.OfflinePushInfo{}, nil, nil)
+	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageNotOss(ctx, msg, "3411008330", "", nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,22 +216,12 @@ func Test_SearchLocalMessages(t *testing.T) {
 	}
 }
 
-// // delete
-// funcation Test_DeleteMessageFromLocalStorage(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Conversation().DeleteMessageFromLocalStorage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
-//		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-// }
-//
-// funcation Test_DeleteMessage(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Conversation().DeleteMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
-//		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-// }
+func Test_SetMessageLocalEx(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().SetMessageLocalEx(ctx, "si_2975755104_6386894923", "53ca4b3be29f7ea231a5e82e7af8a43f", "{key,value}")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func Test_DeleteAllMsgFromLocalAndSvr(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMsgFromLocalAndSvr(ctx)
@@ -296,7 +275,7 @@ func Test_SendImgMsg(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "1919501984", "", nil)
+	res, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "1919501984", "", nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
