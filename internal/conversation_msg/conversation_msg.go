@@ -50,7 +50,7 @@ var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*interaction.LongConnMgr
-	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, string]
+	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, syncer.NoResp, string]
 	db                   db_interface.DataBase
 	ConversationListener func() open_im_sdk_callback.OnConversationListener
 	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
@@ -115,7 +115,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 }
 
 func (c *Conversation) initSyncer() {
-	c.conversationSyncer = syncer.New(
+	c.conversationSyncer = syncer.New[*model_struct.LocalConversation, syncer.NoResp, string](
 		func(ctx context.Context, value *model_struct.LocalConversation) error {
 			return c.db.InsertConversation(ctx, value)
 		},

@@ -41,16 +41,16 @@ type Friend struct {
 	loginUserID        string
 	db                 db_interface.DataBase
 	user               *user.User
-	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, [2]string]
-	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, [2]string]
-	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
-	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
+	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, syncer.NoResp, [2]string]
+	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, syncer.NoResp, [2]string]
+	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
+	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
 func (f *Friend) initSyncer() {
-	f.friendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriend) error {
+	f.friendSyncer = syncer.New[*model_struct.LocalFriend, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriend) error {
 		return f.db.InsertFriend(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalFriend) error {
 		return f.db.DeleteFriendDB(ctx, value.FriendUserID)
@@ -81,7 +81,7 @@ func (f *Friend) initSyncer() {
 		}
 		return nil
 	})
-	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
+	f.blockSyncer = syncer.New[*model_struct.LocalBlack, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.DeleteBlack(ctx, value.BlockUserID)
@@ -98,7 +98,7 @@ func (f *Friend) initSyncer() {
 		}
 		return nil
 	})
-	f.requestRecvSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+	f.requestRecvSyncer = syncer.New[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
@@ -124,7 +124,7 @@ func (f *Friend) initSyncer() {
 		}
 		return nil
 	})
-	f.requestSendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+	f.requestSendSyncer = syncer.New[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)

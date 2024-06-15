@@ -82,6 +82,7 @@ func (f *Friend) RefuseFriendApplication(ctx context.Context, userIDHandleMsg *s
 }
 
 func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFriendApplyReq) error {
+
 	if req.ToUserID == "" {
 		req.ToUserID = f.loginUserID
 	}

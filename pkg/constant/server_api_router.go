@@ -107,6 +107,8 @@ const (
 	//SearchGroupMember                 = RouterGroup + "/search_group_member"
 	GetIncrementalJoinGroup        = RouterGroup + "/get_incremental_join_group"
 	GetIncrementalGroupMemberBatch = RouterGroup + "/get_incremental_group_member_batch"
+	GetJoinedGroupAllIDs           = RouterGroup + "/get_incremental_join_group_ids"
+	GetGroupMemberAllIDs           = RouterGroup + "/get_incremental_group_member_user_ids"
 
 	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
 	GetReceiveMessageOptRouter         = "/conversation/get_receive_message_opt"

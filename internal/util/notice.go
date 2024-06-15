@@ -14,21 +14,15 @@
 
 package util
 
-import (
-	"context"
-	"encoding/json"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-)
-
-func NoticeChange[T any](fn func(data string)) func(ctx context.Context, state int, value T) error {
-	return func(ctx context.Context, state int, value T) error {
-		if state != syncer.Unchanged {
-			data, err := json.Marshal(value)
-			if err != nil {
-				return err
-			}
-			fn(string(data))
-		}
-		return nil
-	}
-}
+//func NoticeChange[T any](fn func(data string)) func(ctx context.Context, state int, value T) error {
+//	return func(ctx context.Context, state int, value T) error {
+//		if state != syncer.Unchanged {
+//			data, err := json.Marshal(value)
+//			if err != nil {
+//				return err
+//			}
+//			fn(string(data))
+//		}
+//		return nil
+//	}
+//}

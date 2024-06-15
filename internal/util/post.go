@@ -20,7 +20,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/tools/errs"
 	"io"
 	"net/http"
 	"time"
@@ -173,4 +175,65 @@ func GetPageAll[A interface {
 		}
 	}
 	return res, nil
+}
+
+func GetPageAllWithMaxNum[A interface {
+	GetPagination() *sdkws.RequestPagination
+}, B, C any](ctx context.Context, api string, req A, fn func(resp *B) []C, maxItems int) ([]C, error) {
+	if req.GetPagination().ShowNumber <= 0 {
+		req.GetPagination().ShowNumber = 50
+	}
+	var res []C
+	totalFetched := 0
+	for i := int32(0); ; i++ {
+		req.GetPagination().PageNumber = i + 1
+		memberResp, err := CallApi[B](ctx, api, req)
+		if err != nil {
+			return nil, err
+		}
+		list := fn(memberResp)
+		res = append(res, list...)
+		totalFetched += len(list)
+		if len(list) < int(req.GetPagination().ShowNumber) || (maxItems > 0 && totalFetched >= maxItems) {
+			break
+		}
+	}
+	if maxItems > 0 && len(res) > maxItems {
+		res = res[:maxItems]
+	}
+	return res, nil
+}
+
+func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req page.PageReq, fn func(resp *RESP) []L, batchInsertFn func(ctx context.Context, items []L) error,
+	insertFn func(ctx context.Context, item L) error, maxItems int) error {
+	if req.GetPagination().ShowNumber <= 0 {
+		req.GetPagination().ShowNumber = 50
+	}
+	var errSingle error
+	errSingle = nil
+	totalFetched := 0
+	for i := int32(0); ; i++ {
+		req.GetPagination().PageNumber = i + 1
+		memberResp, err := CallApi[RESP](ctx, api, req)
+		if err != nil {
+			return err
+		}
+		list := fn(memberResp)
+		if err := batchInsertFn(ctx, list); err != nil {
+			for _, item := range list {
+				errSingle = insertFn(ctx, item)
+				if errSingle != nil {
+					errSingle = errs.New(errSingle.Error(), "item", item)
+				}
+			}
+		}
+		totalFetched += len(list)
+		if len(list) < int(req.GetPagination().ShowNumber) || (maxItems > 0 && totalFetched >= maxItems) {
+			break
+		}
+	}
+	if errSingle != nil {
+		return errs.WrapMsg(errSingle, "batch insert failed due to  data exception")
+	}
+	return nil
 }

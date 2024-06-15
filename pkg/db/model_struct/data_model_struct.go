@@ -14,6 +14,12 @@
 
 package model_struct
 
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"github.com/openimsdk/tools/errs"
+)
+
 //
 //message FriendInfo{
 //string OwnerUserID = 1;
@@ -139,6 +145,10 @@ type LocalGroup struct {
 	NotificationUserID     string `gorm:"column:notification_user_id;size:64" json:"notificationUserID"`
 }
 
+func (LocalGroup) TableName() string {
+	return "local_groups"
+}
+
 //message GroupMemberFullInfo {
 //string GroupID = 1 ;
 //string UserID = 2 ;
@@ -173,6 +183,10 @@ type LocalGroupMember struct {
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+}
+
+func (LocalGroupMember) TableName() string {
+	return "local_group_members"
 }
 
 // message GroupRequest{
@@ -532,11 +546,27 @@ func (LocalUserCommand) TableName() string {
 	return "local_user_command"
 }
 
+type StringArray []string
+
+func (a StringArray) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
+
+func (a *StringArray) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errs.New("type assertion to []byte failed").Wrap()
+	}
+	return json.Unmarshal(b, &a)
+}
+
 type LocalVersionSync struct {
-	Key        string `gorm:"column:key;type:varchar(255);primary_key" json:"key"`
-	VersionID  string `gorm:"column:version_id" json:"versionID"`
-	Version    uint64 `gorm:"column:version" json:"version"`
-	CreateTime int64  `gorm:"column:create_time" json:"createTime"`
+	Table      string      `gorm:"column:table;type:varchar(255);primary_key" json:"table"`
+	EntityID   string      `gorm:"column:entity_id;type:varchar(255);primary_key" json:"entityID"`
+	VersionID  string      `gorm:"column:version_id" json:"versionID"`
+	Version    uint64      `gorm:"column:version" json:"version"`
+	CreateTime int64       `gorm:"column:create_time" json:"createTime"`
+	UIDList    StringArray `gorm:"column:id_list;type:text" json:"uidList"`
 }
 
 func (LocalVersionSync) TableName() string {

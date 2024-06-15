@@ -93,7 +93,7 @@ func gRunGetToken(strMyUid string) string {
 	return token
 }
 func main() {
-	uid := "1"
+	uid := "1695766238"
 	//Gordon
 	//uid:="1554321956297519104"
 	//Gordon2

@@ -45,8 +45,8 @@ type User struct {
 	db_interface.DataBase
 	loginUserID       string
 	listener          func() open_im_sdk_callback.OnUserListener
-	userSyncer        *syncer.Syncer[*model_struct.LocalUser, string]
-	commandSyncer     *syncer.Syncer[*model_struct.LocalUserCommand, string]
+	userSyncer        *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
+	commandSyncer     *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
 	conversationCh    chan common.Cmd2Value
 	UserBasicCache    *cache.Cache[string, *BasicInfo]
 	OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
@@ -67,7 +67,7 @@ func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh 
 }
 
 func (u *User) initSyncer() {
-	u.userSyncer = syncer.New(
+	u.userSyncer = syncer.New[*model_struct.LocalUser, syncer.NoResp, string](
 		func(ctx context.Context, value *model_struct.LocalUser) error {
 			return u.InsertLoginUser(ctx, value)
 		},
@@ -93,7 +93,7 @@ func (u *User) initSyncer() {
 			return nil
 		},
 	)
-	u.commandSyncer = syncer.New(
+	u.commandSyncer = syncer.New[*model_struct.LocalUserCommand, syncer.NoResp, string](
 		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
 			// Logic to insert a command
 			return u.DataBase.ProcessUserCommandAdd(ctx, command)

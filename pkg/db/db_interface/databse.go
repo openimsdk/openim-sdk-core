@@ -24,6 +24,8 @@ type GroupModel interface {
 	InsertGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	DeleteGroup(ctx context.Context, groupID string) error
 	UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
+	BatchInsertGroup(ctx context.Context, groupList []*model_struct.LocalGroup) error
+	DeleteAllGroup(ctx context.Context) error
 	GetJoinedGroupListDB(ctx context.Context) ([]*model_struct.LocalGroup, error)
 	GetGroups(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error)
 	GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
@@ -226,6 +228,7 @@ type UserModel interface {
 type FriendModel interface {
 	InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error
 	DeleteFriendDB(ctx context.Context, friendUserID string) error
+	GetFriendListCount(ctx context.Context) (int64, error)
 	UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error
 	GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error)
 	GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error)
@@ -274,7 +277,7 @@ type SendingMessagesModel interface {
 }
 
 type VersionSyncModel interface {
-	GetVersionSync(ctx context.Context, key string) (*model_struct.LocalVersionSync, error)
+	GetVersionSync(ctx context.Context, tableName, entityID string) (*model_struct.LocalVersionSync, error)
 	SetVersionSync(ctx context.Context, version *model_struct.LocalVersionSync) error
 }
 

@@ -183,7 +183,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			g.listener().OnGroupInfoChanged(string(data))
 			return nil
 		} else {
-			return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.QuitUser.UserID)
+			//return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.QuitUser.UserID)
+			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, []*sdkws.GroupMemberFullInfo{detail.QuitUser}, nil, nil, detail.GroupMemberVersion)
 		}
 	case constant.MemberInvitedNotification: // 1509
 		var detail sdkws.MemberInvitedTips

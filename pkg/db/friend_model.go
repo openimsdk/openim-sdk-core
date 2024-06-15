@@ -37,6 +37,14 @@ func (d *DataBase) DeleteFriendDB(ctx context.Context, friendUserID string) erro
 	return utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&model_struct.LocalFriend{}).Error, "DeleteFriend failed")
 }
 
+func (d *DataBase) GetFriendListCount(ctx context.Context) (int64, error) {
+	d.friendMtx.Lock()
+	defer d.friendMtx.Unlock()
+	var count int64
+	err := d.conn.WithContext(ctx).Model(&model_struct.LocalFriend{}).Count(&count).Error
+	return count, utils.Wrap(err, "GetFriendListCount failed")
+}
+
 func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
