@@ -20,7 +20,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
@@ -192,7 +191,6 @@ func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 		case "3.8.0":
 			d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{})
 		}
-		fmt.Println("now excute Set")
 		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
 		if err != nil {
 			return err

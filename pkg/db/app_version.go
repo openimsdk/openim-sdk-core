@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/openimsdk/tools/errs"
 	"gorm.io/gorm"
@@ -28,7 +27,6 @@ func (d *DataBase) SetAppSDKVersion(ctx context.Context, appVersion *model_struc
 	}
 
 	if updateErr := d.conn.WithContext(ctx).Model(&exist).Updates(appVersion).Error; updateErr != nil {
-		fmt.Println(updateErr)
 		return errs.Wrap(updateErr)
 	}
 
