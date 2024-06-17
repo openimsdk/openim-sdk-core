@@ -27,7 +27,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
 
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -47,7 +49,7 @@ type DataBase struct {
 }
 
 func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -128,32 +130,15 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	sqlDB.SetConnMaxIdleTime(time.Minute * 10)
 	d.conn = db
 
-	err = db.AutoMigrate(
-		&model_struct.LocalFriend{},
-		&model_struct.LocalFriendRequest{},
-		&model_struct.LocalGroup{},
-		&model_struct.LocalGroupMember{},
-		&model_struct.LocalGroupRequest{},
-		&model_struct.LocalErrChatLog{},
-		&model_struct.LocalUser{},
-		&model_struct.LocalBlack{},
-		&model_struct.LocalConversation{},
-		&model_struct.NotificationSeqs{},
-		&model_struct.LocalChatLog{},
-		&model_struct.LocalAdminGroupRequest{},
-		&model_struct.LocalWorkMomentsNotification{},
-		&model_struct.LocalWorkMomentsNotificationUnreadCount{},
-		&model_struct.TempCacheLocalChatLog{},
-		&model_struct.LocalChatLogReactionExtensions{},
-		&model_struct.LocalUpload{},
-		&model_struct.LocalStranger{},
-		&model_struct.LocalSendingMessages{},
-		&model_struct.LocalUserCommand{},
-		&model_struct.LocalVersionSync{},
-	)
-	if err != nil {
+	// base
+	if err = db.AutoMigrate(&model_struct.LocalAppSDKVersion{}); err != nil {
 		return err
 	}
+
+	if err = d.versionDataMigrate(ctx); err != nil {
+		return err
+	}
+
 	//if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
 	//	return err
 	//}
@@ -161,13 +146,56 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	return nil
 }
 
-func (d *DataBase) versionDataFix(ctx context.Context) {
-	//todo some model auto migrate data conversion
-	//conversationIDs, err := d.FindAllConversationConversationID(ctx)
-	//if err != nil {
-	//	log.ZError(ctx, "FindAllConversationConversationID err", err)
-	//}
-	//for _, conversationID := range conversationIDs {
-	//	d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
-	//}
+func (d *DataBase) versionDataMigrate(ctx context.Context) error {
+	verModel, err := d.GetAppSDKVersion(ctx)
+	log.ZDebug(ctx, "SDK err is", errs.Unwrap(err))
+	if errs.Unwrap(err) == gorm.ErrRecordNotFound {
+		err = d.conn.AutoMigrate(
+			&model_struct.LocalAppSDKVersion{},
+			&model_struct.LocalFriend{},
+			&model_struct.LocalFriendRequest{},
+			&model_struct.LocalGroup{},
+			&model_struct.LocalGroupMember{},
+			&model_struct.LocalGroupRequest{},
+			&model_struct.LocalErrChatLog{},
+			&model_struct.LocalUser{},
+			&model_struct.LocalBlack{},
+			&model_struct.LocalConversation{},
+			&model_struct.NotificationSeqs{},
+			&model_struct.LocalChatLog{},
+			&model_struct.LocalAdminGroupRequest{},
+			&model_struct.LocalWorkMomentsNotification{},
+			&model_struct.LocalWorkMomentsNotificationUnreadCount{},
+			&model_struct.TempCacheLocalChatLog{},
+			&model_struct.LocalChatLogReactionExtensions{},
+			&model_struct.LocalUpload{},
+			&model_struct.LocalStranger{},
+			&model_struct.LocalSendingMessages{},
+			&model_struct.LocalUserCommand{},
+			&model_struct.LocalVersionSync{},
+		)
+		if err != nil {
+			return err
+		}
+		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if verModel.Version != version.Version {
+		switch version.Version {
+		case "3.8.0":
+			d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{})
+		}
+		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

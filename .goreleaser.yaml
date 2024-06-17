@@ -58,8 +58,8 @@ builds:
       - amd64
       - arm64
     goarm:
-      - 6
-      - 7
+      - "6"
+      - "7"
   - id: openIM.wasm
     main: wasm/cmd/main.go  # 指定 wasm 主文件路径
     binary: openIM.wasm
