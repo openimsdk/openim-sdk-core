@@ -19,7 +19,6 @@ package db
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -29,6 +28,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
 
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -36,9 +36,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
-
-//go:embed../../version
-var Version string
 
 type DataBase struct {
 	loginUserID   string
@@ -181,22 +178,22 @@ func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: Version})
+		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
 		if err != nil {
 			return err
 		}
 
 		return nil
 	} else if err != nil {
-		return errs.Wrap(err)
+		return err
 	}
-	if verModel.Version != Version {
-		switch Version {
+	if verModel.Version != version.Version {
+		switch version.Version {
 		case "3.8.0":
 			d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{})
 		}
 		fmt.Println("now excute Set")
-		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: Version})
+		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
 		if err != nil {
 			return err
 		}
