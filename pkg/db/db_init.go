@@ -150,7 +150,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 	verModel, err := d.GetAppSDKVersion(ctx)
 	log.ZDebug(ctx, "SDK err is", errs.Unwrap(err))
-	if errors.Is(errs.Unwrap(err), gorm.ErrRecordNotFound) {
+	if errs.Unwrap(err) == gorm.ErrRecordNotFound {
 		err = d.conn.AutoMigrate(
 			&model_struct.LocalAppSDKVersion{},
 			&model_struct.LocalFriend{},

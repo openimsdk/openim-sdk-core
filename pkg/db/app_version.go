@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/openimsdk/tools/errs"
@@ -19,7 +18,7 @@ func (d *DataBase) GetAppSDKVersion(ctx context.Context) (*model_struct.LocalApp
 func (d *DataBase) SetAppSDKVersion(ctx context.Context, appVersion *model_struct.LocalAppSDKVersion) error {
 	var exist model_struct.LocalAppSDKVersion
 	err := d.conn.WithContext(ctx).First(&exist).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if err == gorm.ErrRecordNotFound {
 		if createErr := d.conn.WithContext(ctx).Create(appVersion).Error; createErr != nil {
 			return errs.Wrap(createErr)
 		}
