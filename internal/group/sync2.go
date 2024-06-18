@@ -2,6 +2,8 @@ package group
 
 import (
 	"context"
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -12,7 +14,6 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"sync"
 )
 
 type BatchIncrementalReq struct {
@@ -109,10 +110,10 @@ func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs ...string) err
 
 func (g *Group) syncGroupMember(ctx context.Context, groupID string, resp *group.GetIncrementalGroupMemberResp) error {
 	groupMemberSyncer := incrversion.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
-		Ctx:      ctx,
-		DB:       g.db,
-		TabName:  g.groupMemberTableName(),
-		EntityID: groupID,
+		Ctx:       ctx,
+		DB:        g.db,
+		TableName: g.groupMemberTableName(),
+		EntityID:  groupID,
 		Key: func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
 		},
@@ -158,10 +159,10 @@ func (g *Group) syncGroupMember(ctx context.Context, groupID string, resp *group
 
 func (g *Group) onlineSyncGroupMember(ctx context.Context, groupID string, delete, update, insert []*sdkws.GroupMemberFullInfo, version uint64) error {
 	groupMemberSyncer := incrversion.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
-		Ctx:      ctx,
-		DB:       g.db,
-		TabName:  g.groupMemberTableName(),
-		EntityID: groupID,
+		Ctx:       ctx,
+		DB:        g.db,
+		TableName: g.groupMemberTableName(),
+		EntityID:  groupID,
 		Key: func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
 		},
@@ -235,10 +236,10 @@ func (g *Group) onlineSyncGroupMember(ctx context.Context, groupID string, delet
 
 func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 	opt := incrversion.VersionSynchronizer[*model_struct.LocalGroup, *group.GetIncrementalJoinGroupResp]{
-		Ctx:      ctx,
-		DB:       g.db,
-		TabName:  g.groupTableName(),
-		EntityID: g.loginUserID,
+		Ctx:       ctx,
+		DB:        g.db,
+		TableName: g.groupTableName(),
+		EntityID:  g.loginUserID,
 		Key: func(LocalGroup *model_struct.LocalGroup) string {
 			return LocalGroup.GroupID
 		},

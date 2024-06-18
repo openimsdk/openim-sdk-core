@@ -2,6 +2,7 @@ package module
 
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/protocol/relation"
 )
 
 type TestFriendManager struct {
@@ -9,7 +10,7 @@ type TestFriendManager struct {
 }
 
 func (t *TestFriendManager) ImportFriends(ownerUserID string, friendUserIDs []string) error {
-	req := &friend.ImportFriendReq{
+	req := &relation.ImportFriendReq{
 		OwnerUserID:   ownerUserID,
 		FriendUserIDs: friendUserIDs,
 	}

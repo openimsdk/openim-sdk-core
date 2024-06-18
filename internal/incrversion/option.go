@@ -14,7 +14,7 @@ import (
 type VersionSynchronizer[V, R any] struct {
 	Ctx           context.Context
 	DB            db_interface.VersionSyncModel
-	TabName       string
+	TableName       string
 	EntityID      string
 	Key           func(V) string
 	Local         func() ([]V, error)
@@ -31,7 +31,7 @@ type VersionSynchronizer[V, R any] struct {
 }
 
 func (o *VersionSynchronizer[V, R]) getVersionInfo() (*model_struct.LocalVersionSync, error) {
-	versionInfo, err := o.DB.GetVersionSync(o.Ctx, o.TabName, o.EntityID)
+	versionInfo, err := o.DB.GetVersionSync(o.Ctx, o.TableName, o.EntityID)
 	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
 		log.ZWarn(o.Ctx, "get version info", err)
 		return nil, err
@@ -41,7 +41,7 @@ func (o *VersionSynchronizer[V, R]) getVersionInfo() (*model_struct.LocalVersion
 }
 
 func (o *VersionSynchronizer[V, R]) updateVersionInfo(lvs *model_struct.LocalVersionSync, resp R) error {
-	lvs.Table = o.TabName
+	lvs.Table = o.TableName
 	lvs.EntityID = o.EntityID
 	lvs.VersionID, lvs.Version = o.Version(resp)
 	return o.DB.SetVersionSync(o.Ctx, lvs)
@@ -73,7 +73,7 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 	insert := o.Insert(resp)
 
 	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) {
-		log.ZDebug(o.Ctx, "no data to sync", "table", o.TabName, "entityID", o.EntityID)
+		log.ZDebug(o.Ctx, "no data to sync", "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
 
@@ -128,7 +128,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	insert := o.Insert(resp)
 	_, version := o.Version(resp)
 	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) {
-		log.ZWarn(o.Ctx, "exception no data to sync", errs.New("notification no data"), "table", o.TabName, "entityID", o.EntityID)
+		log.ZWarn(o.Ctx, "exception no data to sync", errs.New("notification no data"), "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
 	if lvs.Version+1 == version {
@@ -161,7 +161,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		return o.updateVersionInfo(lvs, resp)
 	} else if version <= lvs.Version {
 		log.ZWarn(o.Ctx, "version less than local version", errs.New("version less than local version"),
-			"table", o.TabName, "entityID", o.EntityID, "version", version, "localVersion", lvs.Version)
+			"table", o.TableName, "entityID", o.EntityID, "version", version, "localVersion", lvs.Version)
 		return nil
 	} else {
 		// Re-fetch the version number from the server, compare it with the local version number, and fetch the difference once.
