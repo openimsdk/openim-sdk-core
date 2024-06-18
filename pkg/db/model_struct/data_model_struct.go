@@ -17,6 +17,7 @@ package model_struct
 import (
 	"database/sql/driver"
 	"encoding/json"
+
 	"github.com/openimsdk/tools/errs"
 )
 
@@ -73,17 +74,17 @@ type LocalFriend struct {
 // int64 HandleTime = 8;
 // string Ex = 9;
 // }
-// open_im_sdk.FriendRequest == imdb.FriendRequest
+// open_im_sdk.FriendRequest == imdb.FriendRequest.
 type LocalFriendRequest struct {
 	FromUserID   string `gorm:"column:from_user_id;primary_key;type:varchar(64)" json:"fromUserID"`
 	FromNickname string `gorm:"column:from_nickname;type:varchar;type:varchar(255)" json:"fromNickname"`
 	FromFaceURL  string `gorm:"column:from_face_url;type:varchar;type:varchar(255)" json:"fromFaceURL"`
-	//FromGender   int32  `gorm:"column:from_gender" json:"fromGender"`
+	// FromGender   int32  `gorm:"column:from_gender" json:"fromGender"`
 
 	ToUserID   string `gorm:"column:to_user_id;primary_key;type:varchar(64)" json:"toUserID"`
 	ToNickname string `gorm:"column:to_nickname;type:varchar;type:varchar(255)" json:"toNickname"`
 	ToFaceURL  string `gorm:"column:to_face_url;type:varchar;type:varchar(255)" json:"toFaceURL"`
-	//ToGender   int32  `gorm:"column:to_gender" json:"toGender"`
+	// ToGender   int32  `gorm:"column:to_gender" json:"toGender"`
 
 	HandleResult  int32  `gorm:"column:handle_result" json:"handleResult"`
 	ReqMsg        string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
@@ -199,7 +200,7 @@ func (LocalGroupMember) TableName() string {
 // string HandleUserID = 7;
 // int64 HandleTime = 8;
 // string Ex = 9;
-// }open_im_sdk.GroupRequest == imdb.GroupRequest
+// }open_im_sdk.GroupRequest == imdb.GroupRequest.
 type LocalGroupRequest struct {
 	GroupID       string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
 	GroupName     string `gorm:"column:group_name;size:255" json:"groupName"`
@@ -216,7 +217,7 @@ type LocalGroupRequest struct {
 	UserID      string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
 	Nickname    string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
 	UserFaceURL string `gorm:"column:user_face_url;type:varchar(255)" json:"userFaceURL"`
-	//Gender      int32  `gorm:"column:gender" json:"gender"`
+	// Gender      int32  `gorm:"column:gender" json:"gender"`
 
 	HandleResult  int32  `gorm:"column:handle_result" json:"handleResult"`
 	ReqMsg        string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
@@ -240,7 +241,7 @@ type LocalGroupRequest struct {
 // string Ex = 8;
 // int64 CreateTime = 9;
 // int32 AppMangerLevel = 10;
-// open_im_sdk.User == imdb.User
+// open_im_sdk.User == imdb.User.
 type LocalUser struct {
 	UserID           string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
 	Nickname         string `gorm:"column:name;type:varchar(255)" json:"nickname"`
@@ -260,13 +261,13 @@ type LocalUser struct {
 // string OperatorUserID = 6;
 // string Ex = 7;
 // }
-// open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID)
+// open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID).
 type LocalBlack struct {
 	OwnerUserID string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
 	BlockUserID string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"userID"`
 	Nickname    string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
 	FaceURL     string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	//Gender         int32  `gorm:"column:gender" json:"gender"`
+	// Gender         int32  `gorm:"column:gender" json:"gender"`
 	CreateTime     int64  `gorm:"column:create_time" json:"createTime"`
 	AddSource      int32  `gorm:"column:add_source" json:"addSource"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
@@ -402,7 +403,7 @@ type TempCacheLocalChatLog struct {
 //	is_pinned int(10) NOT NULL ,
 //	PRIMARY KEY (conversation_id)
 //
-// )
+// ).
 type LocalConversation struct {
 	ConversationID        string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
 	ConversationType      int32  `gorm:"column:conversation_type" json:"conversationType"`
@@ -447,7 +448,7 @@ type LocalConversationUnreadMessage struct {
 // string HandleUserID = 7;
 // int64 HandleTime = 8;
 // string Ex = 9;
-// }open_im_sdk.GroupRequest == imdb.GroupRequest
+// }open_im_sdk.GroupRequest == imdb.GroupRequest.
 type LocalAdminGroupRequest struct {
 	LocalGroupRequest
 }
@@ -571,4 +572,12 @@ type LocalVersionSync struct {
 
 func (LocalVersionSync) TableName() string {
 	return "local_sync_version"
+}
+
+type LocalAppSDKVersion struct {
+	Version string `gorm:"column:version;type:varchar(255);primary_key" json:"version"`
+}
+
+func (LocalAppSDKVersion) TableName() string {
+	return "local_app_sdk_version"
 }
