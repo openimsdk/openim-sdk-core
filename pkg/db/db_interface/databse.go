@@ -231,6 +231,8 @@ type FriendModel interface {
 	UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error
 	GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error)
 	GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error)
+	BatchInsertFriend(ctx context.Context, friendList []*model_struct.LocalFriend) error
+
 	SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error)
 	GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID string) (*model_struct.LocalFriend, error)
 	GetFriendInfoList(ctx context.Context, friendUserIDList []string) ([]*model_struct.LocalFriend, error)

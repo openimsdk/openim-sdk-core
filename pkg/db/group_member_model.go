@@ -92,7 +92,7 @@ func (d *DataBase) GetGroupMemberListByGroupID(ctx context.Context, groupID stri
 func (d *DataBase) GetGroupMemberListByUserIDs(ctx context.Context, groupID string, filter int32, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
-	var groupMemberList []model_struct.LocalGroupMember
+	var groupMemberList []*model_struct.LocalGroupMember
 	var err error
 	switch filter {
 	case constant.GroupFilterAll:
@@ -100,22 +100,18 @@ func (d *DataBase) GetGroupMemberListByUserIDs(ctx context.Context, groupID stri
 	case constant.GroupFilterOwner:
 		err = d.conn.WithContext(ctx).Where("group_id = ? AND role_level = ? AND user_id IN ?", groupID, constant.GroupOwner, userIDs).Find(&groupMemberList).Error
 	case constant.GroupFilterAdmin:
-		err = d.conn.WithContext(ctx).Where("group_id = ? AND role_level = ? AND user_id IN ?", groupID, constant.GroupAdmin, userIDs).Order("join_time ASC").Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? AND role_level = ? AND user_id IN ?", groupID, constant.GroupAdmin, userIDs).Find(&groupMemberList).Error
 	case constant.GroupFilterOrdinaryUsers:
-		err = d.conn.WithContext(ctx).Where("group_id = ? AND role_level = ? AND user_id IN ?", groupID, constant.GroupOrdinaryUsers, userIDs).Order("join_time ASC").Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? AND role_level = ? AND user_id IN ?", groupID, constant.GroupOrdinaryUsers, userIDs).Find(&groupMemberList).Error
 	case constant.GroupFilterAdminAndOrdinaryUsers:
-		err = d.conn.WithContext(ctx).Where("group_id = ? AND (role_level = ? OR role_level = ?) AND user_id IN ?", groupID, constant.GroupAdmin, constant.GroupOrdinaryUsers, userIDs).Order("role_level DESC, join_time ASC").Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? AND (role_level = ? OR role_level = ?) AND user_id IN ?", groupID, constant.GroupAdmin, constant.GroupOrdinaryUsers, userIDs).Find(&groupMemberList).Error
 	case constant.GroupFilterOwnerAndAdmin:
-		err = d.conn.WithContext(ctx).Where("group_id = ? AND (role_level = ? OR role_level = ?) AND user_id IN ?", groupID, constant.GroupOwner, constant.GroupAdmin, userIDs).Order("role_level DESC, join_time ASC").Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? AND (role_level = ? OR role_level = ?) AND user_id IN ?", groupID, constant.GroupOwner, constant.GroupAdmin, userIDs).Find(&groupMemberList).Error
 	default:
 		return nil, errs.New("filter args failed.", "filter", filter).Wrap()
 	}
-	var transfer []*model_struct.LocalGroupMember
-	for _, member := range groupMemberList {
-		memberCopy := member
-		transfer = append(transfer, &memberCopy)
-	}
-	return transfer, errs.Wrap(err)
+
+	return groupMemberList, errs.Wrap(err)
 
 }
 
@@ -230,7 +226,7 @@ func (d *DataBase) BatchInsertGroupMember(ctx context.Context, groupMemberList [
 	if groupMemberList == nil {
 		return errors.New("nil")
 	}
-	return utils.Wrap(d.conn.WithContext(ctx).Create(groupMemberList).Error, "BatchInsertMessageList failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(groupMemberList).Error, "BatchInsertMessageList failed")
 }
 
 func (d *DataBase) DeleteGroupMember(ctx context.Context, groupID, userID string) error {

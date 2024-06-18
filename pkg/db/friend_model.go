@@ -21,8 +21,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
@@ -77,6 +79,15 @@ func (d *DataBase) GetPageFriendList(ctx context.Context, offset, count int) ([]
 	err := utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Offset(offset).Limit(count).Order("name").Find(&friendList).Error,
 		"GetFriendList failed")
 	return friendList, err
+}
+
+func (d *DataBase) BatchInsertFriend(ctx context.Context, friendList []*model_struct.LocalFriend) error {
+	d.friendMtx.Lock()
+	defer d.friendMtx.Unlock()
+	if friendList == nil {
+		return errs.New("nil").Wrap()
+	}
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(friendList).Error, "BatchInsertFriendList failed")
 }
 
 func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
