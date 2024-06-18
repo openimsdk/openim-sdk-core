@@ -63,6 +63,10 @@ type LocalFriend struct {
 	IsPinned       bool   `gorm:"column:is_pinned;" json:"isPinned"`
 }
 
+func (LocalFriend) TableName() string {
+	return "local_friends"
+}
+
 // message FriendRequest{
 // string  FromUserID = 1;
 // string ToUserID = 2;

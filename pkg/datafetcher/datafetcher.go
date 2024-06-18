@@ -2,6 +2,7 @@ package datafetcher
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
@@ -10,7 +11,7 @@ import (
 // DataFetcher is a struct that handles data synchronization
 type DataFetcher[T any] struct {
 	db              db_interface.VersionSyncModel
-	TabName         string
+	TableName       string
 	EntityID        string
 	Key             func(T) string
 	batchInsert     func(ctx context.Context, servers []T) error
@@ -25,11 +26,11 @@ type FetchDataFunc[T any] func(ctx context.Context, uids []string) ([]T, error)
 type FetchFromServerFunc[T any] func(ctx context.Context, uids []string) ([]T, error)
 
 // NewDataFetcher creates a new NewDataFetcher
-func NewDataFetcher[T any](db db_interface.VersionSyncModel, tabName string, entityID string, key func(T) string,
+func NewDataFetcher[T any](db db_interface.VersionSyncModel, tableName string, entityID string, key func(T) string,
 	batchInsert func(ctx context.Context, servers []T) error, fetchFromLocal FetchDataFunc[T], fetchFromServer FetchFromServerFunc[T]) *DataFetcher[T] {
 	return &DataFetcher[T]{
 		db:              db,
-		TabName:         tabName,
+		TableName:       tableName,
 		EntityID:        entityID,
 		Key:             key,
 		batchInsert:     batchInsert,
@@ -40,7 +41,7 @@ func NewDataFetcher[T any](db db_interface.VersionSyncModel, tabName string, ent
 
 // FetchWithPagination fetches data with pagination and fills missing data from server
 func (ds *DataFetcher[T]) FetchWithPagination(ctx context.Context, offset, limit int) ([]T, error) {
-	versionInfo, err := ds.db.GetVersionSync(ctx, ds.TabName, ds.EntityID)
+	versionInfo, err := ds.db.GetVersionSync(ctx, ds.TableName, ds.EntityID)
 	if err != nil {
 		return nil, err
 	}

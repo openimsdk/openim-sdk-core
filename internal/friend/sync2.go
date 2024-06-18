@@ -2,6 +2,8 @@ package friend
 
 import (
 	"context"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 )
 
 const (
@@ -46,4 +48,8 @@ func (f *Friend) IncrSyncFriends(ctx context.Context) error {
 	//}
 	//return opt.Sync()
 	return nil
+}
+
+func (f *Friend) friendListTableName() string {
+	return model_struct.LocalFriend{}.TableName()
 }

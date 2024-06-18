@@ -4,11 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/openimsdk/tools/log"
 )
@@ -56,7 +57,7 @@ func init() {
 	InitWithFlag()
 
 	if err := log.InitFromConfig("sdk.log", "sdk", 4,
-		true, false, "./chat_log", 2, 24); err != nil {
+		true, false, "./chat_log", 2, 24, "v1.0.0"); err != nil {
 		panic(err)
 	}
 }
