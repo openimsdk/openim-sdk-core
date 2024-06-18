@@ -16,8 +16,10 @@ package friend
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
@@ -25,6 +27,7 @@ import (
 	friend "github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/protocol/wrapperspb"
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/tools/log"
 )
@@ -166,10 +169,34 @@ func (f *Friend) GetFriendList(ctx context.Context) ([]*server_api_params.FullUs
 }
 
 func (f *Friend) GetFriendListPage(ctx context.Context, offset, count int32) ([]*server_api_params.FullUserInfo, error) {
-	localFriendList, err := f.db.GetPageFriendList(ctx, int(offset), int(count))
+	datafetcher := datafetcher.NewDataFetcher(
+		f.db,
+		f.friendListTableName(),
+		f.loginUserID,
+		func(localFriend *model_struct.LocalFriend) string {
+			return localFriend.FriendUserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalFriend) error {
+			return f.db.BatchInsertFriend(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			return f.db.GetFriendInfoList(ctx, userIDs)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
+		},
+	)
+
+	localFriendList, err := datafetcher.FetchWithPagination(ctx, int(offset), int(count))
 	if err != nil {
 		return nil, err
 	}
+
+	// don't need extra handle. only full pull.
 	localBlackList, err := f.db.GetBlackListDB(ctx)
 	if err != nil {
 		return nil, err

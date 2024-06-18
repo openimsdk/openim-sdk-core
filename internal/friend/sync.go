@@ -16,6 +16,7 @@ package friend
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	friend "github.com/openimsdk/protocol/relation"
@@ -158,4 +159,12 @@ func (f *Friend) SyncAllBlackList(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "black from local", "data", localData)
 	return f.blockSyncer.Sync(ctx, util.Batch(ServerBlackToLocalBlack, serverData), localData, nil)
+}
+
+func (f *Friend) GetDesignatedFriends(ctx context.Context, friendIDs []string) ([]*sdkws.FriendInfo, error) {
+	resp := &friend.GetDesignatedFriendsResp{}
+	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsRouter, &friend.GetDesignatedFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs}, &resp); err != nil {
+		return nil, err
+	}
+	return resp.FriendsInfo, nil
 }

@@ -16,9 +16,10 @@ package group
 
 import (
 	"context"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
 	"github.com/openimsdk/tools/utils/datautil"
-	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -176,8 +177,29 @@ func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.S
 	return g.SyncGroupMembers(ctx, groupMemberInfo.GroupID, groupMemberInfo.UserID)
 }
 
-func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
-	return g.db.GetJoinedGroupListDB(ctx)
+func (g *Group) GetJoinedGroupList(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, error) {
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupTableName(),
+		g.loginUserID,
+		func(localGroup *model_struct.LocalGroup) string {
+			return localGroup.GroupID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroup) error {
+			return g.db.BatchInsertGroup(ctx, values)
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+			return g.db.GetGroups(ctx, groupIDs)
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo), nil
+		},
+	)
+	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 }
 
 func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
@@ -261,9 +283,8 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
 			return g.db.BatchInsertGroupMember(ctx, values)
 		},
-		func(ctx context.Context, uids []string) ([]*model_struct.LocalGroupMember, error) {
-			//todo GetGroupMemberListSplit change to
-			return g.db.GetGroupMemberListSplit(ctx, groupID, filter, int(offset), int(count))
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			return g.db.GetGroupMemberListByUserIDs(ctx, groupID, filter, userIDs)
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
