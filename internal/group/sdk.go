@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
 	"github.com/openimsdk/tools/utils/datautil"
 	"time"
 
@@ -250,7 +251,30 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
-	return g.db.GetGroupMemberListSplit(ctx, groupID, filter, int(offset), int(count))
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupMemberTableName(),
+		groupID,
+		func(localGroupMember *model_struct.LocalGroupMember) string {
+			return localGroupMember.UserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
+			return g.db.BatchInsertGroupMember(ctx, values)
+		},
+		func(ctx context.Context, uids []string) ([]*model_struct.LocalGroupMember, error) {
+			//todo GetGroupMemberListSplit change to
+			return g.db.GetGroupMemberListSplit(ctx, groupID, filter, int(offset), int(count))
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
+		},
+	)
+	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
+
 }
 
 func (g *Group) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
