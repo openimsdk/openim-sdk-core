@@ -36,3 +36,10 @@ func (d *DataBase) SetVersionSync(ctx context.Context, lv *model_struct.LocalVer
 
 	return nil
 }
+
+func (d *DataBase) DeleteVersionSync(ctx context.Context, tableName, entityID string) error {
+	d.versionMtx.Lock()
+	defer d.versionMtx.Unlock()
+	localVersionSync := model_struct.LocalVersionSync{Table: tableName, EntityID: entityID}
+	return errs.WrapMsg(d.conn.WithContext(ctx).Delete(&localVersionSync).Error, "DeleteVersionSync failed")
+}

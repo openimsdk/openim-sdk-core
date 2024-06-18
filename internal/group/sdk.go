@@ -32,36 +32,6 @@ import (
 	"github.com/openimsdk/protocol/wrapperspb"
 )
 
-// // deprecated use CreateGroup
-// funcation (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
-//	req := &group.CreateGroupReq{
-//		GroupInfo: &sdkws.GroupInfo{
-//			GroupName:    groupBaseInfo.GroupName,
-//			Notification: groupBaseInfo.Notification,
-//			Introduction: groupBaseInfo.Introduction,
-//			FaceURL:      groupBaseInfo.FaceURL,
-//			Ex:           groupBaseInfo.Ex,
-//			GroupType:    groupBaseInfo.GroupType,
-//		},
-//	}
-//	if groupBaseInfo.NeedVerification != nil {
-//		req.GroupInfo.NeedVerification = *groupBaseInfo.NeedVerification
-//	}
-//	for _, info := range memberList {
-//		switch info.RoleLevel {
-//		case constant.GroupOrdinaryUsers:
-//			req.InitMembers = append(req.InitMembers, info.UserID)
-//		case constant.GroupOwner:
-//			req.OwnerUserID = info.UserID
-//		case constant.GroupAdmin:
-//			req.AdminUserIDs = append(req.AdminUserIDs, info.UserID)
-//		default:
-//			return nil, sdkerrs.ErrArgs.Wrap(fmt.Sprintf("CreateGroup: invalid role level %d", info.RoleLevel))
-//		}
-//	}
-//	return g.CreateGroup(ctx, req)
-// }
-
 func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
 	if req.OwnerUserID == "" {
 		req.OwnerUserID = g.loginUserID
@@ -74,10 +44,10 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 	if err != nil {
 		return nil, err
 	}
-	if err := g.SyncGroups(ctx, resp.GroupInfo.GroupID); err != nil {
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return nil, err
 	}
-	if err := g.SyncAllGroupMember(ctx, resp.GroupInfo.GroupID); err != nil {
+	if err := g.IncrSyncGroupMember(ctx, resp.GroupInfo.GroupID); err != nil {
 		return nil, err
 	}
 	return resp.GroupInfo, nil
@@ -90,12 +60,6 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 	if err := g.SyncSelfGroupApplications(ctx, groupID); err != nil {
 		return err
 	}
-	// if err := g.SyncJoinedGroup(ctx); err != nil {
-	// 	return err
-	// }
-	// if err := g.SyncGroupMember(ctx, groupID); err != nil {
-	// 	return err
-	// }
 	return nil
 }
 
@@ -103,26 +67,11 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
-	if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
-		return err
-	}
-	if err := g.deleteGroup(ctx, groupID); err != nil {
-		return err
-	}
-	// if err := g.SyncGroupMember(ctx, groupID); err != nil {
-	//	return err
-	// }
 	return nil
 }
 
 func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
-		return err
-	}
-	if err := g.deleteGroup(ctx, groupID); err != nil {
-		return err
-	}
-	if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
 		return err
 	}
 	return nil
@@ -137,7 +86,7 @@ func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool
 	if err != nil {
 		return err
 	}
-	if err := g.SyncGroups(ctx, groupID); err != nil {
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -150,12 +99,6 @@ func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID strin
 		err = util.ApiPost(ctx, constant.MuteGroupMemberRouter, &group.MuteGroupMemberReq{GroupID: groupID, UserID: userID, MutedSeconds: uint32(mutedSeconds)}, nil)
 	}
 	if err != nil {
-		return err
-	}
-	if err := g.SyncGroups(ctx, groupID); err != nil {
-		return err
-	}
-	if err := g.SyncGroupMembers(ctx, groupID, userID); err != nil {
 		return err
 	}
 	return nil
@@ -173,7 +116,7 @@ func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.S
 	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
 		return err
 	}
-	return g.SyncGroupMembers(ctx, groupMemberInfo.GroupID, groupMemberInfo.UserID)
+	return g.IncrSyncGroupMember(ctx, groupMemberInfo.GroupID)
 }
 
 func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
@@ -247,7 +190,7 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
 		return err
 	}
-	return g.SyncGroups(ctx, groupInfo.GroupID)
+	return g.IncrSyncJoinGroup(ctx)
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
@@ -296,21 +239,17 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	if err := util.ApiPost(ctx, constant.KickGroupMemberRouter, &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}, nil); err != nil {
 		return err
 	}
-	return g.SyncGroupMembers(ctx, groupID, userIDList...)
+	return g.IncrSyncGroupMember(ctx, groupID)
 }
 
 func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID string) error {
-	oldOwner, err := g.db.GetGroupMemberOwner(ctx, groupID)
-	if err != nil {
-		return err
-	}
 	if err := util.ApiPost(ctx, constant.TransferGroupRouter, &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}, nil); err != nil {
 		return err
 	}
-	if err := g.SyncGroups(ctx, groupID); err != nil {
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMembers(ctx, groupID, newOwnerUserID, oldOwner.UserID); err != nil {
+	if err := g.IncrSyncGroupMember(ctx, groupID); err != nil {
 		return err
 	}
 	return nil
@@ -320,10 +259,10 @@ func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, u
 	if err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}, nil); err != nil {
 		return err
 	}
-	if err := g.SyncGroups(ctx, groupID); err != nil {
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMembers(ctx, groupID, userIDList...); err != nil {
+	if err := g.IncrSyncGroupMember(ctx, groupID); err != nil {
 		return err
 	}
 	return nil

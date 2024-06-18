@@ -380,7 +380,6 @@ func (u *LoginMgr) run(ctx context.Context) {
 	u.longConnMgr.Run(ctx)
 	go u.msgSyncer.DoListener(ctx)
 	go common.DoListener(u.conversation, u.ctx)
-	go u.group.DeleteGroupAndMemberInfo(ctx)
 	go u.logoutListener(ctx)
 }
 

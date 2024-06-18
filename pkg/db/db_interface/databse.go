@@ -83,9 +83,6 @@ type MessageModel interface {
 	SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	// SearchMessageByContentTypeController(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error)
-	// SearchMessageByContentTypeAndKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error)
-	// BatchUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
-	// BatchSpecialUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
 	MessageIfExists(ctx context.Context, ClientMsgID string) (bool, error)
 	IsExistsInErrChatLogBySeq(ctx context.Context, seq int64) bool
 	MessageIfExistsBySeq(ctx context.Context, seq int64) (bool, error)
@@ -279,6 +276,7 @@ type SendingMessagesModel interface {
 type VersionSyncModel interface {
 	GetVersionSync(ctx context.Context, tableName, entityID string) (*model_struct.LocalVersionSync, error)
 	SetVersionSync(ctx context.Context, version *model_struct.LocalVersionSync) error
+	DeleteVersionSync(ctx context.Context, tableName, entityID string) error
 }
 type AppSDKVersion interface {
 	GetAppSDKVersion(ctx context.Context) (*model_struct.LocalAppSDKVersion, error)

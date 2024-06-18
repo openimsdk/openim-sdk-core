@@ -350,7 +350,7 @@ func (g *Group) doNotification2(ctx context.Context, msg *sdkws.MsgData) error {
 		if detail.Group == nil {
 			return errs.New(fmt.Sprintf("group is nil, groupID: %s", detail.Group.GroupID))
 		}
-		return g.SyncAllGroupMember(ctx, detail.Group.GroupID)
+		return g.IncrSyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.MemberKickedNotification: // 1508
 		var detail sdkws.MemberKickedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -364,41 +364,10 @@ func (g *Group) doNotification2(ctx context.Context, msg *sdkws.MsgData) error {
 			}
 		}
 		if self {
-			members, err := g.db.GetGroupMemberListSplit(ctx, detail.Group.GroupID, 0, 0, 999999)
-			if err != nil {
-				return err
-			}
-			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
-				return err
-			}
-			for _, member := range members {
-				data, err := json.Marshal(member)
-				if err != nil {
-					return err
-				}
-				g.listener().OnGroupMemberDeleted(string(data))
-			}
-			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
-			if err != nil {
-				return err
-			}
-			group.MemberCount = 0
-			data, err := json.Marshal(group)
-			if err != nil {
-				return err
-			}
-			if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
-				return err
-			}
-			g.listener().OnGroupInfoChanged(string(data))
-			g.listener().OnJoinedGroupDeleted(string(data))
-			return nil
+			return g.IncrSyncJoinGroup(ctx)
 		} else {
-			var userIDs []string
-			for _, info := range detail.KickedUserList {
-				userIDs = append(userIDs, info.UserID)
-			}
-			return g.SyncGroupMembers(ctx, detail.Group.GroupID, userIDs...)
+			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil,
+				detail.KickedUserList, nil, detail.GroupMemberVersion)
 		}
 	case constant.MemberQuitNotification: // 1504
 		var detail sdkws.MemberQuitTips
@@ -406,37 +375,11 @@ func (g *Group) doNotification2(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		if detail.QuitUser.UserID == g.loginUserID {
-			members, err := g.db.GetGroupMemberListSplit(ctx, detail.Group.GroupID, 0, 0, 999999)
-			if err != nil {
-				return err
-			}
-			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
-				return err
-			}
-			for _, member := range members {
-				data, err := json.Marshal(member)
-				if err != nil {
-					return err
-				}
-				g.listener().OnGroupMemberDeleted(string(data))
-			}
-			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
-			if err != nil {
-				return err
-			}
-			group.MemberCount = 0
-			data, err := json.Marshal(group)
-			if err != nil {
-				return err
-			}
-			if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
-				return err
-			}
-			g.listener().OnGroupInfoChanged(string(data))
-			return nil
+			return g.IncrSyncJoinGroup(ctx)
 		} else {
 			//return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.QuitUser.UserID)
-			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, []*sdkws.GroupMemberFullInfo{detail.QuitUser}, nil, nil, detail.GroupMemberVersion)
+			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, []*sdkws.GroupMemberFullInfo{detail.QuitUser},
+				nil, nil, detail.GroupMemberVersion)
 		}
 	case constant.MemberInvitedNotification: // 1509
 		var detail sdkws.MemberInvitedTips
@@ -453,7 +396,8 @@ func (g *Group) doNotification2(ctx context.Context, msg *sdkws.MsgData) error {
 			}
 			return g.IncrSyncGroupMember(ctx, detail.Group.GroupID)
 		} else {
-			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil, nil, detail.InvitedUserList, detail.GroupMemberVersion)
+			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil, nil,
+				detail.InvitedUserList, detail.GroupMemberVersion)
 		}
 	case constant.MemberEnterNotification: // 1510
 		var detail sdkws.MemberEnterTips
@@ -466,7 +410,8 @@ func (g *Group) doNotification2(ctx context.Context, msg *sdkws.MsgData) error {
 			}
 			return g.IncrSyncGroupMember(ctx, detail.Group.GroupID)
 		} else {
-			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil, nil, []*sdkws.GroupMemberFullInfo{detail.EntrantUser}, detail.GroupMemberVersion)
+			return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil, nil,
+				[]*sdkws.GroupMemberFullInfo{detail.EntrantUser}, detail.GroupMemberVersion)
 		}
 	case constant.GroupDismissedNotification: // 1511
 		var detail sdkws.GroupDismissedTips
@@ -474,60 +419,60 @@ func (g *Group) doNotification2(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		g.listener().OnGroupDismissed(utils.StructToJsonString(detail.Group))
-		if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
-			return err
-		}
-		if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
-			return err
-		}
-		return g.SyncAllGroupMember(ctx, detail.Group.GroupID)
+
+		return g.IncrSyncJoinGroup(ctx)
 	case constant.GroupMemberMutedNotification: // 1512
 		var detail sdkws.GroupMemberMutedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.MutedUser.UserID)
+		return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil,
+			[]*sdkws.GroupMemberFullInfo{detail.MutedUser}, nil, detail.GroupMemberVersion)
 	case constant.GroupMemberCancelMutedNotification: // 1513
 		var detail sdkws.GroupMemberCancelMutedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.MutedUser.UserID)
+		return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil,
+			[]*sdkws.GroupMemberFullInfo{detail.MutedUser}, nil, detail.GroupMemberVersion)
 	case constant.GroupMutedNotification: // 1514
-		return g.SyncGroups(ctx, msg.GroupID)
+		return g.IncrSyncJoinGroup(ctx)
 	case constant.GroupCancelMutedNotification: // 1515
-		return g.SyncGroups(ctx, msg.GroupID)
+		return g.IncrSyncJoinGroup(ctx)
 	case constant.GroupMemberInfoSetNotification: // 1516
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 
-		return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.ChangedUser.UserID) //detail.ChangedUser.UserID
+		return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil,
+			[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, detail.GroupMemberVersion)
 	case constant.GroupMemberSetToAdminNotification: // 1517
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.ChangedUser.UserID)
+		return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil,
+			[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, detail.GroupMemberVersion)
 	case constant.GroupMemberSetToOrdinaryUserNotification: // 1518
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		return g.SyncGroupMembers(ctx, detail.Group.GroupID, detail.ChangedUser.UserID)
+		return g.onlineSyncGroupMember(ctx, detail.Group.GroupID, nil,
+			[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, detail.GroupMemberVersion)
 	case constant.GroupInfoSetAnnouncementNotification: // 1519
 		var detail sdkws.GroupInfoSetAnnouncementTips //
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		return g.SyncGroups(ctx, detail.Group.GroupID)
+		return g.IncrSyncJoinGroup(ctx)
 	case constant.GroupInfoSetNameNotification: // 1520
 		var detail sdkws.GroupInfoSetNameTips //
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		return g.SyncGroups(ctx, detail.Group.GroupID)
+		return g.IncrSyncJoinGroup(ctx)
 	default:
 		return fmt.Errorf("unknown tips type: %d", msg.ContentType)
 	}
