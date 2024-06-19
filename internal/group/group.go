@@ -71,7 +71,7 @@ func (g *Group) initSyncer() {
 			if err := g.db.DeleteGroupAllMembers(ctx, value.GroupID); err != nil {
 				return err
 			}
-			if err := g.db.DeleteVersionSync(ctx, g.groupMemberTableName(), value.GroupID); err != nil {
+			if err := g.db.DeleteVersionSync(ctx, g.groupAndMemberVersionTableName(), value.GroupID); err != nil {
 				return err
 			}
 			return g.db.DeleteGroup(ctx, value.GroupID)
@@ -183,8 +183,8 @@ func (g *Group) initSyncer() {
 		syncer.WithBatchInsert[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
 			return g.db.BatchInsertGroupMember(ctx, values)
 		}),
-		syncer.WithDeleteAll[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(ctx context.Context, entityID string) error {
-			return g.db.DeleteGroupAllMembers(ctx, entityID)
+		syncer.WithDeleteAll[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(ctx context.Context, groupID string) error {
+			return g.db.DeleteGroupAllMembers(ctx, groupID)
 		}),
 		syncer.WithBatchPageReq[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(entityID string) page.PageReq {
 			return &group.GetGroupMemberListReq{GroupID: entityID, Pagination: &sdkws.RequestPagination{ShowNumber: 100}}

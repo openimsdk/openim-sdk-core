@@ -16,6 +16,9 @@ package friend
 
 import (
 	"context"
+	"fmt"
+	"github.com/openimsdk/tools/utils/datautil"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -34,9 +37,9 @@ func (f *Friend) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID
 		return err
 	}
 	if toUserID == f.loginUserID {
-		return f.requestRecvSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
+		return f.requestRecvSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
 	} else if fromUserID == f.loginUserID {
-		return f.requestSendSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
+		return f.requestSendSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, resp.FriendRequests), localData, nil)
 	}
 	return nil
 }
@@ -55,7 +58,7 @@ func (f *Friend) SyncAllSelfFriendApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return f.requestSendSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
+	return f.requestSendSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 
 // recv
@@ -70,10 +73,17 @@ func (f *Friend) SyncAllFriendApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return f.requestRecvSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
+	return f.requestRecvSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 
 func (f *Friend) SyncAllFriendList(ctx context.Context) error {
+	t := time.Now()
+	defer func(start time.Time) {
+
+		elapsed := time.Since(start).Milliseconds()
+		log.ZDebug(ctx, "SyncAllFriendList fn call end", "cost time", fmt.Sprintf("%d ms", elapsed))
+
+	}(t)
 	return f.IncrSyncFriends(ctx)
 	//req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	//fn := func(resp *friend.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
@@ -158,7 +168,7 @@ func (f *Friend) SyncAllBlackList(ctx context.Context) error {
 		return err
 	}
 	log.ZDebug(ctx, "black from local", "data", localData)
-	return f.blockSyncer.Sync(ctx, util.Batch(ServerBlackToLocalBlack, serverData), localData, nil)
+	return f.blockSyncer.Sync(ctx, datautil.Batch(ServerBlackToLocalBlack, serverData), localData, nil)
 }
 
 func (f *Friend) GetDesignatedFriends(ctx context.Context, friendIDs []string) ([]*sdkws.FriendInfo, error) {

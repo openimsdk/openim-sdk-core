@@ -27,6 +27,7 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -262,7 +263,7 @@ func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*mo
 	if err != nil {
 		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromSvr failed")
 	}
-	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
+	return datautil.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
 }
 
 // GetSingleUserFromSvr retrieves user information from the server.

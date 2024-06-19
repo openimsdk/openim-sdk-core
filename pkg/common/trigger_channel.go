@@ -70,18 +70,6 @@ func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 	return sendCmd(ch, c2v, 100)
 }
 
-func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-	c2v := Cmd2Value{
-		Cmd:   constant.CmdDeleteConversation,
-		Value: DeleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
-	}
-
-	return sendCmd(conversationCh, c2v, 100)
-}
-
 func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")

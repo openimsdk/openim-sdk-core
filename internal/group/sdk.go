@@ -48,7 +48,7 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return nil, err
 	}
-	if err := g.IncrSyncGroupMember(ctx, resp.GroupInfo.GroupID); err != nil {
+	if err := g.IncrSyncGroupAndMember(ctx, resp.GroupInfo.GroupID); err != nil {
 		return nil, err
 	}
 	return resp.GroupInfo, nil
@@ -87,7 +87,7 @@ func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool
 	if err != nil {
 		return err
 	}
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
+	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}
 	return nil
@@ -117,7 +117,7 @@ func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.S
 	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
 		return err
 	}
-	return g.IncrSyncGroupMember(ctx, groupMemberInfo.GroupID)
+	return g.IncrSyncGroupAndMember(ctx, groupMemberInfo.GroupID)
 }
 
 func (g *Group) GetJoinedGroupList(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, error) {
@@ -167,7 +167,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 			for i := range groups.GroupInfos {
 				groups.GroupInfos[i].MemberCount = 0
 			}
-			res = append(res, util.Batch(ServerGroupToLocalGroup, groups.GroupInfos)...)
+			res = append(res, datautil.Batch(ServerGroupToLocalGroup, groups.GroupInfos)...)
 		}
 	}
 	return res, nil
@@ -212,13 +212,13 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
 		return err
 	}
-	return g.IncrSyncJoinGroup(ctx)
+	return g.IncrSyncGroupAndMember(ctx)
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupMemberTableName(),
+		g.groupAndMemberVersionTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -260,17 +260,14 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	if err := util.ApiPost(ctx, constant.KickGroupMemberRouter, &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}, nil); err != nil {
 		return err
 	}
-	return g.IncrSyncGroupMember(ctx, groupID)
+	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
 func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID string) error {
 	if err := util.ApiPost(ctx, constant.TransferGroupRouter, &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}, nil); err != nil {
 		return err
 	}
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
-		return err
-	}
-	if err := g.IncrSyncGroupMember(ctx, groupID); err != nil {
+	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}
 	return nil
@@ -280,10 +277,7 @@ func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, u
 	if err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}, nil); err != nil {
 		return err
 	}
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
-		return err
-	}
-	if err := g.IncrSyncGroupMember(ctx, groupID); err != nil {
+	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}
 	return nil
