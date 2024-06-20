@@ -319,9 +319,7 @@ func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, u
 	if err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}, nil); err != nil {
 		return err
 	}
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
-		return err
-	}
+
 	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}

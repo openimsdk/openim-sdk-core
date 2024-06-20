@@ -161,7 +161,6 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		log.ZWarn(o.Ctx, "exception no data to sync", errs.New("notification no data"), "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
-	log.ZDebug(o.Ctx, "check version sync", "table", o.TableName, "entityID", o.EntityID, "versionID", versionID, "localVersionID", lvs.VersionID, "version", version, "localVersion", lvs.Version)
 	/// If the version unique ID cannot correspond with the local version,
 	// it indicates that the data might have been tampered with or an exception has occurred.
 	//Trigger the complete client-server incremental synchronization.
