@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 	"gorm.io/gorm"
+	"reflect"
 	"sort"
 )
 
@@ -48,6 +49,9 @@ func (o *VersionSynchronizer[V, R]) updateVersionInfo(lvs *model_struct.LocalVer
 	lvs.VersionID, lvs.Version = o.Version(resp)
 	return o.DB.SetVersionSync(o.Ctx, lvs)
 }
+func judgeInterfaceIsNil(data any) bool {
+	return reflect.ValueOf(data).Kind() == reflect.Ptr && reflect.ValueOf(data).IsNil()
+}
 
 func (o *VersionSynchronizer[V, R]) Sync() error {
 	var lvs *model_struct.LocalVersionSync
@@ -75,10 +79,13 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 	changes := o.Update(resp)
 	insert := o.Insert(resp)
 	if o.ExtraData != nil {
-		extraData = o.ExtraData(resp)
+		temp := o.ExtraData(resp)
+		if !judgeInterfaceIsNil(temp) {
+			extraData = temp
+		}
 	}
 
-	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && o.ExtraData == nil {
+	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && extraData == nil {
 		log.ZDebug(o.Ctx, "no data to sync", "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
@@ -141,16 +148,21 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	insert := o.Insert(resp)
 	versionID, version := o.Version(resp)
 	if o.ExtraData != nil {
-		extraData = o.ExtraData(resp)
+		temp := o.ExtraData(resp)
+		if !judgeInterfaceIsNil(temp) {
+			extraData = temp
+		}
 	}
-	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && o.ExtraData == nil {
+	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && extraData == nil {
 		log.ZWarn(o.Ctx, "exception no data to sync", errs.New("notification no data"), "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
+	log.ZDebug(o.Ctx, "check version sync", "table", o.TableName, "entityID", o.EntityID, "versionID", versionID, "localVersionID", lvs.VersionID, "version", version, "localVersion", lvs.Version)
 	/// If the version unique ID cannot correspond with the local version,
 	// it indicates that the data might have been tampered with or an exception has occurred.
 	//Trigger the complete client-server incremental synchronization.
 	if versionID != lvs.VersionID {
+		log.ZDebug(o.Ctx, "version id not match", errs.New("version id not match"), "versionID", versionID, "localVersionID", lvs.VersionID)
 		o.ServerVersion = nil
 		return o.Sync()
 	}

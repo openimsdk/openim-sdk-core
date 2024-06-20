@@ -150,3 +150,9 @@ type UploadFileCallback interface {
 type UploadLogProgress interface {
 	OnProgress(current int64, size int64)
 }
+
+type AppDataSyncListener interface {
+	OnAppDataSyncStart()
+	OnAppDataSyncProgress(progress int)
+	OnAppDataSyncFinish()
+}

@@ -142,14 +142,18 @@ func (g *Group) syncGroupAndMember(ctx context.Context, groupID string, resp *gr
 			return resp.Group
 		},
 		ExtraDataProcessor: func(ctx context.Context, data any) error {
-			local, err := g.db.GetJoinedGroupListDB(ctx)
-			if err != nil {
-				return err
-			}
 			groupInfo, ok := data.(*sdkws.GroupInfo)
 			if !ok {
 				return errs.New("group info type error")
 			}
+			if groupInfo == nil {
+				return nil
+			}
+			local, err := g.db.GetJoinedGroupListDB(ctx)
+			if err != nil {
+				return err
+			}
+			log.ZDebug(ctx, "group info", "groupInfo", groupInfo)
 			changes := datautil.Batch(ServerGroupToLocalGroup, []*sdkws.GroupInfo{groupInfo})
 			kv := datautil.SliceToMapAny(local, func(e *model_struct.LocalGroup) (string, *model_struct.LocalGroup) {
 				return e.GroupID, e
@@ -244,14 +248,18 @@ func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, de
 			return resp.Group
 		},
 		ExtraDataProcessor: func(ctx context.Context, data any) error {
-			local, err := g.db.GetJoinedGroupListDB(ctx)
-			if err != nil {
-				return err
-			}
 			groupInfo, ok := data.(*sdkws.GroupInfo)
 			if !ok {
 				return errs.New("group info type error")
 			}
+			if groupInfo == nil {
+				return nil
+			}
+			local, err := g.db.GetJoinedGroupListDB(ctx)
+			if err != nil {
+				return err
+			}
+			log.ZDebug(ctx, "group info", "groupInfo", groupInfo)
 			changes := datautil.Batch(ServerGroupToLocalGroup, []*sdkws.GroupInfo{groupInfo})
 			kv := datautil.SliceToMapAny(local, func(e *model_struct.LocalGroup) (string, *model_struct.LocalGroup) {
 				return e.GroupID, e
