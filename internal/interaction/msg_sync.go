@@ -16,11 +16,12 @@ package interaction
 
 import (
 	"context"
+	"strings"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"strings"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -76,6 +77,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	if len(conversationIDList) == 0 {
 		m.reinstalled = true
 	}
+	//TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
 	for _, v := range conversationIDList {
 		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, v)
 		if err != nil {
