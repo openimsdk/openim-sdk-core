@@ -36,39 +36,48 @@ func DismissGroup(callback open_im_sdk_callback.Base, operationID string, groupI
 	call(callback, operationID, UserForSDK.Group().DismissGroup, groupID)
 }
 
-func SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, roleLevel int) {
-	call(callback, operationID, UserForSDK.Group().SetGroupMemberRoleLevel, groupID, userID, roleLevel)
-}
-
 func SetGroupVerification(callback open_im_sdk_callback.Base, operationID string, groupID string, verification int32) {
 	call(callback, operationID, UserForSDK.Group().SetGroupVerification, groupID, verification)
 }
+
 func SetGroupApplyMemberFriend(callback open_im_sdk_callback.Base, operationID string, groupID string, rule int32) {
 	call(callback, operationID, UserForSDK.Group().SetGroupApplyMemberFriend, groupID, rule)
+}
+
+func SetGroupLookMemberInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, rule int32) {
+	call(callback, operationID, UserForSDK.Group().SetGroupLookMemberInfo, groupID, rule)
 }
 
 func ChangeGroupMute(callback open_im_sdk_callback.Base, operationID string, groupID string, isMute bool) {
 	call(callback, operationID, UserForSDK.Group().ChangeGroupMute, groupID, isMute)
 }
 
-func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupInfo string) {
-	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupInfo)
-}
-
-func KickGroupMember(callback open_im_sdk_callback.Base, operationID string, groupID string, reason string, userIDList string) {
-	call(callback, operationID, UserForSDK.Group().KickGroupMember, groupID, reason, userIDList)
+func ChangeGroupMemberMute(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, mutedSeconds int) {
+	call(callback, operationID, UserForSDK.Group().ChangeGroupMemberMute, groupID, userID, mutedSeconds)
 }
 
 func TransferGroupOwner(callback open_im_sdk_callback.Base, operationID string, groupID string, newOwnerUserID string) {
 	call(callback, operationID, UserForSDK.Group().TransferGroupOwner, groupID, newOwnerUserID)
 }
 
-func ChangeGroupMemberMute(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, mutedSeconds int) {
-	call(callback, operationID, UserForSDK.Group().ChangeGroupMemberMute, groupID, userID, mutedSeconds)
+func KickGroupMember(callback open_im_sdk_callback.Base, operationID string, groupID string, reason string, userIDList string) {
+	call(callback, operationID, UserForSDK.Group().KickGroupMember, groupID, reason, userIDList)
+}
+
+func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupInfo string) {
+	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupInfo)
 }
 
 func SetGroupMemberInfo(callback open_im_sdk_callback.Base, operationID string, groupMemberInfo string) {
 	call(callback, operationID, UserForSDK.Group().SetGroupMemberInfo, groupMemberInfo)
+}
+
+func SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, roleLevel int) {
+	call(callback, operationID, UserForSDK.Group().SetGroupMemberRoleLevel, groupID, userID, roleLevel)
+}
+
+func SetGroupMemberNickname(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, groupMemberNickname string) {
+	call(callback, operationID, UserForSDK.Group().SetGroupMemberNickname, groupID, userID, groupMemberNickname)
 }
 
 func GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
@@ -81,10 +90,6 @@ func GetSpecifiedGroupsInfo(callback open_im_sdk_callback.Base, operationID stri
 
 func SearchGroups(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, UserForSDK.Group().SearchGroups, searchParam)
-}
-
-func SetGroupLookMemberInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, rule int32) {
-	call(callback, operationID, UserForSDK.Group().SetGroupLookMemberInfo, groupID, rule)
 }
 
 func GetGroupMemberOwnerAndAdmin(callback open_im_sdk_callback.Base, operationID string, groupID string) {
@@ -129,8 +134,4 @@ func AcceptGroupApplication(callback open_im_sdk_callback.Base, operationID stri
 
 func RefuseGroupApplication(callback open_im_sdk_callback.Base, operationID string, groupID string, fromUserID string, handleMsg string) {
 	call(callback, operationID, UserForSDK.Group().RefuseGroupApplication, groupID, fromUserID, handleMsg)
-}
-
-func SetGroupMemberNickname(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, groupMemberNickname string) {
-	call(callback, operationID, UserForSDK.Group().SetGroupMemberNickname, groupID, userID, groupMemberNickname)
 }
