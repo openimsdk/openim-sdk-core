@@ -32,8 +32,8 @@ func (g *Group) getIncrementalGroupMemberBatch(ctx context.Context, groups []*gr
 	return resp.List, nil
 }
 
-func (g *Group) groupMemberTableName() string {
-	return model_struct.LocalGroupMember{}.TableName()
+func (g *Group) groupAndMemberVersionTableName() string {
+	return "local_group_entities_version"
 }
 
 func (g *Group) groupTableName() string {
@@ -48,10 +48,10 @@ func (g *Group) IncrSyncJoinGroupMember(ctx context.Context) error {
 	groupIDs := datautil.Slice(groups, func(e *model_struct.LocalGroup) string {
 		return e.GroupID
 	})
-	return g.IncrSyncGroupMember(ctx, groupIDs...)
+	return g.IncrSyncGroupAndMember(ctx, groupIDs...)
 }
 
-func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs ...string) error {
+func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) error {
 	var wg sync.WaitGroup
 	if len(groupIDs) == 0 {
 		return nil
@@ -75,7 +75,7 @@ func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs ...string) err
 			req := group.GetIncrementalGroupMemberReq{
 				GroupID: groupID,
 			}
-			lvs, err := g.db.GetVersionSync(ctx, g.groupMemberTableName(), groupID)
+			lvs, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 			if err == nil {
 				req.VersionID = lvs.VersionID
 				req.Version = lvs.Version
@@ -94,7 +94,7 @@ func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs ...string) err
 			tempGroupID := groupID
 			wg.Add(1)
 			go func() error {
-				if err := g.syncGroupMember(ctx, tempGroupID, tempResp); err != nil {
+				if err := g.syncGroupAndMember(ctx, tempGroupID, tempResp); err != nil {
 					return err
 				}
 				wg.Done()
@@ -108,11 +108,11 @@ func (g *Group) IncrSyncGroupMember(ctx context.Context, groupIDs ...string) err
 	}
 }
 
-func (g *Group) syncGroupMember(ctx context.Context, groupID string, resp *group.GetIncrementalGroupMemberResp) error {
+func (g *Group) syncGroupAndMember(ctx context.Context, groupID string, resp *group.GetIncrementalGroupMemberResp) error {
 	groupMemberSyncer := incrversion.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
 		Ctx:       ctx,
 		DB:        g.db,
-		TableName: g.groupMemberTableName(),
+		TableName: g.groupAndMemberVersionTableName(),
 		EntityID:  groupID,
 		Key: func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -138,6 +138,29 @@ func (g *Group) syncGroupMember(ctx context.Context, groupID string, resp *group
 		Insert: func(resp *group.GetIncrementalGroupMemberResp) []*model_struct.LocalGroupMember {
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, resp.Insert)
 		},
+		ExtraData: func(resp *group.GetIncrementalGroupMemberResp) any {
+			return resp.Group
+		},
+		ExtraDataProcessor: func(ctx context.Context, data any) error {
+			local, err := g.db.GetJoinedGroupListDB(ctx)
+			if err != nil {
+				return err
+			}
+			groupInfo, ok := data.(*sdkws.GroupInfo)
+			if !ok {
+				return errs.New("group info type error")
+			}
+			changes := datautil.Batch(ServerGroupToLocalGroup, []*sdkws.GroupInfo{groupInfo})
+			kv := datautil.SliceToMapAny(local, func(e *model_struct.LocalGroup) (string, *model_struct.LocalGroup) {
+				return e.GroupID, e
+			})
+			for i, change := range changes {
+				key := change.GroupID
+				kv[key] = changes[i]
+			}
+			server := datautil.Values(kv)
+			return g.groupSyncer.Sync(ctx, server, local, nil)
+		},
 		Syncer: func(server, local []*model_struct.LocalGroupMember) error {
 			return g.groupMemberSyncer.Sync(ctx, server, local, nil)
 		},
@@ -145,7 +168,7 @@ func (g *Group) syncGroupMember(ctx context.Context, groupID string, resp *group
 			return g.groupMemberSyncer.FullSync(ctx, groupID)
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[group.GetIncrementalGroupMemberUserIDsResp](ctx, constant.GetGroupMemberAllIDs, &group.GetIncrementalGroupMemberUserIDsReq{
+			resp, err := util.CallApi[group.GetFullGroupMemberUserIDsResp](ctx, constant.GetFullGroupMemberUserIDs, &group.GetFullGroupMemberUserIDsReq{
 				GroupID: groupID,
 			})
 			if err != nil {
@@ -157,11 +180,12 @@ func (g *Group) syncGroupMember(ctx context.Context, groupID string, resp *group
 	return groupMemberSyncer.Sync()
 }
 
-func (g *Group) onlineSyncGroupMember(ctx context.Context, groupID string, delete, update, insert []*sdkws.GroupMemberFullInfo, version uint64) error {
+func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, deleteGroupMembers, updateGroupMembers, insertGroupMembers []*sdkws.GroupMemberFullInfo,
+	updateGroup *sdkws.GroupInfo, version uint64, versionID string) error {
 	groupMemberSyncer := incrversion.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
 		Ctx:       ctx,
 		DB:        g.db,
-		TableName: g.groupMemberTableName(),
+		TableName: g.groupAndMemberVersionTableName(),
 		EntityID:  groupID,
 		Key: func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -172,13 +196,14 @@ func (g *Group) onlineSyncGroupMember(ctx context.Context, groupID string, delet
 		ServerVersion: func() *group.GetIncrementalGroupMemberResp {
 			return &group.GetIncrementalGroupMemberResp{
 				Version:   version,
-				VersionID: "",
+				VersionID: versionID,
 				Full:      false,
-				Delete: datautil.Slice(delete, func(e *sdkws.GroupMemberFullInfo) string {
+				Delete: datautil.Slice(deleteGroupMembers, func(e *sdkws.GroupMemberFullInfo) string {
 					return e.UserID
 				}),
-				Insert: insert,
-				Update: update,
+				Insert: insertGroupMembers,
+				Update: updateGroupMembers,
+				Group:  updateGroup,
 			}
 		},
 		Server: func(version *model_struct.LocalVersionSync) (*group.GetIncrementalGroupMemberResp, error) {
@@ -215,6 +240,29 @@ func (g *Group) onlineSyncGroupMember(ctx context.Context, groupID string, delet
 		Insert: func(resp *group.GetIncrementalGroupMemberResp) []*model_struct.LocalGroupMember {
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, resp.Insert)
 		},
+		ExtraData: func(resp *group.GetIncrementalGroupMemberResp) any {
+			return resp.Group
+		},
+		ExtraDataProcessor: func(ctx context.Context, data any) error {
+			local, err := g.db.GetJoinedGroupListDB(ctx)
+			if err != nil {
+				return err
+			}
+			groupInfo, ok := data.(*sdkws.GroupInfo)
+			if !ok {
+				return errs.New("group info type error")
+			}
+			changes := datautil.Batch(ServerGroupToLocalGroup, []*sdkws.GroupInfo{groupInfo})
+			kv := datautil.SliceToMapAny(local, func(e *model_struct.LocalGroup) (string, *model_struct.LocalGroup) {
+				return e.GroupID, e
+			})
+			for i, change := range changes {
+				key := change.GroupID
+				kv[key] = changes[i]
+			}
+			server := datautil.Values(kv)
+			return g.groupSyncer.Sync(ctx, server, local, nil)
+		},
 		Syncer: func(server, local []*model_struct.LocalGroupMember) error {
 			return g.groupMemberSyncer.Sync(ctx, server, local, nil)
 		},
@@ -222,7 +270,7 @@ func (g *Group) onlineSyncGroupMember(ctx context.Context, groupID string, delet
 			return g.groupMemberSyncer.FullSync(ctx, groupID)
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[group.GetIncrementalGroupMemberUserIDsResp](ctx, constant.GetGroupMemberAllIDs, &group.GetIncrementalGroupMemberUserIDsReq{
+			resp, err := util.CallApi[group.GetFullGroupMemberUserIDsResp](ctx, constant.GetFullGroupMemberUserIDs, &group.GetFullGroupMemberUserIDsReq{
 				GroupID: groupID,
 			})
 			if err != nil {
@@ -263,7 +311,7 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 			return resp.Delete
 		},
 		Update: func(resp *group.GetIncrementalJoinGroupResp) []*model_struct.LocalGroup {
-			return util.Batch(ServerGroupToLocalGroup, resp.Update)
+			return datautil.Batch(ServerGroupToLocalGroup, resp.Update)
 		},
 		Insert: func(resp *group.GetIncrementalJoinGroupResp) []*model_struct.LocalGroup {
 			return datautil.Batch(ServerGroupToLocalGroup, resp.Insert)
@@ -275,7 +323,7 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 			return g.groupSyncer.FullSync(ctx, g.loginUserID)
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[group.GetIncrementalJoinGroupIDsResp](ctx, constant.GetJoinedGroupAllIDs, &group.GetIncrementalJoinGroupIDsReq{
+			resp, err := util.CallApi[group.GetFullJoinGroupIDsResp](ctx, constant.GetFullJoinedGroupIDs, &group.GetFullJoinGroupIDsReq{
 				UserID: g.loginUserID,
 			})
 			if err != nil {

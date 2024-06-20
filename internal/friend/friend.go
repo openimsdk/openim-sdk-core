@@ -23,8 +23,11 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	friend "github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -41,7 +44,7 @@ type Friend struct {
 	loginUserID        string
 	db                 db_interface.DataBase
 	user               *user.User
-	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, syncer.NoResp, [2]string]
+	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string]
 	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, syncer.NoResp, [2]string]
 	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
 	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
@@ -50,37 +53,71 @@ type Friend struct {
 }
 
 func (f *Friend) initSyncer() {
-	f.friendSyncer = syncer.New[*model_struct.LocalFriend, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriend) error {
-		return f.db.InsertFriend(ctx, value)
-	}, func(ctx context.Context, value *model_struct.LocalFriend) error {
-		return f.db.DeleteFriendDB(ctx, value.FriendUserID)
-	}, func(ctx context.Context, server *model_struct.LocalFriend, local *model_struct.LocalFriend) error {
-		return f.db.UpdateFriend(ctx, server)
-
-	}, func(value *model_struct.LocalFriend) [2]string {
-		return [...]string{value.OwnerUserID, value.FriendUserID}
-	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
-		switch state {
-		case syncer.Insert:
-			f.friendListener.OnFriendAdded(*server)
-		case syncer.Delete:
-			log.ZDebug(ctx, "syncer OnFriendDeleted", "local", local)
-			f.friendListener.OnFriendDeleted(*local)
-		case syncer.Update:
-			f.friendListener.OnFriendInfoChanged(*server)
-			if local.Nickname != server.Nickname || local.FaceURL != server.FaceURL || local.Remark != server.Remark {
-				if server.Remark != "" {
-					server.Nickname = server.Remark
+	f.friendSyncer = syncer.New2[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](
+		syncer.WithInsert[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriend) error {
+			return f.db.InsertFriend(ctx, value)
+		}),
+		syncer.WithDelete[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriend) error {
+			return f.db.DeleteFriendDB(ctx, value.FriendUserID)
+		}),
+		syncer.WithUpdate[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(ctx context.Context, server, local *model_struct.LocalFriend) error {
+			return f.db.UpdateFriend(ctx, server)
+		}),
+		syncer.WithUUID[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(value *model_struct.LocalFriend) [2]string {
+			return [...]string{value.OwnerUserID, value.FriendUserID}
+		}),
+		syncer.WithNotice[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
+			switch state {
+			case syncer.Insert:
+				f.friendListener.OnFriendAdded(*server)
+			case syncer.Delete:
+				log.ZDebug(ctx, "syncer OnFriendDeleted", "local", local)
+				f.friendListener.OnFriendDeleted(*local)
+			case syncer.Update:
+				f.friendListener.OnFriendInfoChanged(*server)
+				if local.Nickname != server.Nickname || local.FaceURL != server.FaceURL || local.Remark != server.Remark {
+					if server.Remark != "" {
+						server.Nickname = server.Remark
+					}
+					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+						Action: constant.UpdateConFaceUrlAndNickName,
+						Args: common.SourceIDAndSessionType{
+							SourceID:    server.FriendUserID,
+							SessionType: constant.SingleChatType,
+							FaceURL:     server.FaceURL,
+							Nickname:    server.Nickname,
+						},
+					}, f.conversationCh)
+					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{
+						Action: constant.UpdateMsgFaceUrlAndNickName,
+						Args: common.UpdateMessageInfo{
+							SessionType: constant.SingleChatType,
+							UserID:      server.FriendUserID,
+							FaceURL:     server.FaceURL,
+							Nickname:    server.Nickname,
+						},
+					}, f.conversationCh)
 				}
-				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
-					Args: common.SourceIDAndSessionType{SourceID: server.FriendUserID, SessionType: constant.SingleChatType, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
-				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 			}
+			return nil
+		}),
+		syncer.WithBatchInsert[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(ctx context.Context, values []*model_struct.LocalFriend) error {
+			log.ZDebug(ctx, "BatchInsertFriend", "length", len(values))
+			return f.db.BatchInsertFriend(ctx, values)
+		}),
+		syncer.WithDeleteAll[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(ctx context.Context, _ string) error {
+			return f.db.DeleteAllFriend(ctx)
+		}),
+		syncer.WithBatchPageReq[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(entityID string) page.PageReq {
+			return &friend.GetPaginationFriendsReq{UserID: entityID,
+				Pagination: &sdkws.RequestPagination{ShowNumber: 100}}
+		}),
+		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](func(resp *friend.GetPaginationFriendsResp) []*model_struct.LocalFriend {
+			return datautil.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
+		}),
+		syncer.WithReqApiRouter[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](constant.GetFriendListRouter),
+	)
 
-		}
-		return nil
-	})
 	f.blockSyncer = syncer.New[*model_struct.LocalBlack, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {

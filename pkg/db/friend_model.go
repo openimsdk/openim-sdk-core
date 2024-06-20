@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -88,6 +89,12 @@ func (d *DataBase) BatchInsertFriend(ctx context.Context, friendList []*model_st
 		return errs.New("nil").Wrap()
 	}
 	return errs.WrapMsg(d.conn.WithContext(ctx).Create(friendList).Error, "BatchInsertFriendList failed")
+}
+
+func (d *DataBase) DeleteAllFriend(ctx context.Context) error {
+	d.friendMtx.Lock()
+	defer d.friendMtx.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model_struct.LocalFriend{}).Error, "DeleteAllFriend failed")
 }
 
 func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {

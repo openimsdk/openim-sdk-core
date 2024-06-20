@@ -85,12 +85,12 @@ func (g *Group) SyncAllGroupMember(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) SyncAllGroupMember2(ctx context.Context, groupID string) error {
-	return g.IncrSyncGroupMember(ctx, groupID)
+	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
 func (g *Group) syncGroupMembers(ctx context.Context, groupID string, members []*sdkws.GroupMemberFullInfo, localData []*model_struct.LocalGroupMember) error {
 	log.ZInfo(ctx, "SyncGroupMember Info", "groupID", groupID, "members", len(members), "localData", len(localData))
-	err := g.groupMemberSyncer.Sync(ctx, util.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
+	err := g.groupMemberSyncer.Sync(ctx, datautil.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (g *Group) syncGroupMembers(ctx context.Context, groupID string, members []
 }
 
 func (g *Group) SyncGroupMembers(ctx context.Context, groupID string, userIDs ...string) error {
-	return g.IncrSyncGroupMember(ctx, groupID)
+	return g.IncrSyncGroupAndMember(ctx, groupID)
 	//members, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
 	//if err != nil {
 	//	return err
@@ -225,7 +225,7 @@ func (g *Group) syncAllJoinedGroups(ctx context.Context) ([]*sdkws.GroupInfo, er
 	if err != nil {
 		return nil, err
 	}
-	if err := g.groupSyncer.Sync(ctx, util.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
+	if err := g.groupSyncer.Sync(ctx, datautil.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
 		return nil, err
 	}
 	return groups, nil
@@ -240,7 +240,7 @@ func (g *Group) SyncAllSelfGroupApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := g.groupRequestSyncer.Sync(ctx, util.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil); err != nil {
+	if err := g.groupRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil); err != nil {
 		return err
 	}
 	// todo
@@ -260,7 +260,7 @@ func (g *Group) SyncAllAdminGroupApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return g.groupAdminRequestSyncer.Sync(ctx, util.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil)
+	return g.groupAdminRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil)
 }
 
 func (g *Group) SyncAdminGroupApplications(ctx context.Context, groupIDs ...string) error {

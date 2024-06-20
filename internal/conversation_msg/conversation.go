@@ -27,6 +27,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/utils/datautil"
 	"sort"
 	"strings"
 	"time"
@@ -58,7 +59,7 @@ func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_
 	if err != nil {
 		return nil, err
 	}
-	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
+	return datautil.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
 func (c *Conversation) getServerConversationsByIDs(ctx context.Context, conversations []string) ([]*model_struct.LocalConversation, error) {
@@ -66,7 +67,7 @@ func (c *Conversation) getServerConversationsByIDs(ctx context.Context, conversa
 	if err != nil {
 		return nil, err
 	}
-	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
+	return datautil.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
 func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context, conversationIDs ...string) (map[string]*msg.Seqs, error) {

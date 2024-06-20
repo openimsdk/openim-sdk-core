@@ -12,22 +12,24 @@ import (
 )
 
 type VersionSynchronizer[V, R any] struct {
-	Ctx           context.Context
-	DB            db_interface.VersionSyncModel
-	TableName       string
-	EntityID      string
-	Key           func(V) string
-	Local         func() ([]V, error)
-	ServerVersion func() R
-	Server        func(version *model_struct.LocalVersionSync) (R, error)
-	Full          func(resp R) bool
-	Version       func(resp R) (string, uint64)
-	Delete        func(resp R) []string
-	Update        func(resp R) []V
-	Insert        func(resp R) []V
-	Syncer        func(server, local []V) error
-	FullSyncer    func(ctx context.Context) error
-	FullID        func(ctx context.Context) ([]string, error)
+	Ctx                context.Context
+	DB                 db_interface.VersionSyncModel
+	TableName          string
+	EntityID           string
+	Key                func(V) string
+	Local              func() ([]V, error)
+	ServerVersion      func() R
+	Server             func(version *model_struct.LocalVersionSync) (R, error)
+	Full               func(resp R) bool
+	Version            func(resp R) (string, uint64)
+	Delete             func(resp R) []string
+	Update             func(resp R) []V
+	Insert             func(resp R) []V
+	ExtraData          func(resp R) any
+	ExtraDataProcessor func(ctx context.Context, data any) error
+	Syncer             func(server, local []V) error
+	FullSyncer         func(ctx context.Context) error
+	FullID             func(ctx context.Context) ([]string, error)
 }
 
 func (o *VersionSynchronizer[V, R]) getVersionInfo() (*model_struct.LocalVersionSync, error) {
@@ -50,6 +52,7 @@ func (o *VersionSynchronizer[V, R]) updateVersionInfo(lvs *model_struct.LocalVer
 func (o *VersionSynchronizer[V, R]) Sync() error {
 	var lvs *model_struct.LocalVersionSync
 	var resp R
+	var extraData any
 	if o.ServerVersion == nil {
 		var err error
 		lvs, err = o.getVersionInfo()
@@ -71,8 +74,11 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 	delIDs := o.Delete(resp)
 	changes := o.Update(resp)
 	insert := o.Insert(resp)
+	if o.ExtraData != nil {
+		extraData = o.ExtraData(resp)
+	}
 
-	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) {
+	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && o.ExtraData == nil {
 		log.ZDebug(o.Ctx, "no data to sync", "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
@@ -113,6 +119,12 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 		if err := o.Syncer(server, local); err != nil {
 			return err
 		}
+		if extraData != nil && o.ExtraDataProcessor != nil {
+			if err := o.ExtraDataProcessor(o.Ctx, extraData); err != nil {
+				return err
+			}
+
+		}
 	}
 	return o.updateVersionInfo(lvs, resp)
 }
@@ -122,14 +134,25 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	if err != nil {
 		return err
 	}
+	var extraData any
 	resp := o.ServerVersion()
 	delIDs := o.Delete(resp)
 	changes := o.Update(resp)
 	insert := o.Insert(resp)
-	_, version := o.Version(resp)
-	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) {
+	versionID, version := o.Version(resp)
+	if o.ExtraData != nil {
+		extraData = o.ExtraData(resp)
+	}
+	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && o.ExtraData == nil {
 		log.ZWarn(o.Ctx, "exception no data to sync", errs.New("notification no data"), "table", o.TableName, "entityID", o.EntityID)
 		return nil
+	}
+	/// If the version unique ID cannot correspond with the local version,
+	// it indicates that the data might have been tampered with or an exception has occurred.
+	//Trigger the complete client-server incremental synchronization.
+	if versionID != lvs.VersionID {
+		o.ServerVersion = nil
+		return o.Sync()
 	}
 	if lvs.Version+1 == version {
 		if len(delIDs) > 0 {
@@ -158,13 +181,21 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		if err := o.Syncer(server, local); err != nil {
 			return err
 		}
+		if extraData != nil && o.ExtraDataProcessor != nil {
+			if err := o.ExtraDataProcessor(o.Ctx, extraData); err != nil {
+				return err
+			}
+
+		}
 		return o.updateVersionInfo(lvs, resp)
 	} else if version <= lvs.Version {
 		log.ZWarn(o.Ctx, "version less than local version", errs.New("version less than local version"),
 			"table", o.TableName, "entityID", o.EntityID, "version", version, "localVersion", lvs.Version)
 		return nil
 	} else {
-		// Re-fetch the version number from the server, compare it with the local version number, and fetch the difference once.
+		// If the version number has a gap with the local version number,
+		//it indicates that some pushed data might be missing.
+		//Trigger the complete client-server incremental synchronization.
 		o.ServerVersion = nil
 		return o.Sync()
 	}

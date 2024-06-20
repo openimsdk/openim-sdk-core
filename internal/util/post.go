@@ -210,7 +210,7 @@ func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req p
 		req.GetPagination().ShowNumber = 50
 	}
 	var errSingle error
-	errSingle = nil
+	var errList []error
 	totalFetched := 0
 	for i := int32(0); ; i++ {
 		req.GetPagination().PageNumber = i + 1
@@ -223,7 +223,7 @@ func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req p
 			for _, item := range list {
 				errSingle = insertFn(ctx, item)
 				if errSingle != nil {
-					errSingle = errs.New(errSingle.Error(), "item", item)
+					errList = append(errList, errs.New(errSingle.Error(), "item", item))
 				}
 			}
 		}
@@ -232,8 +232,8 @@ func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req p
 			break
 		}
 	}
-	if errSingle != nil {
-		return errs.WrapMsg(errSingle, "batch insert failed due to  data exception")
+	if len(errList) > 0 {
+		return errs.WrapMsg(errList[0], "batch insert failed due to data exception")
 	}
 	return nil
 }

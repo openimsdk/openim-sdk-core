@@ -48,7 +48,7 @@ func TestSyncJoinGroup2(t *testing.T) {
 func TestSyncGroupMember2(t *testing.T) {
 	for i := 0; ; i++ {
 		if err := open_im_sdk.UserForSDK.Group().IncrSyncJoinGroupMember(ctx); err != nil {
-			t.Log("IncrSyncGroupMember error-->", err)
+			t.Log("IncrSyncGroupAndMember error-->", err)
 			continue
 		}
 		time.Sleep(time.Second)

@@ -22,6 +22,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	userPb "github.com/openimsdk/protocol/user"
+	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -92,5 +93,5 @@ func (u *User) SyncAllCommand(ctx context.Context) error {
 		return err
 	}
 	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
-	return u.commandSyncer.Sync(ctx, util.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
+	return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
 }
