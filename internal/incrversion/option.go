@@ -2,14 +2,15 @@ package incrversion
 
 import (
 	"context"
+	"reflect"
+	"sort"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 	"gorm.io/gorm"
-	"reflect"
-	"sort"
 )
 
 type VersionSynchronizer[V, R any] struct {
@@ -84,7 +85,7 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 			extraData = temp
 		}
 	}
-
+	log.ZDebug(o.Ctx, "Sync panic", "changes", changes, "insert", insert, "delIDs", delIDs)
 	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && extraData == nil {
 		log.ZDebug(o.Ctx, "no data to sync", "table", o.TableName, "entityID", o.EntityID)
 		return nil
@@ -114,7 +115,10 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 		kv := datautil.SliceToMapAny(local, func(v V) (string, V) {
 			return o.Key(v), v
 		})
-		for i, change := range append(changes, insert...) {
+
+		changes = append(changes, insert...)
+
+		for i, change := range changes {
 			key := o.Key(change)
 			kv[key] = changes[i]
 		}
