@@ -77,7 +77,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	if len(conversationIDList) == 0 {
 		m.reinstalled = true
 	}
-	//TODO have a 9s performance problem when login.
+	//TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
 	for _, v := range conversationIDList {
 		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, v)
 		if err != nil {

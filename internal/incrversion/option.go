@@ -85,7 +85,6 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 			extraData = temp
 		}
 	}
-	log.ZDebug(o.Ctx, "Sync panic", "changes", changes, "insert", insert, "delIDs", delIDs)
 	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && extraData == nil {
 		log.ZDebug(o.Ctx, "no data to sync", "table", o.TableName, "entityID", o.EntityID)
 		return nil
@@ -161,6 +160,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		log.ZWarn(o.Ctx, "exception no data to sync", errs.New("notification no data"), "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
+	log.ZDebug(o.Ctx, "check version sync", "table", o.TableName, "entityID", o.EntityID, "versionID", versionID, "localVersionID", lvs.VersionID, "version", version, "localVersion", lvs.Version)
 	/// If the version unique ID cannot correspond with the local version,
 	// it indicates that the data might have been tampered with or an exception has occurred.
 	//Trigger the complete client-server incremental synchronization.
