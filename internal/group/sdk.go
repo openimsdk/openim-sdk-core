@@ -121,9 +121,6 @@ func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID 
 	if err := util.ApiPost(ctx, constant.TransferGroupRouter, &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}, nil); err != nil {
 		return err
 	}
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
-		return err
-	}
 	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}
@@ -138,40 +135,6 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 }
 
 func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSet) error {
-	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
-		return err
-	}
-	return g.IncrSyncJoinGroup(ctx)
-}
-
-func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.SetGroupMemberInfo) error {
-	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
-		return err
-	}
-	return g.IncrSyncGroupAndMember(ctx, groupMemberInfo.GroupID)
-}
-
-func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID string) error {
-	if err := util.ApiPost(ctx, constant.TransferGroupRouter, &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}, nil); err != nil {
-		return err
-	}
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
-		return err
-	}
-	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason string, userIDList []string) error {
-	if err := util.ApiPost(ctx, constant.KickGroupMemberRouter, &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}, nil); err != nil {
-		return err
-	}
-	return g.IncrSyncGroupAndMember(ctx, groupID)
-}
-
-func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupInfo *sdkws.GroupInfoForSet) error {
 	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
 		return err
 	}
@@ -266,30 +229,15 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 //	})
 // }
 
-func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
-	dataFetcher := datafetcher.NewDataFetcher(
-		g.db,
-		g.groupAndMemberVersionTableName(),
-		groupID,
-		func(localGroupMember *model_struct.LocalGroupMember) string {
-			return localGroupMember.UserID
-		},
-		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
-			return g.db.BatchInsertGroupMember(ctx, values)
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
-			if err != nil {
-				return nil, err
-			}
-			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
-		},
-	)
-	return dataFetcher.FetchMissingAndFillLocal(ctx, userIDList)
-	// return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
+func (g *Group) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
+	return g.db.GetGroupMemberOwnerAndAdminDB(ctx, groupID)
+}
+
+func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+	if joinTimeEnd == 0 {
+		joinTimeEnd = time.Now().UnixMilli()
+	}
+	return g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
 }
 
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
