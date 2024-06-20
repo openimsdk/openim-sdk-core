@@ -232,7 +232,29 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 }
 
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
-	return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupMemberTableName(),
+		groupID,
+		func(localGroupMember *model_struct.LocalGroupMember) string {
+			return localGroupMember.UserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
+			return g.db.BatchInsertGroupMember(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
+		},
+	)
+	return dataFetcher.FetchMissingAndFillLocal(ctx, userIDList)
+	// return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
