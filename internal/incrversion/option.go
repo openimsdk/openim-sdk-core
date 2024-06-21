@@ -184,7 +184,8 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		kv := datautil.SliceToMapAny(local, func(v V) (string, V) {
 			return o.Key(v), v
 		})
-		for i, change := range append(changes, insert...) {
+		changes = append(changes, insert...)
+		for i, change := range changes {
 			key := o.Key(change)
 			kv[key] = changes[i]
 		}

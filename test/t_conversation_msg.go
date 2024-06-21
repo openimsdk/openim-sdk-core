@@ -17,6 +17,8 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
@@ -24,7 +26,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/log"
-	"sync"
 
 	"github.com/openimsdk/protocol/sdkws"
 
@@ -670,7 +671,7 @@ func (c *conversationCallBack) OnNewConversation(conversationList string) {
 }
 
 func (c *conversationCallBack) OnConversationChanged(conversationList string) {
-	log.ZInfo(ctx, "OnConversationChanged returnList is", conversationList)
+	log.ZInfo(ctx, "OnConversationChanged. ", "returnList is", conversationList)
 }
 
 func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
