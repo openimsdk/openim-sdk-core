@@ -20,6 +20,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/utils/datautil"
 	"reflect"
 
 	"github.com/openimsdk/tools/log"
@@ -253,10 +254,9 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 	}
 
 	// Convert local data into a map for easier lookup.
-	localMap := make(map[V]T)
-	for i, item := range localData {
-		localMap[s.uuid(item)] = localData[i]
-	}
+	localMap := datautil.SliceToMap(localData, func(item T) V {
+		return s.uuid(item)
+	})
 
 	// Iterate through server data to sync with local data.
 	for i := range serverData {
@@ -266,6 +266,7 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 
 		// If the item doesn't exist locally, insert it.
 		if !ok {
+			log.ZDebug(ctx, "sync insert", "type", s.ts, "server", server)
 			if err := s.insert(ctx, server); err != nil {
 				log.ZError(ctx, "sync insert failed", err, "type", s.ts, "server", server, "local", local)
 				return err
@@ -279,7 +280,6 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 
 		// Remove the item from the local map as it's found.
 		delete(localMap, id)
-		log.ZDebug(ctx, "syncer come", "type", s.ts, "server", server, "local", local, "isEq", s.eq(server, local))
 
 		// If the local and server items are equal, notify and continue.
 		if s.eq(server, local) {
@@ -290,6 +290,7 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 			continue
 		}
 
+		log.ZDebug(ctx, "sync update", "type", s.ts, "server", server, "local", local)
 		// Update the local item with server data.
 		if err := s.update(ctx, server, local); err != nil {
 			log.ZError(ctx, "sync update failed", err, "type", s.ts, "server", server, "local", local)
@@ -305,7 +306,7 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 	if skipDeletion {
 		return nil
 	}
-
+	log.ZDebug(ctx, "sync delete", "type", s.ts, "localMap", localMap)
 	// Delete any local items not present in server data.
 	for id := range localMap {
 		local := localMap[id]
