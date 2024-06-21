@@ -28,7 +28,6 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"sync"
 	"time"
 )
 
@@ -173,36 +172,36 @@ func (g *Group) deleteGroup(ctx context.Context, groupID string) error {
 	//return nil
 }
 
+//	func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
+//		t := time.Now()
+//		defer func(start time.Time) {
+//
+//			elapsed := time.Since(start).Milliseconds()
+//			log.ZDebug(ctx, "SyncAllJoinedGroupsAndMembers fn call end", "cost time", fmt.Sprintf("%d ms", elapsed))
+//
+//		}(t)
+//		_, err := g.syncAllJoinedGroups(ctx)
+//		if err != nil {
+//			return err
+//		}
+//		groups, err := g.db.GetJoinedGroupListDB(ctx)
+//		if err != nil {
+//			return err
+//		}
+//		var wg sync.WaitGroup
+//		for _, group := range groups {
+//			wg.Add(1)
+//			go func(groupID string) {
+//				defer wg.Done()
+//				if err := g.SyncAllGroupMember(ctx, groupID); err != nil {
+//					log.ZError(ctx, "SyncGroupMember failed", err)
+//				}
+//			}(group.GroupID)
+//		}
+//		wg.Wait()
+//		return nil
+//	}
 func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
-	t := time.Now()
-	defer func(start time.Time) {
-
-		elapsed := time.Since(start).Milliseconds()
-		log.ZDebug(ctx, "SyncAllJoinedGroupsAndMembers fn call end", "cost time", fmt.Sprintf("%d ms", elapsed))
-
-	}(t)
-	_, err := g.syncAllJoinedGroups(ctx)
-	if err != nil {
-		return err
-	}
-	groups, err := g.db.GetJoinedGroupListDB(ctx)
-	if err != nil {
-		return err
-	}
-	var wg sync.WaitGroup
-	for _, group := range groups {
-		wg.Add(1)
-		go func(groupID string) {
-			defer wg.Done()
-			if err := g.SyncAllGroupMember(ctx, groupID); err != nil {
-				log.ZError(ctx, "SyncGroupMember failed", err)
-			}
-		}(group.GroupID)
-	}
-	wg.Wait()
-	return nil
-}
-func (g *Group) SyncAllJoinedGroupsAndMembers2(ctx context.Context) error {
 	t := time.Now()
 	defer func(start time.Time) {
 
