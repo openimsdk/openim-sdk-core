@@ -349,7 +349,7 @@ func (s *Syncer[T, RESP, V]) FullSync(ctx context.Context, entityID string) (err
 
 	// Batch page pull data and insert server data
 	if err = util.FetchAndInsertPagedData(ctx, s.reqApiRouter, batchReq, s.batchPageRespConvertFunc,
-		s.batchInsert, s.insert, 10000); err != nil {
+		s.batchInsert, s.insert, 100); err != nil {
 		return errs.New("full sync batch insert failed", "err", err.Error(), "type", s.ts)
 	}
 

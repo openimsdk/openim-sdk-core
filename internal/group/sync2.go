@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"gorm.io/gorm"
 	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
@@ -79,8 +80,8 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 			if err == nil {
 				req.VersionID = lvs.VersionID
 				req.Version = lvs.Version
-			} else {
-				log.ZInfo(ctx, "get group version", "groupID", groupID, "error", err)
+			} else if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+				return err
 			}
 			groups = append(groups, &req)
 		}

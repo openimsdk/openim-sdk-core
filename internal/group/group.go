@@ -129,7 +129,7 @@ func (g *Group) initSyncer() {
 		}),
 		syncer.WithBatchPageReq[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(entityID string) page.PageReq {
 			return &group.GetJoinedGroupListReq{FromUserID: entityID,
-				Pagination: &sdkws.RequestPagination{}}
+				Pagination: &sdkws.RequestPagination{ShowNumber: 100}}
 		}),
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(resp *group.GetJoinedGroupListResp) []*model_struct.LocalGroup {
 			return datautil.Batch(ServerGroupToLocalGroup, resp.Groups)
