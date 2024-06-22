@@ -2,14 +2,15 @@ package group
 
 import (
 	"context"
-	"gorm.io/gorm"
 	"sync"
+
+	"gorm.io/gorm"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	pconstant "github.com/openimsdk/protocol/constant"
+	constantpb "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
@@ -57,7 +58,7 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 	if len(groupIDs) == 0 {
 		return nil
 	}
-	const maxSyncNum = pconstant.MaxSyncPullNumber
+	const maxSyncNum = constantpb.MaxSyncPullNumber
 	groupIDSet := datautil.SliceSet(groupIDs)
 	var groups []*group.GetIncrementalGroupMemberReq
 	if len(groupIDs) > maxSyncNum {
