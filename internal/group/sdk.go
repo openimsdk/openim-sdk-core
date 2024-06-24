@@ -279,7 +279,7 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupMemberTableName(),
+		g.groupAndMemberVersionTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -309,7 +309,7 @@ func (g *Group) GetGroupMemberListByJoinTimeFilterV2(ctx context.Context, groupI
 
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupMemberTableName(),
+		g.groupAndMemberVersionTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -343,7 +343,7 @@ func (g *Group) GetGroupMemberListByJoinTimeFilterV2(ctx context.Context, groupI
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupMemberTableName(),
+		g.groupAndMemberVersionTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -368,7 +368,7 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupMemberTableName(),
+		g.groupAndMemberVersionTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -393,7 +393,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter, offset, count int32) (*GetGroupMemberListV2Response, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupMemberTableName(),
+		g.groupAndMemberVersionTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID

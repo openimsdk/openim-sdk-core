@@ -42,10 +42,6 @@ func (g *Group) groupTableName() string {
 	return model_struct.LocalGroup{}.TableName()
 }
 
-func (g *Group) groupMemberTableName() string {
-	return model_struct.LocalGroupMember{}.TableName()
-}
-
 func (g *Group) IncrSyncJoinGroupMember(ctx context.Context) error {
 	groups, err := g.db.GetJoinedGroupListDB(ctx)
 	if err != nil {
