@@ -21,7 +21,6 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -328,7 +327,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 }
 
-func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter, offset, count int32) ([]*sdk_struct.GroupMemberListWithIsEnd, error) {
+func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter, offset, count int32) (*GroupMemberListWithIsEnd, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupAndMemberVersionTableName(),
@@ -350,29 +349,15 @@ func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
 		},
 	)
-	groupMemberList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+	var groupMemberList *GroupMemberListWithIsEnd
+	groupMembers, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
 	if err != nil {
 		return nil, err
 	}
-	resp := make([]*sdk_struct.GroupMemberListWithIsEnd, 0, len(groupMemberList))
-	for _, groupMember := range groupMemberList {
-		resp = append(resp, &sdk_struct.GroupMemberListWithIsEnd{
-			GroupID:        groupMember.GroupID,
-			UserID:         groupMember.UserID,
-			Nickname:       groupMember.Nickname,
-			FaceURL:        groupMember.FaceURL,
-			RoleLevel:      groupMember.RoleLevel,
-			JoinTime:       groupMember.JoinTime,
-			JoinSource:     groupMember.JoinSource,
-			InviterUserID:  groupMember.InviterUserID,
-			MuteEndTime:    groupMember.MuteEndTime,
-			OperatorUserID: groupMember.OperatorUserID,
-			Ex:             groupMember.Ex,
-			AttachedInfo:   groupMember.AttachedInfo,
-			IsEnd:          isEnd,
-		})
-	}
-	return resp, nil
+	groupMemberList.GroupMemberList = groupMembers
+	groupMemberList.IsEnd = isEnd
+
+	return groupMemberList, nil
 }
 
 func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
