@@ -21,6 +21,7 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -210,6 +211,39 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 	return dataFetcher.FetchMissingAndFillLocal(ctx, groupIDs)
 }
 
+func (g *Group) GetJoinedGroupListPageV2(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, bool, error) {
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupTableName(),
+		g.loginUserID,
+		func(localGroup *model_struct.LocalGroup) string {
+			return localGroup.GroupID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroup) error {
+			return g.db.BatchInsertGroup(ctx, values)
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+			return g.db.GetGroups(ctx, groupIDs)
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo), nil
+		},
+	)
+
+	// for _, groupMember := range groupMemberList {
+	// 	resp=append(resp, &sdk_struct.GroupListWithIsEnd{
+	// 		GroupID: groupMember.GroupID,
+	// 		GroupName: string,
+	// 		Notification: groupMember,
+	// 	})
+	// }
+	return dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+}
+
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
 		return nil, sdkerrs.ErrArgs.WrapMsg("keyword is null or search field all false")
@@ -267,7 +301,6 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 		},
 	)
 	return dataFetcher.FetchMissingAndFillLocal(ctx, userIDList)
-	// return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
@@ -293,6 +326,53 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 		},
 	)
 	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
+}
+
+func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter, offset, count int32) ([]*sdk_struct.GroupMemberListWithIsEnd, error) {
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupAndMemberVersionTableName(),
+		groupID,
+		func(localGroupMember *model_struct.LocalGroupMember) string {
+			return localGroupMember.UserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
+			return g.db.BatchInsertGroupMember(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			return g.db.GetGroupMemberListByUserIDs(ctx, groupID, filter, userIDs)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
+		},
+	)
+	groupMemberList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+	if err != nil {
+		return nil, err
+	}
+	resp := make([]*sdk_struct.GroupMemberListWithIsEnd, 0, len(groupMemberList))
+	for _, groupMember := range groupMemberList {
+		resp = append(resp, &sdk_struct.GroupMemberListWithIsEnd{
+			GroupID:        groupMember.GroupID,
+			UserID:         groupMember.UserID,
+			Nickname:       groupMember.Nickname,
+			FaceURL:        groupMember.FaceURL,
+			RoleLevel:      groupMember.RoleLevel,
+			JoinTime:       groupMember.JoinTime,
+			JoinSource:     groupMember.JoinSource,
+			InviterUserID:  groupMember.InviterUserID,
+			MuteEndTime:    groupMember.MuteEndTime,
+			OperatorUserID: groupMember.OperatorUserID,
+			Ex:             groupMember.Ex,
+			AttachedInfo:   groupMember.AttachedInfo,
+			IsEnd:          isEnd,
+		})
+	}
+	return resp, nil
 }
 
 func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
