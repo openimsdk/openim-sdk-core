@@ -126,7 +126,7 @@ func (ds *DataFetcher[T]) FetchWithPaginationV2(ctx context.Context, offset, lim
 func (ds *DataFetcher[T]) FetchMissingAndFillLocalV2(ctx context.Context, uids []string, isEnd bool) ([]T, bool, error) {
 	localData, err := ds.FetchFromLocal(ctx, uids)
 	if err != nil {
-		return nil, isEnd, err
+		return nil, false, err
 	}
 
 	localUIDSet := datautil.SliceSetAny(localData, ds.Key)
@@ -141,11 +141,11 @@ func (ds *DataFetcher[T]) FetchMissingAndFillLocalV2(ctx context.Context, uids [
 	if len(missingUIDs) > 0 {
 		serverData, err := ds.fetchFromServer(ctx, missingUIDs)
 		if err != nil {
-			isEnd = false
+			return localData, false, nil
 		}
 
 		if err := ds.batchInsert(ctx, serverData); err != nil {
-			return nil, isEnd, err
+			return nil, false, err
 		}
 
 		localData = append(localData, serverData...)
