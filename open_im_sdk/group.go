@@ -84,6 +84,10 @@ func GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) 
 	call(callback, operationID, UserForSDK.Group().GetJoinedGroupList)
 }
 
+func GetJoinedGroupListPage(callback open_im_sdk_callback.Base, operationID string, offset, count int32) {
+	call(callback, operationID, UserForSDK.Group().GetJoinedGroupListPage, offset, count)
+}
+
 func GetSpecifiedGroupsInfo(callback open_im_sdk_callback.Base, operationID string, groupIDList string) {
 	call(callback, operationID, UserForSDK.Group().GetSpecifiedGroupsInfo, groupIDList)
 }

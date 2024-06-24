@@ -156,7 +156,11 @@ func (g *Group) SetGroupMemberNickname(ctx context.Context, groupID, userID stri
 	return g.SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{GroupID: groupID, UserID: userID, Nickname: wrapperspb.String(groupMemberNickname)})
 }
 
-func (g *Group) GetJoinedGroupList(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, error) {
+func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
+	return g.db.GetJoinedGroupListDB(ctx)
+}
+
+func (g *Group) GetJoinedGroupListPage(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupTableName(),
