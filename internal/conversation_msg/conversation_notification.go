@@ -62,14 +62,14 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		}
 		//clear SubscriptionStatusMap
 		c.user.OnlineStatusCache.DeleteAll()
-		for _, asyncFunc := range []func(c context.Context) error{
+		for _, syncFunc := range []func(c context.Context) error{
 			c.user.SyncLoginUserInfo,
 			c.friend.SyncAllBlackList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
 			c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication, c.user.SyncAllCommand,
 		} {
-			go func(asyncFunc func(c context.Context) error) {
-				_ = asyncFunc(ctx)
-			}(asyncFunc)
+			go func(syncFunc func(c context.Context) error) {
+				_ = syncFunc(ctx)
+			}(syncFunc)
 		}
 
 		syncFunctions := []func(c context.Context) error{
