@@ -210,7 +210,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 	return dataFetcher.FetchMissingAndFillLocal(ctx, groupIDs)
 }
 
-func (g *Group) GetJoinedGroupListPageV2(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, bool, error) {
+func (g *Group) GetJoinedGroupListPageV2(ctx context.Context, offset, count int32) (*GetGroupListV2Response, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupTableName(),
@@ -233,14 +233,16 @@ func (g *Group) GetJoinedGroupListPageV2(ctx context.Context, offset, count int3
 		},
 	)
 
-	// for _, groupMember := range groupMemberList {
-	// 	resp=append(resp, &sdk_struct.GroupListWithIsEnd{
-	// 		GroupID: groupMember.GroupID,
-	// 		GroupName: string,
-	// 		Notification: groupMember,
-	// 	})
-	// }
-	return dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+	groupsList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &GetGroupListV2Response{
+		GroupsList: groupsList,
+		IsEnd:      isEnd,
+	}
+	return resp, nil
 }
 
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
@@ -274,13 +276,74 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 	if joinTimeEnd == 0 {
 		joinTimeEnd = time.Now().UnixMilli()
 	}
-	return g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
+
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupMemberTableName(),
+		groupID,
+		func(localGroupMember *model_struct.LocalGroupMember) string {
+			return localGroupMember.UserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
+			return g.db.BatchInsertGroupMember(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			return g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
+		},
+	)
+
+	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
+}
+
+func (g *Group) GetGroupMemberListByJoinTimeFilterV2(ctx context.Context, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, userIDs []string) (*GetGroupMemberListV2Response, error) {
+	if joinTimeEnd == 0 {
+		joinTimeEnd = time.Now().UnixMilli()
+	}
+
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupMemberTableName(),
+		groupID,
+		func(localGroupMember *model_struct.LocalGroupMember) string {
+			return localGroupMember.UserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
+			return g.db.BatchInsertGroupMember(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			return g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
+		},
+	)
+
+	groupMembersList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+	if err != nil {
+		return nil, err
+	}
+	resp := &GetGroupMemberListV2Response{
+		GroupMembersList: groupMembersList,
+		IsEnd:            isEnd,
+	}
+	return resp, nil
 }
 
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupAndMemberVersionTableName(),
+		g.groupMemberTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -305,7 +368,7 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupAndMemberVersionTableName(),
+		g.groupMemberTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -327,10 +390,10 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 }
 
-func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter, offset, count int32) (*GroupMemberListWithIsEnd, error) {
+func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter, offset, count int32) (*GetGroupMemberListV2Response, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
-		g.groupAndMemberVersionTableName(),
+		g.groupMemberTableName(),
 		groupID,
 		func(localGroupMember *model_struct.LocalGroupMember) string {
 			return localGroupMember.UserID
@@ -349,15 +412,16 @@ func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
 		},
 	)
-	var groupMemberList *GroupMemberListWithIsEnd
-	groupMembers, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+	groupMembersList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
 	if err != nil {
 		return nil, err
 	}
-	groupMemberList.GroupMemberList = groupMembers
-	groupMemberList.IsEnd = isEnd
+	resp := &GetGroupMemberListV2Response{
+		GroupMembersList: groupMembersList,
+		IsEnd:            isEnd,
+	}
 
-	return groupMemberList, nil
+	return resp, nil
 }
 
 func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
