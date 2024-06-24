@@ -96,3 +96,60 @@ func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []s
 
 	return localData, nil
 }
+
+func (ds *DataFetcher[T]) FetchWithPaginationV2(ctx context.Context, offset, limit int) ([]T, bool, error) {
+	var isEnd bool
+	versionInfo, err := ds.db.GetVersionSync(ctx, ds.TableName, ds.EntityID)
+	if err != nil {
+		return nil, isEnd, err
+	}
+
+	if offset > len(versionInfo.UIDList) {
+		return nil, isEnd, errs.New("offset exceeds the length of the UID list").Wrap()
+	}
+
+	end := offset + limit
+	if end >= len(versionInfo.UIDList) {
+		isEnd = true
+		end = len(versionInfo.UIDList)
+	}
+
+	paginatedUIDs := versionInfo.UIDList[offset:end]
+
+	localData, isEnd, err := ds.FetchMissingAndFillLocalV2(ctx, paginatedUIDs, isEnd)
+	if err != nil {
+		return nil, isEnd, err
+	}
+	return localData, isEnd, nil
+}
+
+func (ds *DataFetcher[T]) FetchMissingAndFillLocalV2(ctx context.Context, uids []string, isEnd bool) ([]T, bool, error) {
+	localData, err := ds.FetchFromLocal(ctx, uids)
+	if err != nil {
+		return nil, isEnd, err
+	}
+
+	localUIDSet := datautil.SliceSetAny(localData, ds.Key)
+
+	var missingUIDs []string
+	for _, uid := range uids {
+		if _, found := localUIDSet[uid]; !found {
+			missingUIDs = append(missingUIDs, uid)
+		}
+	}
+
+	if len(missingUIDs) > 0 {
+		serverData, err := ds.fetchFromServer(ctx, missingUIDs)
+		if err != nil {
+			isEnd = false
+		}
+
+		if err := ds.batchInsert(ctx, serverData); err != nil {
+			return nil, isEnd, err
+		}
+
+		localData = append(localData, serverData...)
+	}
+
+	return localData, isEnd, nil
+}
