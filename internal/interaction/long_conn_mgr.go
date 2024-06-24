@@ -496,7 +496,6 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	}
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
-	log.ZDebug(ctx, "conn start")
 	c.listener.OnConnecting()
 	c.SetConnectionStatus(Connecting)
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t",
@@ -505,6 +504,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	if c.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
+	log.ZDebug(ctx, "conn start", "url", url)
 	resp, err := c.conn.Dial(url, nil)
 	if err != nil {
 		c.SetConnectionStatus(Closed)

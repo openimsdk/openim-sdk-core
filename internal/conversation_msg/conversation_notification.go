@@ -82,9 +82,9 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 			err := syncFunc(ctx)
 			duration := time.Since(startTime)
 			if err != nil {
-				log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration)
+				log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration.Seconds())
 			} else {
-				log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration)
+				log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
 			}
 		}
 	case constant.MsgSyncFailed:

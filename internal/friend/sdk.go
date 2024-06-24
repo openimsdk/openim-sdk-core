@@ -191,7 +191,7 @@ func (f *Friend) GetFriendList(ctx context.Context) ([]*server_api_params.FullUs
 }
 
 func (f *Friend) GetFriendListPage(ctx context.Context, offset, count int32) ([]*server_api_params.FullUserInfo, error) {
-	datafetcher := datafetcher.NewDataFetcher(
+	dataFetcher := datafetcher.NewDataFetcher(
 		f.db,
 		f.friendListTableName(),
 		f.loginUserID,
@@ -213,7 +213,7 @@ func (f *Friend) GetFriendListPage(ctx context.Context, offset, count int32) ([]
 		},
 	)
 
-	localFriendList, err := datafetcher.FetchWithPagination(ctx, int(offset), int(count))
+	localFriendList, err := dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 	if err != nil {
 		return nil, err
 	}
