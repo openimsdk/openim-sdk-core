@@ -17,6 +17,11 @@ package friend
 import (
 	"context"
 
+	friend "github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/protocol/wrapperspb"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/utils/datautil"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
@@ -24,19 +29,37 @@ import (
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
-	friend "github.com/openimsdk/protocol/relation"
-	"github.com/openimsdk/protocol/wrapperspb"
-	"github.com/openimsdk/tools/errs"
-	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/tools/log"
 )
 
 func (f *Friend) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
-	localFriendList, err := f.db.GetFriendInfoList(ctx, friendUserIDList)
+	datafetcher := datafetcher.NewDataFetcher(
+		f.db,
+		f.friendListTableName(),
+		f.loginUserID,
+		func(localFriend *model_struct.LocalFriend) string {
+			return localFriend.FriendUserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalFriend) error {
+			return f.db.BatchInsertFriend(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			return f.db.GetFriendInfoList(ctx, userIDs)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
+		},
+	)
+	localFriendList, err := datafetcher.FetchMissingAndFillLocal(ctx, friendUserIDList)
 	if err != nil {
 		return nil, err
 	}
+
 	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "localFriendList", localFriendList)
 	blackList, err := f.db.GetBlackInfoList(ctx, friendUserIDList)
 	if err != nil {
@@ -85,7 +108,6 @@ func (f *Friend) RefuseFriendApplication(ctx context.Context, userIDHandleMsg *s
 }
 
 func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFriendApplyReq) error {
-
 	if req.ToUserID == "" {
 		req.ToUserID = f.loginUserID
 	}
@@ -97,7 +119,7 @@ func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFrie
 	}
 	_ = f.SyncAllFriendApplication(ctx)
 	return nil
-	//return f.SyncFriendApplication(ctx)
+	// return f.SyncFriendApplication(ctx)
 }
 
 func (f *Friend) CheckFriend(ctx context.Context, friendUserIDList []string) ([]*server_api_params.UserIDResult, error) {
@@ -261,6 +283,7 @@ func (f *Friend) PinFriends(ctx context.Context, friends *sdk.SetFriendPinParams
 	}
 	return f.SyncFriends(ctx, friends.ToUserIDs)
 }
+
 func (f *Friend) AddBlack(ctx context.Context, blackUserID string, ex string) error {
 	if err := util.ApiPost(ctx, constant.AddBlackRouter, &friend.AddBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID, Ex: ex}, nil); err != nil {
 		return err
@@ -278,6 +301,7 @@ func (f *Friend) RemoveBlack(ctx context.Context, blackUserID string) error {
 func (f *Friend) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack, error) {
 	return f.db.GetBlackListDB(ctx)
 }
+
 func (f *Friend) SetFriendsEx(ctx context.Context, friendIDs []string, ex string) error {
 	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs, Ex: &wrapperspb.StringValue{
 		Value: ex,
