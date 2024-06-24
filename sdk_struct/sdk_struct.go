@@ -364,3 +364,41 @@ type MsgDeleteNotificationElem struct {
 	IsAllDelete bool     `json:"isAllDelete"`
 	SeqList     []string `json:"seqList"`
 }
+
+type GroupListWithIsEnd struct {
+	GroupID                string `json:"groupID"`
+	GroupName              string `json:"groupName"`
+	Notification           string `json:"notification"`
+	Introduction           string `json:"introduction"`
+	FaceURL                string `json:"faceURL"`
+	CreateTime             int64  `json:"createTime"`
+	Status                 int32  `json:"status"`
+	CreatorUserID          string `json:"creatorUserID"`
+	GroupType              int32  `json:"groupType"`
+	OwnerUserID            string `json:"ownerUserID"`
+	MemberCount            int32  `json:"memberCount"`
+	Ex                     string `json:"ex"`
+	AttachedInfo           string `json:"attachedInfo"`
+	NeedVerification       int32  `json:"needVerification"`
+	LookMemberInfo         int32  `json:"lookMemberInfo"`
+	ApplyMemberFriend      int32  `json:"applyMemberFriend"`
+	NotificationUpdateTime int64  `json:"notificationUpdateTime"`
+	NotificationUserID     string `json:"notificationUserID"`
+	IsEnd                  bool   `json:"isEnd"`
+}
+
+type GroupMemberListWithIsEnd struct {
+	GroupID        string `json:"groupID"`
+	UserID         string `json:"userID"`
+	Nickname       string `json:"nickname"`
+	FaceURL        string `json:"faceURL"`
+	RoleLevel      int32  `json:"roleLevel"`
+	JoinTime       int64  `json:"joinTime"`
+	JoinSource     int32  `json:"joinSource"`
+	InviterUserID  string `json:"inviterUserID"`
+	MuteEndTime    int64  `json:"muteEndTime"`
+	OperatorUserID string `json:"operatorUserID"`
+	Ex             string `json:"ex"`
+	AttachedInfo   string `json:"attachedInfo"`
+	IsEnd          bool   `json:"isEnd"`
+}
