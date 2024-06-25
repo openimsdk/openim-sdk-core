@@ -16,6 +16,8 @@ package group
 
 import (
 	"context"
+	"github.com/openimsdk/tools/errs"
+	"gorm.io/gorm"
 	"time"
 
 	"github.com/openimsdk/tools/utils/datautil"
@@ -366,6 +368,13 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
+	_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
+	if errs.Unwrap(err) == gorm.ErrRecordNotFound {
+		err := g.IncrSyncGroupAndMember(ctx, groupID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupAndMemberVersionTableName(),
