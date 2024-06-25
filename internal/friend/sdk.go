@@ -238,6 +238,58 @@ func (f *Friend) GetFriendListPage(ctx context.Context, offset, count int32) ([]
 	return res, nil
 }
 
+func (f *Friend) GetFriendListPageV2(ctx context.Context, offset, count int32) (*GetFriendInfoListV2, error) {
+	datafetcher := datafetcher.NewDataFetcher(
+		f.db,
+		f.friendListTableName(),
+		f.loginUserID,
+		func(localFriend *model_struct.LocalFriend) string {
+			return localFriend.FriendUserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalFriend) error {
+			return f.db.BatchInsertFriend(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			return f.db.GetFriendInfoList(ctx, userIDs)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
+		},
+	)
+
+	localFriendList, isEnd, err := datafetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
+	if err != nil {
+		return nil, err
+	}
+
+	// don't need extra handle. only full pull.
+	localBlackList, err := f.db.GetBlackListDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]*model_struct.LocalBlack)
+	for i, black := range localBlackList {
+		m[black.BlockUserID] = localBlackList[i]
+	}
+	fullUserInfo := make([]*server_api_params.FullUserInfo, 0, len(localFriendList))
+	for _, localFriend := range localFriendList {
+		fullUserInfo = append(fullUserInfo, &server_api_params.FullUserInfo{
+			PublicInfo: nil,
+			FriendInfo: localFriend,
+			BlackInfo:  m[localFriend.FriendUserID],
+		})
+	}
+	response := &GetFriendInfoListV2{
+		FullUserInfoList: fullUserInfo,
+		IsEnd:            isEnd,
+	}
+	return response, nil
+}
+
 func (f *Friend) SearchFriends(ctx context.Context, param *sdk.SearchFriendsParam) ([]*sdk.SearchFriendItem, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchNickname && !param.IsSearchUserID && !param.IsSearchRemark) {
 		return nil, sdkerrs.ErrArgs.WrapMsg("keyword is null or search field all false")
