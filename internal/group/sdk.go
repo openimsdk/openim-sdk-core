@@ -265,6 +265,9 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 			if err != nil {
 				return nil, err
 			}
+			if len(serverGroupMember) == 0 {
+				return nil, nil
+			}
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
 		},
 	)

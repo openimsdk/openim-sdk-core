@@ -86,12 +86,14 @@ func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []s
 		if err != nil {
 			return nil, err
 		}
+		if len(serverData) > 0 {
+			if err := ds.batchInsert(ctx, serverData); err != nil {
+				return nil, err
+			}
 
-		if err := ds.batchInsert(ctx, serverData); err != nil {
-			return nil, err
+			localData = append(localData, serverData...)
 		}
 
-		localData = append(localData, serverData...)
 	}
 
 	return localData, nil
