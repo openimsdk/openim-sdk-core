@@ -209,7 +209,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 			return datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo), nil
 		},
 	)
-	return dataFetcher.FetchMissingAndFillLocal(ctx, groupIDs)
+	return dataFetcher.FetchMissingAndCombineLocal(ctx, groupIDs)
 }
 
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
@@ -247,6 +247,25 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 }
 
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
+	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	if err != nil {
+		return nil, err
+	}
+	if datautil.Contain(groupID, lvs.UIDList...) {
+
+		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
+		if err != nil {
+			if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+				return nil, err
+			}
+			err := g.IncrSyncGroupAndMember(ctx, groupID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else { // If the user is no longer in the group, return nil immediately
+		return nil, nil
+	}
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupAndMemberVersionTableName(),
@@ -276,13 +295,26 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
-	_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
-	if errs.Unwrap(err) == gorm.ErrRecordNotFound {
-		err := g.IncrSyncGroupAndMember(ctx, groupID)
-		if err != nil {
-			return nil, err
-		}
+	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	if err != nil {
+		return nil, err
 	}
+	if datautil.Contain(groupID, lvs.UIDList...) {
+
+		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
+		if err != nil {
+			if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+				return nil, err
+			}
+			err := g.IncrSyncGroupAndMember(ctx, groupID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else { // If the user is no longer in the group, return nil immediately
+		return nil, nil
+	}
+
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupAndMemberVersionTableName(),
