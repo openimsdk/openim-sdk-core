@@ -352,17 +352,16 @@ func (g *Group) SearchGroupMembers(ctx context.Context, searchParam *sdk_params_
 }
 
 func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
-	groupList, err := g.db.GetJoinedGroupListDB(ctx)
+	groupIDs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return false, err
 	}
-	for _, localGroup := range groupList {
-		if localGroup.GroupID == groupID {
-			return true, nil
-		}
+	if datautil.Contain(groupID, groupIDs.UIDList...) {
+		return true, nil
 	}
 	return false, nil
 }
+
 func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, userIDList []string) error {
 	if err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}, nil); err != nil {
 		return err
