@@ -26,7 +26,7 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
-func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, conversationsOnServer []*model_struct.LocalConversation) error {
+func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, conversationsOnServer []*model_struct.LocalConversation, skipNotice bool) error {
 	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, 
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: server.ConversationID, Action: constant.ConChange, Args: []string{server.ConversationID}}})
 		}
 		return nil
-	}, true); err != nil {
+	}, true, skipNotice); err != nil {
 		return err
 	}
 	return nil
@@ -50,7 +50,7 @@ func (c *Conversation) SyncConversations(ctx context.Context, conversationIDs []
 	if err != nil {
 		return err
 	}
-	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
+	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, false)
 }
 
 func (c *Conversation) SyncAllConversations(ctx context.Context) error {
@@ -60,7 +60,7 @@ func (c *Conversation) SyncAllConversations(ctx context.Context) error {
 		return err
 	}
 	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
-	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer)
+	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, true)
 }
 
 func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {

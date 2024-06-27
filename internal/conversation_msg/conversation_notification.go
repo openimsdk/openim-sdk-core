@@ -73,7 +73,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		}
 
 		syncFunctions := []func(c context.Context) error{
-			c.group.SyncAllJoinedGroupsAndMembers, c.friend.IncrSyncFriends,
+			c.group.SyncAllJoinedGroupsAndMembers, c.friend.IncrSyncFriends, c.SyncAllConversations,
 		}
 
 		for _, syncFunc := range syncFunctions {
@@ -92,7 +92,6 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	case constant.MsgSyncEnd:
 		log.ZDebug(ctx, "MsgSyncEnd", "time", time.Since(c.startTime).Milliseconds())
 		defer c.ConversationListener().OnSyncServerFinish()
-		go c.SyncAllConversations(ctx)
 	}
 
 	for conversationID, msgs := range allMsg {
