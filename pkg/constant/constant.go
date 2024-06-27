@@ -422,7 +422,7 @@ const UseHashGroupMemberNum = 1000
 
 const (
 	Uninitialized    = -1001
-	NoNetwork        = 1 //有网络->无网络
-	NetworkAvailable = 2 //无网络->有网络
-	NetworkVariation = 3 //有网络，但状态有变化
+	NoNetwork        = 1 // Online -> Offline
+	NetworkAvailable = 2 // Offline -> Online
+	NetworkVariation = 3 // Online, but status changed
 )

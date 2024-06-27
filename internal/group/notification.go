@@ -67,9 +67,9 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		switch detail.ReceiverAs {
-		case 0:
+		case constant.ApplicantReceiver:
 			return g.SyncAllSelfGroupApplication(ctx)
-		case 1:
+		case constant.AdminReceiver:
 			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
 		default:
 			return fmt.Errorf("GroupApplicationAcceptedNotification ReceiverAs unknown %d", detail.ReceiverAs)
