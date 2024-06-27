@@ -17,7 +17,6 @@ package group
 import (
 	"context"
 	"github.com/openimsdk/tools/errs"
-	"github.com/openimsdk/tools/mcontext"
 	"gorm.io/gorm"
 	"time"
 
@@ -321,14 +320,12 @@ func (g *Group) SearchGroupMembers(ctx context.Context, searchParam *sdk_params_
 }
 
 func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
-	groupIDs, err := g.db.GetVersionSync(ctx, g.groupTableName(), mcontext.GetOpUserID(ctx))
+	groupIDs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return false, err
 	}
-	for i := range groupIDs.UIDList {
-		if groupIDs.UIDList[i] == groupID {
-			return true, nil
-		}
+	if datautil.Contain(groupID, groupIDs.UIDList...) {
+		return true, nil
 	}
 	return false, nil
 }
