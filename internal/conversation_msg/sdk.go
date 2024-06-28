@@ -331,6 +331,13 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 			if gm.Nickname != "" {
 				s.SenderNickname = gm.Nickname
 			}
+		} else { //Maybe the group member information hasn't been pulled locally yet.
+			gm, err := c.group.GetSpecifiedGroupMembersInfo(ctx, groupID, []string{c.loginUserID})
+			if err == nil && gm != nil {
+				if gm[0].Nickname != "" {
+					s.SenderNickname = gm[0].Nickname
+				}
+			}
 		}
 		var attachedInfo sdk_struct.AttachedInfoElem
 		attachedInfo.GroupHasReadInfo.GroupMemberCount = g.MemberCount
