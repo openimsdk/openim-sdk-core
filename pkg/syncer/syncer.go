@@ -243,8 +243,12 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 		}
 	}()
 	skipDeletion := false
+	skipNotice := false
 	if len(skipDeletionAndNotice) > 0 {
 		skipDeletion = skipDeletionAndNotice[0]
+	}
+	if len(skipDeletionAndNotice) > 1 {
+		skipNotice = skipDeletionAndNotice[1]
 	}
 
 	// If both server and local data are empty, log and return.
@@ -271,9 +275,11 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 				log.ZError(ctx, "sync insert failed", err, "type", s.ts, "server", server, "local", local)
 				return err
 			}
-			if err := s.onNotice(ctx, Insert, server, local, notice); err != nil {
-				log.ZError(ctx, "sync notice insert failed", err, "type", s.ts, "server", server, "local", local)
-				return err
+			if !skipNotice {
+				if err := s.onNotice(ctx, Insert, server, local, notice); err != nil {
+					log.ZError(ctx, "sync notice insert failed", err, "type", s.ts, "server", server, "local", local)
+					return err
+				}
 			}
 			continue
 		}
@@ -283,9 +289,11 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 
 		// If the local and server items are equal, notify and continue.
 		if s.eq(server, local) {
-			if err := s.onNotice(ctx, Unchanged, local, server, notice); err != nil {
-				log.ZError(ctx, "sync notice unchanged failed", err, "type", s.ts, "server", server, "local", local)
-				return err
+			if !skipNotice {
+				if err := s.onNotice(ctx, Unchanged, local, server, notice); err != nil {
+					log.ZError(ctx, "sync notice unchanged failed", err, "type", s.ts, "server", server, "local", local)
+					return err
+				}
 			}
 			continue
 		}
@@ -296,9 +304,11 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 			log.ZError(ctx, "sync update failed", err, "type", s.ts, "server", server, "local", local)
 			return err
 		}
-		if err := s.onNotice(ctx, Update, server, local, notice); err != nil {
-			log.ZError(ctx, "sync notice update failed", err, "type", s.ts, "server", server, "local", local)
-			return err
+		if !skipNotice {
+			if err := s.onNotice(ctx, Update, server, local, notice); err != nil {
+				log.ZError(ctx, "sync notice update failed", err, "type", s.ts, "server", server, "local", local)
+				return err
+			}
 		}
 	}
 
@@ -315,9 +325,11 @@ func (s *Syncer[T, RESP, V]) Sync(ctx context.Context, serverData []T, localData
 			return err
 		}
 		var server T
-		if err := s.onNotice(ctx, Delete, server, local, notice); err != nil {
-			log.ZError(ctx, "sync notice delete failed", err, "type", s.ts, "local", local)
-			return err
+		if !skipNotice {
+			if err := s.onNotice(ctx, Delete, server, local, notice); err != nil {
+				log.ZError(ctx, "sync notice delete failed", err, "type", s.ts, "local", local)
+				return err
+			}
 		}
 	}
 	return nil

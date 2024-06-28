@@ -44,22 +44,12 @@ func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToCon
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-
-	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
-	return sendCmd(conversationCh, c2v, 100)
-}
-
-func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-
+func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
-	return sendCmd(conversationCh, c2v, 100)
+	err := sendCmd(conversationCh, c2v, 100)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdNotification error", err, "msg", msg)
+	}
 }
 
 func TriggerCmdWakeUp(ch chan Cmd2Value) error {

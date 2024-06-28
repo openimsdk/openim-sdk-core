@@ -86,11 +86,41 @@ func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []s
 		if err != nil {
 			return nil, err
 		}
+		if len(serverData) > 0 {
+			if err := ds.batchInsert(ctx, serverData); err != nil {
+				return nil, err
+			}
 
-		if err := ds.batchInsert(ctx, serverData); err != nil {
-			return nil, err
+			localData = append(localData, serverData...)
 		}
 
+	}
+
+	return localData, nil
+}
+
+// FetchMissingAndCombineLocal fetches missing data from the server and combines it with local data without inserting it into the local database
+func (ds *DataFetcher[T]) FetchMissingAndCombineLocal(ctx context.Context, uids []string) ([]T, error) {
+	localData, err := ds.FetchFromLocal(ctx, uids)
+	if err != nil {
+		return nil, err
+	}
+
+	localUIDSet := datautil.SliceSetAny(localData, ds.Key)
+
+	var missingUIDs []string
+	for _, uid := range uids {
+		if _, found := localUIDSet[uid]; !found {
+			missingUIDs = append(missingUIDs, uid)
+		}
+	}
+
+	if len(missingUIDs) > 0 {
+		serverData, err := ds.fetchFromServer(ctx, missingUIDs)
+		if err != nil {
+			return nil, err
+		}
+		// Combine local data with server data
 		localData = append(localData, serverData...)
 	}
 

@@ -194,7 +194,7 @@ func (d *DataBase) InsertGroupMember(ctx context.Context, groupMember *model_str
 func (d *DataBase) BatchInsertGroupMember(ctx context.Context, groupMemberList []*model_struct.LocalGroupMember) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
-	return errs.WrapMsg(d.conn.WithContext(ctx).Create(groupMemberList).Error, "BatchInsertMessageList failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(groupMemberList).Error, "BatchInsertGroupMember failed")
 }
 
 func (d *DataBase) DeleteGroupMember(ctx context.Context, groupID, userID string) error {

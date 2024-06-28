@@ -173,6 +173,7 @@ type MessageModel interface {
 	DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error
 	// DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error
 	SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error
+	BatchInsertNotificationSeq(ctx context.Context, notificationSeqs []*model_struct.NotificationSeqs) error
 	GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqs, error)
 }
 

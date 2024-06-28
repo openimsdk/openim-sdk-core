@@ -97,6 +97,7 @@ func (g *Group) initSyncer() {
 					},
 				}, g.conversationCh)
 			case syncer.Delete:
+				local.MemberCount = 0
 				g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(local))
 			case syncer.Update:
 				log.ZInfo(ctx, "groupSyncer trigger update", "groupID",

@@ -22,10 +22,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	userPb "github.com/openimsdk/protocol/user"
-	"github.com/openimsdk/tools/utils/datautil"
-
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 	"gorm.io/gorm"
 )
 
@@ -44,6 +43,22 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
 	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
+}
+func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
+	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
+	if err != nil {
+		return err
+	}
+	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
+	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
+		log.ZError(ctx, "SyncLoginUserInfo", err)
+	}
+	var localUsers []*model_struct.LocalUser
+	if err == nil {
+		localUsers = []*model_struct.LocalUser{localUser}
+	}
+	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
+	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil, false, true)
 }
 
 func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int32, platformID int32) {
@@ -94,4 +109,20 @@ func (u *User) SyncAllCommand(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
 	return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
+}
+
+func (u *User) SyncAllCommandWithoutNotice(ctx context.Context) error {
+	var serverData CommandInfoResponse
+	err := util.ApiPost(ctx, constant.ProcessUserCommandGetAll, userPb.ProcessUserCommandGetAllReq{
+		UserID: u.loginUserID,
+	}, &serverData)
+	if err != nil {
+		return err
+	}
+	localData, err := u.DataBase.ProcessUserCommandGetAll(ctx)
+	if err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
+	return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil, false, true)
 }

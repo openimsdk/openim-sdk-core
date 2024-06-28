@@ -216,22 +216,12 @@ func Test_SearchLocalMessages(t *testing.T) {
 	}
 }
 
-// // delete
-// funcation Test_DeleteMessageFromLocalStorage(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Conversation().DeleteMessageFromLocalStorage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
-//		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-// }
-//
-// funcation Test_DeleteMessage(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Conversation().DeleteMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
-//		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-// }
+func Test_SetMessageLocalEx(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().SetMessageLocalEx(ctx, "si_2975755104_6386894923", "53ca4b3be29f7ea231a5e82e7af8a43f", "{key,value}")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func Test_DeleteAllMsgFromLocalAndSvr(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMsgFromLocalAndSvr(ctx)

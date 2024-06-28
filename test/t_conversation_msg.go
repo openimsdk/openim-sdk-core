@@ -653,16 +653,16 @@ func (c *conversationCallBack) OnSyncServerProgress(progress int) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "progress", progress)
 }
 
-func (c *conversationCallBack) OnSyncServerStart() {
+func (c *conversationCallBack) OnSyncServerStart(reinstalled bool) {
 
 }
 
-func (c *conversationCallBack) OnSyncServerFinish() {
+func (c *conversationCallBack) OnSyncServerFinish(reinstalled bool) {
 	c.SyncFlag = 1
 	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
-func (c *conversationCallBack) OnSyncServerFailed() {
+func (c *conversationCallBack) OnSyncServerFailed(reinstalled bool) {
 	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 

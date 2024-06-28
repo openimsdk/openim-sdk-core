@@ -50,7 +50,7 @@ func (m *MessageController) BatchUpdateMessageList(ctx context.Context, updateMs
 		latestMsg := &sdk_struct.MsgStruct{}
 		if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
 			log.ZError(ctx, "Unmarshal err", err, "conversationID",
-				conversationID, "latestMsg", conversation.LatestMsg)
+				conversationID, "latestMsg", conversation.LatestMsg, "messages", messages)
 			continue
 		}
 		for _, v := range messages {
@@ -70,6 +70,7 @@ func (m *MessageController) BatchUpdateMessageList(ctx context.Context, updateMs
 				latestMsg.ServerMsgID = v.ServerMsgID
 				latestMsg.Seq = v.Seq
 				latestMsg.SendTime = v.SendTime
+				latestMsg.Status = v.Status
 				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID,
 					Action: constant.AddConOrUpLatMsg, Args: *conversation}, m.ch)

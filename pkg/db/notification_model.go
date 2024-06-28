@@ -37,6 +37,12 @@ func (d *DataBase) SetNotificationSeq(ctx context.Context, conversationID string
 	return nil
 }
 
+func (d *DataBase) BatchInsertNotificationSeq(ctx context.Context, notificationSeqs []*model_struct.NotificationSeqs) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(notificationSeqs).Error, "BatchInsertNotificationSeq failed")
+}
+
 func (d *DataBase) GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqs, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
