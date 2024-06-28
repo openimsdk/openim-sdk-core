@@ -38,7 +38,6 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 	switch c2v.Cmd {
 	case constant.CmdNewMsgCome:
 		c.doMsgNew(c2v)
-	case constant.CmdSuperGroupMsgCome:
 	case constant.CmdUpdateConversation:
 		c.doUpdateConversation(c2v)
 	case constant.CmdUpdateMessage:
@@ -54,26 +53,54 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
 	switch syncFlag {
-	case constant.MsgSyncBegin:
+	case constant.AppDataSyncStart:
+		log.ZDebug(ctx, "AppDataSyncStart")
 		c.startTime = time.Now()
-		c.ConversationListener().OnSyncServerStart()
-		if err := c.SyncAllConversationHashReadSeqs(ctx); err != nil {
-			log.ZError(ctx, "SyncConversationHashReadSeqs err", err)
+		c.ConversationListener().OnSyncServerStart(true)
+		syncFunctions := []func(c context.Context) error{
+			c.SyncAllConversationHashReadSeqs,
+			c.user.SyncLoginUserInfoWithoutNotice,
+			c.friend.SyncAllBlackListWithoutNotice,
+			c.friend.SyncAllFriendApplicationWithoutNotice,
+			c.friend.SyncAllSelfFriendApplicationWithoutNotice,
+			c.group.SyncAllAdminGroupApplicationWithoutNotice,
+			c.group.SyncAllSelfGroupApplicationWithoutNotice,
+			c.user.SyncAllCommandWithoutNotice,
+			c.group.SyncAllJoinedGroupsAndMembers,
+			c.friend.IncrSyncFriends,
+			c.SyncAllConversationsWithoutNotice,
 		}
+		totalFunctions := len(syncFunctions)
+		for i, syncFunc := range syncFunctions {
+			funcName := runtime.FuncForPC(reflect.ValueOf(syncFunc).Pointer()).Name()
+			startTime := time.Now()
+			err := syncFunc(ctx)
+			duration := time.Since(startTime)
+			if err != nil {
+				log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration.Seconds())
+			} else {
+				log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
+			}
+			progress := int(float64(i+1) / float64(totalFunctions) * 100)
+			if progress == 0 {
+				progress = 1
+			}
+			c.ConversationListener().OnSyncServerProgress(progress)
+		}
+	case constant.AppDataSyncFinish:
+		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).Milliseconds())
+		c.ConversationListener().OnSyncServerFailed(true)
+	case constant.MsgSyncBegin:
+		log.ZDebug(ctx, "MsgSyncBegin")
+		c.startTime = time.Now()
+		c.ConversationListener().OnSyncServerStart(false)
 		//clear SubscriptionStatusMap
 		c.user.OnlineStatusCache.DeleteAll()
-		for _, syncFunc := range []func(c context.Context) error{
-			c.user.SyncLoginUserInfo,
-			c.friend.SyncAllBlackList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
-			c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication, c.user.SyncAllCommand,
-		} {
-			go func(syncFunc func(c context.Context) error) {
-				_ = syncFunc(ctx)
-			}(syncFunc)
-		}
 
 		syncFunctions := []func(c context.Context) error{
-			c.group.SyncAllJoinedGroupsAndMembers, c.friend.IncrSyncFriends, c.SyncAllConversations,
+			c.SyncAllConversationHashReadSeqs,
+			c.group.SyncAllJoinedGroupsAndMembers,
+			c.friend.IncrSyncFriends,
 		}
 
 		for _, syncFunc := range syncFunctions {
@@ -87,11 +114,29 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
 			}
 		}
+		for _, syncFunc := range []func(c context.Context) error{
+			c.user.SyncLoginUserInfo,
+			c.friend.SyncAllBlackList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
+			c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication, c.user.SyncAllCommand, c.SyncAllConversations,
+		} {
+			go func(syncFunc func(c context.Context) error) {
+				funcName := runtime.FuncForPC(reflect.ValueOf(syncFunc).Pointer()).Name()
+				startTime := time.Now()
+				err := syncFunc(ctx)
+				duration := time.Since(startTime)
+				if err != nil {
+					log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration.Seconds())
+				} else {
+					log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
+				}
+			}(syncFunc)
+		}
+
 	case constant.MsgSyncFailed:
-		c.ConversationListener().OnSyncServerFailed()
+		c.ConversationListener().OnSyncServerFailed(false)
 	case constant.MsgSyncEnd:
 		log.ZDebug(ctx, "MsgSyncEnd", "time", time.Since(c.startTime).Milliseconds())
-		defer c.ConversationListener().OnSyncServerFinish()
+		c.ConversationListener().OnSyncServerFinish(false)
 	}
 
 	for conversationID, msgs := range allMsg {

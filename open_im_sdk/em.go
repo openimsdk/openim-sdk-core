@@ -142,17 +142,21 @@ func newEmptyConversationListener(ctx context.Context) open_im_sdk_callback.OnCo
 	return &emptyConversationListener{ctx: ctx}
 }
 
-func (e *emptyConversationListener) OnSyncServerStart() {
-
+func (e *emptyConversationListener) OnSyncServerStart(reinstalled bool) {
 	log.ZWarn(e.ctx, "ConversationListener is not implemented", nil)
 }
 
-func (e *emptyConversationListener) OnSyncServerFinish() {
+func (e *emptyConversationListener) OnSyncServerProgress(progress int) {
+	log.ZWarn(e.ctx, "ConversationListener is not implemented", nil,
+		"progress", progress)
+}
+
+func (e *emptyConversationListener) OnSyncServerFinish(reinstalled bool) {
 	log.ZWarn(e.ctx, "ConversationListener is not implemented", nil)
 
 }
 
-func (e *emptyConversationListener) OnSyncServerFailed() {
+func (e *emptyConversationListener) OnSyncServerFailed(reinstalled bool) {
 
 	log.ZWarn(e.ctx, "ConversationListener is not implemented", nil)
 }

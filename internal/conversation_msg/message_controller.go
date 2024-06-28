@@ -50,7 +50,7 @@ func (m *MessageController) BatchUpdateMessageList(ctx context.Context, updateMs
 		latestMsg := &sdk_struct.MsgStruct{}
 		if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
 			log.ZError(ctx, "Unmarshal err", err, "conversationID",
-				conversationID, "latestMsg", conversation.LatestMsg)
+				conversationID, "latestMsg", conversation.LatestMsg, "messages", messages)
 			continue
 		}
 		for _, v := range messages {

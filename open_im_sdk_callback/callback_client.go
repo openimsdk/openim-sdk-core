@@ -57,10 +57,10 @@ type OnFriendshipListener interface {
 	OnBlackDeleted(blackInfo string)
 }
 type OnConversationListener interface {
-	OnSyncServerStart()
-	OnSyncServerFinish()
-	//OnSyncServerProgress(progress int)
-	OnSyncServerFailed()
+	OnSyncServerStart(reinstalled bool)
+	OnSyncServerFinish(reinstalled bool)
+	OnSyncServerProgress(progress int)
+	OnSyncServerFailed(reinstalled bool)
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
 	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)

@@ -246,6 +246,22 @@ func (g *Group) SyncAllSelfGroupApplication(ctx context.Context) error {
 	return nil
 }
 
+func (g *Group) SyncAllSelfGroupApplicationWithoutNotice(ctx context.Context) error {
+	list, err := g.GetServerSelfGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	localData, err := g.db.GetSendGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	if err := g.groupRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil, false, true); err != nil {
+		return err
+	}
+	// todo
+	return nil
+}
+
 func (g *Group) SyncSelfGroupApplications(ctx context.Context, groupIDs ...string) error {
 	return g.SyncAllSelfGroupApplication(ctx)
 }
@@ -260,6 +276,18 @@ func (g *Group) SyncAllAdminGroupApplication(ctx context.Context) error {
 		return err
 	}
 	return g.groupAdminRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil)
+}
+
+func (g *Group) SyncAllAdminGroupApplicationWithoutNotice(ctx context.Context) error {
+	requests, err := g.GetServerAdminGroupApplicationList(ctx)
+	if err != nil {
+		return err
+	}
+	localData, err := g.db.GetAdminGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	return g.groupAdminRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil, false, true)
 }
 
 func (g *Group) SyncAdminGroupApplications(ctx context.Context, groupIDs ...string) error {

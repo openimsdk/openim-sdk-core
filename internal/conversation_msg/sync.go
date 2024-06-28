@@ -60,29 +60,48 @@ func (c *Conversation) SyncAllConversations(ctx context.Context) error {
 		return err
 	}
 	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
+	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, false)
+}
+
+func (c *Conversation) SyncAllConversationsWithoutNotice(ctx context.Context) error {
+	ccTime := time.Now()
+	conversationsOnServer, err := c.getServerConversationList(ctx)
+	if err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
 	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, true)
 }
 
 func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
+	startTime := time.Now()
 	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
+
 	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
 	if err != nil {
 		return err
 	}
+	log.ZDebug(ctx, "getServerHasReadAndMaxSeqs completed", "duration", time.Since(startTime).Seconds())
+
 	if len(seqs) == 0 {
 		return nil
 	}
 	var conversationChangedIDs []string
 	var conversationIDsNeedSync []string
 
+	stepStartTime := time.Now()
 	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
 	if err != nil {
 		log.ZWarn(ctx, "get all conversations err", err)
 		return err
 	}
+	log.ZDebug(ctx, "GetAllConversations completed", "duration", time.Since(stepStartTime).Seconds())
+
 	conversationsOnLocalMap := datautil.SliceToMap(conversationsOnLocal, func(e *model_struct.LocalConversation) string {
 		return e.ConversationID
 	})
+
+	stepStartTime = time.Now()
 	for conversationID, v := range seqs {
 		var unreadCount int32
 		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
@@ -104,18 +123,24 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		} else {
 			conversationIDsNeedSync = append(conversationIDsNeedSync, conversationID)
 		}
-
 	}
+	log.ZDebug(ctx, "Process seqs completed", "duration", time.Since(stepStartTime).Seconds())
+
 	if len(conversationIDsNeedSync) > 0 {
+		stepStartTime = time.Now()
 		conversationsOnServer, err := c.getServerConversationsByIDs(ctx, conversationIDsNeedSync)
 		if err != nil {
 			log.ZWarn(ctx, "getServerConversationsByIDs err", err, "conversationIDs", conversationIDsNeedSync)
 			return err
 		}
+		log.ZDebug(ctx, "getServerConversationsByIDs completed", "duration", time.Since(stepStartTime).Seconds())
+
+		stepStartTime = time.Now()
 		if err := c.batchAddFaceURLAndName(ctx, conversationsOnServer...); err != nil {
 			log.ZWarn(ctx, "batchAddFaceURLAndName err", err, "conversationsOnServer", conversationsOnServer)
 			return err
 		}
+		log.ZDebug(ctx, "batchAddFaceURLAndName completed", "duration", time.Since(stepStartTime).Seconds())
 
 		for _, conversation := range conversationsOnServer {
 			var unreadCount int32
@@ -132,17 +157,23 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 			conversation.UnreadCount = unreadCount
 			conversation.HasReadSeq = v.HasReadSeq
 		}
+
+		stepStartTime = time.Now()
 		err = c.db.BatchInsertConversationList(ctx, conversationsOnServer)
 		if err != nil {
 			log.ZWarn(ctx, "BatchInsertConversationList err", err, "conversationsOnServer", conversationsOnServer)
 		}
-
+		log.ZDebug(ctx, "BatchInsertConversationList completed", "duration", time.Since(stepStartTime).Seconds())
 	}
 
 	log.ZDebug(ctx, "update conversations", "conversations", conversationChangedIDs)
 	if len(conversationChangedIDs) > 0 {
+		stepStartTime = time.Now()
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.GetCh())
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.GetCh())
+		log.ZDebug(ctx, "TriggerCmdUpdateConversation completed", "duration", time.Since(stepStartTime).Seconds())
 	}
+
+	log.ZDebug(ctx, "SyncAllConversationHashReadSeqs completed", "totalDuration", time.Since(startTime).Seconds())
 	return nil
 }
