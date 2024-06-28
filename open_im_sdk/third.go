@@ -30,3 +30,7 @@ func SetAppBadge(callback open_im_sdk_callback.Base, operationID string, appUnre
 func UploadLogs(callback open_im_sdk_callback.Base, operationID string, progress open_im_sdk_callback.UploadLogProgress) {
 	call(callback, operationID, UserForSDK.Third().UploadLogs, third.Progress(progress))
 }
+
+func RemoveAllLogFiles(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.Third().RemoveAllLogFiles)
+}

@@ -25,7 +25,6 @@ import (
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/wasm/indexdb/temp_struct"
 )
 
 type Friend struct {
@@ -47,20 +46,7 @@ func (i *Friend) DeleteFriendDB(ctx context.Context, friendUserID string) error 
 }
 
 func (i *Friend) UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
-	tempLocalFriend := temp_struct.LocalFriend{
-		OwnerUserID:    friend.OwnerUserID,
-		FriendUserID:   friend.FriendUserID,
-		Remark:         friend.Remark,
-		CreateTime:     friend.CreateTime,
-		AddSource:      friend.AddSource,
-		OperatorUserID: friend.OperatorUserID,
-		Nickname:       friend.Nickname,
-		FaceURL:        friend.FaceURL,
-		Ex:             friend.Ex,
-		AttachedInfo:   friend.AttachedInfo,
-		IsPinned:       friend.IsPinned,
-	}
-	_, err := exec.Exec(utils.StructToJsonString(tempLocalFriend))
+	_, err := exec.Exec(utils.StructToJsonString(friend))
 	return err
 }
 
