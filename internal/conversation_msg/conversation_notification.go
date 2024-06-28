@@ -89,7 +89,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		}
 	case constant.AppDataSyncFinish:
 		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).Milliseconds())
-		c.ConversationListener().OnSyncServerFailed(true)
+		c.ConversationListener().OnSyncServerFinish(true)
 	case constant.MsgSyncBegin:
 		log.ZDebug(ctx, "MsgSyncBegin")
 		c.startTime = time.Now()
