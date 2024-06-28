@@ -17,18 +17,19 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/tools/log"
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"sync"
+	"github.com/openimsdk/tools/log"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/sdkws"
 
-	"github.com/OpenIMSDK/tools/mcontext"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 //funcation DotestSetConversationRecvMessageOpt() {
@@ -652,16 +653,16 @@ func (c *conversationCallBack) OnSyncServerProgress(progress int) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "progress", progress)
 }
 
-func (c *conversationCallBack) OnSyncServerStart() {
+func (c *conversationCallBack) OnSyncServerStart(reinstalled bool) {
 
 }
 
-func (c *conversationCallBack) OnSyncServerFinish() {
+func (c *conversationCallBack) OnSyncServerFinish(reinstalled bool) {
 	c.SyncFlag = 1
 	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
-func (c *conversationCallBack) OnSyncServerFailed() {
+func (c *conversationCallBack) OnSyncServerFailed(reinstalled bool) {
 	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
@@ -670,7 +671,7 @@ func (c *conversationCallBack) OnNewConversation(conversationList string) {
 }
 
 func (c *conversationCallBack) OnConversationChanged(conversationList string) {
-	log.ZInfo(ctx, "OnConversationChanged returnList is", conversationList)
+	log.ZInfo(ctx, "OnConversationChanged. ", "returnList is", conversationList)
 }
 
 func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {

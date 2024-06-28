@@ -22,7 +22,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"time"
 
-	"github.com/OpenIMSDK/tools/errs"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) GetUpload(ctx context.Context, partHash string) (*model_struct.LocalUpload, error) {

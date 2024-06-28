@@ -22,9 +22,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
@@ -44,22 +44,12 @@ func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToCon
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-
-	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
-	return sendCmd(conversationCh, c2v, 100)
-}
-
-func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-
+func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
-	return sendCmd(conversationCh, c2v, 100)
+	err := sendCmd(conversationCh, c2v, 100)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdNotification error", err, "msg", msg)
+	}
 }
 
 func TriggerCmdWakeUp(ch chan Cmd2Value) error {
@@ -68,18 +58,6 @@ func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
 	return sendCmd(ch, c2v, 100)
-}
-
-func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-	c2v := Cmd2Value{
-		Cmd:   constant.CmdDeleteConversation,
-		Value: DeleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
-	}
-
-	return sendCmd(conversationCh, c2v, 100)
 }
 
 func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
