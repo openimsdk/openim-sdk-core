@@ -17,6 +17,8 @@ package interaction
 import (
 	"context"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -77,15 +79,51 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	if len(conversationIDList) == 0 {
 		m.reinstalled = true
 	}
-	//TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
+
+	// TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
+	type SyncedSeq struct {
+		ConversationID string
+		MaxSyncedSeq   int64
+		Err            error
+	}
+	concurrency := 10
+	t2 := time.Now()
+	SyncedSeqs := make(chan SyncedSeq, len(conversationIDList))
+	sem := make(chan struct{}, concurrency)
+
+	var wg sync.WaitGroup
 	for _, v := range conversationIDList {
-		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, v)
-		if err != nil {
-			log.ZError(ctx, "get group normal seq failed", err, "conversationID", v)
+		wg.Add(1)
+		sem <- struct{}{} // Acquire a token
+		go func(conversationID string) {
+			defer wg.Done()
+			defer func() { <-sem }() // Release the token
+
+			maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, conversationID)
+			SyncedSeqs <- SyncedSeq{
+				ConversationID: conversationID,
+				MaxSyncedSeq:   maxSyncedSeq,
+				Err:            err,
+			}
+		}(v)
+		log.ZDebug(ctx, "goroutine done.", "goroutine cost time", time.Since(t2))
+	}
+
+	// Close the results channel once all goroutines have finished
+	go func() {
+		wg.Wait()
+		close(SyncedSeqs)
+	}()
+
+	// Collect the results
+	for res := range SyncedSeqs {
+		if res.Err != nil {
+			log.ZError(ctx, "get group normal seq failed", res.Err, "conversationID", res.ConversationID)
 		} else {
-			m.syncedMaxSeqs[v] = maxSyncedSeq
+			m.syncedMaxSeqs[res.ConversationID] = res.MaxSyncedSeq
 		}
 	}
+
 	notificationSeqs, err := m.db.GetNotificationAllSeqs(ctx)
 	if err != nil {
 		log.ZError(ctx, "get notification seq failed", err)
