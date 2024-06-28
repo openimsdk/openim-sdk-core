@@ -367,9 +367,17 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 	tx.Commit()
 	return nil
 }
-func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
-	// Define the search condition based on the searchParam
-	condition := fmt.Sprintf("show_name like %q ", "%"+searchParam+"%")
+func (d *DataBase) SearchConversations(ctx context.Context, searchParam string, isSearchID, isSearchName bool) ([]*model_struct.LocalConversation, error) {
+	var condition string
+
+	// Check which type of search is needed and prepare the condition accordingly
+	if isSearchName {
+		condition = fmt.Sprintf("show_name like %q ", "%"+searchParam+"%")
+	} else if isSearchID {
+		condition = fmt.Sprintf("conversation_id = %q ", searchParam)
+	} else {
+		return nil, errors.New("Invalid search criteria")
+	}
 
 	var conversationList []model_struct.LocalConversation
 	err := d.conn.WithContext(ctx).Where(condition).Order("latest_msg_send_time DESC").Find(&conversationList).Error
@@ -379,5 +387,5 @@ func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) 
 		transfer = append(transfer, &v1)
 	}
 
-	return transfer, utils.Wrap(err, "SearchConversation failed ")
+	return transfer, utils.Wrap(err, "SearchConversations failed ")
 }

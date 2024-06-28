@@ -17,7 +17,6 @@ package constant
 const (
 	GetSelfUserInfoRouter         = "/user/get_self_user_info"
 	GetUsersInfoRouter            = "/user/get_users_info"
-	UpdateSelfUserInfoRouter      = "/user/update_user_info"
 	UpdateSelfUserInfoExRouter    = "/user/update_user_info_ex"
 	SetGlobalRecvMessageOptRouter = "/user/set_global_msg_recv_opt"
 	ProcessUserCommandAdd         = "/user/process_user_command_add"

@@ -369,11 +369,12 @@ func (i *LocalConversations) GetAllConversationIDList(ctx context.Context) ([]st
 		}
 	}
 }
-func (i *LocalConversations) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
+func (i *LocalConversations) SearchConversations(ctx context.Context, searchParam string, IsSearchID, IsSearchName bool) ([]*model_struct.LocalConversation, error) {
 
 	var result []*model_struct.LocalConversation
 	// Perform the search operation. Replace the below line with the actual search logic.
-	searchResult, err := exec.Exec(searchParam)
+	searchResult, err := exec.Exec(searchParam, IsSearchID, IsSearchName)
+
 	if err != nil {
 		return nil, utils.Wrap(err, "SearchConversations failed")
 	}
