@@ -1034,7 +1034,26 @@ func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk
 
 }
 func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID string, clientMsgID string, localEx string) error {
-	return c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"local_ex": localEx})
+	err := c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"local_ex": localEx})
+	if err != nil {
+		return err
+	}
+	conversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	var latestMsg sdk_struct.MsgStruct
+	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
+	if latestMsg.ClientMsgID == clientMsgID {
+		log.ZDebug(ctx, "latestMsg local ex changed", "seq", latestMsg.Seq, "clientMsgID", latestMsg.ClientMsgID)
+		latestMsg.LocalEx = localEx
+		latestMsgStr := utils.StructToJsonString(latestMsg)
+		if err = c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg": latestMsgStr, "latest_msg_send_time": latestMsg.SendTime}); err != nil {
+			return err
+		}
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}})
+	}
+	return nil
 }
 
 func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
