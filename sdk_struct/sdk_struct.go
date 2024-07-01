@@ -15,7 +15,7 @@
 package sdk_struct
 
 import (
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 ////////////////////////// message/////////////////////////
@@ -364,3 +364,4 @@ type MsgDeleteNotificationElem struct {
 	IsAllDelete bool     `json:"isAllDelete"`
 	SeqList     []string `json:"seqList"`
 }
+

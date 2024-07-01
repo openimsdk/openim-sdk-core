@@ -2,7 +2,7 @@
 # define the default goal
 #
 
-ROOT_PACKAGE=github.com/OpenIMSDK/Open-IM-SDK-Core
+ROOT_PACKAGE=github.com/openimsdk/Open-IM-SDK-Core
 
 # Copyright 2023 OpenIM. All rights reserved.
 # Use of this source code is governed by a MIT style
@@ -157,7 +157,7 @@ ifeq (${BINS},)
   $(error Could not determine BINS, set ROOT_DIR or run in source dir)
 endif
 
-EXCLUDE_TESTS=github.com/OpenIMSDK/openim-sdk-core/test
+EXCLUDE_TESTS=github.com/openimsdk/openim-sdk-core/test
 
 # ==============================================================================
 # Build

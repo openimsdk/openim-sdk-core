@@ -20,10 +20,12 @@ package db
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
 
 	"gorm.io/gorm"
 )
@@ -246,7 +248,7 @@ func (d *DataBase) MessageIfExists(ctx context.Context, ClientMsgID string) (boo
 	t := d.conn.WithContext(ctx).Model(&model_struct.LocalChatLog{}).Where("client_msg_id = ?",
 		ClientMsgID).Count(&count)
 	if t.Error != nil {
-		return false, utils.Wrap(t.Error, "MessageIfExists get failed")
+		return false, errs.WrapMsg(t.Error, "MessageIfExists get failed")
 	}
 	if count != 1 {
 		return false, nil
@@ -264,7 +266,7 @@ func (d *DataBase) MessageIfExistsBySeq(ctx context.Context, seq int64) (bool, e
 	t := d.conn.WithContext(ctx).Model(&model_struct.LocalChatLog{}).Where("seq = ?",
 		seq).Count(&count)
 	if t.Error != nil {
-		return false, utils.Wrap(t.Error, "MessageIfExistsBySeq get failed")
+		return false, errs.WrapMsg(t.Error, "MessageIfExistsBySeq get failed")
 	}
 	if count != 1 {
 		return false, nil
@@ -289,15 +291,15 @@ func (d *DataBase) MessageIfExistsBySeq(ctx context.Context, seq int64) (bool, e
 
 func (d *DataBase) GetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error) {
 	var seqList []uint32
-	return seqList, utils.Wrap(d.conn.WithContext(ctx).Model(&model_struct.LocalChatLog{}).Where("status != ?", constant.MsgStatusHasDeleted).Select("seq").Find(&seqList).Error, "")
+	return seqList, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalChatLog{}).Where("status != ?", constant.MsgStatusHasDeleted).Select("seq").Find(&seqList).Error, "")
 }
 func (d *DataBase) UpdateColumnsMessageList(ctx context.Context, clientMsgIDList []string, args map[string]interface{}) error {
 	c := model_struct.LocalChatLog{}
 	t := d.conn.WithContext(ctx).Model(&c).Where("client_msg_id IN", clientMsgIDList).Updates(args)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
+	return errs.WrapMsg(t.Error, "UpdateColumnsConversation failed")
 }
 
 //funcation (d *DataBase) UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
@@ -327,8 +329,7 @@ func (d *DataBase) UpdateColumnsMessageList(ctx context.Context, clientMsgIDList
 
 func (d *DataBase) DeleteAllMessage(ctx context.Context) error {
 	m := model_struct.LocalChatLog{Status: constant.MsgStatusHasDeleted, Content: ""}
-	err := d.conn.WithContext(ctx).Session(&gorm.Session{AllowGlobalUpdate: true}).Select("status", "content").Updates(m).Error
-	return utils.Wrap(err, "delete all message error")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Session(&gorm.Session{AllowGlobalUpdate: true}).Select("status", "content").Updates(m).Error, "delete all message error")
 }
 func (d *DataBase) UpdateMessageStatusBySourceID(ctx context.Context, sourceID string, status, sessionType int32) error {
 	d.mRWMutex.Lock()
@@ -341,9 +342,9 @@ func (d *DataBase) UpdateMessageStatusBySourceID(ctx context.Context, sourceID s
 	}
 	t := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(condition, sourceID, sourceID, sessionType).Updates(model_struct.LocalChatLog{Status: status})
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+	return errs.WrapMsg(t.Error, "UpdateMessageStatusBySourceID failed")
 }
 func (d *DataBase) UpdateMessageStatusBySourceIDController(ctx context.Context, sourceID string, status, sessionType int32) error {
 	switch sessionType {
@@ -419,14 +420,8 @@ func (d *DataBase) UpdateMessageStatusBySourceIDController(ctx context.Context, 
 func (d *DataBase) GetAllMessageForTest(ctx context.Context) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	var messageList []model_struct.LocalChatLog
-
-	err = utils.Wrap(d.conn.WithContext(ctx).Find(&messageList).Error, "GetMessageList failed")
-	for _, v := range messageList {
-		v1 := v
-		result = append(result, &v1)
-	}
-	return result, err
+	var messageList []*model_struct.LocalChatLog
+	return messageList, errs.WrapMsg(d.conn.WithContext(ctx).Find(&messageList).Error, "GetMessageList failed")
 }
 
 //funcation (d *DataBase) GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
@@ -487,14 +482,14 @@ func (d *DataBase) GetTestMessage(ctx context.Context, seq uint32) (*model_struc
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalChatLog
-	return &c, utils.Wrap(d.conn.WithContext(ctx).Where("seq = ?",
+	return &c, errs.WrapMsg(d.conn.WithContext(ctx).Where("seq = ?",
 		seq).Find(&c).Error, "GetTestMessage failed")
 }
 
 func (d *DataBase) UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
+	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
 		"send_id = ? and session_type = ? and sender_nick_name != ? ", sendID, sType, nickname).Updates(
 		map[string]interface{}{"sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
@@ -502,7 +497,7 @@ func (d *DataBase) UpdateMsgSenderNickname(ctx context.Context, sendID, nickname
 func (d *DataBase) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
+	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
 		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
 }
@@ -527,8 +522,7 @@ func (d *DataBase) GetMsgSeqByClientMsgID(ctx context.Context, clientMsgID strin
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq uint32
-	err := utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("client_msg_id=?", clientMsgID).First(&seq).Error, utils.GetSelfFuncName()+" failed")
-	return seq, err
+	return seq, errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("client_msg_id=?", clientMsgID).First(&seq).Error, utils.GetSelfFuncName()+" failed")
 }
 
 func (d *DataBase) GetMsgSeqByClientMsgIDController(ctx context.Context, m *sdk_struct.MsgStruct) (uint32, error) {
@@ -544,22 +538,19 @@ func (d *DataBase) GetMsgSeqListByGroupID(ctx context.Context, groupID string) (
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seqList []uint32
-	err := utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=?", groupID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
-	return seqList, err
+	return seqList, errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=?", groupID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
 }
 
 func (d *DataBase) GetMsgSeqListByPeerUserID(ctx context.Context, userID string) ([]uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seqList []uint32
-	err := utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=? or send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
-	return seqList, err
+	return seqList, errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=? or send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
 }
 
 func (d *DataBase) GetMsgSeqListBySelfUserID(ctx context.Context, userID string) ([]uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seqList []uint32
-	err := utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=? and send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
-	return seqList, err
+	return seqList, errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=? and send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
 }

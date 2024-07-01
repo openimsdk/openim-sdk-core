@@ -2,10 +2,10 @@ package open_im_sdk
 
 import (
 	"context"
-	"github.com/OpenIMSDK/tools/errs"
-	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 	"sync/atomic"
 )
 
@@ -36,18 +36,14 @@ func (c *apiErrCallback) OnError(ctx context.Context, err error) {
 			_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 		}
 	case
-		errs.TokenInvalidError,
 		errs.TokenMalformedError,
 		errs.TokenNotValidYetError,
-		errs.TokenUnknownError,
-		errs.TokenNotExistError:
+		errs.TokenUnknownError:
 		if atomic.CompareAndSwapInt32(&c.tokenInvalidState, 0, 1) {
 			log.ZError(ctx, "OnUserTokenInvalid callback", err)
 			c.listener.OnUserTokenInvalid(err.Error())
 			_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 		}
-
-	case errs.TokenKickedError:
 		if atomic.CompareAndSwapInt32(&c.kickedOfflineState, 0, 1) {
 			log.ZError(ctx, "OnKickedOffline callback", err)
 			c.listener.OnKickedOffline()

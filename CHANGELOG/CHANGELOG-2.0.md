@@ -75,18 +75,18 @@
 <a name="v2.0.0"></a>
 ## v2.0.0 - 2022-02-23
 
-[Unreleased]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.3.3...HEAD
-[v2.3.3]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.3.2...v2.3.3
-[v2.3.2]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.3.0-rc0...v2.3.2
-[v2.3.0-rc0]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.2.0...v2.3.0-rc0
-[v2.2.0]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.1.0...v2.2.0
-[v2.1.0]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.9...v2.1.0
-[v2.0.9]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.8...v2.0.9
-[v2.0.8]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.7...v2.0.8
-[v2.0.7]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.6...v2.0.7
-[v2.0.6]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.5...v2.0.6
-[v2.0.5]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.4...v2.0.5
-[v2.0.4]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.3...v2.0.4
-[v2.0.3]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.2...v2.0.3
-[v2.0.2]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.1...v2.0.2
-[v2.0.1]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.0.0...v2.0.1
+[Unreleased]: https://github.com/openimsdk/openim-sdk-core/compare/v2.3.3...HEAD
+[v2.3.3]: https://github.com/openimsdk/openim-sdk-core/compare/v2.3.2...v2.3.3
+[v2.3.2]: https://github.com/openimsdk/openim-sdk-core/compare/v2.3.0-rc0...v2.3.2
+[v2.3.0-rc0]: https://github.com/openimsdk/openim-sdk-core/compare/v2.2.0...v2.3.0-rc0
+[v2.2.0]: https://github.com/openimsdk/openim-sdk-core/compare/v2.1.0...v2.2.0
+[v2.1.0]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.9...v2.1.0
+[v2.0.9]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.8...v2.0.9
+[v2.0.8]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.7...v2.0.8
+[v2.0.7]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.6...v2.0.7
+[v2.0.6]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.5...v2.0.6
+[v2.0.5]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.4...v2.0.5
+[v2.0.4]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.3...v2.0.4
+[v2.0.3]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.2...v2.0.3
+[v2.0.2]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.1...v2.0.2
+[v2.0.1]: https://github.com/openimsdk/openim-sdk-core/compare/v2.0.0...v2.0.1

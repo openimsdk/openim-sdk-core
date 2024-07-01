@@ -403,6 +403,8 @@ const (
 	MsgSyncProcessing = 1002 //
 	MsgSyncEnd        = 1003 //
 	MsgSyncFailed     = 1004
+	AppDataSyncStart  = 1005
+	AppDataSyncFinish = 1006
 )
 
 const (

@@ -36,11 +36,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 
-	pbConversation "github.com/OpenIMSDK/protocol/conversation"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/protocol/wrapperspb"
+	pbConversation "github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/protocol/wrapperspb"
 
 	"github.com/jinzhu/copier"
 )
@@ -330,6 +330,13 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 		if err == nil && gm != nil {
 			if gm.Nickname != "" {
 				s.SenderNickname = gm.Nickname
+			}
+		} else { //Maybe the group member information hasn't been pulled locally yet.
+			gm, err := c.group.GetSpecifiedGroupMembersInfo(ctx, groupID, []string{c.loginUserID})
+			if err == nil && gm != nil {
+				if gm[0].Nickname != "" {
+					s.SenderNickname = gm[0].Nickname
+				}
 			}
 		}
 		var attachedInfo sdk_struct.AttachedInfoElem
@@ -1126,7 +1133,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 func (c *Conversation) SearchConversation(ctx context.Context, searchParam string) ([]*server_api_params.Conversation, error) {
 	// Check if search parameter is empty
 	if searchParam == "" {
-		return nil, sdkerrs.ErrArgs.Wrap("search parameter cannot be empty")
+		return nil, sdkerrs.ErrArgs.WrapMsg("search parameter cannot be empty")
 	}
 
 	// Perform the search in your database or data source

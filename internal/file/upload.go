@@ -21,11 +21,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/tools/errs"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/tools/errs"
 	"io"
 	"net/http"
 	"net/url"
@@ -34,8 +34,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/third"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/protocol/third"
+	"github.com/openimsdk/tools/log"
 )
 
 type UploadFileReq struct {
@@ -247,7 +247,7 @@ func (f *File) initiateMultipartUploadResp(ctx context.Context, req *third.Initi
 
 func (f *File) authSign(ctx context.Context, req *third.AuthSignReq) (*third.AuthSignResp, error) {
 	if len(req.PartNumbers) == 0 {
-		return nil, errs.ErrArgs.Wrap("partNumbers is empty")
+		return nil, errs.ErrArgs.WrapMsg("partNumbers is empty")
 	}
 	return util.CallApi[third.AuthSignResp](ctx, constant.ObjectAuthSign, req)
 }
@@ -412,7 +412,7 @@ func (u *UploadInfo) GetPartSign(ctx context.Context, partNumber int32) (*url.UR
 	u.CreateTime = time.Now()
 	index := u.getIndex(partNumber)
 	if index < 0 {
-		return nil, nil, errs.ErrInternalServer.Wrap("server part sign invalid")
+		return nil, nil, errs.ErrInternalServer.WrapMsg("server part sign invalid")
 	}
 	return u.buildRequest(index)
 }

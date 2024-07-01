@@ -20,20 +20,21 @@ package db
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) InsertFriendRequest(ctx context.Context, friendRequest *model_struct.LocalFriendRequest) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Create(friendRequest).Error, "InsertFriendRequest failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(friendRequest).Error, "InsertFriendRequest failed")
 }
 
 func (d *DataBase) DeleteFriendRequestBothUserID(ctx context.Context, fromUserID, toUserID string) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Where("from_user_id=? and to_user_id=?", fromUserID, toUserID).Delete(&model_struct.LocalFriendRequest{}).Error, "DeleteFriendRequestBothUserID failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Where("from_user_id=? and to_user_id=?", fromUserID, toUserID).Delete(&model_struct.LocalFriendRequest{}).Error, "DeleteFriendRequestBothUserID failed")
 }
 
 func (d *DataBase) UpdateFriendRequest(ctx context.Context, friendRequest *model_struct.LocalFriendRequest) error {
@@ -41,50 +42,35 @@ func (d *DataBase) UpdateFriendRequest(ctx context.Context, friendRequest *model
 	defer d.friendMtx.Unlock()
 	t := d.conn.WithContext(ctx).Model(friendRequest).Select("*").Updates(*friendRequest)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "")
+	return errs.Wrap(t.Error)
 }
 
 func (d *DataBase) GetRecvFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-	var friendRequestList []model_struct.LocalFriendRequest
-	err := utils.Wrap(d.conn.WithContext(ctx).Where("to_user_id = ?", d.loginUserID).Order("create_time DESC").Find(&friendRequestList).Error, "GetRecvFriendApplication failed")
+	var friendRequestList []*model_struct.LocalFriendRequest
 
-	var transfer []*model_struct.LocalFriendRequest
-	for _, v := range friendRequestList {
-		v1 := v
-		transfer = append(transfer, &v1)
-	}
-	return transfer, utils.Wrap(err, "GetRecvFriendApplication failed")
+	return friendRequestList, errs.WrapMsg(d.conn.WithContext(ctx).Where("to_user_id = ?", d.loginUserID).Order("create_time DESC").Find(&friendRequestList).Error, "GetRecvFriendApplication failed")
 }
 
 func (d *DataBase) GetSendFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-	var friendRequestList []model_struct.LocalFriendRequest
-	err := utils.Wrap(d.conn.WithContext(ctx).Where("from_user_id = ?", d.loginUserID).Order("create_time DESC").Find(&friendRequestList).Error, "GetSendFriendApplication failed")
-
-	var transfer []*model_struct.LocalFriendRequest
-	for _, v := range friendRequestList {
-		v1 := v
-		transfer = append(transfer, &v1)
-	}
-	return transfer, utils.Wrap(err, "GetSendFriendApplication failed")
+	var friendRequestList []*model_struct.LocalFriendRequest
+	return friendRequestList, errs.WrapMsg(d.conn.WithContext(ctx).Where("from_user_id = ?", d.loginUserID).Order("create_time DESC").Find(&friendRequestList).Error, "GetSendFriendApplication failed")
 }
 
 func (d *DataBase) GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendRequest model_struct.LocalFriendRequest
-	err := utils.Wrap(d.conn.WithContext(ctx).Where("from_user_id = ? AND to_user_id = ?", fromUserID, toUserID).Take(&friendRequest).Error, "GetFriendApplicationByBothID failed")
-	return &friendRequest, utils.Wrap(err, "GetFriendApplicationByBothID failed")
+	return &friendRequest, errs.WrapMsg(d.conn.WithContext(ctx).Where("from_user_id = ? AND to_user_id = ?", fromUserID, toUserID).Take(&friendRequest).Error, "GetFriendApplicationByBothID failed")
 }
 
 func (d *DataBase) GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) (friendRequests []*model_struct.LocalFriendRequest, err error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-	err = utils.Wrap(d.conn.WithContext(ctx).Where("(from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?)", fromUserID, toUserID, toUserID, fromUserID).Find(&friendRequests).Error, "GetFriendApplicationByBothID failed")
-	return friendRequests, utils.Wrap(err, "GetFriendApplicationByBothID failed")
+	return friendRequests, errs.WrapMsg(d.conn.WithContext(ctx).Where("(from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?)", fromUserID, toUserID, toUserID, fromUserID).Find(&friendRequests).Error, "GetFriendApplicationByBothID failed")
 }

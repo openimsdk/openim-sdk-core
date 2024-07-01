@@ -21,7 +21,7 @@ package workMoments
 //	"open_im_sdk/pkg/db/model_struct"
 //	"open_im_sdk/pkg/utils"
 //
-//	"github.com/OpenIMSDK/tools/log"
+//	"github.com/openimsdk/tools/log"
 //)
 //
 //type WorkMoments struct {

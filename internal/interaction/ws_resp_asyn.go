@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 )
 
 type GeneralWsResp struct {
