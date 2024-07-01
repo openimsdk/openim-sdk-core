@@ -88,9 +88,9 @@ func GetJoinedGroupListPage(callback open_im_sdk_callback.Base, operationID stri
 	call(callback, operationID, UserForSDK.Group().GetJoinedGroupListPage, offset, count)
 }
 
-func GetJoinedGroupListPageV2(callback open_im_sdk_callback.Base, operationID string, offset, count int32) {
-	call(callback, operationID, UserForSDK.Group().GetJoinedGroupListPageV2, offset, count)
-}
+// func GetJoinedGroupListPageV2(callback open_im_sdk_callback.Base, operationID string, offset, count int32) {
+// 	call(callback, operationID, UserForSDK.Group().GetJoinedGroupListPageV2, offset, count)
+// }
 
 func GetSpecifiedGroupsInfo(callback open_im_sdk_callback.Base, operationID string, groupIDList string) {
 	call(callback, operationID, UserForSDK.Group().GetSpecifiedGroupsInfo, groupIDList)
@@ -108,9 +108,9 @@ func GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, oper
 	call(callback, operationID, UserForSDK.Group().GetGroupMemberListByJoinTimeFilter, groupID, offset, count, joinTimeBegin, joinTimeEnd, filterUserIDList)
 }
 
-func GetGroupMemberListByJoinTimeFilterV2(callback open_im_sdk_callback.Base, operationID string, groupID string, offset int32, count int32, joinTimeBegin int64, joinTimeEnd int64, filterUserIDList string) {
-	call(callback, operationID, UserForSDK.Group().GetGroupMemberListByJoinTimeFilterV2, groupID, offset, count, joinTimeBegin, joinTimeEnd, filterUserIDList)
-}
+// func GetGroupMemberListByJoinTimeFilterV2(callback open_im_sdk_callback.Base, operationID string, groupID string, offset int32, count int32, joinTimeBegin int64, joinTimeEnd int64, filterUserIDList string) {
+// 	call(callback, operationID, UserForSDK.Group().GetGroupMemberListByJoinTimeFilterV2, groupID, offset, count, joinTimeBegin, joinTimeEnd, filterUserIDList)
+// }
 
 func GetSpecifiedGroupMembersInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, userIDList string) {
 	call(callback, operationID, UserForSDK.Group().GetSpecifiedGroupMembersInfo, groupID, userIDList)
@@ -120,9 +120,9 @@ func GetGroupMemberList(callback open_im_sdk_callback.Base, operationID string, 
 	call(callback, operationID, UserForSDK.Group().GetGroupMemberList, groupID, filter, offset, count)
 }
 
-func GetGroupMemberListV2(callback open_im_sdk_callback.Base, operationID string, groupID string, filter int32, offset int32, count int32) {
-	call(callback, operationID, UserForSDK.Group().GetGroupMemberListV2, groupID, filter, offset, count)
-}
+// func GetGroupMemberListV2(callback open_im_sdk_callback.Base, operationID string, groupID string, filter int32, offset int32, count int32) {
+// 	call(callback, operationID, UserForSDK.Group().GetGroupMemberListV2, groupID, filter, offset, count)
+// }
 
 func GetGroupApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, UserForSDK.Group().GetGroupApplicationListAsRecipient)
