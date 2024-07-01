@@ -20,31 +20,32 @@ package db
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var l model_struct.LocalChatLogReactionExtensions
-	return &l, utils.Wrap(d.conn.WithContext(ctx).Where("client_msg_id = ?",
+	return &l, errs.WrapMsg(d.conn.WithContext(ctx).Where("client_msg_id = ?",
 		msgID).Take(&l).Error, "GetMessageReactionExtension failed")
 }
 
 func (d *DataBase) InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Create(messageReactionExtension).Error, "InsertMessageReactionExtension failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(messageReactionExtension).Error, "InsertMessageReactionExtension failed")
 }
 func (d *DataBase) UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.WithContext(ctx).Updates(c)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateConversation failed")
+	return errs.WrapMsg(t.Error, "UpdateConversation failed")
 }
 
 //	func (d *DataBase) GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error {
@@ -70,7 +71,7 @@ func (d *DataBase) UpdateMessageReactionExtension(ctx context.Context, c *model_
 //			temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
 //			t := d.conn.WithContext(ctx).Updates(temp)
 //			if t.RowsAffected == 0 {
-//				return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+//				return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
 //			}
 //		}
 //		return nil
@@ -102,7 +103,7 @@ func (d *DataBase) DeleteMessageReactionExtension(ctx context.Context, msgID str
 // 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
 // 		t := d.conn.WithContext(ctx).Updates(temp)
 // 		if t.RowsAffected == 0 {
-// 			return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+// 			return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
 // 		}
 // 	}
 // 	return nil
@@ -111,7 +112,7 @@ func (d *DataBase) DeleteMessageReactionExtension(ctx context.Context, msgID str
 // 	d.mRWMutex.Lock()
 // 	defer d.mRWMutex.Unlock()
 // 	var messageList []model_struct.LocalChatLogReactionExtensions
-// 	err = utils.Wrap(d.conn.WithContext(ctx).Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessageReactionExtension failed")
+// 	err = errs.WrapMsg(d.conn.WithContext(ctx).Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessageReactionExtension failed")
 // 	for _, v := range messageList {
 // 		v1 := v
 // 		result = append(result, &v1)
