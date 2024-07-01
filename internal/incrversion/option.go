@@ -217,15 +217,15 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	}
 }
 
-// DeleteElements 删除切片中包含在另一个切片中的元素，并保持切片顺序
+// DeleteElements removes elements from a slice that are contained in another slice, while maintaining the order of the slice
 func DeleteElements[E comparable](es []E, toDelete []E) []E {
-	// 将要删除的元素存储在哈希集合中
+	// Store the elements to be deleted in a hash set
 	deleteSet := make(map[E]struct{}, len(toDelete))
 	for _, e := range toDelete {
 		deleteSet[e] = struct{}{}
 	}
 
-	// 通过一个索引 j 来跟踪新的切片位置
+	// Use an index j to track the new slice position
 	j := 0
 	for _, e := range es {
 		if _, found := deleteSet[e]; !found {
@@ -236,7 +236,7 @@ func DeleteElements[E comparable](es []E, toDelete []E) []E {
 	return es[:j]
 }
 
-// DeleteElement 删除切片中的指定元素，并保持切片顺序
+// DeleteElement removes a specified element from a slice while maintaining the order of the slice
 func DeleteElement[E comparable](es []E, element E) []E {
 	j := 0
 	for _, e := range es {
@@ -248,15 +248,15 @@ func DeleteElement[E comparable](es []E, element E) []E {
 	return es[:j]
 }
 
-// Slice Converts slice types in batches and sorts the resulting slice using a custom comparator
+// Slice converts slice types in batches and sorts the resulting slice using a custom comparator
 func Slice[E any, T any](es []E, fn func(e E) T, less func(a, b T) bool) []T {
-	// 转换切片
+	// Convert the slice
 	v := make([]T, len(es))
 	for i := 0; i < len(es); i++ {
 		v[i] = fn(es[i])
 	}
 
-	// 排序切片
+	// Sort the slice
 	sort.Slice(v, func(i, j int) bool {
 		return less(v[i], v[j])
 	})
