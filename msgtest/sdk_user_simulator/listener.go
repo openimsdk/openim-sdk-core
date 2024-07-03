@@ -9,7 +9,7 @@ import (
 type conversationCallBack struct {
 }
 
-func (c *conversationCallBack) OnSyncServerFailed() {
+func (c *conversationCallBack) OnSyncServerFailed(reinstalled bool) {
 }
 
 func (c *conversationCallBack) OnNewConversation(conversationList string) {
@@ -30,11 +30,11 @@ func (c *conversationCallBack) OnRecvMessageExtensionsDeleted(msgID string, reac
 func (c *conversationCallBack) OnSyncServerProgress(progress int) {
 }
 
-func (c *conversationCallBack) OnSyncServerStart() {
+func (c *conversationCallBack) OnSyncServerStart(reinstalled bool) {
 
 }
 
-func (c *conversationCallBack) OnSyncServerFinish() {
+func (c *conversationCallBack) OnSyncServerFinish(reinstalled bool) {
 
 }
 
@@ -209,6 +209,8 @@ func (testGroupListener) OnGroupDismissed(callbackInfo string) {
 
 type testConnListener struct {
 }
+
+func (t *testConnListener) OnUserTokenInvalid(errMsg string) {}
 
 func (t *testConnListener) OnUserTokenExpired() {
 

@@ -20,22 +20,22 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
-	utils2 "github.com/OpenIMSDK/tools/utils"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"sync"
+	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
+	"time"
 )
 
 func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
-	userIDs := utils2.Slice(members, func(member *model_struct.LocalGroupMember) string {
+	userIDs := datautil.Slice(members, func(member *model_struct.LocalGroupMember) string {
 		return member.UserID
 	})
-	utils2.Sort(userIDs, true)
+	datautil.Sort(userIDs, true)
 	memberMap := make(map[string]*sdkws.GroupMemberFullInfo)
 	for _, member := range members {
 		memberMap[member.UserID] = &sdkws.GroupMemberFullInfo{
@@ -83,9 +83,13 @@ func (g *Group) SyncAllGroupMember(ctx context.Context, groupID string) error {
 	return g.syncGroupMembers(ctx, groupID, members, localData)
 }
 
+func (g *Group) SyncAllGroupMember2(ctx context.Context, groupID string) error {
+	return g.IncrSyncGroupAndMember(ctx, groupID)
+}
+
 func (g *Group) syncGroupMembers(ctx context.Context, groupID string, members []*sdkws.GroupMemberFullInfo, localData []*model_struct.LocalGroupMember) error {
 	log.ZInfo(ctx, "SyncGroupMember Info", "groupID", groupID, "members", len(members), "localData", len(localData))
-	err := g.groupMemberSyncer.Sync(ctx, util.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
+	err := g.groupMemberSyncer.Sync(ctx, datautil.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
 	if err != nil {
 		return err
 	}
@@ -127,66 +131,90 @@ func (g *Group) syncGroupMembers(ctx context.Context, groupID string, members []
 }
 
 func (g *Group) SyncGroupMembers(ctx context.Context, groupID string, userIDs ...string) error {
-	members, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
-	if err != nil {
-		return err
-	}
-	localData, err := g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
-	if err != nil {
-		return err
-	}
-	return g.syncGroupMembers(ctx, groupID, members, localData)
+	return g.IncrSyncGroupAndMember(ctx, groupID)
+	//members, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+	//if err != nil {
+	//	return err
+	//}
+	//localData, err := g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
+	//if err != nil {
+	//	return err
+	//}
+	//return g.syncGroupMembers(ctx, groupID, members, localData)
 }
 
 func (g *Group) SyncGroups(ctx context.Context, groupIDs ...string) error {
-	groups, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
-	if err != nil {
-		return err
-	}
-	localData, err := g.db.GetGroups(ctx, groupIDs)
-	if err != nil {
-		return err
-	}
-	if err := g.groupSyncer.Sync(ctx, util.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
-		return err
-	}
-	return nil
+	return g.IncrSyncJoinGroup(ctx)
+	//groups, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
+	//if err != nil {
+	//	return err
+	//}
+	//localData, err := g.db.GetGroups(ctx, groupIDs)
+	//if err != nil {
+	//	return err
+	//}
+	//if err := g.groupSyncer.Sync(ctx, util.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
+	//	return err
+	//}
+	//return nil
 }
 
 func (g *Group) deleteGroup(ctx context.Context, groupID string) error {
-	groupInfo, err := g.db.GetGroupInfoByGroupID(ctx, groupID)
-	if err != nil {
-		return err
-	}
-	if err := g.db.DeleteGroup(ctx, groupID); err != nil {
-		return err
-	}
-	g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(groupInfo))
-	return nil
+	return g.IncrSyncJoinGroup(ctx)
+	//groupInfo, err := g.db.GetGroupInfoByGroupID(ctx, groupID)
+	//if err != nil {
+	//	return err
+	//}
+	//if err := g.db.DeleteGroup(ctx, groupID); err != nil {
+	//	return err
+	//}
+	//g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(groupInfo))
+	//return nil
 }
 
+//	func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
+//		t := time.Now()
+//		defer func(start time.Time) {
+//
+//			elapsed := time.Since(start).Milliseconds()
+//			log.ZDebug(ctx, "SyncAllJoinedGroupsAndMembers fn call end", "cost time", fmt.Sprintf("%d ms", elapsed))
+//
+//		}(t)
+//		_, err := g.syncAllJoinedGroups(ctx)
+//		if err != nil {
+//			return err
+//		}
+//		groups, err := g.db.GetJoinedGroupListDB(ctx)
+//		if err != nil {
+//			return err
+//		}
+//		var wg sync.WaitGroup
+//		for _, group := range groups {
+//			wg.Add(1)
+//			go func(groupID string) {
+//				defer wg.Done()
+//				if err := g.SyncAllGroupMember(ctx, groupID); err != nil {
+//					log.ZError(ctx, "SyncGroupMember failed", err)
+//				}
+//			}(group.GroupID)
+//		}
+//		wg.Wait()
+//		return nil
+//	}
 func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
-	_, err := g.syncAllJoinedGroups(ctx)
-	if err != nil {
+	t := time.Now()
+	defer func(start time.Time) {
+
+		elapsed := time.Since(start).Milliseconds()
+		log.ZDebug(ctx, "SyncAllJoinedGroupsAndMembers fn call end", "cost time", fmt.Sprintf("%d ms", elapsed))
+
+	}(t)
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return err
 	}
-	groups, err := g.db.GetJoinedGroupListDB(ctx)
-	if err != nil {
-		return err
-	}
-	var wg sync.WaitGroup
-	for _, group := range groups {
-		wg.Add(1)
-		go func(groupID string) {
-			defer wg.Done()
-			if err := g.SyncAllGroupMember(ctx, groupID); err != nil {
-				log.ZError(ctx, "SyncGroupMember failed", err)
-			}
-		}(group.GroupID)
-	}
-	wg.Wait()
-	return nil
+	return g.IncrSyncJoinGroupMember(ctx)
 }
+
 func (g *Group) syncAllJoinedGroups(ctx context.Context) ([]*sdkws.GroupInfo, error) {
 	groups, err := g.GetServerJoinGroup(ctx)
 	if err != nil {
@@ -196,7 +224,7 @@ func (g *Group) syncAllJoinedGroups(ctx context.Context) ([]*sdkws.GroupInfo, er
 	if err != nil {
 		return nil, err
 	}
-	if err := g.groupSyncer.Sync(ctx, util.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
+	if err := g.groupSyncer.Sync(ctx, datautil.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
 		return nil, err
 	}
 	return groups, nil
@@ -211,7 +239,23 @@ func (g *Group) SyncAllSelfGroupApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := g.groupRequestSyncer.Sync(ctx, util.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil); err != nil {
+	if err := g.groupRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil); err != nil {
+		return err
+	}
+	// todo
+	return nil
+}
+
+func (g *Group) SyncAllSelfGroupApplicationWithoutNotice(ctx context.Context) error {
+	list, err := g.GetServerSelfGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	localData, err := g.db.GetSendGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	if err := g.groupRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil, false, true); err != nil {
 		return err
 	}
 	// todo
@@ -231,7 +275,19 @@ func (g *Group) SyncAllAdminGroupApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return g.groupAdminRequestSyncer.Sync(ctx, util.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil)
+	return g.groupAdminRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil)
+}
+
+func (g *Group) SyncAllAdminGroupApplicationWithoutNotice(ctx context.Context) error {
+	requests, err := g.GetServerAdminGroupApplicationList(ctx)
+	if err != nil {
+		return err
+	}
+	localData, err := g.db.GetAdminGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	return g.groupAdminRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil, false, true)
 }
 
 func (g *Group) SyncAdminGroupApplications(ctx context.Context, groupIDs ...string) error {

@@ -21,7 +21,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 )
 
 func NewUploadFileCallback(ctx context.Context, progress func(progress int), msg *sdk_struct.MsgStruct, conversationID string, db db_interface.DataBase) file.UploadFileCallback {

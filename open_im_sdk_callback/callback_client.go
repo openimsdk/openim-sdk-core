@@ -29,6 +29,7 @@ type OnConnListener interface {
 	OnConnectFailed(errCode int32, errMsg string)
 	OnKickedOffline()
 	OnUserTokenExpired()
+	OnUserTokenInvalid(errMsg string)
 }
 
 type OnGroupListener interface {
@@ -56,10 +57,10 @@ type OnFriendshipListener interface {
 	OnBlackDeleted(blackInfo string)
 }
 type OnConversationListener interface {
-	OnSyncServerStart()
-	OnSyncServerFinish()
-	//OnSyncServerProgress(progress int)
-	OnSyncServerFailed()
+	OnSyncServerStart(reinstalled bool)
+	OnSyncServerFinish(reinstalled bool)
+	OnSyncServerProgress(progress int)
+	OnSyncServerFailed(reinstalled bool)
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
 	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
@@ -148,4 +149,10 @@ type UploadFileCallback interface {
 
 type UploadLogProgress interface {
 	OnProgress(current int64, size int64)
+}
+
+type AppDataSyncListener interface {
+	OnAppDataSyncStart()
+	OnAppDataSyncProgress(progress int)
+	OnAppDataSyncFinish()
 }

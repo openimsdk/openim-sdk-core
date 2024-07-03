@@ -20,28 +20,29 @@ package db
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Create(groupInfo).Error, "InsertSuperGroup failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Create(groupInfo).Error, "InsertSuperGroup failed")
 }
 
 func (d *DataBase) DeleteAllSuperGroup(ctx context.Context) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
 }
 
 func (d *DataBase) GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
 	var g model_struct.LocalGroup
-	return &g, utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
+	return &g, errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }
 
 func (d *DataBase) UpdateSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
@@ -50,14 +51,14 @@ func (d *DataBase) UpdateSuperGroup(ctx context.Context, groupInfo *model_struct
 
 	t := d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Select("*").Updates(*groupInfo)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "")
+	return errs.WrapMsg(t.Error, "")
 }
 
 func (d *DataBase) DeleteSuperGroup(ctx context.Context, groupID string) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
 	localGroup := model_struct.LocalGroup{GroupID: groupID}
-	return utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
 }

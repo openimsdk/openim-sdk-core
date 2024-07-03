@@ -21,11 +21,11 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/utils/datautil"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	utils2 "github.com/OpenIMSDK/tools/utils"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
@@ -326,14 +326,14 @@ func (c *Conversation) singleHandle(ctx context.Context, self, others []*model_s
 }
 func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation) {
 	allMessage := append(self, others...)
-	localGroupMemberInfo, err := c.group.GetSpecifiedGroupMembersInfo(ctx, lc.GroupID, utils2.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
+	localGroupMemberInfo, err := c.group.GetSpecifiedGroupMembersInfo(ctx, lc.GroupID, datautil.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
 		return e.SendID
 	}))
 	if err != nil {
 		log.ZError(ctx, "get group member info err", err)
 		return
 	}
-	groupMap := utils2.SliceToMap(localGroupMemberInfo, func(e *model_struct.LocalGroupMember) string {
+	groupMap := datautil.SliceToMap(localGroupMemberInfo, func(e *model_struct.LocalGroupMember) string {
 		return e.UserID
 	})
 	for _, chatLog := range allMessage {

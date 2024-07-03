@@ -14,9 +14,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/OpenIMSDK/tools/mcontext"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 var (
@@ -325,5 +325,6 @@ func (c *ConnListner) OnConnectSuccess() {}
 func (c *ConnListner) OnConnectFailed(errCode int32, errMsg string) {
 	// log.ZError(context.Background(), "connect failed", nil, "errCode", errCode, "errMsg", errMsg)
 }
-func (c *ConnListner) OnKickedOffline()    {}
-func (c *ConnListner) OnUserTokenExpired() {}
+func (c *ConnListner) OnKickedOffline()                 {}
+func (c *ConnListner) OnUserTokenExpired()              {}
+func (c *ConnListner) OnUserTokenInvalid(errMsg string) {}

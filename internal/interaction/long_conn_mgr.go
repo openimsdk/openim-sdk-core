@@ -33,11 +33,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/errs"
-	"github.com/OpenIMSDK/tools/log"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
 
 const (
@@ -385,7 +385,7 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
 	if c.GetConnectionStatus() != Connected && msg.ReqIdentifier == constant.GetNewestSeq {
-		return tempChan, sdkerrs.ErrNetwork.Wrap("connection closed,conning...")
+		return tempChan, sdkerrs.ErrNetwork.WrapMsg("connection closed,conning...")
 	}
 	for i := 0; i < maxReconnectAttempts; i++ {
 		err := c.writeBinaryMsg(*msg)
@@ -399,7 +399,7 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 			return tempChan, nil
 		}
 	}
-	return nil, sdkerrs.ErrNetwork.Wrap("send binary message error")
+	return nil, sdkerrs.ErrNetwork.WrapMsg("send binary message error")
 }
 
 func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
@@ -410,7 +410,7 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 		return err
 	}
 	if c.GetConnectionStatus() != Connected {
-		return sdkerrs.ErrNetwork.Wrap("connection closed,re conning...")
+		return sdkerrs.ErrNetwork.WrapMsg("connection closed,re conning...")
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	if c.IsCompression {
@@ -512,7 +512,6 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	}
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
-	log.ZDebug(ctx, "conn start")
 	c.listener.OnConnecting()
 	c.SetConnectionStatus(Connecting)
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t",
@@ -521,6 +520,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	if c.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
+	log.ZDebug(ctx, "conn start", "url", url)
 	resp, err := c.conn.Dial(url, nil)
 	if err != nil {
 		c.SetConnectionStatus(Closed)
@@ -543,12 +543,9 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 			switch apiResp.ErrCode {
 			case
 				errs.TokenExpiredError,
-				errs.TokenInvalidError,
 				errs.TokenMalformedError,
 				errs.TokenNotValidYetError,
-				errs.TokenUnknownError,
-				errs.TokenNotExistError,
-				errs.TokenKickedError:
+				errs.TokenUnknownError:
 				return false, err
 			default:
 				return true, err

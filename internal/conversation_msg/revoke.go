@@ -23,12 +23,12 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/utils/timeutil"
 
-	pbMsg "github.com/OpenIMSDK/protocol/msg"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
-	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/jinzhu/copier"
+	pbMsg "github.com/openimsdk/protocol/msg"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
 )
 
 func (c *Conversation) doRevokeMsg(ctx context.Context, msg *sdkws.MsgData) {
@@ -195,7 +195,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, cli
 		ConversationID: conversationID,
 		Seq:            message.Seq,
 		RevokerUserID:  c.loginUserID,
-		RevokeTime:     utils2.GetCurrentTimestampBySecond(),
+		RevokeTime:     timeutil.GetCurrentTimestampBySecond(),
 		SesstionType:   conversation.ConversationType,
 		ClientMsgID:    clientMsgID,
 	})

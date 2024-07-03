@@ -32,11 +32,11 @@
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2021-10-28
 
-[Unreleased]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.7...HEAD
-[v1.0.7]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.6...v1.0.7
-[v1.0.6]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.5...v1.0.6
-[v1.0.5]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.4...v1.0.5
-[v1.0.4]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.3...v1.0.4
-[v1.0.3]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.2...v1.0.3
-[v1.0.2]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.1...v1.0.2
-[v1.0.1]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v1.0.0...v1.0.1
+[Unreleased]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.7...HEAD
+[v1.0.7]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.6...v1.0.7
+[v1.0.6]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.5...v1.0.6
+[v1.0.5]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.4...v1.0.5
+[v1.0.4]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.3...v1.0.4
+[v1.0.3]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.2...v1.0.3
+[v1.0.2]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.1...v1.0.2
+[v1.0.1]: https://github.com/openimsdk/openim-sdk-core/compare/v1.0.0...v1.0.1

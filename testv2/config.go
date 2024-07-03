@@ -15,14 +15,18 @@
 package testv2
 
 import (
-	"github.com/OpenIMSDK/protocol/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/constant"
 )
 
 const (
-	APIADDR      = "http://14.29.168.56:10002"
-	WSADDR       = "ws://14.29.168.56:10001"
-	UserID       = "3"
+	//APIADDR      = "http://172.16.8.48:10002"
+	//WSADDR       = "ws://172.16.8.48:10001"
+
+	APIADDR = "http://127.0.0.1:10002"
+	WSADDR  = "ws://127.0.0.1:10001"
+
+	UserID       = "6864873394"
 	friendUserID = "3281432310"
 )
 

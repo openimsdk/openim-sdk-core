@@ -18,20 +18,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/tools/log"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/log"
 	X "log"
 	"os"
 	"runtime"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/sdkws"
 
-	"github.com/OpenIMSDK/tools/mcontext"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 var loggerf *X.Logger
@@ -685,6 +685,10 @@ func (userCallback) OnUserCommandDelete(callbackData string) {
 
 // //////////////////////////////////////////////////////////////////
 type testInitLister struct {
+}
+
+func (t *testInitLister) OnUserTokenInvalid(errMsg string) {
+	log.ZInfo(ctx, utils.GetSelfFuncName(), "errMsg", errMsg)
 }
 
 func (t *testInitLister) OnUserTokenExpired() {

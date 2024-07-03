@@ -6,8 +6,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
-	"github.com/OpenIMSDK/protocol/msg"
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/msg"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 type ApiMsgSender struct {

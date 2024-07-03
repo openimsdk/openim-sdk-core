@@ -19,9 +19,11 @@ package db
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) initSuperLocalErrChatLog(ctx context.Context, groupID string) {
@@ -34,19 +36,17 @@ func (d *DataBase) SuperBatchInsertExceptionMsg(ctx context.Context, MessageList
 		return nil
 	}
 	d.initSuperLocalErrChatLog(ctx, groupID)
-	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(groupID)).Create(MessageList).Error, "BatchInsertMessageList failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(groupID)).Create(MessageList).Error, "BatchInsertMessageList failed")
 }
 func (d *DataBase) GetAbnormalMsgSeq(ctx context.Context) (int64, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq int64
-	err := d.conn.WithContext(ctx).Model(model_struct.LocalErrChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
-	return seq, utils.Wrap(err, "GetAbnormalMsgSeq")
+	return seq, errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalErrChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error, "GetAbnormalMsgSeq")
 }
 func (d *DataBase) GetAbnormalMsgSeqList(ctx context.Context) ([]int64, error) {
 	var seqList []int64
-	err := d.conn.WithContext(ctx).Model(model_struct.LocalErrChatLog{}).Select("seq").Find(&seqList).Error
-	return seqList, utils.Wrap(err, "GetAbnormalMsgSeqList")
+	return seqList, errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalErrChatLog{}).Select("seq").Find(&seqList).Error, "GetAbnormalMsgSeqList")
 }
 func (d *DataBase) BatchInsertExceptionMsg(ctx context.Context, messageList []*model_struct.LocalErrChatLog) error {
 	if messageList == nil {
@@ -54,7 +54,7 @@ func (d *DataBase) BatchInsertExceptionMsg(ctx context.Context, messageList []*m
 	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Create(messageList).Error, "BatchInsertMessageList failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(messageList).Error, "BatchInsertMessageList failed")
 }
 func (d *DataBase) BatchInsertExceptionMsgController(ctx context.Context, messageList []*model_struct.LocalErrChatLog) error {
 	if len(messageList) == 0 {
@@ -72,6 +72,5 @@ func (d *DataBase) GetConversationAbnormalMsgSeq(ctx context.Context, conversati
 	if !d.conn.WithContext(ctx).Migrator().HasTable(utils.GetErrTableName(conversationID)) {
 		return 0, nil
 	}
-	err := d.conn.WithContext(ctx).Table(utils.GetErrTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
-	return seq, utils.Wrap(err, "GetConversationNormalMsgSeq")
+	return seq, errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetErrTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error, "GetConversationNormalMsgSeq")
 }

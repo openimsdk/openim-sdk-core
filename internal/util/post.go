@@ -20,18 +20,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/tools/errs"
 	"io"
 	"net/http"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
 )
 
 // apiClient is a global HTTP client with a timeout of one minute.
 var apiClient = &http.Client{
-	Timeout: time.Minute,
+	Timeout: time.Second * 30,
 }
 
 // ApiResponse represents the standard structure of an API response.
@@ -54,7 +56,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	// Extract operationID from context and validate.
 	operationID, _ := ctx.Value("operationID").(string)
 	if operationID == "" {
-		err := sdkerrs.ErrArgs.Wrap("call api operationID is empty")
+		err := sdkerrs.ErrArgs.WrapMsg("call api operationID is empty")
 		log.ZError(ctx, "ApiRequest", err, "type", "ctx not set operationID")
 		return err
 	}
@@ -73,7 +75,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	reqBody, err := json.Marshal(req)
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "json.Marshal(req) failed")
-		return sdkerrs.ErrSdkInternal.Wrap("json.Marshal(req) failed " + err.Error())
+		return sdkerrs.ErrSdkInternal.WrapMsg("json.Marshal(req) failed " + err.Error())
 	}
 
 	// Construct the full API URL and create a new HTTP request with context.
@@ -82,7 +84,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, reqUrl, bytes.NewReader(reqBody))
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "http.NewRequestWithContext failed")
-		return sdkerrs.ErrSdkInternal.Wrap("sdk http.NewRequestWithContext failed " + err.Error())
+		return sdkerrs.ErrSdkInternal.WrapMsg("sdk http.NewRequestWithContext failed " + err.Error())
 	}
 
 	// Set headers for the request.
@@ -96,7 +98,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	response, err := apiClient.Do(request)
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "network error")
-		return sdkerrs.ErrNetwork.Wrap("ApiPost http.Client.Do failed " + err.Error())
+		return sdkerrs.ErrNetwork.WrapMsg("ApiPost http.Client.Do failed " + err.Error())
 	}
 
 	// Ensure the response body is closed after processing.
@@ -106,7 +108,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "read body", "status", response.Status)
-		return sdkerrs.ErrSdkInternal.Wrap("io.ReadAll(ApiResponse) failed " + err.Error())
+		return sdkerrs.ErrSdkInternal.WrapMsg("io.ReadAll(ApiResponse) failed " + err.Error())
 	}
 
 	// Log the response for debugging purposes.
@@ -116,7 +118,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	var baseApi ApiResponse
 	if err := json.Unmarshal(respBody, &baseApi); err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "api code parse")
-		return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("api %s json.Unmarshal(%q, %T) failed %s", api, string(respBody), &baseApi, err.Error()))
+		return sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("api %s json.Unmarshal(%q, %T) failed %s", api, string(respBody), &baseApi, err.Error()))
 	}
 
 	// Check if the API returned an error code and handle it.
@@ -135,7 +137,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	// Unmarshal the actual data part of the response into the provided response object.
 	if err := json.Unmarshal(baseApi.Data, resp); err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "api data parse", "data", string(baseApi.Data), "bind", fmt.Sprintf("%T", resp))
-		return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("json.Unmarshal(%q, %T) failed %s", string(baseApi.Data), resp, err.Error()))
+		return sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("json.Unmarshal(%q, %T) failed %s", string(baseApi.Data), resp, err.Error()))
 	}
 
 	return nil
@@ -173,4 +175,65 @@ func GetPageAll[A interface {
 		}
 	}
 	return res, nil
+}
+
+func GetPageAllWithMaxNum[A interface {
+	GetPagination() *sdkws.RequestPagination
+}, B, C any](ctx context.Context, api string, req A, fn func(resp *B) []C, maxItems int) ([]C, error) {
+	if req.GetPagination().ShowNumber <= 0 {
+		req.GetPagination().ShowNumber = 50
+	}
+	var res []C
+	totalFetched := 0
+	for i := int32(0); ; i++ {
+		req.GetPagination().PageNumber = i + 1
+		memberResp, err := CallApi[B](ctx, api, req)
+		if err != nil {
+			return nil, err
+		}
+		list := fn(memberResp)
+		res = append(res, list...)
+		totalFetched += len(list)
+		if len(list) < int(req.GetPagination().ShowNumber) || (maxItems > 0 && totalFetched >= maxItems) {
+			break
+		}
+	}
+	if maxItems > 0 && len(res) > maxItems {
+		res = res[:maxItems]
+	}
+	return res, nil
+}
+
+func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req page.PageReq, fn func(resp *RESP) []L, batchInsertFn func(ctx context.Context, items []L) error,
+	insertFn func(ctx context.Context, item L) error, maxItems int) error {
+	if req.GetPagination().ShowNumber <= 0 {
+		req.GetPagination().ShowNumber = 50
+	}
+	var errSingle error
+	var errList []error
+	totalFetched := 0
+	for i := int32(0); ; i++ {
+		req.GetPagination().PageNumber = i + 1
+		memberResp, err := CallApi[RESP](ctx, api, req)
+		if err != nil {
+			return err
+		}
+		list := fn(memberResp)
+		if err := batchInsertFn(ctx, list); err != nil {
+			for _, item := range list {
+				errSingle = insertFn(ctx, item)
+				if errSingle != nil {
+					errList = append(errList, errs.New(errSingle.Error(), "item", item))
+				}
+			}
+		}
+		totalFetched += len(list)
+		if len(list) < int(req.GetPagination().ShowNumber) || (maxItems > 0 && totalFetched >= maxItems) {
+			break
+		}
+	}
+	if len(errList) > 0 {
+		return errs.WrapMsg(errList[0], "batch insert failed due to data exception")
+	}
+	return nil
 }

@@ -58,8 +58,8 @@ builds:
       - amd64
       - arm64
     goarm:
-      - 6
-      - 7
+      - "6"
+      - "7"
   - id: openIM.wasm
     main: wasm/cmd/main.go  # 指定 wasm 主文件路径
     binary: openIM.wasm
@@ -155,7 +155,7 @@ nfpms:
       - openIM.wasm
     # Your app's vendor.
     vendor: OpenIMSDK
-    homepage: https://github.com/OpenIMSDK/openim-sdk-core
+    homepage: https://github.com/openimsdk/openim-sdk-core
     maintainer: kubbot <https://github.com/kubbot>
     description: |-
       Auto sync github labels
