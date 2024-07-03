@@ -1,7 +1,11 @@
+//go:build !js
+// +build !js
+
 package db
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/tools/errs"
 	"gorm.io/gorm"
