@@ -527,9 +527,12 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 			switch apiResp.ErrCode {
 			case
 				errs.TokenExpiredError,
+				errs.TokenInvalidError,
 				errs.TokenMalformedError,
 				errs.TokenNotValidYetError,
-				errs.TokenUnknownError:
+				errs.TokenUnknownError,
+				errs.TokenNotExistError,
+				errs.TokenKickedError:
 				return false, err
 			default:
 				return true, err
