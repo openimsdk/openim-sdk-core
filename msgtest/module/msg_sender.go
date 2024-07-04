@@ -3,14 +3,16 @@ package module
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"time"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -179,5 +181,6 @@ func (c *ConnListner) OnConnectSuccess() {}
 func (c *ConnListner) OnConnectFailed(errCode int32, errMsg string) {
 	// log.ZError(context.Background(), "connect failed", nil, "errCode", errCode, "errMsg", errMsg)
 }
-func (c *ConnListner) OnKickedOffline()    {}
-func (c *ConnListner) OnUserTokenExpired() {}
+func (c *ConnListner) OnKickedOffline()                 {}
+func (c *ConnListner) OnUserTokenExpired()              {}
+func (c *ConnListner) OnUserTokenInvalid(errMsg string) {}
