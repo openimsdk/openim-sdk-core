@@ -339,10 +339,6 @@ func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversation
 }
 
 func (d *DataBase) GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error) {
-	if !d.checkTable(ctx, utils.GetTableName(conversationID)) {
-		return 0, nil
-	}
-
 	var seq int64
 	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")
