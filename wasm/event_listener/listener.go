@@ -18,11 +18,12 @@
 package event_listener
 
 import (
+	"syscall/js"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"syscall/js"
 )
 
 type ConnCallback struct {
@@ -75,15 +76,18 @@ type ConversationCallback struct {
 func NewConversationCallback(callback *js.Value) *ConversationCallback {
 	return &ConversationCallback{CallbackWriter: NewEventData(callback)}
 }
-func (c ConversationCallback) OnSyncServerStart() {
+func (c ConversationCallback) OnSyncServerStart(reinstalled bool) {
 	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
 
-func (c ConversationCallback) OnSyncServerFinish() {
+func (c ConversationCallback) OnSyncServerFinish(reinstalled bool) {
 	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
+func (c ConversationCallback) OnSyncServerProgress(progress int) {
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(progress).SendMessage()
+}
 
-func (c ConversationCallback) OnSyncServerFailed() {
+func (c ConversationCallback) OnSyncServerFailed(reinstalled bool) {
 	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 
 }

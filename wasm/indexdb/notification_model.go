@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -33,6 +34,11 @@ func NewNotificationSeqs() *NotificationSeqs {
 
 func (i *NotificationSeqs) SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error {
 	_, err := exec.Exec(conversationID, seq)
+	return err
+}
+
+func (i *NotificationSeqs) BatchInsertNotificationSeq(ctx context.Context, notificationSeqs []*model_struct.NotificationSeqs) error {
+	_, err := exec.Exec(notificationSeqs)
 	return err
 }
 
