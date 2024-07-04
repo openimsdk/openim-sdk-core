@@ -173,8 +173,9 @@ func (g *Group) GetJoinedGroupListPage(ctx context.Context, offset, count int32)
 		func(ctx context.Context, values []*model_struct.LocalGroup) error {
 			return g.db.BatchInsertGroup(ctx, values)
 		},
-		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
-			return g.db.GetGroups(ctx, groupIDs)
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, bool, error) {
+			localGroups, err := g.db.GetGroups(ctx, groupIDs)
+			return localGroups, true, err
 		},
 		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
 			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
@@ -198,8 +199,9 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 		func(ctx context.Context, values []*model_struct.LocalGroup) error {
 			return g.db.BatchInsertGroup(ctx, values)
 		},
-		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
-			return g.db.GetGroups(ctx, groupIDs)
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, bool, error) {
+			localGroups, err := g.db.GetGroups(ctx, groupIDs)
+			return localGroups, true, err
 		},
 		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
 			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
@@ -223,8 +225,9 @@ func (g *Group) GetJoinedGroupListPageV2(ctx context.Context, offset, count int3
 		func(ctx context.Context, values []*model_struct.LocalGroup) error {
 			return g.db.BatchInsertGroup(ctx, values)
 		},
-		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
-			return g.db.GetGroups(ctx, groupIDs)
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, bool, error) {
+			localGroups, err := g.db.GetGroups(ctx, groupIDs)
+			return localGroups, true, err
 		},
 		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
 			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
@@ -289,8 +292,9 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
 			return g.db.BatchInsertGroupMember(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			return g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
+			localGroupMembers, err := g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
+			return localGroupMembers, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
@@ -319,8 +323,9 @@ func (g *Group) GetGroupMemberListByJoinTimeFilterV2(ctx context.Context, groupI
 		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
 			return g.db.BatchInsertGroupMember(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			return g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
+			localGroupMembers, err := g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
+			return localGroupMembers, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
@@ -372,8 +377,9 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
 			return g.db.BatchInsertGroupMember(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
+			localGroupMembers, err := g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
+			return localGroupMembers, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
@@ -420,8 +426,24 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
 			return g.db.BatchInsertGroupMember(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			return g.db.GetGroupMemberListByUserIDs(ctx, groupID, filter, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
+			localGroupMembers, err := g.db.GetGroupMemberListByUserIDs(ctx, groupID, filter, userIDs)
+			if err != nil {
+				return nil, false, err
+			}
+			switch filter {
+			case constant.GroupFilterOwner:
+				fallthrough
+			case constant.GroupFilterAdmin:
+				fallthrough
+			case constant.GroupFilterOwnerAndAdmin:
+				return localGroupMembers, false, nil
+			case constant.GroupFilterAll:
+			case constant.GroupFilterOrdinaryUsers:
+			case constant.GroupFilterAdminAndOrdinaryUsers:
+				return localGroupMembers, true, nil
+			}
+			return nil, false, sdkerrs.ErrArgs
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
@@ -431,6 +453,20 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
 		},
 	)
+	switch filter {
+	case constant.GroupFilterOrdinaryUsers:
+		groupOwnerAndGroupMember, err := g.db.GetGroupMemberListSplit(ctx, groupID, constant.GroupFilterOwnerAndAdmin, 0, 100)
+		if err != nil {
+			return nil, err
+		}
+		offset = offset + int32(len(groupOwnerAndGroupMember))
+	case constant.GroupFilterAdminAndOrdinaryUsers:
+		groupOwnerAndGroupMember, err := g.db.GetGroupMemberListSplit(ctx, groupID, constant.GroupFilterOwner, 0, 100)
+		if err != nil {
+			return nil, err
+		}
+		offset = offset + int32(len(groupOwnerAndGroupMember))
+	}
 	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 }
 
@@ -445,8 +481,9 @@ func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter
 		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
 			return g.db.BatchInsertGroupMember(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			return g.db.GetGroupMemberListByUserIDs(ctx, groupID, filter, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
+			localGroupMembers, err := g.db.GetGroupMemberListByUserIDs(ctx, groupID, filter, userIDs)
+			return localGroupMembers, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
