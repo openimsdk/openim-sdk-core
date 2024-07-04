@@ -22,7 +22,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"go.etcd.io/etcd/api/v3/version"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
 	"strings"
 
 	"github.com/openimsdk/tools/log"
