@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -46,6 +45,11 @@ func (d *DataBase) initChatLog(ctx context.Context, conversationID string) {
 		}
 	}
 }
+
+func (d *DataBase) checkTable(ctx context.Context, tableName string) bool {
+	return d.conn.Migrator().HasTable(tableName)
+}
+
 func (d *DataBase) UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
 	t := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Updates(c)
 	if t.RowsAffected == 0 {
@@ -329,6 +333,12 @@ func (d *DataBase) GetMessagesBySeqs(ctx context.Context, conversationID string,
 
 func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	d.initChatLog(ctx, conversationID)
+	var seq int64
+	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")
+}
+
+func (d *DataBase) GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error) {
 	var seq int64
 	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")

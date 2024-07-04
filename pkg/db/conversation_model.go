@@ -31,6 +31,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	batchSize = 200
+)
+
 func (d *DataBase) GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error) {
 	var conversation model_struct.LocalConversation
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("user_id=?", userID).Find(&conversation).Error, "GetConversationByUserID error")
@@ -89,10 +93,23 @@ func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversation
 	if conversationList == nil {
 		return nil
 	}
+
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
-	return errs.WrapMsg(d.conn.WithContext(ctx).Create(conversationList).Error, "BatchInsertConversationList failed")
+	for i := 0; i < len(conversationList); i += batchSize {
+		end := i + batchSize
+		if end > len(conversationList) {
+			end = len(conversationList)
+		}
+
+		batch := conversationList[i:end]
+		if err := d.conn.WithContext(ctx).Create(batch).Error; err != nil {
+			return errs.WrapMsg(err, "BatchInsertConversationList failed")
+		}
+	}
+
+	return nil
 }
 
 func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
