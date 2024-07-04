@@ -36,14 +36,18 @@ func (c *apiErrCallback) OnError(ctx context.Context, err error) {
 			_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 		}
 	case
+		errs.TokenInvalidError,
 		errs.TokenMalformedError,
 		errs.TokenNotValidYetError,
-		errs.TokenUnknownError:
+		errs.TokenUnknownError,
+		errs.TokenNotExistError:
 		if atomic.CompareAndSwapInt32(&c.tokenInvalidState, 0, 1) {
 			log.ZError(ctx, "OnUserTokenInvalid callback", err)
 			c.listener.OnUserTokenInvalid(err.Error())
 			_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 		}
+
+	case errs.TokenKickedError:
 		if atomic.CompareAndSwapInt32(&c.kickedOfflineState, 0, 1) {
 			log.ZError(ctx, "OnKickedOffline callback", err)
 			c.listener.OnKickedOffline()
