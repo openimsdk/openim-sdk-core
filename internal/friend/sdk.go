@@ -44,8 +44,9 @@ func (f *Friend) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList [
 		func(ctx context.Context, values []*model_struct.LocalFriend) error {
 			return f.db.BatchInsertFriend(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			return f.db.GetFriendInfoList(ctx, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriends, err := f.db.GetFriendInfoList(ctx, userIDs)
+			return localFriends, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
 			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
@@ -201,8 +202,9 @@ func (f *Friend) GetFriendListPage(ctx context.Context, offset, count int32) ([]
 		func(ctx context.Context, values []*model_struct.LocalFriend) error {
 			return f.db.BatchInsertFriend(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			return f.db.GetFriendInfoList(ctx, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriendList, err := f.db.GetFriendInfoList(ctx, userIDs)
+			return localFriendList, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
 			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
@@ -249,8 +251,9 @@ func (f *Friend) GetFriendListPageV2(ctx context.Context, offset, count int32) (
 		func(ctx context.Context, values []*model_struct.LocalFriend) error {
 			return f.db.BatchInsertFriend(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			return f.db.GetFriendInfoList(ctx, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriendList, err := f.db.GetFriendInfoList(ctx, userIDs)
+			return localFriendList, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
 			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
