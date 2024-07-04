@@ -269,9 +269,9 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 				}
 			}
 
-			insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
-			updateMsg[conversationID] = updateMessage
 		}
+		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
+		updateMsg[conversationID] = updateMessage
 
 		//update message
 		if err6 := c.messageController.BatchUpdateMessageList(ctx, updateMsg); err6 != nil {
@@ -326,9 +326,11 @@ func (c *Conversation) singleHandle(ctx context.Context, self, others []*model_s
 }
 func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation) {
 	allMessage := append(self, others...)
-	localGroupMemberInfo, err := c.group.GetSpecifiedGroupMembersInfo(ctx, lc.GroupID, datautil.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
+
+	allSenders := datautil.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
 		return e.SendID
-	}))
+	})
+	localGroupMemberInfo, err := c.group.GetSpecifiedGroupMembersInfo(ctx, lc.GroupID, datautil.Distinct(allSenders))
 	if err != nil {
 		log.ZError(ctx, "get group member info err", err)
 		return
@@ -337,11 +339,20 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 		return e.UserID
 	})
 	for _, chatLog := range allMessage {
-		if g, ok := groupMap[chatLog.SendID]; ok {
+		if g, ok := groupMap[chatLog.SendID]; ok { // If group member info is successfully retrieved
 			if g.FaceURL != "" && g.Nickname != "" {
 				chatLog.SenderFaceURL = g.FaceURL
 				chatLog.SenderNickname = g.Nickname
 			}
+		} else { // Otherwise, retrieve from local temporary cache
+			faceURL, name, err := c.getUserNameAndFaceURL(ctx, chatLog.SendID)
+			if err != nil {
+				log.ZWarn(ctx, "getUserNameAndFaceURL error", err, "senderID", chatLog.SendID)
+			} else if faceURL != "" && name != "" {
+				chatLog.SenderFaceURL = faceURL
+				chatLog.SenderNickname = name
+			}
 		}
 	}
+
 }
