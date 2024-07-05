@@ -48,7 +48,7 @@ func (i *LocalGroups) UpdateGroup(ctx context.Context, groupInfo *model_struct.L
 }
 
 func (i *LocalGroups) BatchInsertGroup(ctx context.Context, groupList []*model_struct.LocalGroup) error {
-	_, err := exec.Exec(groupList)
+	_, err := exec.Exec(utils.StructToJsonString(groupList))
 	return err
 }
 func (i *LocalGroups) DeleteAllGroup(ctx context.Context) error {

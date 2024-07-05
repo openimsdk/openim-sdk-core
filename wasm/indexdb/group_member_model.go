@@ -150,7 +150,7 @@ func (i *LocalGroupMember) GetGroupMemberListByGroupID(ctx context.Context, grou
 }
 
 func (i *LocalGroupMember) GetGroupMemberListByUserIDs(ctx context.Context, groupID string, filter int32, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-	member, err := exec.Exec(groupID, filter, userIDs)
+	member, err := exec.Exec(groupID, filter, utils.StructToJsonString(userIDs))
 	if err != nil {
 		return nil, err
 	} else {

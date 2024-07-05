@@ -38,7 +38,7 @@ func (i *NotificationSeqs) SetNotificationSeq(ctx context.Context, conversationI
 }
 
 func (i *NotificationSeqs) BatchInsertNotificationSeq(ctx context.Context, notificationSeqs []*model_struct.NotificationSeqs) error {
-	_, err := exec.Exec(notificationSeqs)
+	_, err := exec.Exec(utils.StructToJsonString(notificationSeqs))
 	return err
 }
 
