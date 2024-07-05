@@ -15,13 +15,14 @@
 package testv2
 
 import (
+	"testing"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/protocol/wrapperspb"
-	"testing"
 )
 
 func Test_CreateGroupV2(t *testing.T) {
@@ -313,4 +314,14 @@ func Test_SetGroupInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func Test_GetJoinedGroupListPage(t *testing.T) {
+	t.Log("-----------------------")
+	info, err := open_im_sdk.UserForSDK.Group().GetJoinedGroupListPage(ctx, 0, 10)
+	t.Log("-----------------------")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(info)
 }

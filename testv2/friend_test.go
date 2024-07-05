@@ -180,3 +180,4 @@ func Test_SetFriendsEx(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
