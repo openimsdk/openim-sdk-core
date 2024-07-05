@@ -77,18 +77,18 @@ func NewConversationCallback(callback *js.Value) *ConversationCallback {
 	return &ConversationCallback{CallbackWriter: NewEventData(callback)}
 }
 func (c ConversationCallback) OnSyncServerStart(reinstalled bool) {
-	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(reinstalled).SendMessage()
 }
 
 func (c ConversationCallback) OnSyncServerFinish(reinstalled bool) {
-	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(reinstalled).SendMessage()
 }
 func (c ConversationCallback) OnSyncServerProgress(progress int) {
 	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(progress).SendMessage()
 }
 
 func (c ConversationCallback) OnSyncServerFailed(reinstalled bool) {
-	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(reinstalled).SendMessage()
 
 }
 
