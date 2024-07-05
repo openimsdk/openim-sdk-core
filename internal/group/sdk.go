@@ -379,7 +379,17 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
 			localGroupMembers, err := g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
-			return localGroupMembers, true, err
+			if err != nil {
+				return nil, false, err
+			}
+			localGroup, err := g.db.GetGroupInfoByGroupID(ctx, groupID)
+			if err != nil {
+				return nil, false, err
+			}
+			if localGroup.MemberCount < groupMemberSyncLimit {
+				return localGroupMembers, false, nil
+			}
+			return localGroupMembers, true, nil
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
 			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)

@@ -32,6 +32,10 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
+const (
+	friendSyncLimit = 100
+)
+
 func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Friend {
 	f := &Friend{loginUserID: loginUserID, db: db, user: user, conversationCh: conversationCh}
 	f.initSyncer()
@@ -115,6 +119,7 @@ func (f *Friend) initSyncer() {
 			return datautil.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
 		}),
 		syncer.WithReqApiRouter[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](constant.GetFriendListRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalFriend, friend.GetPaginationFriendsResp, [2]string](friendSyncLimit),
 	)
 
 	f.blockSyncer = syncer.New[*model_struct.LocalBlack, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalBlack) error {

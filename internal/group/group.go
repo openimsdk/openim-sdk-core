@@ -33,6 +33,11 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
+const (
+	groupSyncLimit       = 100
+	groupMemberSyncLimit = 100
+)
+
 func NewGroup(loginUserID string, db db_interface.DataBase,
 	conversationCh chan common.Cmd2Value) *Group {
 	g := &Group{
@@ -136,6 +141,7 @@ func (g *Group) initSyncer() {
 			return datautil.Batch(ServerGroupToLocalGroup, resp.Groups)
 		}),
 		syncer.WithReqApiRouter[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](constant.GetJoinedGroupListRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](groupSyncLimit),
 	)
 
 	g.groupMemberSyncer = syncer.New2[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](
@@ -194,6 +200,7 @@ func (g *Group) initSyncer() {
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, resp.Members)
 		}),
 		syncer.WithReqApiRouter[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](constant.GetGroupMemberListRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](groupMemberSyncLimit),
 	)
 
 	g.groupRequestSyncer = syncer.New[*model_struct.LocalGroupRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalGroupRequest) error {
