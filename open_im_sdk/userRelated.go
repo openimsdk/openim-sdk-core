@@ -19,6 +19,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+	"unsafe"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -41,10 +46,6 @@ import (
 	"github.com/openimsdk/protocol/push"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
-	"strings"
-	"sync"
-	"time"
-	"unsafe"
 )
 
 const (
