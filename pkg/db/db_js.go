@@ -17,6 +17,7 @@ package db
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/indexdb"
 )
@@ -43,6 +44,8 @@ type IndexDB struct {
 	*indexdb.LocalStrangers
 	*indexdb.LocalSendingMessages
 	*indexdb.LocalUserCommand
+	*indexdb.LocalVersionSync
+	*indexdb.LocalAppSDKVersion
 	loginUserID string
 }
 
@@ -77,6 +80,8 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		LocalStrangers:                  indexdb.NewLocalStrangers(),
 		LocalSendingMessages:            indexdb.NewLocalSendingMessages(),
 		LocalUserCommand:                indexdb.NewLocalUserCommand(),
+		LocalVersionSync:                indexdb.NewLocalVersionSync(),
+		LocalAppSDKVersion:              indexdb.NewLocalAppSDKVersion(),
 		loginUserID:                     loginUserID,
 	}
 	err := i.InitDB(ctx, loginUserID, dbDir)

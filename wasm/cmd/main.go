@@ -19,9 +19,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 	"runtime"
 	"runtime/debug"
+
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 
 	"syscall/js"
 )
@@ -137,6 +138,7 @@ func registerFunc() {
 	js.Global().Set("setGroupMemberRoleLevel", js.FuncOf(wrapperGroup.SetGroupMemberRoleLevel))
 	js.Global().Set("setGroupMemberInfo", js.FuncOf(wrapperGroup.SetGroupMemberInfo))
 	js.Global().Set("getJoinedGroupList", js.FuncOf(wrapperGroup.GetJoinedGroupList))
+	js.Global().Set("getJoinedGroupListPage", js.FuncOf(wrapperGroup.GetJoinedGroupListPage))
 	js.Global().Set("searchGroups", js.FuncOf(wrapperGroup.SearchGroups))
 	js.Global().Set("setGroupInfo", js.FuncOf(wrapperGroup.SetGroupInfo))
 	js.Global().Set("setGroupVerification", js.FuncOf(wrapperGroup.SetGroupVerification))
