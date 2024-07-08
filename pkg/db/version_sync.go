@@ -15,7 +15,7 @@ func (d *DataBase) GetVersionSync(ctx context.Context, tableName, entityID strin
 	d.versionMtx.RLock()
 	defer d.versionMtx.RUnlock()
 	var res model_struct.LocalVersionSync
-	return &res, errs.Wrap(d.conn.WithContext(ctx).Where("`table` = ? and `entity_id` = ?", tableName, entityID).Take(&res).Error)
+	return &res, errs.Wrap(d.conn.WithContext(ctx).Where("`table_name` = ? and `entity_id` = ?", tableName, entityID).Take(&res).Error)
 }
 
 func (d *DataBase) SetVersionSync(ctx context.Context, lv *model_struct.LocalVersionSync) error {
@@ -23,7 +23,7 @@ func (d *DataBase) SetVersionSync(ctx context.Context, lv *model_struct.LocalVer
 	defer d.versionMtx.Unlock()
 
 	var existing model_struct.LocalVersionSync
-	err := d.conn.WithContext(ctx).Where("`table` = ? AND `entity_id` = ?", lv.Table, lv.EntityID).First(&existing).Error
+	err := d.conn.WithContext(ctx).Where("`table_name` = ? AND `entity_id` = ?", lv.Table, lv.EntityID).First(&existing).Error
 
 	if err == gorm.ErrRecordNotFound {
 		if createErr := d.conn.WithContext(ctx).Create(lv).Error; createErr != nil {
