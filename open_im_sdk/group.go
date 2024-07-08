@@ -140,6 +140,10 @@ func IsJoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID
 	call(callback, operationID, UserForSDK.Group().IsJoinGroup, groupID)
 }
 
+func GetUsersInGroup(callback open_im_sdk_callback.Base, operationID string, groupID, userIDList string) {
+	call(callback, operationID, UserForSDK.Group().GetUsersInGroup, groupID, userIDList)
+}
+
 func InviteUserToGroup(callback open_im_sdk_callback.Base, operationID string, groupID string, reason string, userIDList string) {
 	call(callback, operationID, UserForSDK.Group().InviteUserToGroup, groupID, reason, userIDList)
 }

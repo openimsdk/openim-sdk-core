@@ -528,14 +528,42 @@ func (g *Group) SearchGroupMembers(ctx context.Context, searchParam *sdk_params_
 }
 
 func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
-	groupIDs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return false, err
 	}
-	if datautil.Contain(groupID, groupIDs.UIDList...) {
+	if datautil.Contain(groupID, lvs.UIDList...) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (g *Group) GetUsersInGroup(ctx context.Context, groupID string, userIDList []string) ([]string, error) {
+	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	if err != nil {
+		return nil, err
+	}
+	if !datautil.Contain(groupID, lvs.UIDList...) {
+		return nil, nil
+	}
+	lvs, err = g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	groupMembersMap := datautil.SliceSetAny(lvs.UIDList, func(e string) string {
+		return e
+	})
+
+	var usersInGroup []string
+	for _, userID := range userIDList {
+		if _, exists := groupMembersMap[userID]; exists {
+			usersInGroup = append(usersInGroup, userID)
+		}
+	}
+
+	return usersInGroup, nil
+
 }
 
 func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, userIDList []string) error {

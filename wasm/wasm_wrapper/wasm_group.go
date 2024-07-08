@@ -179,6 +179,11 @@ func (w *WrapperGroup) IsJoinGroup(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.IsJoinGroup, callback, &args).AsyncCallWithCallback()
 }
 
+func (w *WrapperGroup) GetUsersInGroup(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetUsersInGroup, callback, &args).AsyncCallWithCallback()
+}
+
 func (w *WrapperGroup) GetSpecifiedGroupsInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetSpecifiedGroupsInfo, callback, &args).AsyncCallWithCallback()
