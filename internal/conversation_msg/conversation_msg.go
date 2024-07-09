@@ -993,7 +993,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 	var notInFriend []string
 
 	if len(userIDs) == 0 {
-		return nil, nil
+		return m, nil
 	}
 
 	friendList, err := c.friend.Db().GetFriendInfoList(ctx, userIDs)
