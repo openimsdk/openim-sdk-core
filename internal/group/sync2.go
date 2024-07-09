@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"gorm.io/gorm"
-
 	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
