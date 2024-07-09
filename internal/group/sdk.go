@@ -383,10 +383,6 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 			if errs.Unwrap(err) != errs.ErrRecordNotFound {
 				return nil, err
 			}
-
-			g.groupSyncMutex.Lock()
-			defer g.groupSyncMutex.Unlock()
-
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
 			if err != nil {
 				return nil, err
@@ -445,10 +441,6 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 			if errs.Unwrap(err) != errs.ErrRecordNotFound {
 				return nil, err
 			}
-
-			g.groupSyncMutex.Lock()
-			defer g.groupSyncMutex.Unlock()
-
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
 			if err != nil {
 				return nil, err
