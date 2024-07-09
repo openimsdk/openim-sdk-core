@@ -30,7 +30,7 @@ func (d *DataBase) GetLoginUser(ctx context.Context, userID string) (*model_stru
 	defer d.userMtx.RUnlock()
 	var user model_struct.LocalUser
 	err := d.conn.WithContext(ctx).Where("user_id = ? ", userID).Take(&user).Error
-	if err != err {
+	if err != nil {
 		if err == errs.ErrRecordNotFound {
 			return nil, errs.ErrRecordNotFound.Wrap()
 		}
