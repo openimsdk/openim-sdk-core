@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -38,10 +39,11 @@ import (
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"sort"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/jinzhu/copier"
 )
@@ -950,10 +952,13 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 			groupIDs = append(groupIDs, conversation.GroupID)
 		}
 	}
+
+	// if userIDs = nil, return nil, nil
 	users, err := c.batchGetUserNameAndFaceURL(ctx, userIDs...)
 	if err != nil {
 		return err
 	}
+
 	groups, err := c.full.GetGroupsInfo(ctx, groupIDs...)
 	if err != nil {
 		return err
@@ -986,6 +991,10 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 	m := make(map[string]*user.BasicInfo)
 	var notCachedUserIDs []string
 	var notInFriend []string
+
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
 
 	friendList, err := c.friend.Db().GetFriendInfoList(ctx, userIDs)
 	if err != nil {

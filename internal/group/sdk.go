@@ -16,9 +16,10 @@ package group
 
 import (
 	"context"
-	"github.com/openimsdk/tools/errs"
-	"gorm.io/gorm"
+	"sync"
 	"time"
+
+	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -356,7 +357,7 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+			if errs.Unwrap(err) != errs.ErrRecordNotFound {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
@@ -414,7 +415,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+			if errs.Unwrap(err) != errs.ErrRecordNotFound {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
@@ -571,6 +572,9 @@ func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, u
 		return err
 	}
 
+	var mu sync.Mutex
+	mu.Lock()
+	defer mu.Unlock()
 	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}
