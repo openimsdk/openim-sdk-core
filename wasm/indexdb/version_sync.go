@@ -22,10 +22,10 @@ func NewLocalVersionSync() *LocalVersionSync {
 func (i *LocalVersionSync) GetVersionSync(ctx context.Context, tableName, entityID string) (*model_struct.LocalVersionSync, error) {
 	version, err := exec.Exec(tableName, entityID)
 	if err != nil {
+		if err == errs.ErrRecordNotFound {
+			return &model_struct.LocalVersionSync{}, err
+		}
 		return nil, err
-	}
-	if err == errs.ErrRecordNotFound {
-		return &model_struct.LocalVersionSync{}, err
 	}
 	if v, ok := version.(string); ok {
 		var temp model_struct.LocalVersionSync
