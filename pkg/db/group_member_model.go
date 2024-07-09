@@ -85,7 +85,7 @@ func (d *DataBase) GetGroupMemberListByUserIDs(ctx context.Context, groupID stri
 	var err error
 	switch filter {
 	case constant.GroupFilterAll:
-		err = d.conn.WithContext(ctx).Where("group_id = ? AND user_id IN ?", groupID, userIDs).Order("role_level DESC, join_time ASC").Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? AND user_id IN ?", groupID, userIDs).Find(&groupMemberList).Error
 	case constant.GroupFilterOwner:
 		err = d.conn.WithContext(ctx).Where("group_id = ? AND role_level = ? AND user_id IN ?", groupID, constant.GroupOwner, userIDs).Find(&groupMemberList).Error
 	case constant.GroupFilterAdmin:
