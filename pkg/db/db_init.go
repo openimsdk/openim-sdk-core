@@ -148,7 +148,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 
 func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 	verModel, err := d.GetAppSDKVersion(ctx)
-	if errs.Unwrap(err) == gorm.ErrRecordNotFound {
+	if errs.Unwrap(err) == errs.ErrRecordNotFound {
 		err = d.conn.AutoMigrate(
 			&model_struct.LocalAppSDKVersion{},
 			&model_struct.LocalFriend{},

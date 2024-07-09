@@ -16,9 +16,9 @@ package group
 
 import (
 	"context"
-	"github.com/openimsdk/tools/errs"
-	"gorm.io/gorm"
 	"time"
+
+	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -47,6 +47,10 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 	if err != nil {
 		return nil, err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return nil, err
 	}
@@ -101,6 +105,10 @@ func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool
 	if err != nil {
 		return err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}
@@ -123,6 +131,10 @@ func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID 
 	if err := util.ApiPost(ctx, constant.TransferGroupRouter, &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}, nil); err != nil {
 		return err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}
@@ -133,6 +145,10 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	if err := util.ApiPost(ctx, constant.KickGroupMemberRouter, &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}, nil); err != nil {
 		return err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
@@ -140,6 +156,10 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
 		return err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	return g.IncrSyncJoinGroup(ctx)
 }
 
@@ -147,6 +167,10 @@ func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.S
 	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
 		return err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	return g.IncrSyncGroupAndMember(ctx, groupMemberInfo.GroupID)
 }
 
@@ -356,7 +380,7 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+			if errs.Unwrap(err) != errs.ErrRecordNotFound {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
@@ -414,7 +438,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+			if errs.Unwrap(err) != errs.ErrRecordNotFound {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
@@ -570,6 +594,9 @@ func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, u
 	if err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}, nil); err != nil {
 		return err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
 
 	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err

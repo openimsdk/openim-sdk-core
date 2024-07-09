@@ -17,6 +17,7 @@ package group
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/errs"
@@ -27,6 +28,9 @@ import (
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	go func() {
 		if err := g.doNotification(ctx, msg); err != nil {
 			log.ZError(ctx, "DoGroupNotification failed", err)
