@@ -28,6 +28,9 @@ import (
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	go func() {
 		if err := g.doNotification(ctx, msg); err != nil {
 			log.ZError(ctx, "DoGroupNotification failed", err)
@@ -146,8 +149,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			}
 			return g.IncrSyncGroupAndMember(ctx, detail.Group.GroupID)
 		} else {
-			g.groupSyncMutex.Lock()
-			defer g.groupSyncMutex.Unlock()
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
 				detail.InvitedUserList, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 		}
