@@ -17,7 +17,6 @@ package group
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -37,7 +36,6 @@ func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
-	var mu sync.Mutex
 	switch msg.ContentType {
 	case constant.GroupCreatedNotification: // 1501
 		var detail sdkws.GroupCreatedTips
@@ -148,8 +146,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			}
 			return g.IncrSyncGroupAndMember(ctx, detail.Group.GroupID)
 		} else {
-			mu.Lock()
-			defer mu.Unlock()
+			g.groupSyncMutex.Lock()
+			defer g.groupSyncMutex.Unlock()
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
 				detail.InvitedUserList, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 		}

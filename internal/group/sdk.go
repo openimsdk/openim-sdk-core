@@ -16,7 +16,6 @@ package group
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/openimsdk/tools/errs"
@@ -572,9 +571,8 @@ func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, u
 		return err
 	}
 
-	var mu sync.Mutex
-	mu.Lock()
-	defer mu.Unlock()
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
 	if err := g.IncrSyncGroupAndMember(ctx, groupID); err != nil {
 		return err
 	}

@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -64,6 +65,7 @@ type Group struct {
 	conversationCh chan common.Cmd2Value
 	//	memberSyncMutex sync.RWMutex
 
+	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
