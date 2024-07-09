@@ -29,7 +29,14 @@ func (d *DataBase) GetLoginUser(ctx context.Context, userID string) (*model_stru
 	d.userMtx.RLock()
 	defer d.userMtx.RUnlock()
 	var user model_struct.LocalUser
-	return &user, errs.WrapMsg(d.conn.WithContext(ctx).Where("user_id = ? ", userID).Take(&user).Error, "GetLoginUserInfo failed")
+	err := d.conn.WithContext(ctx).Where("user_id = ? ", userID).Take(&user).Error
+	if err != err {
+		if err == errs.ErrRecordNotFound {
+			return nil, errs.ErrRecordNotFound.Wrap()
+		}
+		return nil, errs.Wrap(err)
+	}
+	return &user, nil
 }
 
 func (d *DataBase) UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error {

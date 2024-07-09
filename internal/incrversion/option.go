@@ -10,7 +10,6 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"gorm.io/gorm"
 )
 
 type VersionSynchronizer[V, R any] struct {
@@ -36,7 +35,7 @@ type VersionSynchronizer[V, R any] struct {
 
 func (o *VersionSynchronizer[V, R]) getVersionInfo() (*model_struct.LocalVersionSync, error) {
 	versionInfo, err := o.DB.GetVersionSync(o.Ctx, o.TableName, o.EntityID)
-	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
+	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
 		log.ZWarn(o.Ctx, "get version info", err)
 		return nil, err
 
