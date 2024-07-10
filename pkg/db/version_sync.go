@@ -18,7 +18,7 @@ func (d *DataBase) GetVersionSync(ctx context.Context, tableName, entityID strin
 	err := d.conn.WithContext(ctx).Where("`table_name` = ? and `entity_id` = ?", tableName, entityID).Take(&res).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			err = errs.ErrRecordNotFound
+			return &model_struct.LocalVersionSync{}, errs.ErrRecordNotFound.Wrap()
 		}
 		return nil, errs.Wrap(err)
 	}
