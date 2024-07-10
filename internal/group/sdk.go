@@ -74,11 +74,25 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
+		return err
+	}
+
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
 		return err
 	}
 	return nil
