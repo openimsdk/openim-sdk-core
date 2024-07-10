@@ -168,7 +168,13 @@ func (c *Conversation) initSyncer() {
 		syncer.WithDeleteAll[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, _ string) error {
 			return c.db.DeleteAllConversation(ctx)
 		}),
-
+		//syncer.WithBatchPageReq[*model_struct.LocalConversation, syncer.NoResp, string](func(entityID string) page.PageReq {
+		//	return &friend.GetPaginationFriendsReq{UserID: entityID,
+		//		Pagination: &sdkws.RequestPagination{ShowNumber: 300}}
+		//}),
+		//syncer.WithBatchPageRespConvertFunc[*model_struct.LocalConversation, syncer.NoResp, string](func(resp *friend.GetPaginationFriendsResp) []*model_struct.LocalFriend {
+		//	return datautil.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
+		//}),
 		syncer.WithReqApiRouter[*model_struct.LocalConversation, syncer.NoResp, string](constant.GetFriendListRouter),
 		syncer.WithFullSyncLimit[*model_struct.LocalConversation, syncer.NoResp, string](conversationSyncLimit),
 	)
