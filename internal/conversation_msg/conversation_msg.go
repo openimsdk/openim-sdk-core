@@ -18,6 +18,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -38,12 +40,17 @@ import (
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"sort"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+
 	"github.com/jinzhu/copier"
+)
+
+const (
+	conversationSyncLimit = math.MaxInt64
 )
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
@@ -115,14 +122,14 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 }
 
 func (c *Conversation) initSyncer() {
-	c.conversationSyncer = syncer.New[*model_struct.LocalConversation, syncer.NoResp, string](
-		func(ctx context.Context, value *model_struct.LocalConversation) error {
+	c.conversationSyncer = syncer.New2[*model_struct.LocalConversation, syncer.NoResp, string](
+		syncer.WithInsert[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
 			return c.db.InsertConversation(ctx, value)
-		},
-		func(ctx context.Context, value *model_struct.LocalConversation) error {
+		}),
+		syncer.WithDelete[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
 			return c.db.DeleteConversation(ctx, value.ConversationID)
-		},
-		func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
+		}),
+		syncer.WithUpdate[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
 			return c.db.UpdateColumnsConversation(ctx, serverConversation.ConversationID,
 				map[string]interface{}{"recv_msg_opt": serverConversation.RecvMsgOpt,
 					"is_pinned": serverConversation.IsPinned, "is_private_chat": serverConversation.IsPrivateChat, "burn_duration": serverConversation.BurnDuration,
@@ -131,11 +138,11 @@ func (c *Conversation) initSyncer() {
 					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex, "msg_destruct_time": serverConversation.MsgDestructTime,
 					"is_msg_destruct": serverConversation.IsMsgDestruct,
 					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
-		},
-		func(value *model_struct.LocalConversation) string {
+		}),
+		syncer.WithUUID[*model_struct.LocalConversation, syncer.NoResp, string](func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
-		},
-		func(server, local *model_struct.LocalConversation) bool {
+		}),
+		syncer.WithEqual[*model_struct.LocalConversation, syncer.NoResp, string](func(server, local *model_struct.LocalConversation) bool {
 			if server.RecvMsgOpt != local.RecvMsgOpt ||
 				server.IsPinned != local.IsPinned ||
 				server.IsPrivateChat != local.IsPrivateChat ||
@@ -153,9 +160,25 @@ func (c *Conversation) initSyncer() {
 				return false
 			}
 			return true
-		},
+		}),
 		nil,
+		syncer.WithBatchInsert[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, values []*model_struct.LocalConversation) error {
+			return c.db.BatchInsertConversationList(ctx, values)
+		}),
+		syncer.WithDeleteAll[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, _ string) error {
+			return c.db.DeleteAllConversation(ctx)
+		}),
+		//syncer.WithBatchPageReq[*model_struct.LocalConversation, syncer.NoResp, string](func(entityID string) page.PageReq {
+		//	return &friend.GetPaginationFriendsReq{UserID: entityID,
+		//		Pagination: &sdkws.RequestPagination{ShowNumber: 300}}
+		//}),
+		//syncer.WithBatchPageRespConvertFunc[*model_struct.LocalConversation, syncer.NoResp, string](func(resp *friend.GetPaginationFriendsResp) []*model_struct.LocalFriend {
+		//	return datautil.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
+		//}),
+		syncer.WithReqApiRouter[*model_struct.LocalConversation, syncer.NoResp, string](constant.GetFriendListRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalConversation, syncer.NoResp, string](conversationSyncLimit),
 	)
+
 }
 
 func (c *Conversation) GetCh() chan common.Cmd2Value {
