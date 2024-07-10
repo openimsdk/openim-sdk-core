@@ -19,6 +19,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"runtime"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -26,12 +33,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"io"
-	"runtime"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
@@ -579,4 +580,31 @@ func (c *LongConnMgr) SetBackground(isBackground bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.IsBackground = isBackground
+}
+
+func (c *LongConnMgr) pingHandler(_ string) error {
+	if err := c.conn.SetReadDeadline(pongWait); err != nil {
+		return err
+	}
+
+	return c.writePongMsg()
+}
+
+func (c *LongConnMgr) pongHandler(_ string) error {
+	if err := c.conn.SetReadDeadline(pongWait); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *LongConnMgr) writePongMsg() error {
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
+
+	err := c.conn.SetWriteDeadline(writeWait)
+	if err != nil {
+		return err
+	}
+
+	return c.conn.WriteMessage(PongMessage, nil)
 }
