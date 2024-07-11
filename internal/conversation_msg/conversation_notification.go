@@ -18,15 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"runtime"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/utils/datautil"
-	"reflect"
-	"runtime"
-	"time"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -45,6 +46,8 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 	case constant.CmSyncReactionExtensions:
 	case constant.CmdNotification:
 		c.doNotificationNew(c2v)
+	case constant.CmdSyncData:
+		c.syncData(c2v)
 	}
 }
 
@@ -92,45 +95,9 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		c.ConversationListener().OnSyncServerFinish(true)
 	case constant.MsgSyncBegin:
 		log.ZDebug(ctx, "MsgSyncBegin")
-		c.startTime = time.Now()
 		c.ConversationListener().OnSyncServerStart(false)
-		//clear SubscriptionStatusMap
-		c.user.OnlineStatusCache.DeleteAll()
 
-		syncFunctions := []func(c context.Context) error{
-			c.SyncAllConversationHashReadSeqs,
-			c.group.SyncAllJoinedGroupsAndMembers,
-			c.friend.IncrSyncFriends,
-		}
-
-		for _, syncFunc := range syncFunctions {
-			funcName := runtime.FuncForPC(reflect.ValueOf(syncFunc).Pointer()).Name()
-			startTime := time.Now()
-			err := syncFunc(ctx)
-			duration := time.Since(startTime)
-			if err != nil {
-				log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration.Seconds())
-			} else {
-				log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
-			}
-		}
-		for _, syncFunc := range []func(c context.Context) error{
-			c.user.SyncLoginUserInfo,
-			c.friend.SyncAllBlackList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
-			c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication, c.user.SyncAllCommand, c.SyncAllConversations,
-		} {
-			go func(syncFunc func(c context.Context) error) {
-				funcName := runtime.FuncForPC(reflect.ValueOf(syncFunc).Pointer()).Name()
-				startTime := time.Now()
-				err := syncFunc(ctx)
-				duration := time.Since(startTime)
-				if err != nil {
-					log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration.Seconds())
-				} else {
-					log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
-				}
-			}(syncFunc)
-		}
+		c.syncData(c2v)
 
 	case constant.MsgSyncFailed:
 		c.ConversationListener().OnSyncServerFailed(false)
@@ -417,6 +384,49 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.SyncConversation:
 
+	}
+}
+
+func (c *Conversation) syncData(c2v common.Cmd2Value) {
+	ctx := c2v.Ctx
+	c.startTime = time.Now()
+	//clear SubscriptionStatusMap
+	c.user.OnlineStatusCache.DeleteAll()
+
+	syncFunctions := []func(c context.Context) error{
+		c.SyncAllConversationHashReadSeqs,
+		c.group.SyncAllJoinedGroupsAndMembers,
+		c.friend.IncrSyncFriends,
+	}
+
+	for _, syncFunc := range syncFunctions {
+		funcName := runtime.FuncForPC(reflect.ValueOf(syncFunc).Pointer()).Name()
+		startTime := time.Now()
+		err := syncFunc(ctx)
+		duration := time.Since(startTime)
+		if err != nil {
+			log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration.Seconds())
+		} else {
+			log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
+		}
+	}
+
+	for _, syncFunc := range []func(c context.Context) error{
+		c.user.SyncLoginUserInfo,
+		c.friend.SyncAllBlackList, c.friend.SyncAllFriendApplication, c.friend.SyncAllSelfFriendApplication,
+		c.group.SyncAllAdminGroupApplication, c.group.SyncAllSelfGroupApplication, c.user.SyncAllCommand, c.SyncAllConversations,
+	} {
+		go func(syncFunc func(c context.Context) error) {
+			funcName := runtime.FuncForPC(reflect.ValueOf(syncFunc).Pointer()).Name()
+			startTime := time.Now()
+			err := syncFunc(ctx)
+			duration := time.Since(startTime)
+			if err != nil {
+				log.ZWarn(ctx, fmt.Sprintf("%s sync err", funcName), err, "duration", duration.Seconds())
+			} else {
+				log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
+			}
+		}(syncFunc)
 	}
 }
 
