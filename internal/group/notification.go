@@ -28,10 +28,9 @@ import (
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	g.groupSyncMutex.Lock()
-	defer g.groupSyncMutex.Unlock()
 
 	go func() {
+
 		if err := g.doNotification(ctx, msg); err != nil {
 			log.ZError(ctx, "DoGroupNotification failed", err)
 		}
@@ -39,6 +38,8 @@ func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
 	switch msg.ContentType {
 	case constant.GroupCreatedNotification: // 1501
 		var detail sdkws.GroupCreatedTips
