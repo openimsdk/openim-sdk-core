@@ -121,6 +121,8 @@ const (
 	BatchSetConversationRouter         = ConversationGroup + "/batch_set_conversation"
 	ModifyConversationFieldRouter      = ConversationGroup + "/modify_conversation_field"
 	SetConversationsRouter             = ConversationGroup + "/set_conversations"
+	GetFullConversationIDs             = ConversationGroup + "/get_full_conversation_ids"
+	GetOwnerConversationRouter         = ConversationGroup + "/get_owner_conversation"
 
 	// organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"

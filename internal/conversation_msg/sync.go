@@ -16,12 +16,13 @@ package conversation_msg
 
 import (
 	"context"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/tools/utils/datautil"
-	"time"
 
 	"github.com/openimsdk/tools/log"
 )
@@ -53,15 +54,15 @@ func (c *Conversation) SyncConversations(ctx context.Context, conversationIDs []
 	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, false)
 }
 
-func (c *Conversation) SyncAllConversations(ctx context.Context) error {
-	ccTime := time.Now()
-	conversationsOnServer, err := c.getServerConversationList(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
-	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, false)
-}
+//func (c *Conversation) SyncAllConversations(ctx context.Context) error {
+//	ccTime := time.Now()
+//	conversationsOnServer, err := c.getServerConversationList(ctx)
+//	if err != nil {
+//		return err
+//	}
+//	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
+//	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, false)
+//}
 
 func (c *Conversation) SyncAllConversationsWithoutNotice(ctx context.Context) error {
 	ccTime := time.Now()

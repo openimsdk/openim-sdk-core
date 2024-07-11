@@ -190,6 +190,7 @@ type ConversationModel interface {
 	UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error
 	InsertConversation(ctx context.Context, conversationList *model_struct.LocalConversation) error
 	DeleteConversation(ctx context.Context, conversationID string) error
+	DeleteAllConversation(ctx context.Context) error
 	GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error)
 	UpdateConversation(ctx context.Context, c *model_struct.LocalConversation) error
 	UpdateConversationForSync(ctx context.Context, c *model_struct.LocalConversation) error

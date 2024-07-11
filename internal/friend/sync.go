@@ -17,8 +17,9 @@ package friend
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/tools/utils/datautil"
 	"time"
+
+	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -140,6 +141,7 @@ func (f *Friend) deleteFriend(ctx context.Context, friendUserID string) error {
 	//if err := f.db.DeleteFriendDB(ctx, friendUserID); err != nil {
 	//	return err
 	//}
+
 	//f.friendListener.OnFriendDeleted(*friends[0])
 	//return nil
 }

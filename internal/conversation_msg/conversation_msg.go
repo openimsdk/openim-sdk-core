@@ -34,9 +34,12 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
+	pbConversation "github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -57,7 +60,7 @@ var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*interaction.LongConnMgr
-	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, syncer.NoResp, string]
+	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
 	db                   db_interface.DataBase
 	ConversationListener func() open_im_sdk_callback.OnConversationListener
 	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
@@ -122,14 +125,14 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 }
 
 func (c *Conversation) initSyncer() {
-	c.conversationSyncer = syncer.New2[*model_struct.LocalConversation, syncer.NoResp, string](
-		syncer.WithInsert[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
+	c.conversationSyncer = syncer.New2[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](
+		syncer.WithInsert[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
 			return c.db.InsertConversation(ctx, value)
 		}),
-		syncer.WithDelete[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
+		syncer.WithDelete[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
 			return c.db.DeleteConversation(ctx, value.ConversationID)
 		}),
-		syncer.WithUpdate[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
+		syncer.WithUpdate[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
 			return c.db.UpdateColumnsConversation(ctx, serverConversation.ConversationID,
 				map[string]interface{}{"recv_msg_opt": serverConversation.RecvMsgOpt,
 					"is_pinned": serverConversation.IsPinned, "is_private_chat": serverConversation.IsPrivateChat, "burn_duration": serverConversation.BurnDuration,
@@ -139,10 +142,10 @@ func (c *Conversation) initSyncer() {
 					"is_msg_destruct": serverConversation.IsMsgDestruct,
 					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
 		}),
-		syncer.WithUUID[*model_struct.LocalConversation, syncer.NoResp, string](func(value *model_struct.LocalConversation) string {
+		syncer.WithUUID[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
 		}),
-		syncer.WithEqual[*model_struct.LocalConversation, syncer.NoResp, string](func(server, local *model_struct.LocalConversation) bool {
+		syncer.WithEqual[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(server, local *model_struct.LocalConversation) bool {
 			if server.RecvMsgOpt != local.RecvMsgOpt ||
 				server.IsPinned != local.IsPinned ||
 				server.IsPrivateChat != local.IsPrivateChat ||
@@ -162,21 +165,21 @@ func (c *Conversation) initSyncer() {
 			return true
 		}),
 		nil,
-		syncer.WithBatchInsert[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, values []*model_struct.LocalConversation) error {
+		syncer.WithBatchInsert[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, values []*model_struct.LocalConversation) error {
 			return c.db.BatchInsertConversationList(ctx, values)
 		}),
-		syncer.WithDeleteAll[*model_struct.LocalConversation, syncer.NoResp, string](func(ctx context.Context, _ string) error {
+		syncer.WithDeleteAll[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, _ string) error {
 			return c.db.DeleteAllConversation(ctx)
 		}),
-		//syncer.WithBatchPageReq[*model_struct.LocalConversation, syncer.NoResp, string](func(entityID string) page.PageReq {
-		//	return &friend.GetPaginationFriendsReq{UserID: entityID,
-		//		Pagination: &sdkws.RequestPagination{ShowNumber: 300}}
-		//}),
-		//syncer.WithBatchPageRespConvertFunc[*model_struct.LocalConversation, syncer.NoResp, string](func(resp *friend.GetPaginationFriendsResp) []*model_struct.LocalFriend {
-		//	return datautil.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
-		//}),
-		syncer.WithReqApiRouter[*model_struct.LocalConversation, syncer.NoResp, string](constant.GetFriendListRouter),
-		syncer.WithFullSyncLimit[*model_struct.LocalConversation, syncer.NoResp, string](conversationSyncLimit),
+		syncer.WithBatchPageReq[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(entityID string) page.PageReq {
+			return &pbConversation.GetOwnerConversationReq{UserID: entityID,
+				Pagination: &sdkws.RequestPagination{ShowNumber: 300}}
+		}),
+		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(resp *pbConversation.GetOwnerConversationResp) []*model_struct.LocalConversation {
+			return datautil.Batch(ServerConversationToLocal, resp.Conversations)
+		}),
+		syncer.WithReqApiRouter[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](constant.GetOwnerConversationRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](conversationSyncLimit),
 	)
 
 }
@@ -428,14 +431,6 @@ func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struc
 	}
 
 }
-func removeElementInList(a sdk_struct.NewMsgList, e *sdk_struct.MsgStruct) (b sdk_struct.NewMsgList) {
-	for i := 0; i < len(a); i++ {
-		if a[i] != e {
-			b = append(b, a[i])
-		}
-	}
-	return b
-}
 func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[string]*model_struct.LocalConversation) {
 	var newConversations []*model_struct.LocalConversation
 	for _, v := range generated {
@@ -481,15 +476,6 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 	}
 }
 
-//	funcation (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
-//		var lc model_struct.LocalChatLog
-//		copier.Copy(&lc, m)
-//		if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
-//			lc.RecvID = m.GroupID
-//		}
-//		lc.AttachedInfo = utils.StructToJsonString(m.AttachedInfoElem)
-//		return &lc
-//	}
 func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
 	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, m)
@@ -666,15 +652,6 @@ func (c *Conversation) doReactionMsgDeleter(ctx context.Context, msgReactionList
 	// 	c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 
 	// }
-}
-
-func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (bool, *sdk_struct.MessageRevoked) {
-	for _, element := range List {
-		if target == element.ClientMsgID {
-			return true, element
-		}
-	}
-	return false, nil
 }
 
 func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
