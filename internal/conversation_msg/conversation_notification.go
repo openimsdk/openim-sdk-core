@@ -46,7 +46,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 	case constant.CmSyncReactionExtensions:
 	case constant.CmdNotification:
 		c.doNotificationNew(c2v)
-	case constant.CmdActiveSyncConversation:
+	case constant.CmdSyncData:
 		c.syncData(c2v)
 	}
 }

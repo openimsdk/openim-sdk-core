@@ -63,11 +63,11 @@ func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 	return sendCmd(ch, c2v, 100)
 }
 
-func TriggerCmdActiveSyncConversation(ch chan Cmd2Value) error {
+func TriggerCmdSyncData(ch chan Cmd2Value) error {
 	if ch == nil {
 		return errs.Wrap(ErrChanNil)
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdActiveSyncConversation, Value: nil}
+	c2v := Cmd2Value{Cmd: constant.CmdSyncData, Value: nil}
 	return sendCmd(ch, c2v, 100)
 }
 
