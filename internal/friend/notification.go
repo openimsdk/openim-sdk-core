@@ -49,9 +49,9 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 
 		if tips.FromToUserID.FromUserID == f.loginUserID {
-			err = f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
+			err = f.SyncFriends(ctx)
 		} else if tips.FromToUserID.ToUserID == f.loginUserID {
-			err = f.SyncFriends(ctx, []string{tips.FromToUserID.FromUserID})
+			err = f.SyncFriends(ctx)
 		}
 		if err != nil {
 			return err
@@ -70,9 +70,9 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		if tips.Friend != nil && tips.Friend.FriendUser != nil {
 			if tips.Friend.FriendUser.UserID == f.loginUserID {
-				return f.SyncFriends(ctx, []string{tips.Friend.OwnerUserID})
+				return f.SyncFriends(ctx)
 			} else if tips.Friend.OwnerUserID == f.loginUserID {
-				return f.SyncFriends(ctx, []string{tips.Friend.FriendUser.UserID})
+				return f.SyncFriends(ctx)
 			}
 		}
 	case constant.FriendDeletedNotification:
@@ -82,7 +82,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		if tips.FromToUserID != nil {
 			if tips.FromToUserID.FromUserID == f.loginUserID {
-				return f.deleteFriend(ctx, tips.FromToUserID.ToUserID)
+				return f.SyncFriends(ctx)
 			}
 		}
 	case constant.FriendRemarkSetNotification:
@@ -92,7 +92,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		if tips.FromToUserID != nil {
 			if tips.FromToUserID.FromUserID == f.loginUserID {
-				return f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
+				return f.SyncFriends(ctx)
 			}
 		}
 	case constant.FriendInfoUpdatedNotification:
@@ -101,7 +101,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		if tips.UserID != f.loginUserID {
-			return f.SyncFriends(ctx, []string{tips.UserID})
+			return f.SyncFriends(ctx)
 		}
 	case constant.BlackAddedNotification:
 		var tips sdkws.BlackAddedTips
@@ -127,7 +127,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		if tips.FromToUserID.ToUserID == f.loginUserID {
-			return f.SyncFriends(ctx, tips.FriendIDs)
+			return f.SyncFriends(ctx)
 		}
 	default:
 		return fmt.Errorf("type failed %d", msg.ContentType)

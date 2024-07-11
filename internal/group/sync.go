@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -28,7 +30,6 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"time"
 )
 
 func (g *Group) getGroupHash(members []*model_struct.LocalGroupMember) uint64 {
@@ -81,10 +82,6 @@ func (g *Group) SyncAllGroupMember(ctx context.Context, groupID string) error {
 		return err
 	}
 	return g.syncGroupMembers(ctx, groupID, members, localData)
-}
-
-func (g *Group) SyncAllGroupMember2(ctx context.Context, groupID string) error {
-	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
 func (g *Group) syncGroupMembers(ctx context.Context, groupID string, members []*sdkws.GroupMemberFullInfo, localData []*model_struct.LocalGroupMember) error {
@@ -143,33 +140,8 @@ func (g *Group) SyncGroupMembers(ctx context.Context, groupID string, userIDs ..
 	//return g.syncGroupMembers(ctx, groupID, members, localData)
 }
 
-func (g *Group) SyncGroups(ctx context.Context, groupIDs ...string) error {
+func (g *Group) SyncGroups(ctx context.Context) error {
 	return g.IncrSyncJoinGroup(ctx)
-	//groups, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
-	//if err != nil {
-	//	return err
-	//}
-	//localData, err := g.db.GetGroups(ctx, groupIDs)
-	//if err != nil {
-	//	return err
-	//}
-	//if err := g.groupSyncer.Sync(ctx, util.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
-	//	return err
-	//}
-	//return nil
-}
-
-func (g *Group) deleteGroup(ctx context.Context, groupID string) error {
-	return g.IncrSyncJoinGroup(ctx)
-	//groupInfo, err := g.db.GetGroupInfoByGroupID(ctx, groupID)
-	//if err != nil {
-	//	return err
-	//}
-	//if err := g.db.DeleteGroup(ctx, groupID); err != nil {
-	//	return err
-	//}
-	//g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(groupInfo))
-	//return nil
 }
 
 //	func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
