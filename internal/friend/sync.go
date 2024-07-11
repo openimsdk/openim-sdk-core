@@ -119,49 +119,7 @@ func (f *Friend) SyncAllFriendList(ctx context.Context) error {
 
 	}(t)
 	return f.IncrSyncFriends(ctx)
-	//req := &relation.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	//fn := func(resp *relation.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
-	//friends, err := util.GetPageAll(ctx, constant.GetFriendListRouter, req, fn)
-	//if err != nil {
-	//	return err
-	//}
-	//localData, err := f.db.GetAllFriendList(ctx)
-	//if err != nil {
-	//	return err
-	//}
-	//log.ZDebug(ctx, "sync friend", "data from server", friends, "data from local", localData)
-	//return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, friends), localData, nil)
 }
-
-func (f *Friend) SyncFriends(ctx context.Context) error {
-	return f.IncrSyncFriends(ctx)
-}
-
-//func (f *Friend) SyncFriendPart(ctx context.Context) error {
-//	hashResp, err := util.CallApi[relation.GetFriendHashResp](ctx, constant.GetFriendHash, &relation.GetFriendHashReq{UserID: f.loginUserID})
-//	if err != nil {
-//		return err
-//	}
-//	friends, err := f.db.GetAllFriendList(ctx)
-//	if err != nil {
-//		return err
-//	}
-//	hashCode := f.CalculateHash(friends)
-//	log.ZDebug(ctx, "SyncFriendPart", "serverHash", hashResp.Hash, "serverTotal", hashResp.Total, "localHash", hashCode, "localTotal", len(friends))
-//	if hashCode == hashResp.Hash {
-//		return nil
-//	}
-//	req := &relation.GetPaginationFriendsReq{
-//		UserID:     f.loginUserID,
-//		Pagination: &sdkws.RequestPagination{PageNumber: pconstant.FirstPageNumber, ShowNumber: pconstant.MaxSyncPullNumber},
-//	}
-//	resp, err := util.CallApi[relation.GetPaginationFriendsResp](ctx, constant.GetFriendListRouter, req)
-//	if err != nil {
-//		return err
-//	}
-//	serverFriends := util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
-//	return f.friendSyncer.Sync(ctx, serverFriends, friends, nil)
-//}
 
 func (f *Friend) SyncAllBlackList(ctx context.Context) error {
 	req := &relation.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
