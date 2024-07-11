@@ -386,6 +386,8 @@ func (g *Group) GetGroupMemberListByJoinTimeFilterV2(ctx context.Context, groupI
 }
 
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
 	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return nil, err
