@@ -17,19 +17,22 @@ package common
 import (
 	"context"
 	"errors"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 
 	"github.com/openimsdk/protocol/sdkws"
 )
 
+var ErrChanNil = errs.New("channal == nil")
+
 func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
 	if joinedSuperGroupCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdJoinedSuperGroup, Value: cmd}
 	return sendCmd(joinedSuperGroupCh, c2v, 100)
@@ -37,7 +40,7 @@ func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperG
 
 func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg, Ctx: ctx}
@@ -54,15 +57,23 @@ func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToC
 
 func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
 	return sendCmd(ch, c2v, 100)
 }
 
+func TriggerCmdActiveSyncConversation(ch chan Cmd2Value) error {
+	if ch == nil {
+		return errs.Wrap(ErrChanNil)
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdActiveSyncConversation, Value: nil}
+	return sendCmd(ch, c2v, 100)
+}
+
 func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{
 		Cmd:   constant.CmSyncReactionExtensions,
@@ -95,7 +106,7 @@ func TriggerCmdUpdateMessage(ctx context.Context, node UpdateMessageNode, conver
 // Push message, msg for msgData slice
 func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg, Ctx: ctx}
@@ -105,7 +116,7 @@ func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd
 // seq trigger
 func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
@@ -113,7 +124,7 @@ func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, c
 
 func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdLogOut, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
@@ -122,7 +133,7 @@ func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
 // Connection success trigger
 func TriggerCmdConnected(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdConnSuccesss, Value: nil, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
