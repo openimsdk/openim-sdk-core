@@ -388,6 +388,7 @@ func (g *Group) GetGroupMemberListByJoinTimeFilterV2(ctx context.Context, groupI
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	g.groupSyncMutex.Lock()
 	defer g.groupSyncMutex.Unlock()
+
 	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return nil, err
@@ -446,6 +447,9 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 }
 
 func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, offset, count int32) ([]*model_struct.LocalGroupMember, error) {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return nil, err
@@ -568,6 +572,9 @@ func (g *Group) SearchGroupMembers(ctx context.Context, searchParam *sdk_params_
 }
 
 func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return false, err
@@ -579,6 +586,9 @@ func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
 }
 
 func (g *Group) GetUsersInGroup(ctx context.Context, groupID string, userIDList []string) ([]string, error) {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
 	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {
 		return nil, err
