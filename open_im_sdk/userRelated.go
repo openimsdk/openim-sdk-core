@@ -459,7 +459,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 		u.longConnMgr.SetBackground(isBackground)
 		if isBackground == false {
 			_ = common.TriggerCmdWakeUp(u.heartbeatCmdCh)
-			_ = common.TriggerCmdActiveSyncConversation(u.heartbeatCmdCh)
+			_ = common.TriggerCmdActiveSyncConversation(u.conversationCh)
 		}
 		return nil
 	}
