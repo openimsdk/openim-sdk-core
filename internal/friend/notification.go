@@ -26,8 +26,6 @@ import (
 
 func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
-		f.friendSyncMutex.Lock()
-		defer f.friendSyncMutex.Unlock()
 
 		if err := f.doNotification(ctx, msg); err != nil {
 			log.ZError(ctx, "doNotification error", err, "msg", msg)
@@ -36,6 +34,9 @@ func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
 	switch msg.ContentType {
 	case constant.FriendApplicationNotification:
 		tips := sdkws.FriendApplicationTips{}
