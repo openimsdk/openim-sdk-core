@@ -26,7 +26,6 @@ import (
 
 func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
-
 		if err := f.doNotification(ctx, msg); err != nil {
 			log.ZError(ctx, "doNotification error", err, "msg", msg)
 		}
