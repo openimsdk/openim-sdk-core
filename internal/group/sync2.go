@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"gorm.io/gorm"
-
 	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -77,11 +75,12 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 			req := group.GetIncrementalGroupMemberReq{
 				GroupID: groupID,
 			}
+
 			lvs, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 			if err == nil {
 				req.VersionID = lvs.VersionID
 				req.Version = lvs.Version
-			} else if errs.Unwrap(err) != gorm.ErrRecordNotFound {
+			} else if errs.Unwrap(err) != errs.ErrRecordNotFound {
 				return err
 			}
 			groups = append(groups, &req)
@@ -96,10 +95,11 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 			tempGroupID := groupID
 			wg.Add(1)
 			go func() error {
+				defer wg.Done()
 				if err := g.syncGroupAndMember(ctx, tempGroupID, tempResp); err != nil {
-					return err
+					log.ZError(ctx, "sync Group And Member error", errs.Wrap(err))
+					return errs.Wrap(err)
 				}
-				wg.Done()
 				return nil
 			}()
 			delete(groupIDSet, tempGroupID)

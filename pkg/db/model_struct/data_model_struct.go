@@ -571,7 +571,7 @@ func (a *StringArray) Scan(value interface{}) error {
 }
 
 type LocalVersionSync struct {
-	Table      string      `gorm:"column:table;type:varchar(255);primary_key" json:"table"`
+	Table      string      `gorm:"column:table_name;type:varchar(255);primary_key" json:"tableName"`
 	EntityID   string      `gorm:"column:entity_id;type:varchar(255);primary_key" json:"entityID"`
 	VersionID  string      `gorm:"column:version_id" json:"versionID"`
 	Version    uint64      `gorm:"column:version" json:"version"`

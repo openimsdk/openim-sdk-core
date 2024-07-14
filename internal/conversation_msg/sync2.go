@@ -38,7 +38,7 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 			return c.db.GetAllConversations(ctx)
 		},
 		Server: func(version *model_struct.LocalVersionSync) (*pbConversation.GetIncrementalConversationResp, error) {
-			return util.CallApi[pbConversation.GetIncrementalConversationResp](ctx, constant.GetIncrementalFriends, &pbConversation.GetIncrementalConversationReq{
+			return util.CallApi[pbConversation.GetIncrementalConversationResp](ctx, constant.GetIncrementalConversation, &pbConversation.GetIncrementalConversationReq{
 				UserID:    c.loginUserID,
 				Version:   version.Version,
 				VersionID: version.VersionID,
@@ -60,7 +60,7 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 			return datautil.Batch(ServerConversationToLocal, resp.Insert)
 		},
 		Syncer: func(server, local []*model_struct.LocalConversation) error {
-			return c.conversationSyncer.Sync(ctx, server, local, nil)
+			return c.conversationSyncer.Sync(ctx, server, local, nil, true)
 		},
 		FullSyncer: func(ctx context.Context) error {
 			return c.conversationSyncer.FullSync(ctx, c.loginUserID)

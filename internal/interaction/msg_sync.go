@@ -16,13 +16,14 @@ package interaction
 
 import (
 	"context"
+	"strings"
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"strings"
-	"sync"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -203,16 +204,6 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 		if err != nil {
 			log.ZWarn(ctx, "BatchInsertNotificationSeq err", err)
 		}
-
-		//for conversationID, seq := range notificationsSeqMap {
-		//	err := m.db.SetNotificationSeq(ctx, conversationID, seq)
-		//	if err != nil {
-		//		log.ZWarn(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "seq", seq)
-		//		continue
-		//	} else {
-		//		m.syncedMaxSeqs[conversationID] = seq
-		//	}
-		//}
 		for conversationID, maxSeq := range messagesSeqMap {
 			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
 				if maxSeq > syncedMaxSeq {

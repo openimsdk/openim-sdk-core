@@ -177,6 +177,7 @@ func registerFunc() {
 	wrapperFriend := wasm_wrapper.NewWrapperFriend(globalFuc)
 	js.Global().Set("getSpecifiedFriendsInfo", js.FuncOf(wrapperFriend.GetSpecifiedFriendsInfo))
 	js.Global().Set("getFriendList", js.FuncOf(wrapperFriend.GetFriendList))
+	js.Global().Set("getFriendListPage", js.FuncOf(wrapperFriend.GetFriendListPage))
 	js.Global().Set("searchFriends", js.FuncOf(wrapperFriend.SearchFriends))
 	js.Global().Set("checkFriend", js.FuncOf(wrapperFriend.CheckFriend))
 	js.Global().Set("addFriend", js.FuncOf(wrapperFriend.AddFriend))

@@ -17,6 +17,7 @@ package user
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -25,7 +26,6 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"gorm.io/gorm"
 )
 
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {
@@ -34,7 +34,7 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 		return err
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
+	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
 		log.ZError(ctx, "SyncLoginUserInfo", err)
 	}
 	var localUsers []*model_struct.LocalUser
@@ -50,7 +50,7 @@ func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
 		return err
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
+	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
 		log.ZError(ctx, "SyncLoginUserInfo", err)
 	}
 	var localUsers []*model_struct.LocalUser

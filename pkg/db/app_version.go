@@ -6,15 +6,20 @@ package db
 import (
 	"context"
 
-	"github.com/openimsdk/tools/errs"
 	"gorm.io/gorm"
+
+	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 )
 
 func (d *DataBase) GetAppSDKVersion(ctx context.Context) (*model_struct.LocalAppSDKVersion, error) {
 	var appVersion model_struct.LocalAppSDKVersion
-	return &appVersion, errs.Wrap(d.conn.WithContext(ctx).Take(&appVersion).Error)
+	err := d.conn.WithContext(ctx).Take(&appVersion).Error
+	if err == gorm.ErrRecordNotFound {
+		err = errs.ErrRecordNotFound
+	}
+	return &appVersion, errs.Wrap(err)
 }
 
 func (d *DataBase) SetAppSDKVersion(ctx context.Context, appVersion *model_struct.LocalAppSDKVersion) error {

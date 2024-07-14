@@ -127,6 +127,9 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 func (c *Conversation) initSyncer() {
 	c.conversationSyncer = syncer.New2[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](
 		syncer.WithInsert[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
+			if err := c.batchAddFaceURLAndName(ctx, value); err != nil {
+				return err
+			}
 			return c.db.InsertConversation(ctx, value)
 		}),
 		syncer.WithDelete[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
@@ -164,8 +167,16 @@ func (c *Conversation) initSyncer() {
 			}
 			return true
 		}),
-		nil,
+		syncer.WithNotice[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, state int, server, local *model_struct.LocalConversation) error {
+			if state == syncer.Update || state == syncer.Insert {
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: server.ConversationID, Action: constant.ConChange, Args: []string{server.ConversationID}}})
+			}
+			return nil
+		}),
 		syncer.WithBatchInsert[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, values []*model_struct.LocalConversation) error {
+			if err := c.batchAddFaceURLAndName(ctx, values...); err != nil {
+				return err
+			}
 			return c.db.BatchInsertConversationList(ctx, values)
 		}),
 		syncer.WithDeleteAll[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, _ string) error {
@@ -422,7 +433,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
-	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b), "len", len(allMsg))
+	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 }
 
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
@@ -950,10 +961,13 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 			groupIDs = append(groupIDs, conversation.GroupID)
 		}
 	}
+
+	// if userIDs = nil, return nil, nil
 	users, err := c.batchGetUserNameAndFaceURL(ctx, userIDs...)
 	if err != nil {
 		return err
 	}
+
 	groups, err := c.full.GetGroupsInfo(ctx, groupIDs...)
 	if err != nil {
 		return err
@@ -986,6 +1000,10 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 	m := make(map[string]*user.BasicInfo)
 	var notCachedUserIDs []string
 	var notInFriend []string
+
+	if len(userIDs) == 0 {
+		return m, nil
+	}
 
 	friendList, err := c.friend.Db().GetFriendInfoList(ctx, userIDs)
 	if err != nil {
