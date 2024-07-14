@@ -247,7 +247,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			//De-analyze data
 			err := c.msgHandleByContentType(msg)
 			if err != nil {
-				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType)
+				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType, "msg", msg)
 				continue
 			}
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
