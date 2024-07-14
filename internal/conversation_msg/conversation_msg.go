@@ -354,7 +354,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
-		updateMsg[conversationID] = updateMessage
+		if len(updateMessage) > 0 {
+			updateMsg[conversationID] = updateMessage
+
+		}
 	}
 	list, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
