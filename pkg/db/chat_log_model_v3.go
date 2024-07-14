@@ -30,20 +30,23 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
-func (d *DataBase) initChatLog(ctx context.Context, conversationID string) {
-	if !d.conn.Migrator().HasTable(utils.GetTableName(conversationID)) {
-		d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
-		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID,
-			utils.GetTableName(conversationID)))
-		if result.Error != nil {
-			log.ZError(ctx, "create table seq index failed", result.Error, "conversationID", conversationID)
+func (d *DataBase) initChatLog(ctx context.Context, conversationID string) error {
+	tableName := utils.GetTableName(conversationID)
+	if !d.tableChecker.HasTable(tableName) {
+		if err := d.conn.WithContext(ctx).Table(tableName).AutoMigrate(&model_struct.LocalChatLog{}); err != nil {
+			return errs.WrapMsg(err, "AutoMigrate failed", "table", tableName)
 		}
-		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID,
-			utils.GetTableName(conversationID)))
+		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID, tableName))
 		if result.Error != nil {
-			log.ZError(ctx, "create table send_time index failed", result.Error, "conversationID", conversationID)
+			return errs.WrapMsg(result.Error, "Create index_seq failed", "table", tableName, "index", "index_seq_"+conversationID)
 		}
+		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID, tableName))
+		if result.Error != nil {
+			return errs.WrapMsg(result.Error, "Create index_send_time failed", "table", tableName, "index", "index_send_time_"+conversationID)
+		}
+		d.tableChecker.UpdateTable(tableName)
 	}
+	return nil
 }
 
 func (d *DataBase) checkTable(ctx context.Context, tableName string) bool {
@@ -79,14 +82,22 @@ func (d *DataBase) InsertMessage(ctx context.Context, conversationID string, Mes
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Create(Message).Error, "InsertMessage failed")
 }
 func (d *DataBase) GetMessage(ctx context.Context, conversationID string, clientMsgID string) (*model_struct.LocalChatLog, error) {
-	d.initChatLog(ctx, conversationID)
+	err := d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return nil, err
+	}
 	var c model_struct.LocalChatLog
 	return &c, errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("client_msg_id = ?",
 		clientMsgID).Take(&c).Error, "GetMessage failed")
 }
 
 func (d *DataBase) GetMessageBySeq(ctx context.Context, conversationID string, seq int64) (*model_struct.LocalChatLog, error) {
-	d.initChatLog(ctx, conversationID)
+	err := d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return nil, err
+	}
 	var c model_struct.LocalChatLog
 	return &c, errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq = ?",
 		seq).Take(&c).Error, "GetMessage failed")
@@ -100,7 +111,11 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 }
 func (d *DataBase) GetMessageListNoTime(ctx context.Context, conversationID string,
 	count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	d.initChatLog(ctx, conversationID)
+	err = d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return nil, err
+	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var timeOrder string
@@ -332,9 +347,13 @@ func (d *DataBase) GetMessagesBySeqs(ctx context.Context, conversationID string,
 }
 
 func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
-	d.initChatLog(ctx, conversationID)
+	err := d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return 0, err
+	}
 	var seq int64
-	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	err = d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")
 }
 
