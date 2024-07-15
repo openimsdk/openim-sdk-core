@@ -116,7 +116,7 @@ func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFrie
 		return err
 	}
 	if req.HandleResult == constant.FriendResponseAgree {
-		_ = f.SyncFriends(ctx, []string{req.FromUserID})
+		_ = f.IncrSyncFriends(ctx)
 	}
 	_ = f.SyncAllFriendApplication(ctx)
 	return nil
@@ -164,7 +164,7 @@ func (f *Friend) DeleteFriend(ctx context.Context, friendUserID string) error {
 	if err := util.ApiPost(ctx, constant.DeleteFriendRouter, &friend.DeleteFriendReq{OwnerUserID: f.loginUserID, FriendUserID: friendUserID}, nil); err != nil {
 		return err
 	}
-	return f.deleteFriend(ctx, friendUserID)
+	return f.IncrSyncFriends(ctx)
 }
 
 func (f *Friend) GetFriendList(ctx context.Context) ([]*server_api_params.FullUserInfo, error) {
@@ -329,14 +329,14 @@ func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFrien
 	if err := util.ApiPost(ctx, constant.SetFriendRemark, &friend.SetFriendRemarkReq{OwnerUserID: f.loginUserID, FriendUserID: userIDRemark.ToUserID, Remark: userIDRemark.Remark}, nil); err != nil {
 		return err
 	}
-	return f.SyncFriends(ctx, []string{userIDRemark.ToUserID})
+	return f.IncrSyncFriends(ctx)
 }
 
 func (f *Friend) PinFriends(ctx context.Context, friends *sdk.SetFriendPinParams) error {
 	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friends.ToUserIDs, IsPinned: friends.IsPinned}, nil); err != nil {
 		return err
 	}
-	return f.SyncFriends(ctx, friends.ToUserIDs)
+	return f.IncrSyncFriends(ctx)
 }
 
 func (f *Friend) AddBlack(ctx context.Context, blackUserID string, ex string) error {
