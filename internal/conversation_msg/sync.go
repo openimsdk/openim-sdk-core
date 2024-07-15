@@ -16,62 +16,15 @@ package conversation_msg
 
 import (
 	"context"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/tools/utils/datautil"
-	"time"
 
 	"github.com/openimsdk/tools/log"
 )
-
-func (c *Conversation) SyncConversationsAndTriggerCallback(ctx context.Context, conversationsOnServer []*model_struct.LocalConversation, skipNotice bool) error {
-	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
-	if err != nil {
-		return err
-	}
-	if err := c.batchAddFaceURLAndName(ctx, conversationsOnServer...); err != nil {
-		return err
-	}
-	if err = c.conversationSyncer.Sync(ctx, conversationsOnServer, conversationsOnLocal, func(ctx context.Context, state int, server, local *model_struct.LocalConversation) error {
-		if state == syncer.Update || state == syncer.Insert {
-			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: server.ConversationID, Action: constant.ConChange, Args: []string{server.ConversationID}}})
-		}
-		return nil
-	}, true, skipNotice); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Conversation) SyncConversations(ctx context.Context, conversationIDs []string) error {
-	conversationsOnServer, err := c.getServerConversationsByIDs(ctx, conversationIDs)
-	if err != nil {
-		return err
-	}
-	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, false)
-}
-
-func (c *Conversation) SyncAllConversations(ctx context.Context) error {
-	ccTime := time.Now()
-	conversationsOnServer, err := c.getServerConversationList(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
-	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, false)
-}
-
-func (c *Conversation) SyncAllConversationsWithoutNotice(ctx context.Context) error {
-	ccTime := time.Now()
-	conversationsOnServer, err := c.getServerConversationList(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
-	return c.SyncConversationsAndTriggerCallback(ctx, conversationsOnServer, true)
-}
 
 func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) error {
 	startTime := time.Now()

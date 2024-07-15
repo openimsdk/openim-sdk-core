@@ -29,17 +29,55 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
 
-	"github.com/openimsdk/tools/errs"
-	"github.com/openimsdk/tools/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
+
+type TableChecker struct {
+	db         *gorm.DB
+	tableCache map[string]bool
+	mu         sync.RWMutex
+}
+
+func NewTableChecker(db *gorm.DB) *TableChecker {
+	tc := &TableChecker{
+		db:         db,
+		tableCache: make(map[string]bool),
+	}
+	tc.InitTableCache()
+	return tc
+}
+
+func (tc *TableChecker) InitTableCache() {
+	var tables []string
+	tc.db.Raw("SELECT name FROM sqlite_master WHERE type='table'").Scan(&tables)
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	for _, table := range tables {
+		tc.tableCache[table] = true
+	}
+}
+
+func (tc *TableChecker) HasTable(tableName string) bool {
+	tc.mu.RLock()
+	defer tc.mu.RUnlock()
+	return tc.tableCache[tableName]
+}
+func (tc *TableChecker) UpdateTable(tableName string) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	tc.tableCache[tableName] = true
+}
 
 type DataBase struct {
 	loginUserID   string
 	dbDir         string
 	conn          *gorm.DB
+	tableChecker  *TableChecker
 	mRWMutex      sync.RWMutex
 	groupMtx      sync.RWMutex
 	friendMtx     sync.RWMutex
@@ -142,7 +180,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	//if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
 	//	return err
 	//}
-
+	d.tableChecker = NewTableChecker(db)
 	return nil
 }
 

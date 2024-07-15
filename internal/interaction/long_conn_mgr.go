@@ -36,6 +36,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"

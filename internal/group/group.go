@@ -35,8 +35,8 @@ import (
 )
 
 const (
-	groupSyncLimit       = 100
-	groupMemberSyncLimit = 100
+	groupSyncLimit       = 1000
+	groupMemberSyncLimit = 1000
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,

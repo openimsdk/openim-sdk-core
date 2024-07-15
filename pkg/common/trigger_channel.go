@@ -30,14 +30,6 @@ import (
 
 var ErrChanNil = errs.New("channal == nil")
 
-func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
-	if joinedSuperGroupCh == nil {
-		return errs.Wrap(ErrChanNil)
-	}
-	c2v := Cmd2Value{Cmd: constant.CmdJoinedSuperGroup, Value: cmd}
-	return sendCmd(joinedSuperGroupCh, c2v, 100)
-}
-
 func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return errs.Wrap(ErrChanNil)
