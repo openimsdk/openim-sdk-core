@@ -26,7 +26,6 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
 
 	"gorm.io/driver/sqlite"
@@ -38,28 +37,15 @@ import (
 )
 
 type TableChecker struct {
-	db         *gorm.DB
 	tableCache map[string]bool
 	mu         sync.RWMutex
 }
 
-func NewTableChecker(db *gorm.DB) *TableChecker {
+func NewTableChecker() *TableChecker {
 	tc := &TableChecker{
-		db:         db,
 		tableCache: make(map[string]bool),
 	}
-	tc.InitTableCache()
 	return tc
-}
-
-func (tc *TableChecker) InitTableCache() {
-	var tables []string
-	tc.db.Raw("SELECT name FROM sqlite_master WHERE type='table'").Scan(&tables)
-	tc.mu.Lock()
-	defer tc.mu.Unlock()
-	for _, table := range tables {
-		tc.tableCache[table] = true
-	}
 }
 
 func (tc *TableChecker) HasTable(tableName string) bool {
@@ -107,6 +93,19 @@ func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) er
 	panic("implement me")
 }
 
+func (d *DataBase) InitTableCache(ctx context.Context) error {
+	tables, err := d.GetExistTables(ctx)
+	if err != nil {
+		return err
+	}
+	d.tableChecker.mu.Lock()
+	defer d.tableChecker.mu.Unlock()
+	for _, table := range tables {
+		d.tableChecker.tableCache[table] = true
+	}
+	return nil
+}
+
 func (d *DataBase) Close(ctx context.Context) error {
 	dbConn, err := d.conn.WithContext(ctx).DB()
 	if err != nil {
@@ -126,7 +125,11 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
 	err := dataBase.initDB(ctx, logLevel)
 	if err != nil {
-		return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
+		return dataBase, errs.WrapMsg(err, "initDB failed "+dbDir)
+	}
+	err = dataBase.InitTableCache(ctx)
+	if err != nil {
+		return dataBase, errs.WrapMsg(err, "initTableCache failed"+dbDir)
 	}
 	return dataBase, nil
 }
@@ -154,12 +157,12 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	}
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 	if err != nil {
-		return utils.Wrap(err, "open db failed "+dbFileName)
+		return errs.WrapMsg(err, "open db failed "+dbFileName)
 	}
 	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {
-		return utils.Wrap(err, "get sql db failed")
+		return errs.WrapMsg(err, "get sql db failed")
 	}
 
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
@@ -180,7 +183,8 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	//if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
 	//	return err
 	//}
-	d.tableChecker = NewTableChecker(db)
+
+	// d.tableChecker = NewTableChecker()
 	return nil
 }
 
