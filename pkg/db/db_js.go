@@ -64,7 +64,6 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		LocalUsers:                      indexdb.NewLocalUsers(),
 		LocalConversations:              indexdb.NewLocalConversations(),
 		LocalChatLogs:                   indexdb.NewLocalChatLogs(loginUserID),
-		LocalSuperGroupChatLogs:         indexdb.NewLocalSuperGroupChatLogs(),
 		LocalSuperGroup:                 indexdb.NewLocalSuperGroup(),
 		LocalConversationUnreadMessages: indexdb.NewLocalConversationUnreadMessages(),
 		LocalGroups:                     indexdb.NewLocalGroups(),

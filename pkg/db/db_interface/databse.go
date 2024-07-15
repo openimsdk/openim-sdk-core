@@ -111,18 +111,12 @@ type MessageModel interface {
 	UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
 	// UpdateMsgSenderFaceURLAndSenderNicknameController(ctx context.Context, sendID, faceURL, nickname string, sessionType int) error
 	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error
-	InitSuperLocalErrChatLog(ctx context.Context, groupID string)
-	SuperBatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog, groupID string) error
 	GetAbnormalMsgSeq(ctx context.Context) (int64, error)
 	GetAbnormalMsgSeqList(ctx context.Context) ([]int64, error)
 	BatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
 	GetConversationAbnormalMsgSeq(ctx context.Context, groupID string) (int64, error)
 	BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error
 	InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error
-	InitSuperLocalChatLog(ctx context.Context, groupID string)
-	SuperGroupBatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog, groupID string) error
-	SuperGroupInsertMessage(ctx context.Context, Message *model_struct.LocalChatLog, groupID string) error
-	SuperGroupDeleteAllMessage(ctx context.Context, groupID string) error
 	DeleteConversationAllMessages(ctx context.Context, conversationID string) error
 	MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error
 
@@ -169,7 +163,6 @@ type ConversationModel interface {
 	SetMultipleConversationRecvMsgOpt(ctx context.Context, conversationIDList []string, opt int) (err error)
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) ([]*model_struct.LocalChatLog, error)
-	SuperGroupSearchAllMessageByContentType(ctx context.Context, superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
 	SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error)
 }
 
