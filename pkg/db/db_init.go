@@ -41,10 +41,11 @@ type TableChecker struct {
 	mu         sync.RWMutex
 }
 
-func NewTableChecker() *TableChecker {
+func NewTableChecker(tables []string) *TableChecker {
 	tc := &TableChecker{
 		tableCache: make(map[string]bool),
 	}
+	tc.InitTableCache(tables)
 	return tc
 }
 
@@ -126,9 +127,7 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 	if err != nil {
 		return dataBase, errs.Wrap(err)
 	}
-
-	dataBase.tableChecker = NewTableChecker()
-	dataBase.tableChecker.InitTableCache(tables)
+	dataBase.tableChecker = NewTableChecker(tables)
 
 	return dataBase, nil
 }
