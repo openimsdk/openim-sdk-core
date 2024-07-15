@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
@@ -35,7 +36,6 @@ type IndexDB struct {
 	LocalUsers
 	LocalConversations
 	*LocalChatLogs
-	LocalSuperGroupChatLogs
 	LocalSuperGroup
 	LocalConversationUnreadMessages
 	LocalGroups
