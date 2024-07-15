@@ -28,7 +28,6 @@ import (
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-
 	go func() {
 
 		if err := g.doNotification(ctx, msg); err != nil {
