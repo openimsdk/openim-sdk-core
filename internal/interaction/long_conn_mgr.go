@@ -175,7 +175,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
-	//c.conn.SetPongHandler(function(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 		needRecon, err := c.reConn(ctx, &connNum)
@@ -192,11 +191,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		_ = c.conn.SetReadDeadline(pongWait)
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			//	log.Printf("error: %v", err)
-			//}
-			//break
-			//c.closedErr = err
 			log.ZError(c.ctx, "readMessage err", err, "goroutine ID:", getGoroutineID())
 			_ = c.close()
 			continue
@@ -211,9 +205,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		case MessageText:
 			c.closedErr = ErrNotSupportMessageProtocol
 			return
-		//case PingMessage:
-		//	err := c.writePongMsg()
-		//	log.ZError(c.ctx, "writePongMsg", err)
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
@@ -289,7 +280,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
 			return
 		case <-c.heartbeatCh:
-			c.sendPingToServer(ctx)
+			c.retrieveMaxSeq(ctx)
 		case <-ticker.C:
 			c.sendPingMessage(ctx)
 		}
@@ -319,7 +310,7 @@ func getGoroutineID() int64 {
 	return id
 }
 
-func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
+func (c *LongConnMgr) retrieveMaxSeq(ctx context.Context) {
 	if c.conn == nil {
 		return
 	}
@@ -327,7 +318,7 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	m.UserID = ccontext.Info(ctx).UserID()
 	opID := utils.OperationIDGenerator()
 	sCtx := ccontext.WithOperationID(c.ctx, opID)
-	log.ZInfo(sCtx, "ping and getMaxSeq start", "goroutine ID:", getGoroutineID())
+	log.ZInfo(sCtx, "retrieveMaxSeq start", "goroutine ID:", getGoroutineID())
 	data, err := proto.Marshal(&m)
 	if err != nil {
 		log.ZError(sCtx, "proto.Marshal", err)
@@ -347,7 +338,7 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 		return
 	} else {
 		if resp.ErrCode != 0 {
-			log.ZError(sCtx, "getMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
+			log.ZError(sCtx, "retrieveMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
 		}
 		var wsSeqResp sdkws.GetMaxSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
