@@ -48,6 +48,14 @@ func NewTableChecker() *TableChecker {
 	return tc
 }
 
+func (tc *TableChecker) InitTableCache(tables []string) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	for _, table := range tables {
+		tc.tableCache[table] = true
+	}
+}
+
 func (tc *TableChecker) HasTable(tableName string) bool {
 	tc.mu.RLock()
 	defer tc.mu.RUnlock()
@@ -93,19 +101,6 @@ func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) er
 	panic("implement me")
 }
 
-func (d *DataBase) InitTableCache(ctx context.Context) error {
-	tables, err := d.GetExistTables(ctx)
-	if err != nil {
-		return err
-	}
-	d.tableChecker.mu.Lock()
-	defer d.tableChecker.mu.Unlock()
-	for _, table := range tables {
-		d.tableChecker.tableCache[table] = true
-	}
-	return nil
-}
-
 func (d *DataBase) Close(ctx context.Context) error {
 	dbConn, err := d.conn.WithContext(ctx).DB()
 	if err != nil {
@@ -127,10 +122,14 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 	if err != nil {
 		return dataBase, errs.WrapMsg(err, "initDB failed "+dbDir)
 	}
-	err = dataBase.InitTableCache(ctx)
+	tables, err := dataBase.GetExistTables(ctx)
 	if err != nil {
-		return dataBase, errs.WrapMsg(err, "initTableCache failed"+dbDir)
+		return dataBase, errs.Wrap(err)
 	}
+
+	dataBase.tableChecker = NewTableChecker()
+	dataBase.tableChecker.InitTableCache(tables)
+
 	return dataBase, nil
 }
 
@@ -184,7 +183,6 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	//	return err
 	//}
 
-	// d.tableChecker = NewTableChecker()
 	return nil
 }
 
