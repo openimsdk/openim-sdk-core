@@ -22,28 +22,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/tools/log"
 	"io"
 	"net/http"
 	"net/url"
-	"nhooyr.io/websocket"
 	"time"
+
+	"nhooyr.io/websocket"
+
+	"github.com/openimsdk/tools/log"
 )
 
 type JSWebSocket struct {
 	ConnType int
 	conn     *websocket.Conn
 	sendConn *websocket.Conn
-}
-
-func (w *JSWebSocket) SetPongHandler(handler PingPongHandler) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (w *JSWebSocket) SetPingHandler(handler PingPongHandler) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (w *JSWebSocket) SetReadDeadline(timeout time.Duration) error {
@@ -56,6 +48,14 @@ func (w *JSWebSocket) SetWriteDeadline(timeout time.Duration) error {
 
 func (w *JSWebSocket) SetReadLimit(limit int64) {
 	w.conn.SetReadLimit(limit)
+}
+
+func (w *JSWebSocket) SetPingHandler(handler PingPongHandler) {
+
+}
+
+func (w *JSWebSocket) SetPongHandler(handler PingPongHandler) {
+
 }
 
 func (w *JSWebSocket) LocalAddr() string {

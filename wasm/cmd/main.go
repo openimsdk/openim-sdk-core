@@ -19,9 +19,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 	"runtime"
 	"runtime/debug"
+
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
 
 	"syscall/js"
 )
@@ -137,6 +138,7 @@ func registerFunc() {
 	js.Global().Set("setGroupMemberRoleLevel", js.FuncOf(wrapperGroup.SetGroupMemberRoleLevel))
 	js.Global().Set("setGroupMemberInfo", js.FuncOf(wrapperGroup.SetGroupMemberInfo))
 	js.Global().Set("getJoinedGroupList", js.FuncOf(wrapperGroup.GetJoinedGroupList))
+	js.Global().Set("getJoinedGroupListPage", js.FuncOf(wrapperGroup.GetJoinedGroupListPage))
 	js.Global().Set("searchGroups", js.FuncOf(wrapperGroup.SearchGroups))
 	js.Global().Set("setGroupInfo", js.FuncOf(wrapperGroup.SetGroupInfo))
 	js.Global().Set("setGroupVerification", js.FuncOf(wrapperGroup.SetGroupVerification))
@@ -156,6 +158,7 @@ func registerFunc() {
 	js.Global().Set("setGroupMemberNickname", js.FuncOf(wrapperGroup.SetGroupMemberNickname))
 	js.Global().Set("searchGroupMembers", js.FuncOf(wrapperGroup.SearchGroupMembers))
 	js.Global().Set("isJoinGroup", js.FuncOf(wrapperGroup.IsJoinGroup))
+	js.Global().Set("getUsersInGroup", js.FuncOf(wrapperGroup.GetUsersInGroup))
 
 	wrapperUser := wasm_wrapper.NewWrapperUser(globalFuc)
 	js.Global().Set("getSelfUserInfo", js.FuncOf(wrapperUser.GetSelfUserInfo))
@@ -174,6 +177,7 @@ func registerFunc() {
 	wrapperFriend := wasm_wrapper.NewWrapperFriend(globalFuc)
 	js.Global().Set("getSpecifiedFriendsInfo", js.FuncOf(wrapperFriend.GetSpecifiedFriendsInfo))
 	js.Global().Set("getFriendList", js.FuncOf(wrapperFriend.GetFriendList))
+	js.Global().Set("getFriendListPage", js.FuncOf(wrapperFriend.GetFriendListPage))
 	js.Global().Set("searchFriends", js.FuncOf(wrapperFriend.SearchFriends))
 	js.Global().Set("checkFriend", js.FuncOf(wrapperFriend.CheckFriend))
 	js.Global().Set("addFriend", js.FuncOf(wrapperFriend.AddFriend))

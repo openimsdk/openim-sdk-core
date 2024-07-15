@@ -16,12 +16,14 @@ package syncer
 
 import (
 	"context"
+	"reflect"
+
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
-	"reflect"
 
 	"github.com/openimsdk/tools/log"
 )
@@ -82,7 +84,7 @@ type Syncer[T, RESP any, V comparable] struct {
 	batchPageRespConvertFunc func(resp *RESP) []T
 	reqApiRouter             string
 	ts                       string // Represents the type of T as a string.
-
+	fullSyncLimit            int
 }
 
 type NoResp struct{}
@@ -191,6 +193,13 @@ func WithBatchPageRespConvertFunc[T, RESP any, V comparable](f func(resp *RESP) 
 func WithReqApiRouter[T, RESP any, V comparable](router string) Option[T, RESP, V] {
 	return func(s *Syncer[T, RESP, V]) {
 		s.reqApiRouter = router
+	}
+}
+
+// WithFullSyncLimit sets the fullSyncLimit for the Syncer.
+func WithFullSyncLimit[T, RESP any, V comparable](limit int) Option[T, RESP, V] {
+	return func(s *Syncer[T, RESP, V]) {
+		s.fullSyncLimit = limit
 	}
 }
 
@@ -361,7 +370,7 @@ func (s *Syncer[T, RESP, V]) FullSync(ctx context.Context, entityID string) (err
 
 	// Batch page pull data and insert server data
 	if err = util.FetchAndInsertPagedData(ctx, s.reqApiRouter, batchReq, s.batchPageRespConvertFunc,
-		s.batchInsert, s.insert, 100); err != nil {
+		s.batchInsert, s.insert, s.fullSyncLimit); err != nil {
 		return errs.New("full sync batch insert failed", "err", err.Error(), "type", s.ts)
 	}
 

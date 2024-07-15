@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -40,9 +41,18 @@ func (i *LocalGroups) DeleteGroup(ctx context.Context, groupID string) error {
 	return err
 }
 
-// 该函数需要全更新
+// this method need full update
 func (i *LocalGroups) UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	_, err := exec.Exec(groupInfo.GroupID, utils.StructToJsonString(groupInfo))
+	return err
+}
+
+func (i *LocalGroups) BatchInsertGroup(ctx context.Context, groupList []*model_struct.LocalGroup) error {
+	_, err := exec.Exec(utils.StructToJsonString(groupList))
+	return err
+}
+func (i *LocalGroups) DeleteAllGroup(ctx context.Context) error {
+	_, err := exec.Exec()
 	return err
 }
 

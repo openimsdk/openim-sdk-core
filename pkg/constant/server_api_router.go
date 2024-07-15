@@ -106,8 +106,8 @@ const (
 	SetGroupMemberInfoRouter          = RouterGroup + "/set_group_member_info"
 	GetGroupAbstractInfoRouter        = RouterGroup + "/get_group_abstract_info"
 	//SearchGroupMember                 = RouterGroup + "/search_group_member"
-	GetIncrementalJoinGroup        = RouterGroup + "/get_incremental_join_group"
-	GetIncrementalGroupMemberBatch = RouterGroup + "/get_incremental_group_member_batch"
+	GetIncrementalJoinGroup        = RouterGroup + "/get_incremental_join_groups"
+	GetIncrementalGroupMemberBatch = RouterGroup + "/get_incremental_group_members_batch"
 	GetFullJoinedGroupIDs          = RouterGroup + "/get_full_join_group_ids"
 	GetFullGroupMemberUserIDs      = RouterGroup + "/get_full_group_member_user_ids"
 
@@ -121,6 +121,9 @@ const (
 	BatchSetConversationRouter         = ConversationGroup + "/batch_set_conversation"
 	ModifyConversationFieldRouter      = ConversationGroup + "/modify_conversation_field"
 	SetConversationsRouter             = ConversationGroup + "/set_conversations"
+	GetIncrementalConversation         = ConversationGroup + "/get_incremental_conversations"
+	GetFullConversationIDs             = ConversationGroup + "/get_full_conversation_ids"
+	GetOwnerConversationRouter         = ConversationGroup + "/get_owner_conversation"
 
 	// organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"

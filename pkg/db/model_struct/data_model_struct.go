@@ -435,6 +435,11 @@ type LocalConversation struct {
 	MsgDestructTime       int64  `gorm:"column:msg_destruct_time;default:604800" json:"msgDestructTime"`
 	IsMsgDestruct         bool   `gorm:"column:is_msg_destruct;default:false" json:"isMsgDestruct"`
 }
+
+func (LocalConversation) TableName() string {
+	return "local_conversations"
+}
+
 type LocalConversationUnreadMessage struct {
 	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
 	ClientMsgID    string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
@@ -566,7 +571,7 @@ func (a *StringArray) Scan(value interface{}) error {
 }
 
 type LocalVersionSync struct {
-	Table      string      `gorm:"column:table;type:varchar(255);primary_key" json:"table"`
+	Table      string      `gorm:"column:table_name;type:varchar(255);primary_key" json:"tableName"`
 	EntityID   string      `gorm:"column:entity_id;type:varchar(255);primary_key" json:"entityID"`
 	VersionID  string      `gorm:"column:version_id" json:"versionID"`
 	Version    uint64      `gorm:"column:version" json:"version"`

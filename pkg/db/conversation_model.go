@@ -26,9 +26,14 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
+	"gorm.io/gorm"
+
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
-	"gorm.io/gorm"
+)
+
+const (
+	batchSize = 200
 )
 
 func (d *DataBase) GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error) {
@@ -89,10 +94,23 @@ func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversation
 	if conversationList == nil {
 		return nil
 	}
+
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
-	return errs.WrapMsg(d.conn.WithContext(ctx).Create(conversationList).Error, "BatchInsertConversationList failed")
+	for i := 0; i < len(conversationList); i += batchSize {
+		end := i + batchSize
+		if end > len(conversationList) {
+			end = len(conversationList)
+		}
+
+		batch := conversationList[i:end]
+		if err := d.conn.WithContext(ctx).Create(batch).Error; err != nil {
+			return errs.WrapMsg(err, "BatchInsertConversationList failed")
+		}
+	}
+
+	return nil
 }
 
 func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
@@ -133,6 +151,12 @@ func (d *DataBase) DeleteConversation(ctx context.Context, conversationID string
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id = ?", conversationID).Delete(&model_struct.LocalConversation{}).Error, "DeleteConversation failed")
+}
+
+func (d *DataBase) DeleteAllConversation(ctx context.Context) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model_struct.LocalConversation{}).Error, "DeleteAllConversation failed")
 }
 
 func (d *DataBase) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {

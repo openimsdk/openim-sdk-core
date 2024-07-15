@@ -19,13 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"io"
 	"runtime"
 	"strconv"
@@ -33,8 +26,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -316,10 +318,6 @@ func getGoroutineID() int64 {
 	}
 	return id
 }
-func (c *LongConnMgr) pongHandler(_ string) error {
-	//c.conn.SetReadDeadline(pongWait)
-	return nil
-}
 
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
@@ -543,9 +541,12 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 			switch apiResp.ErrCode {
 			case
 				errs.TokenExpiredError,
+				errs.TokenInvalidError,
 				errs.TokenMalformedError,
 				errs.TokenNotValidYetError,
-				errs.TokenUnknownError:
+				errs.TokenUnknownError,
+				errs.TokenNotExistError,
+				errs.TokenKickedError:
 				return false, err
 			default:
 				return true, err
@@ -593,4 +594,31 @@ func (c *LongConnMgr) SetBackground(isBackground bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.IsBackground = isBackground
+}
+
+func (c *LongConnMgr) pingHandler(_ string) error {
+	if err := c.conn.SetReadDeadline(pongWait); err != nil {
+		return err
+	}
+
+	return c.writePongMsg()
+}
+
+func (c *LongConnMgr) pongHandler(_ string) error {
+	if err := c.conn.SetReadDeadline(pongWait); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *LongConnMgr) writePongMsg() error {
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
+
+	err := c.conn.SetWriteDeadline(writeWait)
+	if err != nil {
+		return err
+	}
+
+	return c.conn.WriteMessage(PongMessage, nil)
 }

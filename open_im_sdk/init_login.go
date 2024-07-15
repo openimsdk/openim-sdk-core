@@ -18,12 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"go.etcd.io/etcd/api/v3/version"
-	"strings"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
 
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/mcontext"

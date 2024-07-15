@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -31,6 +32,11 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
+)
+
+const (
+	groupSyncLimit       = 1000
+	groupMemberSyncLimit = 1000
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
@@ -59,6 +65,7 @@ type Group struct {
 	conversationCh chan common.Cmd2Value
 	//	memberSyncMutex sync.RWMutex
 
+	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
@@ -136,6 +143,7 @@ func (g *Group) initSyncer() {
 			return datautil.Batch(ServerGroupToLocalGroup, resp.Groups)
 		}),
 		syncer.WithReqApiRouter[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](constant.GetJoinedGroupListRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](groupSyncLimit),
 	)
 
 	g.groupMemberSyncer = syncer.New2[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](
@@ -194,6 +202,7 @@ func (g *Group) initSyncer() {
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, resp.Members)
 		}),
 		syncer.WithReqApiRouter[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](constant.GetGroupMemberListRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](groupMemberSyncLimit),
 	)
 
 	g.groupRequestSyncer = syncer.New[*model_struct.LocalGroupRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalGroupRequest) error {

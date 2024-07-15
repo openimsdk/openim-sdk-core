@@ -17,6 +17,14 @@ package conversation_msg
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -28,13 +36,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"net/url"
-	"os"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/openimsdk/tools/log"
 
@@ -164,8 +165,7 @@ func (c *Conversation) setConversationAndSync(ctx context.Context, conversationI
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, []string{conversationID})
-	return nil
+	return c.IncrSyncConversations(ctx)
 }
 
 func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {

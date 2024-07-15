@@ -17,19 +17,20 @@ package friend
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/tools/utils/datautil"
 	"time"
+
+	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	friend "github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
 
 func (f *Friend) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID string) error {
-	var resp friend.GetDesignatedFriendsApplyResp
-	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsApplyRouter, &friend.GetDesignatedFriendsApplyReq{FromUserID: fromUserID, ToUserID: toUserID}, &resp); err != nil {
+	var resp relation.GetDesignatedFriendsApplyResp
+	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsApplyRouter, &relation.GetDesignatedFriendsApplyReq{FromUserID: fromUserID, ToUserID: toUserID}, &resp); err != nil {
 		return nil
 	}
 	localData, err := f.db.GetBothFriendReq(ctx, fromUserID, toUserID)
@@ -46,8 +47,8 @@ func (f *Friend) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID
 
 // send
 func (f *Friend) SyncAllSelfFriendApplication(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	fn := func(resp *friend.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
+	req := &relation.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	fn := func(resp *relation.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
 		return resp.FriendRequests
 	}
 	requests, err := util.GetPageAll(ctx, constant.GetSelfFriendApplicationListRouter, req, fn)
@@ -62,8 +63,8 @@ func (f *Friend) SyncAllSelfFriendApplication(ctx context.Context) error {
 }
 
 func (f *Friend) SyncAllSelfFriendApplicationWithoutNotice(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	fn := func(resp *friend.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
+	req := &relation.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	fn := func(resp *relation.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
 		return resp.FriendRequests
 	}
 	requests, err := util.GetPageAll(ctx, constant.GetSelfFriendApplicationListRouter, req, fn)
@@ -79,8 +80,10 @@ func (f *Friend) SyncAllSelfFriendApplicationWithoutNotice(ctx context.Context) 
 
 // recv
 func (f *Friend) SyncAllFriendApplication(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	fn := func(resp *friend.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest { return resp.FriendRequests }
+	req := &relation.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	fn := func(resp *relation.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest {
+		return resp.FriendRequests
+	}
 	requests, err := util.GetPageAll(ctx, constant.GetFriendApplicationListRouter, req, fn)
 	if err != nil {
 		return err
@@ -92,8 +95,10 @@ func (f *Friend) SyncAllFriendApplication(ctx context.Context) error {
 	return f.requestRecvSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 func (f *Friend) SyncAllFriendApplicationWithoutNotice(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	fn := func(resp *friend.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest { return resp.FriendRequests }
+	req := &relation.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	fn := func(resp *relation.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest {
+		return resp.FriendRequests
+	}
 	requests, err := util.GetPageAll(ctx, constant.GetFriendApplicationListRouter, req, fn)
 	if err != nil {
 		return err
@@ -114,79 +119,11 @@ func (f *Friend) SyncAllFriendList(ctx context.Context) error {
 
 	}(t)
 	return f.IncrSyncFriends(ctx)
-	//req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	//fn := func(resp *friend.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
-	//friends, err := util.GetPageAll(ctx, constant.GetFriendListRouter, req, fn)
-	//if err != nil {
-	//	return err
-	//}
-	//localData, err := f.db.GetAllFriendList(ctx)
-	//if err != nil {
-	//	return err
-	//}
-	//log.ZDebug(ctx, "sync friend", "data from server", friends, "data from local", localData)
-	//return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, friends), localData, nil)
 }
-
-func (f *Friend) deleteFriend(ctx context.Context, friendUserID string) error {
-	return f.IncrSyncFriends(ctx)
-	//friends, err := f.db.GetFriendInfoList(ctx, []string{friendUserID})
-	//if err != nil {
-	//	return err
-	//}
-	//if len(friends) == 0 {
-	//	return sdkerrs.ErrUserIDNotFound.WrapMsg("friendUserID not found")
-	//}
-	//if err := f.db.DeleteFriendDB(ctx, friendUserID); err != nil {
-	//	return err
-	//}
-	//f.friendListener.OnFriendDeleted(*friends[0])
-	//return nil
-}
-
-func (f *Friend) SyncFriends(ctx context.Context, friendIDs []string) error {
-	return f.IncrSyncFriends(ctx)
-	//var resp friend.GetDesignatedFriendsResp
-	//if err := util.ApiPost(ctx, constant.GetDesignatedFriendsRouter, &friend.GetDesignatedFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs}, &resp); err != nil {
-	//	return err
-	//}
-	//localData, err := f.db.GetFriendInfoList(ctx, friendIDs)
-	//if err != nil {
-	//	return err
-	//}
-	//log.ZDebug(ctx, "sync friend", "data from server", resp.FriendsInfo, "data from local", localData)
-	//return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo), localData, nil)
-}
-
-//func (f *Friend) SyncFriendPart(ctx context.Context) error {
-//	hashResp, err := util.CallApi[friend.GetFriendHashResp](ctx, constant.GetFriendHash, &friend.GetFriendHashReq{UserID: f.loginUserID})
-//	if err != nil {
-//		return err
-//	}
-//	friends, err := f.db.GetAllFriendList(ctx)
-//	if err != nil {
-//		return err
-//	}
-//	hashCode := f.CalculateHash(friends)
-//	log.ZDebug(ctx, "SyncFriendPart", "serverHash", hashResp.Hash, "serverTotal", hashResp.Total, "localHash", hashCode, "localTotal", len(friends))
-//	if hashCode == hashResp.Hash {
-//		return nil
-//	}
-//	req := &friend.GetPaginationFriendsReq{
-//		UserID:     f.loginUserID,
-//		Pagination: &sdkws.RequestPagination{PageNumber: pconstant.FirstPageNumber, ShowNumber: pconstant.MaxSyncPullNumber},
-//	}
-//	resp, err := util.CallApi[friend.GetPaginationFriendsResp](ctx, constant.GetFriendListRouter, req)
-//	if err != nil {
-//		return err
-//	}
-//	serverFriends := util.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
-//	return f.friendSyncer.Sync(ctx, serverFriends, friends, nil)
-//}
 
 func (f *Friend) SyncAllBlackList(ctx context.Context) error {
-	req := &friend.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	fn := func(resp *friend.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
+	req := &relation.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	fn := func(resp *relation.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
 	serverData, err := util.GetPageAll(ctx, constant.GetBlackListRouter, req, fn)
 	if err != nil {
 		return err
@@ -201,8 +138,8 @@ func (f *Friend) SyncAllBlackList(ctx context.Context) error {
 }
 
 func (f *Friend) SyncAllBlackListWithoutNotice(ctx context.Context) error {
-	req := &friend.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	fn := func(resp *friend.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
+	req := &relation.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	fn := func(resp *relation.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
 	serverData, err := util.GetPageAll(ctx, constant.GetBlackListRouter, req, fn)
 	if err != nil {
 		return err
@@ -217,8 +154,8 @@ func (f *Friend) SyncAllBlackListWithoutNotice(ctx context.Context) error {
 }
 
 func (f *Friend) GetDesignatedFriends(ctx context.Context, friendIDs []string) ([]*sdkws.FriendInfo, error) {
-	resp := &friend.GetDesignatedFriendsResp{}
-	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsRouter, &friend.GetDesignatedFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs}, &resp); err != nil {
+	resp := &relation.GetDesignatedFriendsResp{}
+	if err := util.ApiPost(ctx, constant.GetDesignatedFriendsRouter, &relation.GetDesignatedFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friendIDs}, &resp); err != nil {
 		return nil, err
 	}
 	return resp.FriendsInfo, nil

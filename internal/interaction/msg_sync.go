@@ -18,13 +18,11 @@ import (
 	"context"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/openimsdk/protocol/sdkws"
@@ -88,44 +86,47 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		MaxSyncedSeq   int64
 		Err            error
 	}
-	concurrency := 10
-	t2 := time.Now()
-	SyncedSeqs := make(chan SyncedSeq, len(conversationIDList))
-	sem := make(chan struct{}, concurrency)
 
+	concurrency := 20
+	partSize := len(conversationIDList) / concurrency
 	var wg sync.WaitGroup
-	for _, v := range conversationIDList {
-		wg.Add(1)
-		sem <- struct{}{} // Acquire a token
-		go func(conversationID string) {
-			defer wg.Done()
-			defer func() { <-sem }() // Release the token
+	resultMaps := make([]map[string]SyncedSeq, concurrency)
 
-			maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, conversationID)
-			SyncedSeqs <- SyncedSeq{
-				ConversationID: conversationID,
-				MaxSyncedSeq:   maxSyncedSeq,
-				Err:            err,
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		start := i * partSize
+		end := start + partSize
+		if i == concurrency-1 {
+			end = len(conversationIDList)
+		}
+
+		resultMaps[i] = make(map[string]SyncedSeq)
+
+		go func(i, start, end int) {
+			defer wg.Done()
+			for _, v := range conversationIDList[start:end] {
+				maxSyncedSeq, err := m.db.GetConversationNormalMsgSeqNoInit(ctx, v)
+				resultMaps[i][v] = SyncedSeq{
+					ConversationID: v,
+					MaxSyncedSeq:   maxSyncedSeq,
+					Err:            err,
+				}
 			}
-		}(v)
-		log.ZDebug(ctx, "goroutine done.", "goroutine cost time", time.Since(t2))
+		}(i, start, end)
 	}
 
-	// Close the results channel once all goroutines have finished
-	go func() {
-		wg.Wait()
-		close(SyncedSeqs)
-	}()
+	wg.Wait()
 
-	// Collect the results
-	for res := range SyncedSeqs {
-		if res.Err != nil {
-			log.ZError(ctx, "get group normal seq failed", res.Err, "conversationID", res.ConversationID)
-		} else {
-			m.syncedMaxSeqs[res.ConversationID] = res.MaxSyncedSeq
+	// merge map
+	for _, resultMap := range resultMaps {
+		for k, v := range resultMap {
+			if v.Err != nil {
+				log.ZError(ctx, "get group normal seq failed", v.Err, "conversationID", k)
+				continue
+			}
+			m.syncedMaxSeqs[k] = v.MaxSyncedSeq
 		}
 	}
-
 	notificationSeqs, err := m.db.GetNotificationAllSeqs(ctx)
 	if err != nil {
 		log.ZError(ctx, "get notification seq failed", err)
@@ -203,16 +204,6 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 		if err != nil {
 			log.ZWarn(ctx, "BatchInsertNotificationSeq err", err)
 		}
-
-		//for conversationID, seq := range notificationsSeqMap {
-		//	err := m.db.SetNotificationSeq(ctx, conversationID, seq)
-		//	if err != nil {
-		//		log.ZWarn(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "seq", seq)
-		//		continue
-		//	} else {
-		//		m.syncedMaxSeqs[conversationID] = seq
-		//	}
-		//}
 		for conversationID, maxSeq := range messagesSeqMap {
 			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
 				if maxSeq > syncedMaxSeq {

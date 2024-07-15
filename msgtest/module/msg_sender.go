@@ -3,9 +3,11 @@ package module
 import (
 	"context"
 	"fmt"
+
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"sync"
 
 	"time"
 

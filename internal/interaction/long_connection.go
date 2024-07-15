@@ -20,26 +20,42 @@ import (
 )
 
 type PingPongHandler func(string) error
+
 type LongConn interface {
-	//Close this connection
+	// Close closes this connection.
 	Close() error
-	// WriteMessage Write message to connection,messageType means data type,can be set binary(2) and text(1).
+
+	// WriteMessage writes a message to the connection.
+	// messageType indicates the type of data and can be set to binary (2) or text (1).
 	WriteMessage(messageType int, message []byte) error
-	// ReadMessage Read message from connection.
+
+	// ReadMessage reads a message from the connection.
 	ReadMessage() (int, []byte, error)
-	// SetReadDeadline sets the read deadline on the underlying network connection,
-	//after a read has timed out, will return an error.
+
+	// SetReadDeadline sets the deadline for reading from the underlying network connection.
+	// After a timeout, there will be an error in the writing process.
 	SetReadDeadline(timeout time.Duration) error
-	// SetWriteDeadline sets to write deadline when send message,when read has timed out,will return error.
+
+	// SetWriteDeadline sets the deadline for writing to the connection.
+	// After a timeout, there will be an error in the writing process.
 	SetWriteDeadline(timeout time.Duration) error
-	// Dial Try to dial a connection,url must set auth args,header can control compress data
+
+	// Dial tries to establish a connection.
+	// urlStr must include authentication arguments; requestHeader can control data compression.
 	Dial(urlStr string, requestHeader http.Header) (*http.Response, error)
-	// IsNil Whether the connection of the current long connection is nil
+
+	// IsNil checks whether the current long connection is nil.
 	IsNil() bool
-	// SetReadLimit sets the maximum size for a message read from the peer.bytes
+
+	// SetReadLimit sets the maximum size for a message read from the peer in bytes.
 	SetReadLimit(limit int64)
-	SetPongHandler(handler PingPongHandler)
+
+	// SetPingHandler sets the handler for ping messages.
 	SetPingHandler(handler PingPongHandler)
+
+	// SetPongHandler sets the handler for pong messages.
+	SetPongHandler(handler PingPongHandler)
+
 	// LocalAddr returns the local network address.
 	LocalAddr() string
 }

@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -139,6 +140,23 @@ func (i *LocalGroupMember) GetGroupMemberListByGroupID(ctx context.Context, grou
 			var temp []*model_struct.LocalGroupMember
 			err := utils.JsonStringToStruct(v, &temp)
 			if err != nil {
+				return nil, err
+			}
+			return temp, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
+func (i *LocalGroupMember) GetGroupMemberListByUserIDs(ctx context.Context, groupID string, filter int32, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+	member, err := exec.Exec(groupID, filter, utils.StructToJsonString(userIDs))
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := member.(string); ok {
+			var temp []*model_struct.LocalGroupMember
+			if err := utils.JsonStringToStruct(v, &temp); err != nil {
 				return nil, err
 			}
 			return temp, err

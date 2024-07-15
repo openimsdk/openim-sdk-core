@@ -44,8 +44,9 @@ func (f *Friend) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList [
 		func(ctx context.Context, values []*model_struct.LocalFriend) error {
 			return f.db.BatchInsertFriend(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			return f.db.GetFriendInfoList(ctx, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriends, err := f.db.GetFriendInfoList(ctx, userIDs)
+			return localFriends, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
 			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
@@ -88,6 +89,10 @@ func (f *Friend) AddFriend(ctx context.Context, userIDReqMsg *friend.ApplyToAddF
 	if err := util.ApiPost(ctx, constant.AddFriendRouter, userIDReqMsg, nil); err != nil {
 		return err
 	}
+
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
 	return f.SyncAllFriendApplication(ctx)
 }
 
@@ -114,8 +119,11 @@ func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFrie
 	if err := util.ApiPost(ctx, constant.AddFriendResponse, req, nil); err != nil {
 		return err
 	}
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
 	if req.HandleResult == constant.FriendResponseAgree {
-		_ = f.SyncFriends(ctx, []string{req.FromUserID})
+		_ = f.IncrSyncFriends(ctx)
 	}
 	_ = f.SyncAllFriendApplication(ctx)
 	return nil
@@ -163,9 +171,14 @@ func (f *Friend) DeleteFriend(ctx context.Context, friendUserID string) error {
 	if err := util.ApiPost(ctx, constant.DeleteFriendRouter, &friend.DeleteFriendReq{OwnerUserID: f.loginUserID, FriendUserID: friendUserID}, nil); err != nil {
 		return err
 	}
-	return f.deleteFriend(ctx, friendUserID)
+
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
+	return f.IncrSyncFriends(ctx)
 }
 
+// Full GetFriendList
 func (f *Friend) GetFriendList(ctx context.Context) ([]*server_api_params.FullUserInfo, error) {
 	localFriendList, err := f.db.GetAllFriendList(ctx)
 	if err != nil {
@@ -201,8 +214,9 @@ func (f *Friend) GetFriendListPage(ctx context.Context, offset, count int32) ([]
 		func(ctx context.Context, values []*model_struct.LocalFriend) error {
 			return f.db.BatchInsertFriend(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			return f.db.GetFriendInfoList(ctx, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriendList, err := f.db.GetFriendInfoList(ctx, userIDs)
+			return localFriendList, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
 			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
@@ -249,8 +263,9 @@ func (f *Friend) GetFriendListPageV2(ctx context.Context, offset, count int32) (
 		func(ctx context.Context, values []*model_struct.LocalFriend) error {
 			return f.db.BatchInsertFriend(ctx, values)
 		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			return f.db.GetFriendInfoList(ctx, userIDs)
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriendList, err := f.db.GetFriendInfoList(ctx, userIDs)
+			return localFriendList, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
 			serverFriend, err := f.GetDesignatedFriends(ctx, userIDs)
@@ -326,14 +341,22 @@ func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFrien
 	if err := util.ApiPost(ctx, constant.SetFriendRemark, &friend.SetFriendRemarkReq{OwnerUserID: f.loginUserID, FriendUserID: userIDRemark.ToUserID, Remark: userIDRemark.Remark}, nil); err != nil {
 		return err
 	}
-	return f.SyncFriends(ctx, []string{userIDRemark.ToUserID})
+
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
+	return f.IncrSyncFriends(ctx)
 }
 
 func (f *Friend) PinFriends(ctx context.Context, friends *sdk.SetFriendPinParams) error {
 	if err := util.ApiPost(ctx, constant.UpdateFriends, &friend.UpdateFriendsReq{OwnerUserID: f.loginUserID, FriendUserIDs: friends.ToUserIDs, IsPinned: friends.IsPinned}, nil); err != nil {
 		return err
 	}
-	return f.SyncFriends(ctx, friends.ToUserIDs)
+
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
+	return f.IncrSyncFriends(ctx)
 }
 
 func (f *Friend) AddBlack(ctx context.Context, blackUserID string, ex string) error {
@@ -347,6 +370,10 @@ func (f *Friend) RemoveBlack(ctx context.Context, blackUserID string) error {
 	if err := util.ApiPost(ctx, constant.RemoveBlackRouter, &friend.RemoveBlackReq{OwnerUserID: f.loginUserID, BlackUserID: blackUserID}, nil); err != nil {
 		return err
 	}
+
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
 	return f.SyncAllBlackList(ctx)
 }
 

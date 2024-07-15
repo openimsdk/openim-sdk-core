@@ -20,7 +20,7 @@ type DataFetcher[T any] struct {
 }
 
 // FetchDataFunc is a function type for fetching data
-type FetchDataFunc[T any] func(ctx context.Context, uids []string) ([]T, error)
+type FetchDataFunc[T any] func(ctx context.Context, uids []string) ([]T, bool, error)
 
 // FetchFromServerFunc is a function type for fetching data from server
 type FetchFromServerFunc[T any] func(ctx context.Context, uids []string) ([]T, error)
@@ -67,9 +67,12 @@ func (ds *DataFetcher[T]) FetchWithPagination(ctx context.Context, offset, limit
 
 // FetchMissingAndFillLocal fetches missing data from server and fills local database
 func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []string) ([]T, error) {
-	localData, err := ds.FetchFromLocal(ctx, uids)
+	localData, needServer, err := ds.FetchFromLocal(ctx, uids)
 	if err != nil {
 		return nil, err
+	}
+	if !needServer {
+		return localData, nil
 	}
 
 	localUIDSet := datautil.SliceSetAny(localData, ds.Key)
@@ -101,9 +104,13 @@ func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []s
 
 // FetchMissingAndCombineLocal fetches missing data from the server and combines it with local data without inserting it into the local database
 func (ds *DataFetcher[T]) FetchMissingAndCombineLocal(ctx context.Context, uids []string) ([]T, error) {
-	localData, err := ds.FetchFromLocal(ctx, uids)
+	localData, needServer, err := ds.FetchFromLocal(ctx, uids)
 	if err != nil {
 		return nil, err
+	}
+
+	if !needServer {
+		return localData, nil
 	}
 
 	localUIDSet := datautil.SliceSetAny(localData, ds.Key)
@@ -154,7 +161,7 @@ func (ds *DataFetcher[T]) FetchWithPaginationV2(ctx context.Context, offset, lim
 }
 
 func (ds *DataFetcher[T]) FetchMissingAndFillLocalV2(ctx context.Context, uids []string, isEnd bool) ([]T, bool, error) {
-	localData, err := ds.FetchFromLocal(ctx, uids)
+	localData, _, err := ds.FetchFromLocal(ctx, uids)
 	if err != nil {
 		return nil, false, err
 	}

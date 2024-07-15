@@ -19,6 +19,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+	"unsafe"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -41,10 +46,6 @@ import (
 	"github.com/openimsdk/protocol/push"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
-	"strings"
-	"sync"
-	"time"
-	"unsafe"
 )
 
 const (
@@ -441,12 +442,13 @@ func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
 	}
 	// user object must be rest  when user logout
 	u.initResources()
-	log.ZDebug(ctx, "TriggerCmdLogout client success...", "isTokenValid", isTokenValid)
+	log.ZDebug(ctx, "TriggerCmdLogout client success...",
+		"isTokenValid", isTokenValid)
 	return nil
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	if u.longConnMgr.GetConnectionStatus() == 0 {
+	if u.longConnMgr.GetConnectionStatus() == interaction.DefaultNotConnect {
 		u.longConnMgr.SetBackground(isBackground)
 		return nil
 	}
@@ -458,6 +460,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 		u.longConnMgr.SetBackground(isBackground)
 		if isBackground == false {
 			_ = common.TriggerCmdWakeUp(u.heartbeatCmdCh)
+			_ = common.TriggerCmdSyncData(u.conversationCh)
 		}
 		return nil
 	}
