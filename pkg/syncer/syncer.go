@@ -16,12 +16,14 @@ package syncer
 
 import (
 	"context"
+	"reflect"
+
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
-	"reflect"
 
 	"github.com/openimsdk/tools/log"
 )

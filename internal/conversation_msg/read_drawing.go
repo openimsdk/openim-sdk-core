@@ -219,7 +219,6 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
 		}
 	}
-
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 
