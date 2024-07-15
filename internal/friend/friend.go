@@ -16,6 +16,7 @@ package friend
 
 import (
 	"context"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -53,6 +54,7 @@ type Friend struct {
 	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
+	friendSyncMutex    sync.Mutex
 }
 
 func (f *Friend) initSyncer() {
