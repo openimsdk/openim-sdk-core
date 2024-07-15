@@ -168,23 +168,6 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 
 }
 
-func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
-	node := c2v.Value.(common.DeleteConNode)
-	ctx := c2v.Ctx
-	// Mark messages related to this conversation for deletion
-	err := c.db.UpdateMessageStatusBySourceID(context.Background(), node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
-	if err != nil {
-		log.ZError(ctx, "setMessageStatusBySourceID", err)
-		return
-	}
-	// Reset the session information, empty session
-	err = c.db.ResetConversation(ctx, node.ConversationID)
-	if err != nil {
-		log.ZError(ctx, "ResetConversation err:", err)
-	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
-}
-
 func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string {
 	msg := &sdk_struct.MsgStruct{}
 	if err := json.Unmarshal([]byte(latestMsg), msg); err != nil {

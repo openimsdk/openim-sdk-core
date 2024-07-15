@@ -33,6 +33,9 @@ func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
+	f.friendSyncMutex.Lock()
+	defer f.friendSyncMutex.Unlock()
+
 	switch msg.ContentType {
 	case constant.FriendApplicationNotification:
 		tips := sdkws.FriendApplicationTips{}

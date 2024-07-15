@@ -28,7 +28,6 @@ type IndexDB struct {
 	*indexdb.LocalUsers
 	*indexdb.LocalConversations
 	*indexdb.LocalChatLogs
-	*indexdb.LocalSuperGroupChatLogs
 	*indexdb.LocalSuperGroup
 	*indexdb.LocalConversationUnreadMessages
 	*indexdb.LocalGroups
@@ -46,6 +45,7 @@ type IndexDB struct {
 	*indexdb.LocalUserCommand
 	*indexdb.LocalVersionSync
 	*indexdb.LocalAppSDKVersion
+	*indexdb.LocalTableMaster
 	loginUserID string
 }
 
@@ -64,7 +64,6 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		LocalUsers:                      indexdb.NewLocalUsers(),
 		LocalConversations:              indexdb.NewLocalConversations(),
 		LocalChatLogs:                   indexdb.NewLocalChatLogs(loginUserID),
-		LocalSuperGroupChatLogs:         indexdb.NewLocalSuperGroupChatLogs(),
 		LocalSuperGroup:                 indexdb.NewLocalSuperGroup(),
 		LocalConversationUnreadMessages: indexdb.NewLocalConversationUnreadMessages(),
 		LocalGroups:                     indexdb.NewLocalGroups(),
@@ -82,6 +81,7 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		LocalUserCommand:                indexdb.NewLocalUserCommand(),
 		LocalVersionSync:                indexdb.NewLocalVersionSync(),
 		LocalAppSDKVersion:              indexdb.NewLocalAppSDKVersion(),
+		LocalTableMaster:                indexdb.NewLocalTableMaster(),
 		loginUserID:                     loginUserID,
 	}
 	err := i.InitDB(ctx, loginUserID, dbDir)

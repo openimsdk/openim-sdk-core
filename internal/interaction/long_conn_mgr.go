@@ -124,7 +124,6 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
-	//fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
 	go c.readPump(ctx)
 	go c.writePump(ctx)
 	go c.heartbeat(ctx)
@@ -176,7 +175,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
-	//c.conn.SetPongHandler(function(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 		needRecon, err := c.reConn(ctx, &connNum)
@@ -193,11 +191,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		_ = c.conn.SetReadDeadline(pongWait)
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			//	log.Printf("error: %v", err)
-			//}
-			//break
-			//c.closedErr = err
 			log.ZError(c.ctx, "readMessage err", err, "goroutine ID:", getGoroutineID())
 			_ = c.close()
 			continue
@@ -212,9 +205,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		case MessageText:
 			c.closedErr = ErrNotSupportMessageProtocol
 			return
-		//case PingMessage:
-		//	err := c.writePongMsg()
-		//	log.ZError(c.ctx, "writePongMsg", err)
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
@@ -290,9 +280,21 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
 			return
 		case <-c.heartbeatCh:
-			c.sendPingToServer(ctx)
+			c.retrieveMaxSeq(ctx)
 		case <-ticker.C:
-			c.sendPingToServer(ctx)
+			c.sendPingMessage(ctx)
+		}
+	}
+
+}
+func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
+	log.ZInfo(ctx, "ping message tart", "goroutine ID:", getGoroutineID())
+	if c.IsConnected() {
+		c.conn.SetWriteDeadline(writeWait)
+		if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
+			return
 		}
 	}
 
@@ -307,7 +309,8 @@ func getGoroutineID() int64 {
 	}
 	return id
 }
-func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
+
+func (c *LongConnMgr) retrieveMaxSeq(ctx context.Context) {
 	if c.conn == nil {
 		return
 	}
@@ -315,7 +318,7 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	m.UserID = ccontext.Info(ctx).UserID()
 	opID := utils.OperationIDGenerator()
 	sCtx := ccontext.WithOperationID(c.ctx, opID)
-	log.ZInfo(sCtx, "ping and getMaxSeq start", "goroutine ID:", getGoroutineID())
+	log.ZInfo(sCtx, "retrieveMaxSeq start", "goroutine ID:", getGoroutineID())
 	data, err := proto.Marshal(&m)
 	if err != nil {
 		log.ZError(sCtx, "proto.Marshal", err)
@@ -335,7 +338,7 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 		return
 	} else {
 		if resp.ErrCode != 0 {
-			log.ZError(sCtx, "getMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
+			log.ZError(sCtx, "retrieveMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
 		}
 		var wsSeqResp sdkws.GetMaxSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
@@ -400,7 +403,7 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	if c.IsCompression {
-		resultBuf, compressErr := c.compressor.Compress(encodeBuf)
+		resultBuf, compressErr := c.compressor.CompressWithPool(encodeBuf)
 		if compressErr != nil {
 			return compressErr
 		}
@@ -423,7 +426,7 @@ func (c *LongConnMgr) close() error {
 func (c *LongConnMgr) handleMessage(message []byte) error {
 	if c.IsCompression {
 		var decompressErr error
-		message, decompressErr = c.compressor.DeCompress(message)
+		message, decompressErr = c.compressor.DecompressWithPool(message)
 		if decompressErr != nil {
 			log.ZError(c.ctx, "DeCompress failed", decompressErr, message)
 			return sdkerrs.ErrMsgDeCompression
@@ -547,6 +550,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	c.ctx = newContext(c.conn.LocalAddr())
 	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)
 	c.SetConnectionStatus(Connected)
+	c.conn.SetPongHandler(c.pongHandler)
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
 	c.reconnectStrategy.Reset()
