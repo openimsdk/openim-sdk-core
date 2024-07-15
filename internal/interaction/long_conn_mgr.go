@@ -50,7 +50,7 @@ const (
 	pongWait = 30 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
+	pingPeriod = (pongWait * 8) / 10
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 1024
@@ -64,11 +64,6 @@ const (
 	Closed            = iota + 1
 	Connecting
 	Connected
-)
-
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
 )
 
 var (
@@ -290,7 +285,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
-	log.ZInfo(ctx, "ping message tart", "goroutine ID:", getGoroutineID())
+	log.ZDebug(ctx, "ping Message Started", "goroutine ID:", getGoroutineID())
 	if c.IsConnected() {
 		c.conn.SetWriteDeadline(writeWait)
 		if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
@@ -551,6 +546,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)
 	c.SetConnectionStatus(Connected)
 	c.conn.SetPongHandler(c.pongHandler)
+	c.conn.SetPingHandler(c.pingHandler)
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
 	c.reconnectStrategy.Reset()
@@ -596,6 +592,7 @@ func (c *LongConnMgr) pingHandler(_ string) error {
 }
 
 func (c *LongConnMgr) pongHandler(_ string) error {
+	log.ZDebug(c.ctx, "server Pong Message Received")
 	if err := c.conn.SetReadDeadline(pongWait); err != nil {
 		return err
 	}
