@@ -26,9 +26,10 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 
+	"gorm.io/gorm"
+
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
-	"gorm.io/gorm"
 )
 
 const (
@@ -150,6 +151,12 @@ func (d *DataBase) DeleteConversation(ctx context.Context, conversationID string
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id = ?", conversationID).Delete(&model_struct.LocalConversation{}).Error, "DeleteConversation failed")
+}
+
+func (d *DataBase) DeleteAllConversation(ctx context.Context) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model_struct.LocalConversation{}).Error, "DeleteAllConversation failed")
 }
 
 func (d *DataBase) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {

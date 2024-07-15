@@ -442,12 +442,13 @@ func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
 	}
 	// user object must be rest  when user logout
 	u.initResources()
-	log.ZDebug(ctx, "TriggerCmdLogout client success...", "isTokenValid", isTokenValid)
+	log.ZDebug(ctx, "TriggerCmdLogout client success...",
+		"isTokenValid", isTokenValid)
 	return nil
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	if u.longConnMgr.GetConnectionStatus() == 0 {
+	if u.longConnMgr.GetConnectionStatus() == interaction.DefaultNotConnect {
 		u.longConnMgr.SetBackground(isBackground)
 		return nil
 	}

@@ -2,16 +2,13 @@ package friend
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	friend "github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/utils/datautil"
-)
-
-const (
-	LocalFriendSyncMaxNum = 1000
 )
 
 func (f *Friend) IncrSyncFriends(ctx context.Context) error {

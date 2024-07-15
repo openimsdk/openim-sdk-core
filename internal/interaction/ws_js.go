@@ -27,8 +27,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/openimsdk/tools/log"
 	"nhooyr.io/websocket"
+
+	"github.com/openimsdk/tools/log"
 )
 
 type JSWebSocket struct {
