@@ -28,7 +28,6 @@ type IndexDB struct {
 	*indexdb.LocalUsers
 	*indexdb.LocalConversations
 	*indexdb.LocalChatLogs
-	*indexdb.LocalSuperGroupChatLogs
 	*indexdb.LocalSuperGroup
 	*indexdb.LocalConversationUnreadMessages
 	*indexdb.LocalGroups
