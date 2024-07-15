@@ -21,6 +21,8 @@ import (
 	"context"
 	"errors"
 
+	"gorm.io/gorm"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/tools/errs"
 )
@@ -31,7 +33,7 @@ func (d *DataBase) GetLoginUser(ctx context.Context, userID string) (*model_stru
 	var user model_struct.LocalUser
 	err := d.conn.WithContext(ctx).Where("user_id = ? ", userID).Take(&user).Error
 	if err != nil {
-		if err == errs.ErrRecordNotFound {
+		if err == gorm.ErrRecordNotFound {
 			return nil, errs.ErrRecordNotFound.Wrap()
 		}
 		return nil, errs.Wrap(err)
