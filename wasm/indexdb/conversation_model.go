@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -170,6 +171,11 @@ func (i *LocalConversations) InsertConversation(ctx context.Context, conversatio
 
 func (i *LocalConversations) DeleteConversation(ctx context.Context, conversationID string) error {
 	_, err := exec.Exec(conversationID)
+	return err
+}
+
+func (i *LocalConversations) DeleteAllConversation(ctx context.Context) error {
+	_, err := exec.Exec()
 	return err
 }
 

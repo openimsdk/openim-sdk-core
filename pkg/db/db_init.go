@@ -26,7 +26,6 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
 
 	"gorm.io/driver/sqlite"
@@ -38,23 +37,19 @@ import (
 )
 
 type TableChecker struct {
-	db         *gorm.DB
 	tableCache map[string]bool
 	mu         sync.RWMutex
 }
 
-func NewTableChecker(db *gorm.DB) *TableChecker {
+func NewTableChecker(tables []string) *TableChecker {
 	tc := &TableChecker{
-		db:         db,
 		tableCache: make(map[string]bool),
 	}
-	tc.InitTableCache()
+	tc.InitTableCache(tables)
 	return tc
 }
 
-func (tc *TableChecker) InitTableCache() {
-	var tables []string
-	tc.db.Raw("SELECT name FROM sqlite_master WHERE type='table'").Scan(&tables)
+func (tc *TableChecker) InitTableCache(tables []string) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
 	for _, table := range tables {
@@ -126,8 +121,14 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
 	err := dataBase.initDB(ctx, logLevel)
 	if err != nil {
-		return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
+		return dataBase, errs.WrapMsg(err, "initDB failed "+dbDir)
 	}
+	tables, err := dataBase.GetExistTables(ctx)
+	if err != nil {
+		return dataBase, errs.Wrap(err)
+	}
+	dataBase.tableChecker = NewTableChecker(tables)
+
 	return dataBase, nil
 }
 
@@ -154,12 +155,12 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	}
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 	if err != nil {
-		return utils.Wrap(err, "open db failed "+dbFileName)
+		return errs.WrapMsg(err, "open db failed "+dbFileName)
 	}
 	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {
-		return utils.Wrap(err, "get sql db failed")
+		return errs.WrapMsg(err, "get sql db failed")
 	}
 
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
@@ -180,7 +181,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	//if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
 	//	return err
 	//}
-	d.tableChecker = NewTableChecker(db)
+
 	return nil
 }
 

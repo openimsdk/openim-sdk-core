@@ -291,6 +291,9 @@ type AppSDKVersion interface {
 	SetAppSDKVersion(ctx context.Context, version *model_struct.LocalAppSDKVersion) error
 }
 
+type TableMaster interface {
+	GetExistTables(ctx context.Context) ([]string, error)
+}
 type DataBase interface {
 	Close(ctx context.Context) error
 	InitDB(ctx context.Context, userID string, dataDir string) error
@@ -304,4 +307,5 @@ type DataBase interface {
 	SendingMessagesModel
 	VersionSyncModel
 	AppSDKVersion
+	TableMaster
 }
