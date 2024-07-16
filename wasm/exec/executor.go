@@ -20,12 +20,13 @@ package exec
 import (
 	"context"
 	"errors"
-	"github.com/OpenIMSDK/tools/errs"
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"runtime"
 	"syscall/js"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
 
 type CallbackData struct {
@@ -40,7 +41,7 @@ const JSNOTFOUND = 10002
 var ErrType = errors.New("from javascript data type err")
 var PrimaryKeyNull = errors.New("primary key is null err")
 
-var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout，maybe should check  function from javascript")
+var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout, maybe should check  function from javascript")
 var jsErr = js.Global().Get("Error")
 
 func Exec(args ...interface{}) (output interface{}, err error) {

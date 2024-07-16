@@ -28,6 +28,10 @@ func GetFriendListPage(callback open_im_sdk_callback.Base, operationID string, o
 	call(callback, operationID, UserForSDK.Friend().GetFriendListPage, offset, count)
 }
 
+// func GetFriendListPageV2(callback open_im_sdk_callback.Base, operationID string, offset int32, count int32) {
+// 	call(callback, operationID, UserForSDK.Friend().GetFriendListPageV2, offset, count)
+// }
+
 func SearchFriends(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, UserForSDK.Friend().SearchFriends, searchParam)
 }

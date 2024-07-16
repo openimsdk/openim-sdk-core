@@ -21,11 +21,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/tools/errs"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/tools/errs"
 	"io"
 	"net/http"
 	"net/url"
@@ -34,8 +34,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/third"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/protocol/third"
+	"github.com/openimsdk/tools/log"
 )
 
 type UploadFileReq struct {
@@ -247,7 +247,7 @@ func (f *File) initiateMultipartUploadResp(ctx context.Context, req *third.Initi
 
 func (f *File) authSign(ctx context.Context, req *third.AuthSignReq) (*third.AuthSignResp, error) {
 	if len(req.PartNumbers) == 0 {
-		return nil, errs.ErrArgs.Wrap("partNumbers is empty")
+		return nil, errs.ErrArgs.WrapMsg("partNumbers is empty")
 	}
 	return util.CallApi[third.AuthSignResp](ctx, constant.ObjectAuthSign, req)
 }
@@ -319,11 +319,10 @@ type AuthSignParts struct {
 }
 
 type UploadInfo struct {
-	PartNum int
-	Bitmap  *Bitmap
-	DBInfo  *model_struct.LocalUpload
-	Resp    *third.InitiateMultipartUploadResp
-	//Signs   *AuthSignParts
+	PartNum      int
+	Bitmap       *Bitmap
+	DBInfo       *model_struct.LocalUpload
+	Resp         *third.InitiateMultipartUploadResp
 	CreateTime   time.Time
 	BatchSignNum int32
 	f            *File
@@ -412,50 +411,57 @@ func (u *UploadInfo) GetPartSign(ctx context.Context, partNumber int32) (*url.UR
 	u.CreateTime = time.Now()
 	index := u.getIndex(partNumber)
 	if index < 0 {
-		return nil, nil, errs.ErrInternalServer.Wrap("server part sign invalid")
+		return nil, nil, errs.ErrInternalServer.WrapMsg("server part sign invalid")
 	}
 	return u.buildRequest(index)
 }
 
-func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUploadReq) (*UploadInfo, error) {
+func (f *File) getLocalUploadInfo(ctx context.Context, req *third.InitiateMultipartUploadReq) (info *UploadInfo) {
 	partNum := f.getPartNum(req.Size, req.PartSize)
-	var bitmap *Bitmap
-	if f.database != nil {
-		dbUpload, err := f.database.GetUpload(ctx, req.Hash)
-		if err == nil {
-			bitmapBytes, err := base64.StdEncoding.DecodeString(dbUpload.UploadInfo)
-			if err != nil || len(bitmapBytes) == 0 || partNum <= 1 || dbUpload.ExpireTime-3600*1000 < time.Now().UnixMilli() {
-				if err := f.database.DeleteUpload(ctx, req.Hash); err != nil {
-					return nil, err
-				}
-				dbUpload = nil
-			}
-			if dbUpload == nil {
-				bitmap = NewBitmap(partNum)
-			} else {
-				bitmap = ParseBitmap(bitmapBytes, partNum)
-			}
-			tUpInfo := &third.UploadInfo{
-				PartSize: req.PartSize,
-				Sign:     &third.AuthSignParts{},
-			}
-			if dbUpload != nil {
-				tUpInfo.UploadID = dbUpload.UploadID
-				tUpInfo.ExpireTime = dbUpload.ExpireTime
-			}
-			return &UploadInfo{
-				PartNum: partNum,
-				Bitmap:  bitmap,
-				DBInfo:  dbUpload,
-				Resp: &third.InitiateMultipartUploadResp{
-					Upload: tUpInfo,
-				},
-				BatchSignNum: req.MaxParts,
-				f:            f,
-			}, nil
-		}
-		log.ZError(ctx, "get upload db", err, "pratsMd5", req.Hash)
+	if partNum <= 1 {
+		return nil
 	}
+	dbUpload, err := f.database.GetUpload(ctx, req.Hash)
+	if err != nil {
+		return nil
+	}
+	defer func() {
+		if info == nil {
+			if err := f.database.DeleteUpload(ctx, req.Hash); err != nil {
+				log.ZError(ctx, "delete upload db", err, "partHash", req.Hash)
+			}
+		}
+	}()
+	if dbUpload.UploadID == "" || dbUpload.ExpireTime-3600*1000 < time.Now().UnixMilli() {
+		return nil
+	}
+	bitmapBytes, err := base64.StdEncoding.DecodeString(dbUpload.UploadInfo)
+	if err != nil {
+		log.ZError(ctx, "decode upload info", err, "partHash", req.Hash)
+		return nil
+	}
+	return &UploadInfo{
+		PartNum: partNum,
+		Bitmap:  ParseBitmap(bitmapBytes, partNum),
+		DBInfo:  dbUpload,
+		Resp: &third.InitiateMultipartUploadResp{
+			Upload: &third.UploadInfo{
+				PartSize:   req.PartSize,
+				Sign:       &third.AuthSignParts{},
+				UploadID:   dbUpload.UploadID,
+				ExpireTime: dbUpload.ExpireTime,
+			},
+		},
+		BatchSignNum: req.MaxParts,
+		f:            f,
+	}
+}
+
+func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUploadReq) (*UploadInfo, error) {
+	if info := f.getLocalUploadInfo(ctx, req); info != nil {
+		return info, nil
+	}
+	partNum := f.getPartNum(req.Size, req.PartSize)
 	resp, err := f.initiateMultipartUploadResp(ctx, req)
 	if err != nil {
 		return nil, err
@@ -465,9 +471,9 @@ func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUpload
 			Resp: resp,
 		}, nil
 	}
-	bitmap = NewBitmap(partNum)
+	bitmap := NewBitmap(partNum)
 	var dbUpload *model_struct.LocalUpload
-	if f.database != nil {
+	if partNum > 1 {
 		dbUpload = &model_struct.LocalUpload{
 			PartHash:   req.Hash,
 			UploadID:   resp.Upload.UploadID,
@@ -475,12 +481,12 @@ func (f *File) getUpload(ctx context.Context, req *third.InitiateMultipartUpload
 			ExpireTime: resp.Upload.ExpireTime,
 			CreateTime: time.Now().UnixMilli(),
 		}
+		if err := f.database.DeleteUpload(ctx, req.Hash); err != nil {
+			log.ZError(ctx, "delete upload db", err, "partHash", req.Hash)
+		}
 		if err := f.database.InsertUpload(ctx, dbUpload); err != nil {
 			log.ZError(ctx, "insert upload db", err, "pratsHash", req.Hash, "name", req.Name)
 		}
-	}
-	if req.MaxParts >= 0 && len(resp.Upload.Sign.Parts) != int(req.MaxParts) {
-		resp.Upload.Sign.Parts = nil
 	}
 	return &UploadInfo{
 		PartNum:      partNum,

@@ -3,12 +3,14 @@ package sdk_user_simulator
 import (
 	"context"
 	"fmt"
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/login"
+
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
+	"github.com/openimsdk/tools/log"
 )
 
 var (
@@ -33,7 +35,7 @@ func GetRelativeServerTime() int64 {
 }
 
 func InitSDKAndLogin(userID, token string) error {
-	userForSDK := login.NewLoginMgr()
+	userForSDK := open_im_sdk.NewLoginMgr()
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = APIADDR
 	cf.PlatformID = int32(PLATFORMID)
@@ -45,7 +47,7 @@ func InitSDKAndLogin(userID, token string) error {
 	cf.LogFilePath = ""
 	var testConnListener testConnListener
 	userForSDK.InitSDK(cf, &testConnListener)
-	if err := log.InitFromConfig(userID+"_open-im-sdk-core", "", int(LogLevel), true, false, cf.DataDir, 0, 24); err != nil {
+	if err := log.InitFromConfig(userID+"_open-im-sdk-core", "", int(LogLevel), true, false, cf.DataDir, 0, 24, version.Version); err != nil {
 		return err
 	}
 	ctx := ccontext.WithOperationID(userForSDK.BaseCtx(), utils.OperationIDGenerator())
@@ -58,7 +60,7 @@ func InitSDKAndLogin(userID, token string) error {
 	return nil
 }
 
-func SetListener(userForSDK *login.LoginMgr, userID string) {
+func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {
 	var testConversation conversationCallBack
 	userForSDK.SetConversationListener(&testConversation)
 

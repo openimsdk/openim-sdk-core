@@ -19,15 +19,16 @@ package db
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error) {
 	groupList, err := d.GetJoinedGroupListDB(ctx)
 	if err != nil {
-		return nil, utils.Wrap(err, "")
+		return nil, errs.WrapMsg(err, "")
 	}
 	var groupIDList []string
 	for _, v := range groupList {
@@ -46,5 +47,5 @@ func (d *DataBase) GetJoinedWorkingGroupList(ctx context.Context) ([]*model_stru
 			transfer = append(transfer, v)
 		}
 	}
-	return transfer, utils.Wrap(err, "GetJoinedSuperGroupList failed ")
+	return transfer, errs.WrapMsg(err, "GetJoinedSuperGroupList failed ")
 }

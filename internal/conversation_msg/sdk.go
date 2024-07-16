@@ -17,6 +17,14 @@ package conversation_msg
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -28,19 +36,12 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"net/url"
-	"os"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
-	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 
-	pbConversation "github.com/OpenIMSDK/protocol/conversation"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/protocol/wrapperspb"
+	pbConversation "github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/protocol/wrapperspb"
 
 	"github.com/jinzhu/copier"
 )
@@ -164,8 +165,7 @@ func (c *Conversation) setConversationAndSync(ctx context.Context, conversationI
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, []string{conversationID})
-	return nil
+	return c.IncrSyncConversations(ctx)
 }
 
 func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
@@ -331,6 +331,13 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 			if gm.Nickname != "" {
 				s.SenderNickname = gm.Nickname
 			}
+		} else { //Maybe the group member information hasn't been pulled locally yet.
+			gm, err := c.group.GetSpecifiedGroupMembersInfo(ctx, groupID, []string{c.loginUserID})
+			if err == nil && gm != nil {
+				if gm[0].Nickname != "" {
+					s.SenderNickname = gm[0].Nickname
+				}
+			}
 		}
 		var attachedInfo sdk_struct.AttachedInfoElem
 		attachedInfo.GroupHasReadInfo.GroupMemberCount = g.MemberCount
@@ -381,6 +388,11 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 func (c *Conversation) GetConversationIDBySessionType(_ context.Context, sourceID string, sessionType int) string {
 	return c.getConversationIDBySessionType(sourceID, sessionType)
 }
+
+//this is a test file
+/**
+his is a test file
+*/
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
 	filepathExt := func(name ...string) string {
 		for _, path := range name {
@@ -1126,7 +1138,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 func (c *Conversation) SearchConversation(ctx context.Context, searchParam string) ([]*server_api_params.Conversation, error) {
 	// Check if search parameter is empty
 	if searchParam == "" {
-		return nil, sdkerrs.ErrArgs.Wrap("search parameter cannot be empty")
+		return nil, sdkerrs.ErrArgs.WrapMsg("search parameter cannot be empty")
 	}
 
 	// Perform the search in your database or data source

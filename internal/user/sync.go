@@ -17,15 +17,15 @@ package user
 import (
 	"context"
 	"errors"
-	userPb "github.com/OpenIMSDK/protocol/user"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-
-	"github.com/OpenIMSDK/tools/errs"
-	"github.com/OpenIMSDK/tools/log"
-	"gorm.io/gorm"
+	userPb "github.com/openimsdk/protocol/user"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 )
 
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {
@@ -34,8 +34,8 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 		return err
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
-		log.ZError(ctx, "SyncLoginUserInfo", err)
+	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
+		return err
 	}
 	var localUsers []*model_struct.LocalUser
 	if err == nil {
@@ -43,6 +43,22 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
 	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
+}
+func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
+	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
+	if err != nil {
+		return err
+	}
+	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
+	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
+		log.ZError(ctx, "SyncLoginUserInfo", err)
+	}
+	var localUsers []*model_struct.LocalUser
+	if err == nil {
+		localUsers = []*model_struct.LocalUser{localUser}
+	}
+	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
+	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil, false, true)
 }
 
 func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int32, platformID int32) {
@@ -92,5 +108,21 @@ func (u *User) SyncAllCommand(ctx context.Context) error {
 		return err
 	}
 	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
-	return u.commandSyncer.Sync(ctx, util.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
+	return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
+}
+
+func (u *User) SyncAllCommandWithoutNotice(ctx context.Context) error {
+	var serverData CommandInfoResponse
+	err := util.ApiPost(ctx, constant.ProcessUserCommandGetAll, userPb.ProcessUserCommandGetAllReq{
+		UserID: u.loginUserID,
+	}, &serverData)
+	if err != nil {
+		return err
+	}
+	localData, err := u.DataBase.ProcessUserCommandGetAll(ctx)
+	if err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
+	return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil, false, true)
 }

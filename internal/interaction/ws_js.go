@@ -22,12 +22,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/tools/log"
 	"io"
 	"net/http"
 	"net/url"
-	"nhooyr.io/websocket"
 	"time"
+
+	"nhooyr.io/websocket"
+
+	"github.com/openimsdk/tools/log"
 )
 
 type JSWebSocket struct {
@@ -48,7 +50,11 @@ func (w *JSWebSocket) SetReadLimit(limit int64) {
 	w.conn.SetReadLimit(limit)
 }
 
-func (w *JSWebSocket) SetPongHandler(handler PongHandler) {
+func (w *JSWebSocket) SetPingHandler(handler PingPongHandler) {
+
+}
+
+func (w *JSWebSocket) SetPongHandler(handler PingPongHandler) {
 
 }
 

@@ -2,7 +2,7 @@
 # define the default goal
 #
 
-ROOT_PACKAGE=github.com/OpenIMSDK/Open-IM-SDK-Core
+ROOT_PACKAGE=github.com/openimsdk/Open-IM-SDK-Core
 
 # Copyright 2023 OpenIM. All rights reserved.
 # Use of this source code is governed by a MIT style
@@ -100,8 +100,9 @@ else
 endif
 
 # Copy githook scripts when execute makefile
+# NEED Remove. DON'T REJECT!!
 # TODO! GIT_FILE_SIZE_LIMIT=42000000 git commit -m "This commit is allowed file sizes up to 42MB"
-COPY_GITHOOK:=$(shell cp -f scripts/githooks/* .git/hooks/; chmod +x .git/hooks/*)
+# COPY_GITHOOK:=$(shell cp -f scripts/githooks/* .git/hooks/; chmod +x .git/hooks/*)
 
 # Linux command settings
 FIND := find . ! -path './image/*' ! -path './vendor/*' ! -path './bin/*'
@@ -156,7 +157,7 @@ ifeq (${BINS},)
   $(error Could not determine BINS, set ROOT_DIR or run in source dir)
 endif
 
-EXCLUDE_TESTS=github.com/OpenIMSDK/openim-sdk-core/test
+EXCLUDE_TESTS=github.com/openimsdk/openim-sdk-core/test
 
 # ==============================================================================
 # Build

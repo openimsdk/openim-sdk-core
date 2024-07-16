@@ -18,8 +18,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/OpenIMSDK/tools/log"
-	utils2 "github.com/OpenIMSDK/tools/utils"
+	"math"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -34,23 +34,33 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
+	pbConversation "github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"sort"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+
 	"github.com/jinzhu/copier"
+)
+
+const (
+	conversationSyncLimit = math.MaxInt64
 )
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*interaction.LongConnMgr
-	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, string]
+	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
 	db                   db_interface.DataBase
 	ConversationListener func() open_im_sdk_callback.OnConversationListener
 	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
@@ -115,14 +125,17 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 }
 
 func (c *Conversation) initSyncer() {
-	c.conversationSyncer = syncer.New(
-		func(ctx context.Context, value *model_struct.LocalConversation) error {
+	c.conversationSyncer = syncer.New2[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](
+		syncer.WithInsert[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
+			if err := c.batchAddFaceURLAndName(ctx, value); err != nil {
+				return err
+			}
 			return c.db.InsertConversation(ctx, value)
-		},
-		func(ctx context.Context, value *model_struct.LocalConversation) error {
+		}),
+		syncer.WithDelete[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, value *model_struct.LocalConversation) error {
 			return c.db.DeleteConversation(ctx, value.ConversationID)
-		},
-		func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
+		}),
+		syncer.WithUpdate[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
 			return c.db.UpdateColumnsConversation(ctx, serverConversation.ConversationID,
 				map[string]interface{}{"recv_msg_opt": serverConversation.RecvMsgOpt,
 					"is_pinned": serverConversation.IsPinned, "is_private_chat": serverConversation.IsPrivateChat, "burn_duration": serverConversation.BurnDuration,
@@ -131,11 +144,11 @@ func (c *Conversation) initSyncer() {
 					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex, "msg_destruct_time": serverConversation.MsgDestructTime,
 					"is_msg_destruct": serverConversation.IsMsgDestruct,
 					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
-		},
-		func(value *model_struct.LocalConversation) string {
+		}),
+		syncer.WithUUID[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
-		},
-		func(server, local *model_struct.LocalConversation) bool {
+		}),
+		syncer.WithEqual[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(server, local *model_struct.LocalConversation) bool {
 			if server.RecvMsgOpt != local.RecvMsgOpt ||
 				server.IsPinned != local.IsPinned ||
 				server.IsPrivateChat != local.IsPrivateChat ||
@@ -153,9 +166,33 @@ func (c *Conversation) initSyncer() {
 				return false
 			}
 			return true
-		},
-		nil,
+		}),
+		syncer.WithNotice[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, state int, server, local *model_struct.LocalConversation) error {
+			if state == syncer.Update || state == syncer.Insert {
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: server.ConversationID, Action: constant.ConChange, Args: []string{server.ConversationID}}})
+			}
+			return nil
+		}),
+		syncer.WithBatchInsert[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, values []*model_struct.LocalConversation) error {
+			if err := c.batchAddFaceURLAndName(ctx, values...); err != nil {
+				return err
+			}
+			return c.db.BatchInsertConversationList(ctx, values)
+		}),
+		syncer.WithDeleteAll[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(ctx context.Context, _ string) error {
+			return c.db.DeleteAllConversation(ctx)
+		}),
+		syncer.WithBatchPageReq[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(entityID string) page.PageReq {
+			return &pbConversation.GetOwnerConversationReq{UserID: entityID,
+				Pagination: &sdkws.RequestPagination{ShowNumber: 300}}
+		}),
+		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(resp *pbConversation.GetOwnerConversationResp) []*model_struct.LocalConversation {
+			return datautil.Batch(ServerConversationToLocal, resp.Conversations)
+		}),
+		syncer.WithReqApiRouter[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](constant.GetOwnerConversationRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](conversationSyncLimit),
 	)
+
 }
 
 func (c *Conversation) GetCh() chan common.Cmd2Value {
@@ -210,7 +247,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			//De-analyze data
 			err := c.msgHandleByContentType(msg)
 			if err != nil {
-				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType)
+				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType, "msg", msg)
 				continue
 			}
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
@@ -317,7 +354,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
-		updateMsg[conversationID] = updateMessage
+		if len(updateMessage) > 0 {
+			updateMsg[conversationID] = updateMessage
+
+		}
 	}
 	list, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
@@ -373,6 +413,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(phNewConversationSet)); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
+	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
+
 	if c.batchMsgListener() != nil {
 		c.batchNewMessages(ctx, newMessages)
 	} else {
@@ -396,7 +438,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
-	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b), "len", len(allMsg))
+	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 }
 
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
@@ -404,14 +446,6 @@ func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struc
 		m[v.ConversationID] = v
 	}
 
-}
-func removeElementInList(a sdk_struct.NewMsgList, e *sdk_struct.MsgStruct) (b sdk_struct.NewMsgList) {
-	for i := 0; i < len(a); i++ {
-		if a[i] != e {
-			b = append(b, a[i])
-		}
-	}
-	return b
 }
 func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[string]*model_struct.LocalConversation) {
 	var newConversations []*model_struct.LocalConversation
@@ -458,15 +492,6 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 	}
 }
 
-//	funcation (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
-//		var lc model_struct.LocalChatLog
-//		copier.Copy(&lc, m)
-//		if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
-//			lc.RecvID = m.GroupID
-//		}
-//		lc.AttachedInfo = utils.StructToJsonString(m.AttachedInfoElem)
-//		return &lc
-//	}
 func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
 	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, m)
@@ -643,15 +668,6 @@ func (c *Conversation) doReactionMsgDeleter(ctx context.Context, msgReactionList
 	// 	c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 
 	// }
-}
-
-func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (bool, *sdk_struct.MessageRevoked) {
-	for _, element := range List {
-		if target == element.ClientMsgID {
-			return true, element
-		}
-	}
-	return false, nil
 }
 
 func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
@@ -950,10 +966,13 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 			groupIDs = append(groupIDs, conversation.GroupID)
 		}
 	}
+
+	// if userIDs = nil, return nil, nil
 	users, err := c.batchGetUserNameAndFaceURL(ctx, userIDs...)
 	if err != nil {
 		return err
 	}
+
 	groups, err := c.full.GetGroupsInfo(ctx, groupIDs...)
 	if err != nil {
 		return err
@@ -987,12 +1006,16 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 	var notCachedUserIDs []string
 	var notInFriend []string
 
+	if len(userIDs) == 0 {
+		return m, nil
+	}
+
 	friendList, err := c.friend.Db().GetFriendInfoList(ctx, userIDs)
 	if err != nil {
 		log.ZWarn(ctx, "BatchGetUserNameAndFaceURL", err, "userIDs", userIDs)
 		notInFriend = userIDs
 	} else {
-		notInFriend = utils2.SliceSub(userIDs, utils2.Slice(friendList, func(e *model_struct.LocalFriend) string {
+		notInFriend = datautil.SliceSub(userIDs, datautil.Slice(friendList, func(e *model_struct.LocalFriend) string {
 			return e.FriendUserID
 		}))
 	}
@@ -1049,7 +1072,7 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 		return "", "", err
 	}
 	if len(users) == 0 {
-		return "", "", sdkerrs.ErrUserIDNotFound.Wrap(userID)
+		return "", "", sdkerrs.ErrUserIDNotFound.WrapMsg(userID)
 	}
 	c.user.UserBasicCache.Store(userID, &user.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
 	return users[0].FaceURL, users[0].Nickname, nil

@@ -15,7 +15,7 @@
 package constant
 
 const (
-	CmdFriend                     = "001"
+	CmdSyncData                   = "001"
 	CmdBlackList                  = "002"
 	CmdNotification               = "003"
 	CmdDeleteConversation         = "004"
@@ -403,6 +403,8 @@ const (
 	MsgSyncProcessing = 1002 //
 	MsgSyncEnd        = 1003 //
 	MsgSyncFailed     = 1004
+	AppDataSyncStart  = 1005
+	AppDataSyncFinish = 1006
 )
 
 const (
@@ -422,7 +424,7 @@ const UseHashGroupMemberNum = 1000
 
 const (
 	Uninitialized    = -1001
-	NoNetwork        = 1 //有网络->无网络
-	NetworkAvailable = 2 //无网络->有网络
-	NetworkVariation = 3 //有网络，但状态有变化
+	NoNetwork        = 1 // Online -> Offline
+	NetworkAvailable = 2 // Offline -> Online
+	NetworkVariation = 3 // Online, but status changed
 )

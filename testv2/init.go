@@ -19,16 +19,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/protocol/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/protocol/constant"
+
+	"github.com/openimsdk/tools/log"
 )
 
 var (
@@ -138,16 +139,20 @@ type onConversationListener struct {
 	ctx context.Context
 }
 
-func (o *onConversationListener) OnSyncServerStart() {
+func (o *onConversationListener) OnSyncServerStart(reinstalled bool) {
 	log.ZInfo(o.ctx, "OnSyncServerStart")
 }
 
-func (o *onConversationListener) OnSyncServerFinish() {
+func (o *onConversationListener) OnSyncServerFinish(reinstalled bool) {
 	log.ZInfo(o.ctx, "OnSyncServerFinish")
 }
 
-func (o *onConversationListener) OnSyncServerFailed() {
+func (o *onConversationListener) OnSyncServerFailed(reinstalled bool) {
 	log.ZInfo(o.ctx, "OnSyncServerFailed")
+}
+
+func (o *onConversationListener) OnSyncServerProgress(progress int) {
+	log.ZInfo(o.ctx, "OnSyncServerProgress", "progress", progress)
 }
 
 func (o *onConversationListener) OnNewConversation(conversationList string) {

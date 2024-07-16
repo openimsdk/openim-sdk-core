@@ -16,14 +16,17 @@ package interaction
 
 import (
 	"context"
+	"strings"
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"strings"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
 )
 
 const (
@@ -76,12 +79,52 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	if len(conversationIDList) == 0 {
 		m.reinstalled = true
 	}
-	for _, v := range conversationIDList {
-		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, v)
-		if err != nil {
-			log.ZError(ctx, "get group normal seq failed", err, "conversationID", v)
-		} else {
-			m.syncedMaxSeqs[v] = maxSyncedSeq
+
+	// TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
+	type SyncedSeq struct {
+		ConversationID string
+		MaxSyncedSeq   int64
+		Err            error
+	}
+
+	concurrency := 20
+	partSize := len(conversationIDList) / concurrency
+	var wg sync.WaitGroup
+	resultMaps := make([]map[string]SyncedSeq, concurrency)
+
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		start := i * partSize
+		end := start + partSize
+		if i == concurrency-1 {
+			end = len(conversationIDList)
+		}
+
+		resultMaps[i] = make(map[string]SyncedSeq)
+
+		go func(i, start, end int) {
+			defer wg.Done()
+			for _, v := range conversationIDList[start:end] {
+				maxSyncedSeq, err := m.db.GetConversationNormalMsgSeqNoInit(ctx, v)
+				resultMaps[i][v] = SyncedSeq{
+					ConversationID: v,
+					MaxSyncedSeq:   maxSyncedSeq,
+					Err:            err,
+				}
+			}
+		}(i, start, end)
+	}
+
+	wg.Wait()
+
+	// merge map
+	for _, resultMap := range resultMaps {
+		for k, v := range resultMap {
+			if v.Err != nil {
+				log.ZError(ctx, "get group normal seq failed", v.Err, "conversationID", k)
+				continue
+			}
+			m.syncedMaxSeqs[k] = v.MaxSyncedSeq
 		}
 	}
 	notificationSeqs, err := m.db.GetNotificationAllSeqs(ctx)
@@ -146,14 +189,20 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 				messagesSeqMap[conversationID] = seq
 			}
 		}
+
+		var notificationSeqs []*model_struct.NotificationSeqs
+
 		for conversationID, seq := range notificationsSeqMap {
-			err := m.db.SetNotificationSeq(ctx, conversationID, seq)
-			if err != nil {
-				log.ZWarn(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "seq", seq)
-				continue
-			} else {
-				m.syncedMaxSeqs[conversationID] = seq
-			}
+			notificationSeqs = append(notificationSeqs, &model_struct.NotificationSeqs{
+				ConversationID: conversationID,
+				Seq:            seq,
+			})
+			m.syncedMaxSeqs[conversationID] = seq
+		}
+
+		err := m.db.BatchInsertNotificationSeq(ctx, notificationSeqs)
+		if err != nil {
+			log.ZWarn(ctx, "BatchInsertNotificationSeq err", err)
 		}
 		for conversationID, maxSeq := range messagesSeqMap {
 			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
@@ -215,17 +264,26 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 
 // Called after successful reconnection to synchronize the latest message
 func (m *MsgSyncer) doConnected(ctx context.Context) {
-	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncBegin}, m.conversationCh)
+	reinstalled := m.reinstalled
+	if reinstalled {
+		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.AppDataSyncStart}, m.conversationCh)
+	} else {
+		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncBegin}, m.conversationCh)
+	}
 	var resp sdkws.GetMaxSeqResp
 	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(m.ctx, "get max seq error", err)
 		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncFailed}, m.conversationCh)
 		return
 	} else {
-		log.ZDebug(m.ctx, "get max seq success", "resp", resp)
+		log.ZDebug(m.ctx, "get max seq success", "resp", resp.MaxSeqs)
 	}
 	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, connectPullNums)
-	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncEnd}, m.conversationCh)
+	if reinstalled {
+		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.AppDataSyncFinish}, m.conversationCh)
+	} else {
+		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncEnd}, m.conversationCh)
+	}
 }
 
 func IsNotification(conversationID string) bool {
@@ -361,24 +419,24 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 
 // triggers a conversation with a new message.
 func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
-	if len(msgs) >= 0 {
+	if len(msgs) > 0 {
 		err := common.TriggerCmdNewMsgCome(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
 		if err != nil {
 			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
 		}
 		log.ZDebug(ctx, "triggerConversation", "msgs", msgs)
 		return err
+	} else {
+		log.ZDebug(ctx, "triggerConversation is nil", "msgs", msgs)
 	}
 	return nil
 }
 
 func (m *MsgSyncer) triggerNotification(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
-	if len(msgs) >= 0 {
-		err := common.TriggerCmdNotification(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
-		if err != nil {
-			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
-		}
-		return err
+	if len(msgs) > 0 {
+		common.TriggerCmdNotification(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
+	} else {
+		log.ZDebug(ctx, "triggerNotification is nil", "msgs", msgs)
 	}
 	return nil
 

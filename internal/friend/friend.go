@@ -16,18 +16,25 @@ package friend
 
 import (
 	"context"
-	"fmt"
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/tools/utils/datautil"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+)
+
+const (
+	friendSyncLimit = 100
 )
 
 func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Friend {
@@ -41,47 +48,83 @@ type Friend struct {
 	loginUserID        string
 	db                 db_interface.DataBase
 	user               *user.User
-	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, [2]string]
-	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, [2]string]
-	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
-	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
+	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string]
+	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, syncer.NoResp, [2]string]
+	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
+	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
+	friendSyncMutex    sync.Mutex
 }
 
 func (f *Friend) initSyncer() {
-	f.friendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriend) error {
-		return f.db.InsertFriend(ctx, value)
-	}, func(ctx context.Context, value *model_struct.LocalFriend) error {
-		return f.db.DeleteFriendDB(ctx, value.FriendUserID)
-	}, func(ctx context.Context, server *model_struct.LocalFriend, local *model_struct.LocalFriend) error {
-		return f.db.UpdateFriend(ctx, server)
-
-	}, func(value *model_struct.LocalFriend) [2]string {
-		return [...]string{value.OwnerUserID, value.FriendUserID}
-	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
-		switch state {
-		case syncer.Insert:
-			f.friendListener.OnFriendAdded(*server)
-		case syncer.Delete:
-			log.ZDebug(ctx, "syncer OnFriendDeleted", "local", local)
-			f.friendListener.OnFriendDeleted(*local)
-		case syncer.Update:
-			f.friendListener.OnFriendInfoChanged(*server)
-			if local.Nickname != server.Nickname || local.FaceURL != server.FaceURL || local.Remark != server.Remark {
-				if server.Remark != "" {
-					server.Nickname = server.Remark
+	f.friendSyncer = syncer.New2[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](
+		syncer.WithInsert[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriend) error {
+			return f.db.InsertFriend(ctx, value)
+		}),
+		syncer.WithDelete[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriend) error {
+			return f.db.DeleteFriendDB(ctx, value.FriendUserID)
+		}),
+		syncer.WithUpdate[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, server, local *model_struct.LocalFriend) error {
+			return f.db.UpdateFriend(ctx, server)
+		}),
+		syncer.WithUUID[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(value *model_struct.LocalFriend) [2]string {
+			return [...]string{value.OwnerUserID, value.FriendUserID}
+		}),
+		syncer.WithNotice[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
+			switch state {
+			case syncer.Insert:
+				f.friendListener.OnFriendAdded(*server)
+			case syncer.Delete:
+				log.ZDebug(ctx, "syncer OnFriendDeleted", "local", local)
+				f.friendListener.OnFriendDeleted(*local)
+			case syncer.Update:
+				f.friendListener.OnFriendInfoChanged(*server)
+				if local.Nickname != server.Nickname || local.FaceURL != server.FaceURL || local.Remark != server.Remark {
+					if server.Remark != "" {
+						server.Nickname = server.Remark
+					}
+					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+						Action: constant.UpdateConFaceUrlAndNickName,
+						Args: common.SourceIDAndSessionType{
+							SourceID:    server.FriendUserID,
+							SessionType: constant.SingleChatType,
+							FaceURL:     server.FaceURL,
+							Nickname:    server.Nickname,
+						},
+					}, f.conversationCh)
+					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{
+						Action: constant.UpdateMsgFaceUrlAndNickName,
+						Args: common.UpdateMessageInfo{
+							SessionType: constant.SingleChatType,
+							UserID:      server.FriendUserID,
+							FaceURL:     server.FaceURL,
+							Nickname:    server.Nickname,
+						},
+					}, f.conversationCh)
 				}
-				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
-					Args: common.SourceIDAndSessionType{SourceID: server.FriendUserID, SessionType: constant.SingleChatType, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
-				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
 			}
+			return nil
+		}),
+		syncer.WithBatchInsert[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, values []*model_struct.LocalFriend) error {
+			log.ZDebug(ctx, "BatchInsertFriend", "length", len(values))
+			return f.db.BatchInsertFriend(ctx, values)
+		}),
+		syncer.WithDeleteAll[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, _ string) error {
+			return f.db.DeleteAllFriend(ctx)
+		}),
+		syncer.WithBatchPageReq[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(entityID string) page.PageReq {
+			return &relation.GetPaginationFriendsReq{UserID: entityID,
+				Pagination: &sdkws.RequestPagination{ShowNumber: 100}}
+		}),
+		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(resp *relation.GetPaginationFriendsResp) []*model_struct.LocalFriend {
+			return datautil.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
+		}),
+		syncer.WithReqApiRouter[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](constant.GetFriendListRouter),
+		syncer.WithFullSyncLimit[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](friendSyncLimit),
+	)
 
-		}
-		return nil
-	})
-	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
+	f.blockSyncer = syncer.New[*model_struct.LocalBlack, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.DeleteBlack(ctx, value.BlockUserID)
@@ -98,7 +141,7 @@ func (f *Friend) initSyncer() {
 		}
 		return nil
 	})
-	f.requestRecvSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+	f.requestRecvSyncer = syncer.New[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
@@ -124,7 +167,7 @@ func (f *Friend) initSyncer() {
 		}
 		return nil
 	})
-	f.requestSendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+	f.requestSendSyncer = syncer.New[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
@@ -160,115 +203,4 @@ func (f *Friend) SetListener(listener func() open_im_sdk_callback.OnFriendshipLi
 
 func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
 	f.listenerForService = listener
-}
-
-func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	go func() {
-		if err := f.doNotification(ctx, msg); err != nil {
-			log.ZError(ctx, "doNotification error", err, "msg", msg)
-		}
-	}()
-}
-
-func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
-	switch msg.ContentType {
-	case constant.FriendApplicationNotification:
-		tips := sdkws.FriendApplicationTips{}
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		return f.SyncBothFriendRequest(ctx,
-			tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
-	case constant.FriendApplicationApprovedNotification:
-		var tips sdkws.FriendApplicationApprovedTips
-		err := utils.UnmarshalNotificationElem(msg.Content, &tips)
-		if err != nil {
-			return err
-		}
-
-		if tips.FromToUserID.FromUserID == f.loginUserID {
-			err = f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
-		} else if tips.FromToUserID.ToUserID == f.loginUserID {
-			err = f.SyncFriends(ctx, []string{tips.FromToUserID.FromUserID})
-		}
-		if err != nil {
-			return err
-		}
-		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
-	case constant.FriendApplicationRejectedNotification:
-		var tips sdkws.FriendApplicationRejectedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		return f.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
-	case constant.FriendAddedNotification:
-		var tips sdkws.FriendAddedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		if tips.Friend != nil && tips.Friend.FriendUser != nil {
-			if tips.Friend.FriendUser.UserID == f.loginUserID {
-				return f.SyncFriends(ctx, []string{tips.Friend.OwnerUserID})
-			} else if tips.Friend.OwnerUserID == f.loginUserID {
-				return f.SyncFriends(ctx, []string{tips.Friend.FriendUser.UserID})
-			}
-		}
-	case constant.FriendDeletedNotification:
-		var tips sdkws.FriendDeletedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		if tips.FromToUserID != nil {
-			if tips.FromToUserID.FromUserID == f.loginUserID {
-				return f.deleteFriend(ctx, tips.FromToUserID.ToUserID)
-			}
-		}
-	case constant.FriendRemarkSetNotification:
-		var tips sdkws.FriendInfoChangedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		if tips.FromToUserID != nil {
-			if tips.FromToUserID.FromUserID == f.loginUserID {
-				return f.SyncFriends(ctx, []string{tips.FromToUserID.ToUserID})
-			}
-		}
-	case constant.FriendInfoUpdatedNotification:
-		var tips sdkws.UserInfoUpdatedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		if tips.UserID != f.loginUserID {
-			return f.SyncFriends(ctx, []string{tips.UserID})
-		}
-	case constant.BlackAddedNotification:
-		var tips sdkws.BlackAddedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		if tips.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncAllBlackList(ctx)
-		}
-	case constant.BlackDeletedNotification:
-		var tips sdkws.BlackDeletedTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		if tips.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncAllBlackList(ctx)
-		}
-	case constant.FriendsInfoUpdateNotification:
-
-		var tips sdkws.FriendsInfoUpdateTips
-
-		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-			return err
-		}
-		if tips.FromToUserID.ToUserID == f.loginUserID {
-			return f.SyncFriends(ctx, tips.FriendIDs)
-		}
-	default:
-		return fmt.Errorf("type failed %d", msg.ContentType)
-	}
-	return nil
 }

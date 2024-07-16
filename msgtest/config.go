@@ -2,6 +2,7 @@ package msgtest
 
 import (
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
@@ -10,9 +11,9 @@ import (
 
 // system
 var (
-	TESTIP        = "59.36.173.89"
-	APIADDR       = fmt.Sprintf("http://%v:10002", TESTIP)
-	WSADDR        = fmt.Sprintf("ws://%v:10001", TESTIP)
+	TESTIP        = "127.0.0.1"
+	APIADDR       = fmt.Sprintf("http://%v:20002", TESTIP)
+	WSADDR        = fmt.Sprintf("ws://%v:20001", TESTIP)
 	SECRET        = "openIM123"
 	MANAGERUSERID = "openIMAdmin"
 

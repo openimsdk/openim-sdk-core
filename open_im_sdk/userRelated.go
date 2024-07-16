@@ -19,9 +19,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/protocol/push"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/log"
+	"strings"
+	"sync"
+	"time"
+	"unsafe"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
@@ -41,10 +43,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"strings"
-	"sync"
-	"time"
-	"unsafe"
+	"github.com/openimsdk/protocol/push"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
 )
 
 const (
@@ -335,7 +336,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	var err error
 	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir, int(u.info.LogLevel))
 	if err != nil {
-		return sdkerrs.ErrSdkInternal.Wrap("init database " + err.Error())
+		return sdkerrs.ErrSdkInternal.WrapMsg("init database " + err.Error())
 	}
 	u.checkSendingMessage(ctx)
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
@@ -380,7 +381,6 @@ func (u *LoginMgr) run(ctx context.Context) {
 	u.longConnMgr.Run(ctx)
 	go u.msgSyncer.DoListener(ctx)
 	go common.DoListener(u.conversation, u.ctx)
-	go u.group.DeleteGroupAndMemberInfo(ctx)
 	go u.logoutListener(ctx)
 }
 
@@ -442,12 +442,13 @@ func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
 	}
 	// user object must be rest  when user logout
 	u.initResources()
-	log.ZDebug(ctx, "TriggerCmdLogout client success...", "isTokenValid", isTokenValid)
+	log.ZDebug(ctx, "TriggerCmdLogout client success...",
+		"isTokenValid", isTokenValid)
 	return nil
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	if u.longConnMgr.GetConnectionStatus() == 0 {
+	if u.longConnMgr.GetConnectionStatus() == interaction.DefaultNotConnect {
 		u.longConnMgr.SetBackground(isBackground)
 		return nil
 	}
@@ -457,9 +458,11 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 		return err
 	} else {
 		u.longConnMgr.SetBackground(isBackground)
-		if isBackground == false {
+		if !isBackground {
 			_ = common.TriggerCmdWakeUp(u.heartbeatCmdCh)
+			_ = common.TriggerCmdSyncData(ctx, u.conversationCh)
 		}
+
 		return nil
 	}
 }

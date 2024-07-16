@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -698,6 +699,21 @@ func (i *LocalChatLogs) GetMessagesBySeqs(ctx context.Context, conversationID st
 
 // GetConversationNormalMsgSeq gets the maximum seq of the session
 func (i *LocalChatLogs) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	seq, err := exec.Exec(conversationID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := seq.(float64); ok {
+			var result int64
+			result = int64(v)
+			return result, err
+		} else {
+			return 0, exec.ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error) {
 	seq, err := exec.Exec(conversationID)
 	if err != nil {
 		return 0, err

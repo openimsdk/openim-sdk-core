@@ -19,18 +19,19 @@ package db
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error {
 	if MessageList == nil {
 		return nil
 	}
-	return utils.Wrap(d.conn.WithContext(ctx).Create(MessageList).Error, "BatchInsertTempCacheMessageList failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(MessageList).Error, "BatchInsertTempCacheMessageList failed")
 }
 func (d *DataBase) InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error {
 
-	return utils.Wrap(d.conn.WithContext(ctx).Create(Message).Error, "InsertTempCacheMessage failed")
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(Message).Error, "InsertTempCacheMessage failed")
 
 }

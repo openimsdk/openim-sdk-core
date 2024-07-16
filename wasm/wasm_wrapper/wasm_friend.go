@@ -18,10 +18,11 @@
 package wasm_wrapper
 
 import (
+	"syscall/js"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/event_listener"
-	"syscall/js"
 )
 
 // ------------------------------------group---------------------------
@@ -41,6 +42,11 @@ func (w *WrapperFriend) GetSpecifiedFriendsInfo(_ js.Value, args []js.Value) int
 func (w *WrapperFriend) GetFriendList(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetFriendList, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperFriend) GetFriendListPage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetFriendListPage, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperFriend) SearchFriends(_ js.Value, args []js.Value) interface{} {
