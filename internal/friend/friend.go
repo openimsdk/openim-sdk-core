@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	friendSyncLimit = 100
+	friendSyncLimit int64 = 10000
 )
 
 func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Friend {
