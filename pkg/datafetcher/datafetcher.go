@@ -2,6 +2,7 @@ package datafetcher
 
 import (
 	"context"
+	"sort"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/tools/errs"
@@ -72,7 +73,7 @@ func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []s
 		return nil, err
 	}
 	if !needServer {
-		return localData, nil
+		return ds.sortByUserIDs(localData, uids), nil
 	}
 
 	localUIDSet := datautil.SliceSetAny(localData, ds.Key)
@@ -99,7 +100,23 @@ func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []s
 
 	}
 
-	return localData, nil
+	return ds.sortByUserIDs(localData, uids), nil
+}
+
+func (ds *DataFetcher[T]) sortByUserIDs(data []T, userIDs []string) []T {
+	userIndexMap := make(map[string]int, len(userIDs))
+	for i, uid := range userIDs {
+		userIndexMap[uid] = i
+	}
+	sort.SliceStable(data, func(i, j int) bool {
+		uid1 := ds.Key(data[i])
+		uid2 := ds.Key(data[j])
+		index1 := userIndexMap[uid1]
+		index2 := userIndexMap[uid2]
+		return index1 < index2
+	})
+
+	return data
 }
 
 // FetchMissingAndCombineLocal fetches missing data from the server and combines it with local data without inserting it into the local database

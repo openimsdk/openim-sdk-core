@@ -19,13 +19,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/tools/errs"
-	"io"
-	"net/http"
-	"time"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -205,7 +206,7 @@ func GetPageAllWithMaxNum[A interface {
 }
 
 func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req page.PageReq, fn func(resp *RESP) []L, batchInsertFn func(ctx context.Context, items []L) error,
-	insertFn func(ctx context.Context, item L) error, maxItems int) error {
+	insertFn func(ctx context.Context, item L) error, maxItems int64) error {
 	if req.GetPagination().ShowNumber <= 0 {
 		req.GetPagination().ShowNumber = 50
 	}
@@ -228,7 +229,7 @@ func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req p
 			}
 		}
 		totalFetched += len(list)
-		if len(list) < int(req.GetPagination().ShowNumber) || (maxItems > 0 && totalFetched >= maxItems) {
+		if len(list) < int(req.GetPagination().ShowNumber) || (maxItems > 0 && totalFetched >= int(maxItems)) {
 			break
 		}
 	}
