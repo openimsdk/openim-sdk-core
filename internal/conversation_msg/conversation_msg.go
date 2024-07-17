@@ -53,7 +53,7 @@ import (
 )
 
 const (
-	conversationSyncLimit = math.MaxInt64
+	conversationSyncLimit int64 = math.MaxInt64
 )
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}

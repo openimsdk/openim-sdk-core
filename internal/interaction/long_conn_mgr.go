@@ -277,6 +277,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-c.heartbeatCh:
 			c.retrieveMaxSeq(ctx)
 		case <-ticker.C:
+			log.ZInfo(ctx, "sendPingMessage", "goroutine ID:", getGoroutineID())
 			c.sendPingMessage(ctx)
 		}
 	}
@@ -304,7 +305,7 @@ func getGoroutineID() int64 {
 	idField := strings.Fields(strings.TrimPrefix(string(buf), "goroutine "))[0]
 	id, err := strconv.ParseInt(idField, 10, 64)
 	if err != nil {
-		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
+		return 0
 	}
 	return id
 }
