@@ -47,6 +47,14 @@ func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToC
 	}
 }
 
+func TriggerCmdSyncFlag(ctx context.Context, syncFlag int, conversationCh chan Cmd2Value) {
+	c2v := Cmd2Value{Cmd: constant.CmdSyncFlag, Value: sdk_struct.CmdNewMsgComeToConversation{SyncFlag: syncFlag}, Ctx: ctx}
+	err := sendCmd(conversationCh, c2v, 100)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdNotification error", err, "syncFlag", syncFlag)
+	}
+}
+
 func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 	if ch == nil {
 		return errs.Wrap(ErrChanNil)

@@ -16,7 +16,7 @@ package constant
 
 const (
 	CmdSyncData                   = "001"
-	CmdBlackList                  = "002"
+	CmdSyncFlag                   = "002"
 	CmdNotification               = "003"
 	CmdDeleteConversation         = "004"
 	CmdNewMsgCome                 = "005"

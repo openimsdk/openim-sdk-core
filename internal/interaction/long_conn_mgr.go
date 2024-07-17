@@ -287,10 +287,14 @@ func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
 	defer c.connWrite.Unlock()
 	log.ZDebug(ctx, "ping Message Started", "goroutine ID:", getGoroutineID())
 	if c.IsConnected() {
+		log.ZDebug(ctx, "ping Message Started isConnected", "goroutine ID:", getGoroutineID())
 		c.conn.SetWriteDeadline(writeWait)
-		if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
+		if err := c.conn.WriteMessage(PingMessage, []byte(utils.OperationIDGenerator())); err != nil {
+			log.ZWarn(ctx, "ping Message failed", err, "goroutine ID:", getGoroutineID())
 			return
 		}
+	} else {
+		log.ZDebug(ctx, "ping Message failed, connection", "connStatus", c.GetConnectionStatus(), "goroutine ID:", getGoroutineID())
 	}
 
 }
@@ -591,8 +595,8 @@ func (c *LongConnMgr) pingHandler(_ string) error {
 	return c.writePongMsg()
 }
 
-func (c *LongConnMgr) pongHandler(_ string) error {
-	log.ZDebug(c.ctx, "server Pong Message Received")
+func (c *LongConnMgr) pongHandler(appData string) error {
+	log.ZDebug(c.ctx, "server Pong Message Received", "appData", appData)
 	if err := c.conn.SetReadDeadline(pongWait); err != nil {
 		return err
 	}
