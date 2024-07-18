@@ -16,6 +16,14 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
+type BatchIncrementalReq struct {
+	UserID string                                `json:"user_id"`
+	List   []*group.GetIncrementalGroupMemberReq `json:"list"`
+}
+type BatchIncrementalResp struct {
+	List map[string]*group.GetIncrementalGroupMemberResp `json:"list"`
+}
+
 func (g *Group) getIncrementalGroupMemberBatch(ctx context.Context, groups []*group.GetIncrementalGroupMemberReq) (map[string]*group.GetIncrementalGroupMemberResp, error) {
 	resp, err := util.CallApi[group.BatchGetIncrementalGroupMemberResp](ctx, constant.GetIncrementalGroupMemberBatch, &group.BatchGetIncrementalGroupMemberReq{UserID: g.loginUserID, ReqList: groups})
 	if err != nil {
