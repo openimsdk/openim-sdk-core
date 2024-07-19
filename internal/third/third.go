@@ -16,20 +16,21 @@ package third
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/third"
-
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+	"sync"
 )
 
 type Third struct {
-	platformID   int32
-	loginUserID  string
-	version      string
-	systemType   string
-	LogFilePath  string
-	fileUploader *file.File
+	platformID    int32
+	loginUserID   string
+	version       string
+	systemType    string
+	LogFilePath   string
+	fileUploader  *file.File
+	logUploadLock sync.Mutex
 }
 
 func NewThird(platformID int32, loginUserID, version, systemType, LogFilePath string, fileUploader *file.File) *Third {

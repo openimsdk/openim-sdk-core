@@ -18,6 +18,11 @@ import (
 )
 
 func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) error {
+	if c.logUploadLock.TryLock() {
+		defer c.logUploadLock.Unlock()
+	} else {
+		return errors.New("log file is uploading")
+	}
 	logFilePath := c.LogFilePath
 	entrys, err := os.ReadDir(logFilePath)
 	if err != nil {
