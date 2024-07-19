@@ -19,10 +19,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	pbUser "github.com/openimsdk/protocol/user"
-	userPb "github.com/openimsdk/protocol/user"
-
 	"github.com/openimsdk/protocol/sdkws"
+	pbUser "github.com/openimsdk/protocol/user"
 )
 
 func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
@@ -61,29 +59,4 @@ func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string
 		}
 	}
 	return nil
-}
-
-func (u *User) SubscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	userStatus, err := u.subscribeUsersStatus(ctx, userIDs)
-	if err != nil {
-		return nil, err
-	}
-	u.OnlineStatusCache.DeleteAll()
-	u.OnlineStatusCache.StoreAll(func(value *userPb.OnlineStatus) string {
-		return value.UserID
-	}, userStatus)
-	return userStatus, nil
-}
-
-func (u *User) UnsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
-	u.OnlineStatusCache.DeleteAll()
-	return u.unsubscribeUsersStatus(ctx, userIDs)
-}
-
-func (u *User) GetSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
-	return u.getSubscribeUsersStatus(ctx)
-}
-
-func (u *User) GetUserStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	return u.getUserStatus(ctx, userIDs)
 }

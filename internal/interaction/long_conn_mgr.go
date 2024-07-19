@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	userPb "github.com/openimsdk/protocol/user"
 	"io"
 	"runtime"
 	"strconv"
@@ -79,8 +80,9 @@ type LongConnMgr struct {
 	w          sync.Mutex
 	connStatus int
 	// The long connection,can be set tcp or websocket.
-	conn     LongConn
-	listener open_im_sdk_callback.OnConnListener
+	conn         LongConn
+	listener     open_im_sdk_callback.OnConnListener
+	userListener open_im_sdk_callback.OnUserListener
 	// Buffered channel of outbound messages.
 	send               chan Message
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
@@ -99,6 +101,8 @@ type LongConnMgr struct {
 	IsBackground bool
 	// write conn lock
 	connWrite *sync.Mutex
+
+	sub *subscription
 }
 
 type Message struct {
@@ -106,11 +110,19 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
-	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
-		loginMgrCh: loginMgrCh, IsCompression: true,
-		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor(),
-		reconnectStrategy: NewExponentialRetry()}
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userListener open_im_sdk_callback.OnUserListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
+	l := &LongConnMgr{
+		listener:           listener,
+		userListener:       userListener,
+		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
+		loginMgrCh:         loginMgrCh,
+		IsCompression:      true,
+		Syncer:             NewWsRespAsyn(),
+		encoder:            NewGobEncoder(),
+		compressor:         NewGzipCompressor(),
+		reconnectStrategy:  NewExponentialRetry(),
+		sub:                newSubscription(),
+	}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
@@ -188,6 +200,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		if err != nil {
 			log.ZError(c.ctx, "readMessage err", err, "goroutine ID:", getGoroutineID())
 			_ = c.close()
+			c.sub.onConnClosed(err)
 			continue
 		}
 		switch messageType {
@@ -205,7 +218,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			return
 		default:
 		}
-
 	}
 }
 
@@ -349,6 +361,7 @@ func (c *LongConnMgr) retrieveMaxSeq(ctx context.Context) {
 		}
 	}
 }
+
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
 	tempChan, err := c.writeBinaryMsgAndRetry(msg)
 	defer c.Syncer.DelCh(msg.MsgIncr)
@@ -386,9 +399,50 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 	return nil, sdkerrs.ErrNetwork.WrapMsg("send binary message error")
 }
 
+func (c *LongConnMgr) writeBinaryMsgAndNotRetry(msg *GeneralWsReq) (chan *GeneralWsResp, error) {
+	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
+	msg.MsgIncr = msgIncr
+	if err := c.writeBinaryMsg(*msg); err != nil {
+		c.Syncer.DelCh(msgIncr)
+		return nil, err
+	}
+	return tempChan, nil
+}
+
 func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
+	return c.writeBinaryMsgNoLock(req)
+}
+
+func (c *LongConnMgr) writeSubInfo(subscribeUserID, unsubscribeUserID []string, lock bool) error {
+	opID := utils.OperationIDGenerator()
+	sCtx := ccontext.WithOperationID(c.ctx, opID)
+	log.ZInfo(sCtx, "writeSubInfo start", "goroutine ID:", getGoroutineID())
+	subReq := sdkws.SubUserOnlineStatus{
+		SubscribeUserID:   subscribeUserID,
+		UnsubscribeUserID: unsubscribeUserID,
+	}
+	data, err := proto.Marshal(&subReq)
+	if err != nil {
+		log.ZError(sCtx, "proto.Marshal", err)
+		return err
+	}
+	req := GeneralWsReq{
+		ReqIdentifier: constant.WsSubUserOnlineStatus,
+		SendID:        ccontext.Info(sCtx).UserID(),
+		OperationID:   opID,
+		MsgIncr:       utils.OperationIDGenerator(),
+		Data:          data,
+	}
+	if lock {
+		return c.writeBinaryMsg(req)
+	} else {
+		return c.writeBinaryMsgNoLock(req)
+	}
+}
+
+func (c *LongConnMgr) writeBinaryMsgNoLock(req GeneralWsReq) error {
 	encodeBuf, err := c.encoder.Encode(req)
 	if err != nil {
 		return err
@@ -407,6 +461,7 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 		return c.conn.WriteMessage(MessageBinary, encodeBuf)
 	}
 }
+
 func (c *LongConnMgr) close() error {
 	c.w.Lock()
 	defer c.w.Unlock()
@@ -464,12 +519,93 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 			log.ZError(ctx, "notifyResp failed", err, "reqIdentifier", wsResp.ReqIdentifier, "errCode",
 				wsResp.ErrCode, "errMsg", wsResp.ErrMsg, "msgIncr", wsResp.MsgIncr, "operationID", wsResp.OperationID)
 		}
+	case constant.WsSubUserOnlineStatus:
+		if err := c.handlerUserOnlineChange(ctx, wsResp); err != nil {
+			log.ZError(ctx, "handlerUserOnlineChange failed", err, "wsResp", wsResp)
+		}
 	default:
 		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return sdkerrs.ErrMsgBinaryTypeNotSupport
 	}
 	return nil
 }
+
+func (c *LongConnMgr) handlerUserOnlineChange(ctx context.Context, wsResp GeneralWsResp) error {
+	if wsResp.ErrCode != 0 {
+		return errs.New("handlerUserOnlineChange failed")
+	}
+	var resp sdkws.SubUserOnlineStatusTips
+	if err := proto.Unmarshal(wsResp.Data, &resp); err != nil {
+		return err
+	}
+	c.callbackUserOnlineChange(c.sub.setUserState(resp.Subscribers))
+	return nil
+}
+
+func (c *LongConnMgr) GetUserOnlinePlatformIDs(ctx context.Context, userIDs []string) (map[string][]int32, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+	exist, wait, subUserIDs, unsubUserIDs := c.sub.getUserOnline(userIDs)
+	if len(subUserIDs)+len(unsubUserIDs) > 0 {
+		if err := c.writeSubInfo(subUserIDs, unsubUserIDs, true); err != nil {
+			c.sub.writeFailed(wait, err)
+			return nil, err
+		}
+	}
+	for userID, statues := range wait {
+		select {
+		case <-ctx.Done():
+			return nil, context.Cause(ctx)
+		case <-statues.Done():
+			online, err := statues.Result()
+			if err != nil {
+				return nil, err
+			}
+			exist[userID] = online
+		}
+	}
+	return exist, nil
+}
+
+func (c *LongConnMgr) UnsubscribeUserOnlinePlatformIDs(ctx context.Context, userIDs []string) error {
+	if len(userIDs) > 0 {
+		c.sub.unsubscribe(userIDs)
+	}
+	return nil
+}
+
+func (c *LongConnMgr) writeConnFirstSubMsg(ctx context.Context) error {
+	userIDs := c.sub.getNewConnSubUserIDs()
+	log.ZDebug(ctx, "writeConnFirstSubMsg getNewConnSubUserIDs", "userIDs", userIDs)
+	if len(userIDs) == 0 {
+		return nil
+	}
+	if err := c.writeSubInfo(userIDs, nil, false); err != nil {
+		c.sub.onConnClosed(err)
+		return err
+	}
+	return nil
+}
+
+func (c *LongConnMgr) callbackUserOnlineChange(users map[string][]int32) {
+	if len(users) == 0 {
+		return
+	}
+	log.ZError(c.ctx, "#### ===> callbackUserOnlineChange", nil, "users", users)
+	for userID, onlinePlatformIDs := range users {
+		status := userPb.OnlineStatus{
+			UserID:      userID,
+			PlatformIDs: onlinePlatformIDs,
+		}
+		if len(status.PlatformIDs) == 0 {
+			status.Status = constant.Offline
+		} else {
+			status.Status = constant.Online
+		}
+		c.userListener.OnUserStatusChanged(utils.StructToJsonString(users))
+	}
+}
+
 func (c *LongConnMgr) IsConnected() bool {
 	c.w.Lock()
 	defer c.w.Unlock()
@@ -490,6 +626,7 @@ func (c *LongConnMgr) SetConnectionStatus(status int) {
 	defer c.w.Unlock()
 	c.connStatus = status
 }
+
 func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err error) {
 	if c.IsConnected() {
 		return true, nil
@@ -541,7 +678,15 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return true, err
 	}
+	if err := c.writeConnFirstSubMsg(ctx); err != nil {
+		log.ZError(ctx, "first write user online sub info error", err)
+		ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
+		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
+		c.conn.Close()
+		return true, err
+	}
 	c.listener.OnConnectSuccess()
+	c.sub.onConnSuccess()
 	c.ctx = newContext(c.conn.LocalAddr())
 	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)
 	c.SetConnectionStatus(Connected)
