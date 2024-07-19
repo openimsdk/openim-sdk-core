@@ -129,7 +129,7 @@ func newUserCtx(userID, token string, imConfig sdk_struct.IMConfig) context.Cont
 func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ctx := newUserCtx(userID, token, imConfig)
-	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListener{}, &UserListener{}, nil, pushMsgAndMaxSeqCh, nil)
+	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListener{}, func(m map[string][]int32) {}, nil, pushMsgAndMaxSeqCh, nil)
 	core := &SendMsgUser{
 		pushMsgAndMaxSeqCh:      pushMsgAndMaxSeqCh,
 		longConnMgr:             longConnMgr,

@@ -59,6 +59,21 @@ func (u *User) SetListener(listener func() open_im_sdk_callback.OnUserListener) 
 	u.listener = listener
 }
 
+func (u *User) UserOnlineStatusChange(users map[string][]int32) {
+	for userID, onlinePlatformIDs := range users {
+		status := userPb.OnlineStatus{
+			UserID:      userID,
+			PlatformIDs: onlinePlatformIDs,
+		}
+		if len(status.PlatformIDs) == 0 {
+			status.Status = constant.Offline
+		} else {
+			status.Status = constant.Online
+		}
+		u.listener().OnUserStatusChanged(utils.StructToJsonString(&status))
+	}
+}
+
 // NewUser creates a new User object.
 func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}

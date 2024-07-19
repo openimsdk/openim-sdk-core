@@ -49,7 +49,7 @@ func Test_OnlineState(t *testing.T) {
 	}
 	for i := 1; ; i++ {
 		time.Sleep(time.Second)
-		open_im_sdk.UserForSDK.LongConnMgr().UnsubscribeUserOnlinePlatformIDs(ctx, userIDs)
+		//open_im_sdk.UserForSDK.LongConnMgr().UnsubscribeUserOnlinePlatformIDs(ctx, userIDs)
 		res, err := open_im_sdk.UserForSDK.LongConnMgr().GetUserOnlinePlatformIDs(ctx, userIDs)
 		if err != nil {
 			t.Logf("@@@@@@@@@@@@=====> <%d> error %s", i, err)

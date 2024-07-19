@@ -406,9 +406,13 @@ func (u *LoginMgr) initResources() {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
-	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
 	u.setLoginStatus(LogoutStatus)
+}
+
+func (u *LoginMgr) userOnlineStatusChange(users map[string][]int32) {
+	u.User().UserOnlineStatusChange(users)
 }
 
 func (u *LoginMgr) UnInitSDK() {

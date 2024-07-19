@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	userPb "github.com/openimsdk/protocol/user"
 	"io"
 	"runtime"
 	"strconv"
@@ -80,9 +79,9 @@ type LongConnMgr struct {
 	w          sync.Mutex
 	connStatus int
 	// The long connection,can be set tcp or websocket.
-	conn         LongConn
-	listener     open_im_sdk_callback.OnConnListener
-	userListener open_im_sdk_callback.OnUserListener
+	conn       LongConn
+	listener   open_im_sdk_callback.OnConnListener
+	userOnline func(map[string][]int32)
 	// Buffered channel of outbound messages.
 	send               chan Message
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
@@ -110,10 +109,10 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userListener open_im_sdk_callback.OnUserListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userOnline func(map[string][]int32), heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{
 		listener:           listener,
-		userListener:       userListener,
+		userOnline:         userOnline,
 		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		loginMgrCh:         loginMgrCh,
 		IsCompression:      true,
@@ -534,11 +533,12 @@ func (c *LongConnMgr) handlerUserOnlineChange(ctx context.Context, wsResp Genera
 	if wsResp.ErrCode != 0 {
 		return errs.New("handlerUserOnlineChange failed")
 	}
-	var resp sdkws.SubUserOnlineStatusTips
-	if err := proto.Unmarshal(wsResp.Data, &resp); err != nil {
+	var tips sdkws.SubUserOnlineStatusTips
+	if err := proto.Unmarshal(wsResp.Data, &tips); err != nil {
 		return err
 	}
-	c.callbackUserOnlineChange(c.sub.setUserState(resp.Subscribers))
+	log.ZDebug(ctx, "handlerUserOnlineChange", "tips", &tips)
+	c.callbackUserOnlineChange(c.sub.setUserState(tips.Subscribers))
 	return nil
 }
 
@@ -588,22 +588,23 @@ func (c *LongConnMgr) writeConnFirstSubMsg(ctx context.Context) error {
 }
 
 func (c *LongConnMgr) callbackUserOnlineChange(users map[string][]int32) {
+	log.ZDebug(c.ctx, "#### ===> callbackUserOnlineChange", "users", users)
 	if len(users) == 0 {
 		return
 	}
-	log.ZError(c.ctx, "#### ===> callbackUserOnlineChange", nil, "users", users)
-	for userID, onlinePlatformIDs := range users {
-		status := userPb.OnlineStatus{
-			UserID:      userID,
-			PlatformIDs: onlinePlatformIDs,
-		}
-		if len(status.PlatformIDs) == 0 {
-			status.Status = constant.Offline
-		} else {
-			status.Status = constant.Online
-		}
-		c.userListener.OnUserStatusChanged(utils.StructToJsonString(users))
-	}
+	c.userOnline(users)
+	//for userID, onlinePlatformIDs := range users {
+	//	status := userPb.OnlineStatus{
+	//		UserID:      userID,
+	//		PlatformIDs: onlinePlatformIDs,
+	//	}
+	//	if len(status.PlatformIDs) == 0 {
+	//		status.Status = constant.Offline
+	//	} else {
+	//		status.Status = constant.Online
+	//	}
+	//	c.userOnline.OnUserStatusChanged(utils.StructToJsonString(users))
+	//}
 }
 
 func (c *LongConnMgr) IsConnected() bool {

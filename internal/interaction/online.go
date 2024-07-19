@@ -42,6 +42,5 @@ func (c *LongConnMgr) SubscribeUsersStatus(ctx context.Context, userIDs []string
 }
 
 func (c *LongConnMgr) GetSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
-
-	return u.getSubscribeUsersStatus(ctx)
+	return c.subscribeUsersStatus(ctx, nil)
 }
