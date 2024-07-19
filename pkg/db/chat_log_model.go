@@ -239,7 +239,9 @@ func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int
 	condition += subCondition
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "InsertMessage failed")
 	return result, err
-} // SearchMessageByContentTypeAndKeyword searches for messages in the database that match specified content types and keywords within a given time range.
+}
+
+// SearchMessageByContentTypeAndKeyword searches for messages in the database that match specified content types and keywords within a given time range.
 func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	var condition string
 	var subCondition string
@@ -383,6 +385,16 @@ func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversation
 	var seq int64
 	err = d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")
+}
+
+func (d *DataBase) CheckConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	var seq int64
+
+	if d.tableChecker.HasTable(utils.GetConversationTableName(conversationID)) {
+		d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq)
+		return seq, nil
+	}
+	return 0, nil
 }
 
 func (d *DataBase) GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error) {
