@@ -26,6 +26,6 @@ func SetAppBadge(callback open_im_sdk_callback.Base, operationID string, appUnre
 	call(callback, operationID, UserForSDK.Third().SetAppBadge, appUnreadCount)
 }
 
-func UploadLogs(callback open_im_sdk_callback.Base, operationID string, systemType, ex string, progress open_im_sdk_callback.UploadLogProgress) {
-	call(callback, operationID, UserForSDK.Third().UploadLogs, systemType, ex, progress)
+func UploadLogs(callback open_im_sdk_callback.Base, operationID string, ex string, progress open_im_sdk_callback.UploadLogProgress) {
+	call(callback, operationID, UserForSDK.Third().UploadLogs, ex, progress)
 }
