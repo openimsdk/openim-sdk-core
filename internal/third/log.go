@@ -2,13 +2,13 @@ package third
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/third"
+	"github.com/openimsdk/tools/errs"
 	"io"
 	"math/rand"
 	"os"
@@ -21,7 +21,7 @@ func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) er
 	if c.logUploadLock.TryLock() {
 		defer c.logUploadLock.Unlock()
 	} else {
-		return errors.New("log file is uploading")
+		return errs.New("log file is uploading").Wrap()
 	}
 	logFilePath := c.LogFilePath
 	entrys, err := os.ReadDir(logFilePath)
@@ -35,7 +35,7 @@ func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) er
 		}
 	}
 	if len(files) == 0 {
-		return errors.New("not found log file")
+		return errs.New("not found log file").Wrap()
 	}
 	zippath := filepath.Join(logFilePath, fmt.Sprintf("%d_%d.zip", time.Now().UnixMilli(), rand.Uint32()))
 	defer os.Remove(zippath)
