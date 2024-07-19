@@ -392,7 +392,7 @@ func (d *DataBase) CheckConversationNormalMsgSeq(ctx context.Context, conversati
 
 	if d.tableChecker.HasTable(utils.GetConversationTableName(conversationID)) {
 		err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
-		return seq, err
+		return seq, errs.Wrap(err)
 	}
 	return 0, nil
 }
