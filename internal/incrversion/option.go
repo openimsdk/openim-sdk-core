@@ -31,6 +31,7 @@ type VersionSynchronizer[V, R any] struct {
 	Syncer             func(server, local []V) error
 	FullSyncer         func(ctx context.Context) error
 	FullID             func(ctx context.Context) ([]string, error)
+	IDOrderChanged     func(resp R) bool
 }
 
 func (o *VersionSynchronizer[V, R]) getVersionInfo() (*model_struct.LocalVersionSync, error) {
@@ -134,6 +135,14 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 			}
 
 		}
+		// The ordering of fullID has changed due to modifications such as group role level changes or friend list reordering.
+		// Therefore, it is necessary to refresh and obtain the fullID again.
+		if o.IDOrderChanged != nil && o.IDOrderChanged(resp) {
+			lvs.UIDList, err = o.FullID(o.Ctx)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return o.updateVersionInfo(lvs, resp)
 }
@@ -201,6 +210,14 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 				return err
 			}
 
+		}
+		// The ordering of fullID has changed due to modifications such as group role level changes or friend list reordering.
+		// Therefore, it is necessary to refresh and obtain the fullID again.
+		if o.IDOrderChanged != nil && o.IDOrderChanged(resp) {
+			lvs.UIDList, err = o.FullID(o.Ctx)
+			if err != nil {
+				return err
+			}
 		}
 		return o.updateVersionInfo(lvs, resp)
 	} else if version <= lvs.Version {

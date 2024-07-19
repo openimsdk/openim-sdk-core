@@ -104,7 +104,7 @@ type MessageModel interface {
 	GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (result []*model_struct.LocalChatLog, err error)
 	GetMessagesBySeqs(ctx context.Context, conversationID string, seqs []int64) (result []*model_struct.LocalChatLog, err error)
 	GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
-	GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error)
+	CheckConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 	GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 
 	UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error

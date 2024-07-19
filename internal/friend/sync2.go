@@ -60,6 +60,12 @@ func (f *Friend) IncrSyncFriends(ctx context.Context) error {
 			}
 			return resp.UserIDs, nil
 		},
+		IDOrderChanged: func(resp *friend.GetIncrementalFriendsResp) bool {
+			if resp.SortVersion > 0 {
+				return true
+			}
+			return false
+		},
 	}
 	return friendSyncer.Sync()
 }

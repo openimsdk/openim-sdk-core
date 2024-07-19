@@ -52,15 +52,16 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		c.doUpdateMessage(c2v)
 	case constant.CmSyncReactionExtensions:
 	case constant.CmdNotification:
-		c.doNotificationNew(c2v)
+		c.doNotification(c2v)
 	case constant.CmdSyncData:
 		c.syncData(c2v)
+	case constant.CmdSyncFlag:
+		c.syncFlag(c2v)
 	}
 }
 
-func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
+func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
-	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
 	switch syncFlag {
 	case constant.AppDataSyncStart:
@@ -70,15 +71,15 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		asyncWaitFunctions := []func(c context.Context) error{
 			c.group.SyncAllJoinedGroupsAndMembers,
 			c.friend.IncrSyncFriends,
-			c.IncrSyncConversations,
 		}
 		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait, c.ConversationListener().OnSyncServerProgress)
 
 		syncWaitFunctions := []func(c context.Context) error{
+			c.IncrSyncConversations,
 			c.SyncAllConversationHashReadSeqs,
 		}
 		runSyncFunctions(ctx, syncWaitFunctions, syncWait, c.ConversationListener().OnSyncServerProgress)
-		log.ZDebug(ctx, "core data sync over", "cost time", time.Since(c.startTime).Seconds())
+		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
 
 		asyncNoWaitFunctions := []func(c context.Context) error{
 			c.user.SyncLoginUserInfoWithoutNotice,
@@ -106,6 +107,11 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		log.ZDebug(ctx, "MsgSyncEnd", "time", time.Since(c.startTime).Milliseconds())
 		c.ConversationListener().OnSyncServerFinish(false)
 	}
+}
+
+func (c *Conversation) doNotification(c2v common.Cmd2Value) {
+	ctx := c2v.Ctx
+	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "notification handling", "conversationID", conversationID, "msgs", msgs)

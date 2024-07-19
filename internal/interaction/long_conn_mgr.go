@@ -182,6 +182,13 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 	}()
 	connNum := 0
 	for {
+		select {
+		case <-ctx.Done():
+			c.closedErr = ctx.Err()
+			log.ZInfo(c.ctx, "readPump done, sdk logout.....")
+			return
+		default:
+		}
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 		needRecon, err := c.reConn(ctx, &connNum)
 		if !needRecon {
@@ -236,6 +243,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			c.closedErr = ctx.Err()
+			log.ZInfo(c.ctx, "writePump done, sdk logout.....")
 			return
 		case message, ok := <-c.send:
 			if !ok {
@@ -288,6 +296,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-c.heartbeatCh:
 			c.retrieveMaxSeq(ctx)
 		case <-ticker.C:
+			log.ZInfo(ctx, "sendPingMessage", "goroutine ID:", getGoroutineID())
 			c.sendPingMessage(ctx)
 		}
 	}
@@ -296,12 +305,17 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
-	log.ZDebug(ctx, "ping Message Started", "goroutine ID:", getGoroutineID())
+	opid := utils.OperationIDGenerator()
+	log.ZDebug(ctx, "ping Message Started", "goroutine ID:", getGoroutineID(), "opid", opid)
 	if c.IsConnected() {
+		log.ZDebug(ctx, "ping Message Started isConnected", "goroutine ID:", getGoroutineID(), "opid", opid)
 		c.conn.SetWriteDeadline(writeWait)
-		if err := c.conn.WriteMessage(PingMessage, nil); err != nil {
+		if err := c.conn.WriteMessage(PingMessage, []byte(opid)); err != nil {
+			log.ZWarn(ctx, "ping Message failed", err, "goroutine ID:", getGoroutineID(), "opid", opid)
 			return
 		}
+	} else {
+		log.ZDebug(ctx, "ping Message failed, connection", "connStatus", c.GetConnectionStatus(), "goroutine ID:", getGoroutineID(), "opid", opid)
 	}
 
 }
@@ -311,7 +325,7 @@ func getGoroutineID() int64 {
 	idField := strings.Fields(strings.TrimPrefix(string(buf), "goroutine "))[0]
 	id, err := strconv.ParseInt(idField, 10, 64)
 	if err != nil {
-		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
+		return 0
 	}
 	return id
 }
@@ -501,10 +515,11 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		}
 		return sdkerrs.ErrLoginOut
 	case constant.KickOnlineMsg:
-		log.ZDebug(ctx, "client kicked offline")
-		c.listener.OnKickedOffline()
-		_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
-		return errors.New("client kicked offline")
+		log.ZDebug(ctx, "socket receive client kicked offline")
+
+		err = errs.ErrTokenKicked.WrapMsg("socket receive client kicked offline")
+		ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
+		return err
 	case constant.GetNewestSeq:
 		fallthrough
 	case constant.PullMsgBySeqList:
@@ -737,8 +752,8 @@ func (c *LongConnMgr) pingHandler(_ string) error {
 	return c.writePongMsg()
 }
 
-func (c *LongConnMgr) pongHandler(_ string) error {
-	log.ZDebug(c.ctx, "server Pong Message Received")
+func (c *LongConnMgr) pongHandler(appData string) error {
+	log.ZDebug(c.ctx, "server Pong Message Received", "appData", appData)
 	if err := c.conn.SetReadDeadline(pongWait); err != nil {
 		return err
 	}

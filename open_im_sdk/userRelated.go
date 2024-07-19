@@ -17,7 +17,6 @@ package open_im_sdk
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -41,11 +40,12 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/protocol/push"
 	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/jsonutil"
 )
 
 const (
@@ -66,7 +66,7 @@ var (
 // CheckResourceLoad checks the SDK is resource load status.
 func CheckResourceLoad(uSDK *LoginMgr, funcName string) error {
 	if uSDK == nil {
-		return utils.Wrap(errors.New("CheckResourceLoad failed uSDK == nil "), "")
+		return errs.New("SDK not initialized,userForSDK is nil", "funcName", funcName).Wrap()
 	}
 	if funcName == "" {
 		return nil
@@ -75,9 +75,8 @@ func CheckResourceLoad(uSDK *LoginMgr, funcName string) error {
 	if parts[len(parts)-1] == "Login-fm" {
 		return nil
 	}
-	if uSDK.Friend() == nil || uSDK.User() == nil || uSDK.Group() == nil || uSDK.Conversation() == nil ||
-		uSDK.Full() == nil {
-		return utils.Wrap(errors.New("CheckResourceLoad failed, resource nil "), "")
+	if uSDK.getLoginStatus(context.Background()) != Logged {
+		return errs.New("SDK not logged in", "funcName", funcName).Wrap()
 	}
 	return nil
 }
@@ -316,7 +315,7 @@ func (u *LoginMgr) handlerSendingMsg(ctx context.Context, sendingMsg *model_stru
 	}
 	if latestMsg.ClientMsgID == sendingMsg.ClientMsgID {
 		latestMsg.Status = constant.MsgStatusSendFailed
-		conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+		conversation.LatestMsg = jsonutil.StructToJsonString(latestMsg)
 		return u.db.UpdateConversation(ctx, conversation)
 	}
 	return nil
