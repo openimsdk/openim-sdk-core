@@ -174,12 +174,18 @@ func (g *Group) syncGroupAndMember(ctx context.Context, groupID string, resp *gr
 			}
 			return resp.UserIDs, nil
 		},
+		IDOrderChanged: func(resp *group.GetIncrementalGroupMemberResp) bool {
+			if resp.SortVersion > 0 {
+				return true
+			}
+			return false
+		},
 	}
 	return groupMemberSyncer.Sync()
 }
 
 func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, deleteGroupMembers, updateGroupMembers, insertGroupMembers []*sdkws.GroupMemberFullInfo,
-	updateGroup *sdkws.GroupInfo, version uint64, versionID string) error {
+	updateGroup *sdkws.GroupInfo, sortVersion uint64, version uint64, versionID string) error {
 	groupMemberSyncer := incrversion.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
 		Ctx:       ctx,
 		DB:        g.db,
@@ -199,9 +205,10 @@ func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, de
 				Delete: datautil.Slice(deleteGroupMembers, func(e *sdkws.GroupMemberFullInfo) string {
 					return e.UserID
 				}),
-				Insert: insertGroupMembers,
-				Update: updateGroupMembers,
-				Group:  updateGroup,
+				Insert:      insertGroupMembers,
+				Update:      updateGroupMembers,
+				Group:       updateGroup,
+				SortVersion: sortVersion,
 			}
 		},
 		Server: func(version *model_struct.LocalVersionSync) (*group.GetIncrementalGroupMemberResp, error) {
@@ -282,6 +289,12 @@ func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, de
 			}
 			return resp.UserIDs, nil
 		},
+		IDOrderChanged: func(resp *group.GetIncrementalGroupMemberResp) bool {
+			if resp.SortVersion > 0 {
+				return true
+			}
+			return false
+		},
 	}
 	return groupMemberSyncer.CheckVersionSync()
 }
@@ -335,6 +348,12 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 			}
 			return resp.GroupIDs, nil
 
+		},
+		IDOrderChanged: func(resp *group.GetIncrementalJoinGroupResp) bool {
+			if resp.SortVersion > 0 {
+				return true
+			}
+			return false
 		},
 	}
 	return opt.Sync()

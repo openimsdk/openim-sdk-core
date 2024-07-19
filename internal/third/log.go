@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
+func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) error {
 	logFilePath := c.LogFilePath
 	entrys, err := os.ReadDir(logFilePath)
 	if err != nil {
@@ -48,6 +48,7 @@ func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
 		SystemType: c.systemType,
 		Version:    c.version,
 		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
+		Ex:         ex,
 	}
 	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, reqLog)
 	return err

@@ -84,7 +84,7 @@ type Syncer[T, RESP any, V comparable] struct {
 	batchPageRespConvertFunc func(resp *RESP) []T
 	reqApiRouter             string
 	ts                       string // Represents the type of T as a string.
-	fullSyncLimit            int
+	fullSyncLimit            int64
 }
 
 type NoResp struct{}
@@ -197,7 +197,7 @@ func WithReqApiRouter[T, RESP any, V comparable](router string) Option[T, RESP, 
 }
 
 // WithFullSyncLimit sets the fullSyncLimit for the Syncer.
-func WithFullSyncLimit[T, RESP any, V comparable](limit int) Option[T, RESP, V] {
+func WithFullSyncLimit[T, RESP any, V comparable](limit int64) Option[T, RESP, V] {
 	return func(s *Syncer[T, RESP, V]) {
 		s.fullSyncLimit = limit
 	}
