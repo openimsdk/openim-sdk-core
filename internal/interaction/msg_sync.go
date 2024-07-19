@@ -24,6 +24,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -81,6 +82,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	}
 
 	// TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
+
 	type SyncedSeq struct {
 		ConversationID string
 		MaxSyncedSeq   int64
@@ -105,7 +107,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		go func(i, start, end int) {
 			defer wg.Done()
 			for _, v := range conversationIDList[start:end] {
-				maxSyncedSeq, err := m.db.GetConversationNormalMsgSeqNoInit(ctx, v)
+				maxSyncedSeq, err := m.db.CheckConversationNormalMsgSeq(ctx, v)
 				resultMaps[i][v] = SyncedSeq{
 					ConversationID: v,
 					MaxSyncedSeq:   maxSyncedSeq,
@@ -121,7 +123,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	for _, resultMap := range resultMaps {
 		for k, v := range resultMap {
 			if v.Err != nil {
-				log.ZError(ctx, "get group normal seq failed", v.Err, "conversationID", k)
+				log.ZError(ctx, "get group normal seq failed", errs.Wrap(v.Err), "conversationID", k)
 				continue
 			}
 			m.syncedMaxSeqs[k] = v.MaxSyncedSeq
@@ -266,23 +268,23 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 func (m *MsgSyncer) doConnected(ctx context.Context) {
 	reinstalled := m.reinstalled
 	if reinstalled {
-		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.AppDataSyncStart}, m.conversationCh)
+		common.TriggerCmdSyncFlag(m.ctx, constant.AppDataSyncStart, m.conversationCh)
 	} else {
-		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncBegin}, m.conversationCh)
+		common.TriggerCmdSyncFlag(m.ctx, constant.MsgSyncBegin, m.conversationCh)
 	}
 	var resp sdkws.GetMaxSeqResp
 	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(m.ctx, "get max seq error", err)
-		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncFailed}, m.conversationCh)
+		common.TriggerCmdSyncFlag(m.ctx, constant.MsgSyncFailed, m.conversationCh)
 		return
 	} else {
 		log.ZDebug(m.ctx, "get max seq success", "resp", resp.MaxSeqs)
 	}
 	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, connectPullNums)
 	if reinstalled {
-		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.AppDataSyncFinish}, m.conversationCh)
+		common.TriggerCmdSyncFlag(m.ctx, constant.AppDataSyncFinish, m.conversationCh)
 	} else {
-		common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncEnd}, m.conversationCh)
+		common.TriggerCmdSyncFlag(m.ctx, constant.MsgSyncEnd, m.conversationCh)
 	}
 }
 

@@ -27,6 +27,11 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
+const (
+	groupSortIDUnchanged = 0
+	groupSortIDChanged   = 1
+)
+
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 
@@ -57,7 +62,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
-			nil, nil, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			nil, nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.JoinGroupApplicationNotification: // 1503
 		var detail sdkws.JoinGroupApplicationTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -76,8 +81,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if detail.QuitUser.UserID == g.loginUserID {
 			return g.IncrSyncJoinGroup(ctx)
 		} else {
-			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, []*sdkws.GroupMemberFullInfo{detail.QuitUser},
-				nil, nil, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, []*sdkws.GroupMemberFullInfo{detail.QuitUser}, nil,
+				nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 		}
 	case constant.GroupApplicationAcceptedNotification: // 1505
 		var detail sdkws.GroupApplicationAcceptedTips
@@ -115,7 +120,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 			[]*sdkws.GroupMemberFullInfo{detail.NewGroupOwner, detail.OldGroupOwnerInfo}, nil,
-			detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			detail.Group, groupSortIDChanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.MemberKickedNotification: // 1508
 		var detail sdkws.MemberKickedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -132,7 +137,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.IncrSyncJoinGroup(ctx)
 		} else {
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, detail.KickedUserList, nil,
-				nil, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+				nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 		}
 	case constant.MemberInvitedNotification: // 1509
 		var detail sdkws.MemberInvitedTips
@@ -142,7 +147,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		userIDMap := datautil.SliceSetAny(detail.InvitedUserList, func(e *sdkws.GroupMemberFullInfo) string {
 			return e.UserID
 		})
-		//自己也是被邀请的一员
+		//Also invited as a member
 		if _, ok := userIDMap[g.loginUserID]; ok {
 			if err := g.IncrSyncJoinGroup(ctx); err != nil {
 				return err
@@ -150,7 +155,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.IncrSyncGroupAndMember(ctx, detail.Group.GroupID)
 		} else {
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
-				detail.InvitedUserList, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+				detail.InvitedUserList, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 		}
 	case constant.MemberEnterNotification: // 1510
 		var detail sdkws.MemberEnterTips
@@ -164,7 +169,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.IncrSyncGroupAndMember(ctx, detail.Group.GroupID)
 		} else {
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
-				[]*sdkws.GroupMemberFullInfo{detail.EntrantUser}, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+				[]*sdkws.GroupMemberFullInfo{detail.EntrantUser}, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 		}
 	case constant.GroupDismissedNotification: // 1511
 		var detail sdkws.GroupDismissedTips
@@ -181,7 +186,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 			[]*sdkws.GroupMemberFullInfo{detail.MutedUser}, nil, nil,
-			detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupMemberCancelMutedNotification: // 1513
 		var detail sdkws.GroupMemberCancelMutedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -189,21 +194,21 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 			[]*sdkws.GroupMemberFullInfo{detail.MutedUser}, nil, nil,
-			detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupMutedNotification: // 1514
 		var detail sdkws.GroupMutedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
-			nil, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupCancelMutedNotification: // 1515
 		var detail sdkws.GroupCancelMutedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
-			nil, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupMemberInfoSetNotification: // 1516
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -212,7 +217,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 			[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, nil,
-			detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			detail.GroupSortVersion, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupMemberSetToAdminNotification: // 1517
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -220,7 +225,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 			[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, nil,
-			detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			detail.GroupSortVersion, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupMemberSetToOrdinaryUserNotification: // 1518
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -228,21 +233,21 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 			[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, nil,
-			detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			detail.GroupSortVersion, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupInfoSetAnnouncementNotification: // 1519
 		var detail sdkws.GroupInfoSetAnnouncementTips //
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
-			nil, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+			nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	case constant.GroupInfoSetNameNotification: // 1520
 		var detail sdkws.GroupInfoSetNameTips //
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
-			nil, nil, detail.Group, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+		return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
+			nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 	default:
 		return errs.New("unknown tips type", "contentType", msg.ContentType).Wrap()
 	}
