@@ -391,16 +391,10 @@ func (d *DataBase) CheckConversationNormalMsgSeq(ctx context.Context, conversati
 	var seq int64
 
 	if d.tableChecker.HasTable(utils.GetConversationTableName(conversationID)) {
-		d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq)
-		return seq, nil
+		err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+		return seq, err
 	}
 	return 0, nil
-}
-
-func (d *DataBase) GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error) {
-	var seq int64
-	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
-	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")
 }
 
 func (d *DataBase) GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
