@@ -58,14 +58,15 @@ func GenMsgIncr(userID string) string {
 func (u *WsRespAsyn) AddCh(userID string) (string, chan *GeneralWsResp) {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
-	msgIncr := GenMsgIncr(userID)
-
-	ch := make(chan *GeneralWsResp, 1)
-	_, ok := u.wsNotification[msgIncr]
-	if ok {
+	for {
+		msgIncr := GenMsgIncr(userID)
+		ch := make(chan *GeneralWsResp, 1)
+		if _, ok := u.wsNotification[msgIncr]; ok {
+			continue
+		}
+		u.wsNotification[msgIncr] = ch
+		return msgIncr, ch
 	}
-	u.wsNotification[msgIncr] = ch
-	return msgIncr, ch
 }
 
 func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan *GeneralWsResp {
