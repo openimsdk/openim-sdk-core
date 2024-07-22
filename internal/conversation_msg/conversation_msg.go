@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
@@ -80,6 +81,10 @@ type Conversation struct {
 	full                 *full.Full
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
+	offsetByReinstalled  int
+	syncFinishCH         chan struct{}
+	progress             int
+	mu                   sync.Mutex
 
 	startTime time.Time
 
@@ -117,6 +122,9 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
+		offsetByReinstalled:  0,
+		syncFinishCH:         make(chan struct{}),
+		progress:             0,
 	}
 	n.typing = newTyping(n)
 	n.initSyncer()
@@ -441,12 +449,134 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 }
 
+func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
+	allMsg := c2v.Value.(sdk_struct.CmdMsgSyncInReinstall).Msgs
+	ctx := c2v.Ctx
+	// msgLen := len(allMsg)
+	total := c2v.Value.(sdk_struct.CmdMsgSyncInReinstall).Total
+
+	var isTriggerUnReadCount bool
+	insertMsg := make(map[string][]*model_struct.LocalChatLog, 10)
+	// var exceptionMsg []*model_struct.LocalErrChatLog
+	conversationSet := make(map[string]*model_struct.LocalConversation)
+
+	//var unreadMessages []*model_struct.LocalConversationUnreadMessage
+	log.ZDebug(ctx, "message come here conversation ch", "conversation length", len(allMsg))
+	b := time.Now()
+
+	for conversationID, msgs := range allMsg {
+		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
+			conversationID, "message length", len(msgs.Msgs))
+		var insertMessage []*model_struct.LocalChatLog
+		for _, v := range msgs.Msgs {
+			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
+			msg := &sdk_struct.MsgStruct{}
+			// TODO
+			copier.Copy(msg, v)
+			msg.Content = string(v.Content)
+			var attachedInfo sdk_struct.AttachedInfoElem
+			_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
+			msg.AttachedInfoElem = &attachedInfo
+			msg.Status = constant.MsgStatusSendSuccess
+
+			err := c.msgHandleByContentType(msg)
+			if err != nil {
+				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType, "msg", msg)
+				continue
+			}
+
+			// //When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
+			// if msg.Status == constant.MsgStatusHasDeleted {
+			// 	insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
+			// 	continue
+			// }
+
+			// if msg.ClientMsgID == "" {
+			// 	exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+			// 	continue
+			// }
+			// if conversationID == "" {
+			// 	log.ZError(ctx, "conversationID is empty", errors.New("conversationID is empty"), "msg", msg)
+			// 	continue
+			// }
+
+			insertMsg[conversationID] = append(insertMessage, c.msgStructToLocalChatLog(msg))
+
+			lc := model_struct.LocalConversation{
+				ConversationType:  v.SessionType,
+				LatestMsg:         utils.StructToJsonString(msg),
+				LatestMsgSendTime: msg.SendTime,
+				ConversationID:    conversationID,
+			}
+			switch v.SessionType {
+			case constant.SingleChatType:
+				lc.UserID = v.SendID
+				lc.ShowName = msg.SenderNickname
+				lc.FaceURL = msg.SenderFaceURL
+			case constant.GroupChatType, constant.SuperGroupChatType:
+				lc.GroupID = v.GroupID
+			case constant.NotificationChatType:
+				lc.UserID = v.SendID
+			}
+
+			conversationSet[conversationID] = &lc
+		}
+
+		// message storage
+		_ = c.messageController.BatchInsertMessageList(ctx, insertMsg)
+
+		// conversation storage
+		if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(conversationSet)); err != nil {
+			log.ZError(ctx, "insert new conversation err:", err)
+		}
+		log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
+
+		if isTriggerUnReadCount {
+			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}})
+		}
+
+		for _, msgs := range allMsg {
+			for _, msg := range msgs.Msgs {
+				if msg.ContentType == constant.Typing {
+					c.typing.onNewMsg(ctx, msg)
+				}
+			}
+		}
+		log.ZDebug(ctx, "insert msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
+
+	}
+	c.offsetByReinstalled += len(insertMsg)
+	c.AddProgress(c.offsetByReinstalled / total * 90)
+	c.ConversationListener().OnSyncServerProgress(c.getProgress())
+	select {
+	case <-c.syncFinishCH:
+		return
+	default:
+
+	}
+}
+
+func (c *Conversation) AddProgress(progress int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.progress += progress
+	if c.progress > 100 {
+		c.progress = 100
+	}
+}
+
+func (c *Conversation) getProgress() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.progress
+}
+
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
 	for _, v := range list {
 		m[v.ConversationID] = v
 	}
-
 }
+
 func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[string]*model_struct.LocalConversation) {
 	var newConversations []*model_struct.LocalConversation
 	for _, v := range generated {
@@ -474,6 +604,7 @@ func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[st
 		}
 	}
 }
+
 func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversation, s *sdk_struct.MsgStruct) {
 	if s.ContentType == constant.AtText {
 		tagMe := utils.IsContain(c.loginUserID, s.AtTextElem.AtUserList)
@@ -870,6 +1001,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 
 	return utils.Wrap(err, "")
 }
+
 func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs map[string]*model_struct.LocalConversation) {
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
@@ -926,12 +1058,14 @@ func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs
 	//}
 
 }
+
 func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*model_struct.LocalConversation) {
 	for _, v := range m {
 		cs = append(cs, v)
 	}
 	return cs
 }
+
 func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
@@ -1000,6 +1134,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 	}
 	return nil
 }
+
 func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*user.BasicInfo,
 	error) {
 	m := make(map[string]*user.BasicInfo)
@@ -1050,6 +1185,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 	}
 	return m, nil
 }
+
 func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
 	//find in cache
 	if value, ok := c.user.UserBasicCache.Load(userID); ok {
