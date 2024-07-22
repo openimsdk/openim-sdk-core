@@ -75,7 +75,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.friend.IncrSyncFriends,
 		}
 		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait)
-		c.AddProgress(4)                                               // add 4 percent in progress
+		c.addProgress(4)                                               // add 4 percent in progress
 		c.ConversationListener().OnSyncServerProgress(c.getProgress()) // notify server current Progress
 
 		syncWaitFunctions := []func(c context.Context) error{
@@ -84,7 +84,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		}
 		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
 		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
-		c.AddProgress(6)                                               // add 6 percent in progress
+		c.addProgress(6)                                               // add 6 percent in progress
 		c.ConversationListener().OnSyncServerProgress(c.getProgress()) // notify server current Progress
 
 		asyncNoWaitFunctions := []func(c context.Context) error{
