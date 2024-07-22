@@ -39,6 +39,15 @@ func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToCon
 	return sendCmd(conversationCh, c2v, 100)
 }
 
+func TriggerCmdMsgSyncInReinstall(ctx context.Context, msg sdk_struct.CmdMsgSyncInReinstall, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
+		return errs.Wrap(ErrChanNil)
+	}
+
+	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg, Ctx: ctx}
+	return sendCmd(conversationCh, c2v, 100)
+}
+
 func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
 	err := sendCmd(conversationCh, c2v, 100)

@@ -215,7 +215,10 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 				needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
 			}
 		}
-		m.reinstalled = false
+		defer func() {
+			m.reinstalled = false
+		}()
+
 	} else {
 		for conversationID, maxSeq := range maxSeqToSync {
 			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
@@ -296,8 +299,12 @@ func IsNotification(conversationID string) bool {
 func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
 	if len(seqMap) > 0 {
 		log.ZDebug(ctx, "current sync seqMap", "seqMap", seqMap)
-		tempSeqMap := make(map[string][2]int64, 50)
-		msgNum := 0
+		var (
+			tempSeqMap = make(map[string][2]int64, 50)
+			msgNum     = 0
+			offset     = 0
+			total      = len(seqMap)
+		)
 		for k, v := range seqMap {
 			oneConversationSyncNum := v[1] - v[0] + 1
 			if (oneConversationSyncNum/SplitPullMsgNum) > 1 && IsNotification(k) {
@@ -331,6 +338,7 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 				continue
 			}
 			tempSeqMap[k] = v
+			offset++
 			if oneConversationSyncNum > 0 {
 				msgNum += int(oneConversationSyncNum)
 			}
@@ -340,8 +348,12 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 					log.ZError(ctx, "syncMsgFromSvr err", err, "tempSeqMap", tempSeqMap)
 					return err
 				}
-				_ = m.triggerConversation(ctx, resp.Msgs)
-				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
+				if m.reinstalled {
+					_ = m.triggerReinstallConversation(ctx, resp.Msgs, offset, total)
+				} else {
+					_ = m.triggerConversation(ctx, resp.Msgs)
+					_ = m.triggerNotification(ctx, resp.NotificationMsgs)
+				}
 				for conversationID, seqs := range tempSeqMap {
 					m.syncedMaxSeqs[conversationID] = seqs[1]
 				}
@@ -423,6 +435,25 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
 	if len(msgs) > 0 {
 		err := common.TriggerCmdNewMsgCome(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
+		if err != nil {
+			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
+		}
+		log.ZDebug(ctx, "triggerConversation", "msgs", msgs)
+		return err
+	} else {
+		log.ZDebug(ctx, "triggerConversation is nil", "msgs", msgs)
+	}
+	return nil
+}
+
+// triggers a conversation with a new message.
+func (m *MsgSyncer) triggerReinstallConversation(ctx context.Context, msgs map[string]*sdkws.PullMsgs, offset, total int) (err error) {
+	if len(msgs) > 0 {
+		err = common.TriggerCmdMsgSyncInReinstall(ctx, sdk_struct.CmdMsgSyncInReinstall{
+			Msgs:   msgs,
+			Offset: offset,
+			Total:  total,
+		}, m.conversationCh)
 		if err != nil {
 			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
 		}
