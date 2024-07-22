@@ -309,6 +309,7 @@ func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, other
 	}
 	return append(self, others...)
 }
+
 func (c *Conversation) singleHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation) {
 	userInfo, err := c.db.GetLoginUser(ctx, c.loginUserID)
 	if err == nil {

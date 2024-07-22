@@ -74,14 +74,18 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.group.SyncAllJoinedGroupsAndMembers,
 			c.friend.IncrSyncFriends,
 		}
-		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait, 4, c.ConversationListener().OnSyncServerProgress) // progress is add 4 percent
+		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait)
+		c.AddProgress(4)                                               // add 4 percent in progress
+		c.ConversationListener().OnSyncServerProgress(c.getProgress()) // notify server current Progress
 
 		syncWaitFunctions := []func(c context.Context) error{
 			c.IncrSyncConversations,
 			c.SyncAllConversationHashReadSeqs,
 		}
-		runSyncFunctions(ctx, syncWaitFunctions, syncWait, 6, c.ConversationListener().OnSyncServerProgress) // progress is add 6 percent
+		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
 		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
+		c.AddProgress(6)                                               // add 6 percent in progress
+		c.ConversationListener().OnSyncServerProgress(c.getProgress()) // notify server current Progress
 
 		asyncNoWaitFunctions := []func(c context.Context) error{
 			c.user.SyncLoginUserInfoWithoutNotice,
@@ -92,13 +96,13 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.group.SyncAllSelfGroupApplicationWithoutNotice,
 			c.user.SyncAllCommandWithoutNotice,
 		}
-		runSyncFunctions(ctx, asyncNoWaitFunctions, 0, asyncNoWait, nil) // avoid current progress
+		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
 	case constant.AppDataSyncFinish:
 		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).Milliseconds())
-		c.ConversationListener().OnSyncServerFinish(true)
 		c.progress = 100
-		c.syncFinishCH <- struct{}{} // send to `doMsgSyncByReinstalled`
+		c.ConversationListener().OnSyncServerProgress(c.progress)
+		c.ConversationListener().OnSyncServerFinish(true)
 	case constant.MsgSyncBegin:
 		log.ZDebug(ctx, "MsgSyncBegin")
 		c.ConversationListener().OnSyncServerStart(false)
@@ -379,7 +383,7 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 		c.SyncAllConversationHashReadSeqs,
 	}
 
-	runSyncFunctions(ctx, syncFuncs, syncWait, 0, nil)
+	runSyncFunctions(ctx, syncFuncs, syncWait)
 
 	// Asynchronous sync functions
 	asyncFuncs := []func(c context.Context) error{
@@ -395,22 +399,21 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 		c.IncrSyncConversations,
 	}
 
-	runSyncFunctions(ctx, asyncFuncs, asyncNoWait, 0, nil)
+	runSyncFunctions(ctx, asyncFuncs, asyncNoWait)
 }
 
-func runSyncFunctions(ctx context.Context, funcs []func(c context.Context) error, mode int, currentProgress int, progressCallback func(progress int)) {
-	totalFuncs := len(funcs)
+func runSyncFunctions(ctx context.Context, funcs []func(c context.Context) error, mode int) {
 	var wg sync.WaitGroup
 
 	for _, fn := range funcs {
 		switch mode {
 		case asyncWait:
 			wg.Add(1)
-			go executeSyncFunction(ctx, fn, currentProgress, totalFuncs, progressCallback, &wg)
+			go executeSyncFunction(ctx, fn, &wg)
 		case asyncNoWait:
-			go executeSyncFunction(ctx, fn, currentProgress, totalFuncs, progressCallback, nil)
+			go executeSyncFunction(ctx, fn, nil)
 		case syncWait:
-			executeSyncFunction(ctx, fn, currentProgress, totalFuncs, progressCallback, nil)
+			executeSyncFunction(ctx, fn, nil)
 		}
 	}
 
@@ -419,7 +422,7 @@ func runSyncFunctions(ctx context.Context, funcs []func(c context.Context) error
 	}
 }
 
-func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, currentProgress int, total int, progressCallback func(progress int), wg *sync.WaitGroup) {
+func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, wg *sync.WaitGroup) {
 	if wg != nil {
 		defer wg.Done()
 	}
@@ -432,14 +435,6 @@ func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, 
 		log.ZWarn(ctx, fmt.Sprintf("%s sync error", funcName), err, "duration", duration.Seconds())
 	} else {
 		log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
-	}
-	if progressCallback != nil {
-		// progress := int(float64(currentProgress+1) / float64(total) * 100 / 10)
-		progress := int(currentProgress / 2)
-		if progress == 0 {
-			progress = 1
-		}
-		progressCallback(progress)
 	}
 }
 
