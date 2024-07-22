@@ -18,7 +18,7 @@ const (
 	CmdSyncData                   = "001"
 	CmdSyncFlag                   = "002"
 	CmdNotification               = "003"
-	CmdDeleteConversation         = "004"
+	CmdMsgSyncInReinstall         = "004"
 	CmdNewMsgCome                 = "005"
 	CmdSuperGroupMsgCome          = "006"
 	CmdUpdateConversation         = "007"
