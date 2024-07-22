@@ -498,41 +498,22 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 					LatestMsgSendTime: msg.SendTime,
 					ConversationID:    conversationID,
 				}
-				switch v.SessionType {
-				case constant.SingleChatType:
-					lc.UserID = v.RecvID
-				case constant.GroupChatType, constant.SuperGroupChatType:
-					lc.GroupID = v.GroupID
-				}
+
+				conversationList = append(conversationList, &lc)
+
 				selfInsertMessage = append(selfInsertMessage, c.msgStructToLocalChatLog(msg))
 			} else { //Sent by others
 				if _, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil { //Deduplication operation
+					othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
+
 					lc := model_struct.LocalConversation{
 						ConversationType:  v.SessionType,
 						LatestMsg:         utils.StructToJsonString(msg),
 						LatestMsgSendTime: msg.SendTime,
 						ConversationID:    conversationID,
 					}
-					switch v.SessionType {
-					case constant.SingleChatType:
-						lc.UserID = v.SendID
-						lc.ShowName = msg.SenderNickname
-						lc.FaceURL = msg.SenderFaceURL
-					case constant.GroupChatType, constant.SuperGroupChatType:
-						lc.GroupID = v.GroupID
-					case constant.NotificationChatType:
-						lc.UserID = v.SendID
-					}
-					othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
+					conversationList = append(conversationList, &lc)
 				}
-
-				lc := model_struct.LocalConversation{
-					ConversationType:  v.SessionType,
-					LatestMsg:         utils.StructToJsonString(msg),
-					LatestMsgSendTime: msg.SendTime,
-					ConversationID:    conversationID,
-				}
-				conversationList = append(conversationList, &lc)
 			}
 		}
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
@@ -542,7 +523,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	_ = c.messageController.BatchUpdateMessageList(ctx, insertMsg)
 
 	// conversation storage
-	if err := c.db.BatchInsertConversationList(ctx, conversationList); err != nil {
+	if err := c.db.BatchUpdateConversationList(ctx, conversationList); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
