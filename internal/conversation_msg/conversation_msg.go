@@ -460,6 +460,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
 			conversationID, "message length", msgLen)
 		var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
+		var localConversation *model_struct.LocalConversation
 		for _, v := range msgs.Msgs {
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			msg := &sdk_struct.MsgStruct{}
@@ -498,24 +499,24 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 					LatestMsgSendTime: msg.SendTime,
 					ConversationID:    conversationID,
 				}
-
-				conversationList = append(conversationList, &lc)
+				localConversation = &lc
 
 				selfInsertMessage = append(selfInsertMessage, c.msgStructToLocalChatLog(msg))
 			} else { //Sent by others
-				if _, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil { //Deduplication operation
-					othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
+				othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
 
-					lc := model_struct.LocalConversation{
-						ConversationType:  v.SessionType,
-						LatestMsg:         utils.StructToJsonString(msg),
-						LatestMsgSendTime: msg.SendTime,
-						ConversationID:    conversationID,
-					}
-					conversationList = append(conversationList, &lc)
+				lc := model_struct.LocalConversation{
+					ConversationType:  v.SessionType,
+					LatestMsg:         utils.StructToJsonString(msg),
+					LatestMsgSendTime: msg.SendTime,
+					ConversationID:    conversationID,
 				}
+				localConversation = &lc
+
 			}
 		}
+		conversationList = append(conversationList, localConversation)
+
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
 	}
 
