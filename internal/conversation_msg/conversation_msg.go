@@ -513,7 +513,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	}
 
 	// message storage
-	_ = c.messageController.BatchUpdateMessageList(ctx, insertMsg)
+	_ = c.messageController.BatchInsertMessageList(ctx, insertMsg)
 
 	// conversation storage
 	if err := c.db.BatchUpdateConversationList(ctx, conversationList); err != nil {
