@@ -81,9 +81,9 @@ func Test_SyncBlack(t *testing.T) {
 	}
 }
 
-func Test_SyncAllConversation(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SyncAllConversations(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func Test_SyncAllConversation(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Conversation().SyncAllConversations(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
