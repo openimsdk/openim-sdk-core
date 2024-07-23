@@ -44,13 +44,14 @@ type BasicInfo struct {
 // User is a struct that represents a user in the system.
 type User struct {
 	db_interface.DataBase
-	loginUserID       string
-	listener          func() open_im_sdk_callback.OnUserListener
-	userSyncer        *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
-	commandSyncer     *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
-	conversationCh    chan common.Cmd2Value
-	UserBasicCache    *cache.Cache[string, *BasicInfo]
-	OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
+	loginUserID    string
+	listener       func() open_im_sdk_callback.OnUserListener
+	userSyncer     *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
+	commandSyncer  *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
+	conversationCh chan common.Cmd2Value
+	UserBasicCache *cache.Cache[string, *BasicInfo]
+
+	//OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
 
 // SetListener sets the user's listener.
@@ -58,12 +59,27 @@ func (u *User) SetListener(listener func() open_im_sdk_callback.OnUserListener) 
 	u.listener = listener
 }
 
+func (u *User) UserOnlineStatusChange(users map[string][]int32) {
+	for userID, onlinePlatformIDs := range users {
+		status := userPb.OnlineStatus{
+			UserID:      userID,
+			PlatformIDs: onlinePlatformIDs,
+		}
+		if len(status.PlatformIDs) == 0 {
+			status.Status = constant.Offline
+		} else {
+			status.Status = constant.Online
+		}
+		u.listener().OnUserStatusChanged(utils.StructToJsonString(&status))
+	}
+}
+
 // NewUser creates a new User object.
 func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
 	user.initSyncer()
 	user.UserBasicCache = cache.NewCache[string, *BasicInfo]()
-	user.OnlineStatusCache = cache.NewCache[string, *userPb.OnlineStatus]()
+	//user.OnlineStatusCache = cache.NewCache[string, *userPb.OnlineStatus]()
 	return user
 }
 
@@ -180,7 +196,7 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		case constant.UserInfoUpdatedNotification:
 			u.userInfoUpdatedNotification(ctx, msg)
 		case constant.UserStatusChangeNotification:
-			u.userStatusChangeNotification(ctx, msg)
+			//u.userStatusChangeNotification(ctx, msg)
 		case constant.UserCommandAddNotification:
 			u.userCommandAddNotification(ctx, msg)
 		case constant.UserCommandDeleteNotification:
@@ -210,19 +226,19 @@ func (u *User) userInfoUpdatedNotification(ctx context.Context, msg *sdkws.MsgDa
 }
 
 // userStatusChangeNotification get subscriber status change callback
-func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData) {
-	log.ZDebug(ctx, "userStatusChangeNotification", "msg", *msg)
-	tips := sdkws.UserStatusChangeTips{}
-	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-		log.ZError(ctx, "comm.UnmarshalTips failed", err, "msg", msg.Content)
-		return
-	}
-	if tips.FromUserID == u.loginUserID {
-		log.ZDebug(ctx, "self terminal login", "tips", tips)
-		return
-	}
-	u.SyncUserStatus(ctx, tips.FromUserID, tips.Status, tips.PlatformID)
-}
+//func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData) {
+//	log.ZDebug(ctx, "userStatusChangeNotification", "msg", *msg)
+//	tips := sdkws.UserStatusChangeTips{}
+//	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+//		log.ZError(ctx, "comm.UnmarshalTips failed", err, "msg", msg.Content)
+//		return
+//	}
+//	if tips.FromUserID == u.loginUserID {
+//		log.ZDebug(ctx, "self terminal login", "tips", tips)
+//		return
+//	}
+//	u.SyncUserStatus(ctx, tips.FromUserID, tips.Status, tips.PlatformID)
+//}
 
 // userCommandAddNotification handle notification when user add favorite
 func (u *User) userCommandAddNotification(ctx context.Context, msg *sdkws.MsgData) {

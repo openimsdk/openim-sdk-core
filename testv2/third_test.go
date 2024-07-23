@@ -1,12 +1,5 @@
 package testv2
 
-import (
-	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
-	"testing"
-	"time"
-)
-
 type SProgress struct{}
 
 func (s SProgress) OnProgress(current int64, size int64) {
