@@ -713,7 +713,7 @@ func (i *LocalChatLogs) GetConversationNormalMsgSeq(ctx context.Context, convers
 	}
 }
 
-func (i *LocalChatLogs) GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error) {
+func (i *LocalChatLogs) CheckConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	seq, err := exec.Exec(conversationID)
 	if err != nil {
 		return 0, err

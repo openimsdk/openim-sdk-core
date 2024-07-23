@@ -16,6 +16,7 @@ package interaction
 
 import (
 	"context"
+	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -33,6 +35,8 @@ const (
 	connectPullNums = 1
 	defaultPullNums = 10
 	SplitPullMsgNum = 100
+
+	pullMsgGoroutineLimit = 10
 )
 
 // The callback synchronization starts. The reconnection ends
@@ -42,6 +46,7 @@ type MsgSyncer struct {
 	PushMsgAndMaxSeqCh chan common.Cmd2Value // channel for receiving push messages and the maximum SEQ number
 	conversationCh     chan common.Cmd2Value // storage and session triggering
 	syncedMaxSeqs      map[string]int64      // map of the maximum synced SEQ numbers for all group IDs
+	syncedMaxSeqsLock  sync.RWMutex          // syncedMaxSeqs map lock
 	db                 db_interface.DataBase // data store
 	syncTimes          int                   // times of sync
 	ctx                context.Context       // context
@@ -81,6 +86,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	}
 
 	// TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
+
 	type SyncedSeq struct {
 		ConversationID string
 		MaxSyncedSeq   int64
@@ -105,7 +111,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		go func(i, start, end int) {
 			defer wg.Done()
 			for _, v := range conversationIDList[start:end] {
-				maxSyncedSeq, err := m.db.GetConversationNormalMsgSeqNoInit(ctx, v)
+				maxSyncedSeq, err := m.db.CheckConversationNormalMsgSeq(ctx, v)
 				resultMaps[i][v] = SyncedSeq{
 					ConversationID: v,
 					MaxSyncedSeq:   maxSyncedSeq,
@@ -121,7 +127,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	for _, resultMap := range resultMaps {
 		for k, v := range resultMap {
 			if v.Err != nil {
-				log.ZError(ctx, "get group normal seq failed", v.Err, "conversationID", k)
+				log.ZError(ctx, "get group normal seq failed", errs.Wrap(v.Err), "conversationID", k)
 				continue
 			}
 			m.syncedMaxSeqs[k] = v.MaxSyncedSeq
@@ -213,7 +219,10 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 				needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
 			}
 		}
-		m.reinstalled = false
+		defer func() {
+			m.reinstalled = false
+		}()
+		_ = m.syncAndTriggerReinstallMsgs(m.ctx, needSyncSeqMap, pullNums)
 	} else {
 		for conversationID, maxSeq := range maxSeqToSync {
 			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
@@ -224,8 +233,8 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 				needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
 			}
 		}
+		_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap, pullNums)
 	}
-	_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap, pullNums)
 }
 
 func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
@@ -294,8 +303,10 @@ func IsNotification(conversationID string) bool {
 func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
 	if len(seqMap) > 0 {
 		log.ZDebug(ctx, "current sync seqMap", "seqMap", seqMap)
-		tempSeqMap := make(map[string][2]int64, 50)
-		msgNum := 0
+		var (
+			tempSeqMap = make(map[string][2]int64, 50)
+			msgNum     = 0
+		)
 		for k, v := range seqMap {
 			oneConversationSyncNum := v[1] - v[0] + 1
 			if (oneConversationSyncNum/SplitPullMsgNum) > 1 && IsNotification(k) {
@@ -364,6 +375,69 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 	return nil
 }
 
+// Fragment synchronization message, seq refresh after successful trigger
+func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
+	if len(seqMap) > 0 {
+		log.ZDebug(ctx, "current sync seqMap", "seqMap", seqMap)
+		var (
+			tempSeqMap = make(map[string][2]int64, 50)
+			msgNum     = 0
+			total      = len(seqMap)
+			gr         *errgroup.Group
+		)
+		gr, ctx = errgroup.WithContext(ctx)
+		gr.SetLimit(pullMsgGoroutineLimit)
+		for k, v := range seqMap {
+			oneConversationSyncNum := min(v[1]-v[0]+1, syncMsgNum)
+			tempSeqMap[k] = v
+			if oneConversationSyncNum > 0 {
+				msgNum += int(oneConversationSyncNum)
+			}
+			if msgNum >= SplitPullMsgNum {
+				tpSeqMap := tempSeqMap
+				gr.Go(func() error {
+					resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
+					if err != nil {
+						log.ZError(ctx, "syncMsgFromSvr err", err, "tempSeqMap", tpSeqMap)
+						return err
+					}
+					_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
+					for conversationID, seqs := range tpSeqMap {
+						m.syncedMaxSeqsLock.Lock()
+						m.syncedMaxSeqs[conversationID] = seqs[1]
+						m.syncedMaxSeqsLock.Unlock()
+					}
+					return nil
+				})
+
+				tempSeqMap = make(map[string][2]int64, 50)
+				msgNum = 0
+			}
+		}
+		gr.Go(func() error {
+			resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
+			if err != nil {
+				log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
+				return err
+			}
+			_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
+			for conversationID, seqs := range seqMap {
+				m.syncedMaxSeqsLock.Lock()
+				m.syncedMaxSeqs[conversationID] = seqs[1]
+				m.syncedMaxSeqsLock.Unlock()
+			}
+			return nil
+		})
+		if err := gr.Wait(); err != nil {
+			return err
+		}
+
+	} else {
+		log.ZDebug(ctx, "noting conversation to sync", "syncMsgNum", syncMsgNum)
+	}
+	return nil
+}
+
 func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]int64) {
 	if len(seqsNeedSync) <= split {
 		splitSeqs = append(splitSeqs, seqsNeedSync)
@@ -421,6 +495,24 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
 	if len(msgs) > 0 {
 		err := common.TriggerCmdNewMsgCome(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
+		if err != nil {
+			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
+		}
+		log.ZDebug(ctx, "triggerConversation", "msgs", msgs)
+		return err
+	} else {
+		log.ZDebug(ctx, "triggerConversation is nil", "msgs", msgs)
+	}
+	return nil
+}
+
+// triggers a conversation with a new message.
+func (m *MsgSyncer) triggerReinstallConversation(ctx context.Context, msgs map[string]*sdkws.PullMsgs, total int) (err error) {
+	if len(msgs) > 0 {
+		err = common.TriggerCmdMsgSyncInReinstall(ctx, sdk_struct.CmdMsgSyncInReinstall{
+			Msgs:  msgs,
+			Total: total,
+		}, m.conversationCh)
 		if err != nil {
 			log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
 		}

@@ -324,6 +324,11 @@ type CmdNewMsgComeToConversation struct {
 	SyncFlag int
 }
 
+type CmdMsgSyncInReinstall struct {
+	Msgs  map[string]*sdkws.PullMsgs
+	Total int
+}
+
 type CmdPushMsgToMsgSync struct {
 	Msgs []*sdkws.PushMessages
 }

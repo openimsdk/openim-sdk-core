@@ -2,13 +2,13 @@ package third
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/third"
+	"github.com/openimsdk/tools/errs"
 	"io"
 	"math/rand"
 	"os"
@@ -17,7 +17,12 @@ import (
 	"time"
 )
 
-func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
+func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) error {
+	if c.logUploadLock.TryLock() {
+		defer c.logUploadLock.Unlock()
+	} else {
+		return errs.New("log file is uploading").Wrap()
+	}
 	logFilePath := c.LogFilePath
 	entrys, err := os.ReadDir(logFilePath)
 	if err != nil {
@@ -30,7 +35,7 @@ func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
 		}
 	}
 	if len(files) == 0 {
-		return errors.New("not found log file")
+		return errs.New("not found log file").Wrap()
 	}
 	zippath := filepath.Join(logFilePath, fmt.Sprintf("%d_%d.zip", time.Now().UnixMilli(), rand.Uint32()))
 	defer os.Remove(zippath)
@@ -48,6 +53,7 @@ func (c *Third) UploadLogs(ctx context.Context, progress Progress) error {
 		SystemType: c.systemType,
 		Version:    c.version,
 		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
+		Ex:         ex,
 	}
 	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, reqLog)
 	return err

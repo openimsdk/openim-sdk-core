@@ -129,7 +129,7 @@ func newUserCtx(userID, token string, imConfig sdk_struct.IMConfig) context.Cont
 func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ctx := newUserCtx(userID, token, imConfig)
-	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListner{}, nil, pushMsgAndMaxSeqCh, nil)
+	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListener{}, func(m map[string][]int32) {}, nil, pushMsgAndMaxSeqCh, nil)
 	core := &SendMsgUser{
 		pushMsgAndMaxSeqCh:      pushMsgAndMaxSeqCh,
 		longConnMgr:             longConnMgr,
@@ -152,6 +152,10 @@ func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig
 	go core.recvPushMsg(baseCtx)
 	go core.longConnMgr.Run(baseCtx)
 	return core
+}
+
+func (b *SendMsgUser) LongConnMgr() *interaction.LongConnMgr {
+	return b.longConnMgr
 }
 
 func (b *SendMsgUser) Close(ctx context.Context) {
@@ -319,14 +323,40 @@ func (b *SendMsgUser) GetRelativeServerTime() int64 {
 	return utils.GetCurrentTimestampByMill()
 }
 
-type ConnListner struct {
-}
+type ConnListener struct{}
 
-func (c *ConnListner) OnConnecting()     {}
-func (c *ConnListner) OnConnectSuccess() {}
-func (c *ConnListner) OnConnectFailed(errCode int32, errMsg string) {
+func (c *ConnListener) OnConnecting()     {}
+func (c *ConnListener) OnConnectSuccess() {}
+func (c *ConnListener) OnConnectFailed(errCode int32, errMsg string) {
 	// log.ZError(context.Background(), "connect failed", nil, "errCode", errCode, "errMsg", errMsg)
 }
-func (c *ConnListner) OnKickedOffline()                 {}
-func (c *ConnListner) OnUserTokenExpired()              {}
-func (c *ConnListner) OnUserTokenInvalid(errMsg string) {}
+func (c *ConnListener) OnKickedOffline()                 {}
+func (c *ConnListener) OnUserTokenExpired()              {}
+func (c *ConnListener) OnUserTokenInvalid(errMsg string) {}
+
+type UserListener struct{}
+
+func (u *UserListener) OnSelfInfoUpdated(userInfo string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserListener) OnUserStatusChanged(userOnlineStatus string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserListener) OnUserCommandAdd(userCommand string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserListener) OnUserCommandDelete(userCommand string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserListener) OnUserCommandUpdate(userCommand string) {
+	//TODO implement me
+	panic("implement me")
+}

@@ -55,26 +55,6 @@ func UpdateMsgSenderInfo(callback open_im_sdk_callback.Base, operationID string,
 	call(callback, operationID, UserForSDK.User().UpdateMsgSenderInfo, nickname, faceURL)
 }
 
-// SubscribeUsersStatus Presence status of subscribed users.
-func SubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.User().SubscribeUsersStatus, userIDs)
-}
-
-// UnsubscribeUsersStatus Unsubscribe a user's presence.
-func UnsubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.User().UnsubscribeUsersStatus, userIDs)
-}
-
-// GetSubscribeUsersStatus Get the online status of subscribers.
-func GetSubscribeUsersStatus(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.User().GetSubscribeUsersStatus)
-}
-
-// GetUserStatus Get the online status of users.
-func GetUserStatus(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.User().GetUserStatus, userIDs)
-}
-
 // AddUserCommand add to user's favorite
 func AddUserCommand(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string, value string) {
 	call(callback, operationID, UserForSDK.User().ProcessUserCommandAdd, Type, uuid, value)
