@@ -63,7 +63,23 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 			return c.conversationSyncer.Sync(ctx, server, local, nil, true)
 		},
 		FullSyncer: func(ctx context.Context) error {
-			return c.conversationSyncer.FullSync(ctx, c.loginUserID)
+			conversationIDList, err := c.db.GetAllConversationIDList(ctx)
+			if err != nil {
+				return err
+			}
+			if len(conversationIDList) == 0 {
+				return c.conversationSyncer.FullSync(ctx, c.loginUserID)
+			} else {
+				local, err := c.db.GetAllConversations(ctx)
+				if err != nil {
+					return err
+				}
+				server, err := c.getServerConversationList(ctx)
+				if err != nil {
+					return err
+				}
+				return c.conversationSyncer.Sync(ctx, server, local, nil, true)
+			}
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
 			resp, err := util.CallApi[pbConversation.GetFullOwnerConversationIDsResp](ctx, constant.GetFullConversationIDs, &pbConversation.GetFullOwnerConversationIDsReq{
