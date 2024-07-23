@@ -21,6 +21,7 @@ require (
 	github.com/openimsdk/tools v0.0.49-alpha.44
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	golang.org/x/image v0.15.0
+	golang.org/x/sync v0.6.0
 	gorm.io/gorm v1.25.10
 )
 
