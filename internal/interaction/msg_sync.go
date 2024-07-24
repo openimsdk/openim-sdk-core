@@ -389,7 +389,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 			total      = len(seqMap)
 			gr         *errgroup.Group
 		)
-		gr, ctx = errgroup.WithContext(ctx)
+		gr, _ = errgroup.WithContext(ctx)
 		gr.SetLimit(pullMsgGoroutineLimit)
 		for k, v := range seqMap {
 			oneConversationSyncNum := min(v[1]-v[0]+1, syncMsgNum)
