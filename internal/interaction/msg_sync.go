@@ -16,9 +16,11 @@ package interaction
 
 import (
 	"context"
-	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
+
+	"golang.org/x/sync/errgroup"
+	"gorm.io/gorm"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -207,7 +209,8 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 		}
 
 		err := m.db.BatchInsertNotificationSeq(ctx, notificationSeqs)
-		if err != nil {
+
+		if err != nil && errs.Unwrap(err) != gorm.ErrEmptySlice {
 			log.ZWarn(ctx, "BatchInsertNotificationSeq err", err)
 		}
 		for conversationID, maxSeq := range messagesSeqMap {

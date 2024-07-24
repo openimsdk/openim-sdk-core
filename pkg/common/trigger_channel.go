@@ -44,7 +44,7 @@ func TriggerCmdMsgSyncInReinstall(ctx context.Context, msg sdk_struct.CmdMsgSync
 		return errs.Wrap(ErrChanNil)
 	}
 
-	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg, Ctx: ctx}
+	c2v := Cmd2Value{Cmd: constant.CmdMsgSyncInReinstall, Value: msg, Ctx: ctx}
 	return sendCmd(conversationCh, c2v, 100)
 }
 
