@@ -517,11 +517,6 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 			})
 		} else {
 			log.ZWarn(ctx, "latestMsg is nil", errs.New("latestMsg is nil"), "conversationID", conversationID)
-			conversationList = append(conversationList, &model_struct.LocalConversation{
-				LatestMsg:         utils.StructToJsonString(latestMsg),
-				LatestMsgSendTime: 0,
-				ConversationID:    conversationID,
-			})
 		}
 
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
