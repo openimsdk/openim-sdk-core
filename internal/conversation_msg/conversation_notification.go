@@ -84,7 +84,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.SyncAllConversationHashReadSeqs,
 		}
 		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
-		log.ZDebug(ctx, "core data sync over", "cost time", time.Since(c.startTime).Seconds())
+		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
 		c.addProgress(initSyncBaseProgress)
 		c.ConversationListener().OnSyncServerProgress(c.getProgress()) // notify server current Progress
 
