@@ -40,6 +40,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -457,10 +458,15 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
-			conversationID, "message length", msgLen)
+			conversationID, "message length", len(msgs.Msgs))
 		var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
 		var latestMsg *sdk_struct.MsgStruct
+		if len(msgs.Msgs) == 0 {
+			log.ZWarn(ctx, "msg.Msgs is empty", errs.New("msg.Msgs is empty"), "conversationID", conversationID)
+			continue
+		}
 		for _, v := range msgs.Msgs {
+
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			msg := &sdk_struct.MsgStruct{}
 			// TODO need replace when after.
@@ -502,11 +508,16 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 				latestMsg = msg
 			}
 		}
-		conversationList = append(conversationList, &model_struct.LocalConversation{
-			LatestMsg:         utils.StructToJsonString(latestMsg),
-			LatestMsgSendTime: latestMsg.SendTime,
-			ConversationID:    conversationID,
-		})
+
+		if latestMsg != nil {
+			conversationList = append(conversationList, &model_struct.LocalConversation{
+				LatestMsg:         utils.StructToJsonString(latestMsg),
+				LatestMsgSendTime: latestMsg.SendTime,
+				ConversationID:    conversationID,
+			})
+		} else {
+			log.ZWarn(ctx, "latestMsg is nil", errs.New("latestMsg is nil"), "conversationID", conversationID)
+		}
 
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
 	}
