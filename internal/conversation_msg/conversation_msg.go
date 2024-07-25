@@ -54,8 +54,7 @@ import (
 )
 
 const (
-	conversationSyncLimit   int64 = math.MaxInt64
-	MsgSyncProgressPercents       = 100 - InitSyncProgress
+	conversationSyncLimit int64 = math.MaxInt64
 )
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
@@ -535,8 +534,8 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*MsgSyncProgressPercents)/total+InitSyncProgress)
-	c.ConversationListener().OnSyncServerProgress((c.msgOffset*MsgSyncProgressPercents)/total + InitSyncProgress)
+	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
+	c.ConversationListener().OnSyncServerProgress((c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
 }
 
 func (c *Conversation) addInitProgress(progress int) {

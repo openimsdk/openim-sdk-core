@@ -40,6 +40,7 @@ const (
 	asyncWait
 )
 
+// InitSyncProgress is initialize Sync when reinstall.
 const InitSyncProgress = 10
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
