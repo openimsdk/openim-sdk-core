@@ -384,6 +384,8 @@ const (
 	KeywordMatchAnd = 1 // Keyword match mode: match all keywords
 )
 
+const BigVersion = "v3"
+
 const (
 	MsgSyncModelDefault  = 0   //SyncFlag
 	MsgSyncModelLogin    = 1   //SyncFlag
