@@ -535,7 +535,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total)
+	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*MsgSyncProgressPercents)/total+InitSyncProgress)
 	c.ConversationListener().OnSyncServerProgress((c.msgOffset*MsgSyncProgressPercents)/total + InitSyncProgress)
 }
 
