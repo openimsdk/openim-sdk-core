@@ -73,6 +73,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		log.ZDebug(ctx, "AppDataSyncStart")
 		c.startTime = time.Now()
 		c.ConversationListener().OnSyncServerStart(true)
+		c.ConversationListener().OnSyncServerProgress(1)
 		asyncWaitFunctions := []func(c context.Context) error{
 			c.group.SyncAllJoinedGroupsAndMembers,
 			c.friend.IncrSyncFriends,
