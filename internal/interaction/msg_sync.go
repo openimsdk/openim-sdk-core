@@ -399,6 +399,10 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 			}
 			if msgNum >= SplitPullMsgNum {
 				tpSeqMap := make(map[string][2]int64, len(tempSeqMap))
+				for k, v := range tempSeqMap {
+					tpSeqMap[k] = v
+				}
+
 				gr.Go(func() error {
 					resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
 					if err != nil {
