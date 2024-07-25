@@ -81,6 +81,7 @@ type Conversation struct {
 	full                 *full.Full
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
+	msgOffset            int
 	progress             int
 
 	startTime time.Time
@@ -119,6 +120,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
+		msgOffset:            0,
 		progress:             0,
 	}
 	n.typing = newTyping(n)
@@ -448,12 +450,13 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	allMsg := c2v.Value.(sdk_struct.CmdMsgSyncInReinstall).Msgs
 	ctx := c2v.Ctx
 	msgLen := len(allMsg)
+	c.msgOffset += msgLen
 	total := c2v.Value.(sdk_struct.CmdMsgSyncInReinstall).Total
 
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	conversationList := make([]*model_struct.LocalConversation, 0)
 
-	log.ZDebug(ctx, "message come here conversation ch", "conversation length", msgLen)
+	log.ZDebug(ctx, "message come here conversation ch in reinstalled", "conversation length", msgLen)
 	b := time.Now()
 
 	for conversationID, msgs := range allMsg {
@@ -497,7 +500,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 			log.ZDebug(ctx, "decode message", "msg", msg)
 			if v.SendID == c.loginUserID {
 				// Messages sent by myself  //if  sent through  this terminal
-				log.ZInfo(ctx, "sync message", "msg", msg)
+				log.ZInfo(ctx, "sync message in reinstalled", "msg", msg)
 
 				latestMsg = msg
 
@@ -531,19 +534,15 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	c.addProgress((msgLen * 90) / total)
-	c.ConversationListener().OnSyncServerProgress(c.getProgress())
+	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
+	c.ConversationListener().OnSyncServerProgress((c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
 }
 
-func (c *Conversation) addProgress(progress int) {
+func (c *Conversation) addInitProgress(progress int) {
 	c.progress += progress
 	if c.progress > 100 {
 		c.progress = 100
 	}
-}
-
-func (c *Conversation) getProgress() int {
-	return c.progress
 }
 
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
