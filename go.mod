@@ -6,7 +6,6 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.4.0
-	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	google.golang.org/protobuf v1.33.0 // indirect
 	gorm.io/driver/sqlite v1.5.5
@@ -18,7 +17,7 @@ require golang.org/x/net v0.22.0
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/openimsdk/protocol v0.0.69-alpha.37
-	github.com/openimsdk/tools v0.0.49-alpha.44
+	github.com/openimsdk/tools v0.0.49-alpha.56
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	golang.org/x/image v0.15.0
 	golang.org/x/sync v0.6.0
