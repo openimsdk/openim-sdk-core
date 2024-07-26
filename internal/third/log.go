@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
