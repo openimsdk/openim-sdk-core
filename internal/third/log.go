@@ -3,18 +3,19 @@ package third
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/protocol/third"
-	"github.com/openimsdk/tools/errs"
 	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
+	"github.com/openimsdk/protocol/third"
+	"github.com/openimsdk/tools/errs"
 )
 
 func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) error {
@@ -51,7 +52,7 @@ func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) er
 	reqLog := &third.UploadLogsReq{
 		Platform:   c.platformID,
 		SystemType: c.systemType,
-		Version:    c.version,
+		Version:    version.Version,
 		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
 		Ex:         ex,
 	}

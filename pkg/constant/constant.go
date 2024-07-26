@@ -385,15 +385,6 @@ const (
 )
 
 const BigVersion = "v3"
-const UpdateVersion = ".0.0"
-const SdkVersion = "openim-sdk-core-"
-const LogFileName = "sdk"
-
-func GetSdkVersion() string {
-	return SdkVersion + BigVersion + UpdateVersion
-}
-
-var HeartbeatInterval = 5
 
 const (
 	MsgSyncModelDefault  = 0   //SyncFlag
