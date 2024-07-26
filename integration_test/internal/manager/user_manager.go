@@ -44,10 +44,13 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 	for _, userID := range userIDs {
 		users = append(users, &sdkws.UserInfo{UserID: userID, Nickname: userID})
 	}
-	return t.PostWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
+	if err := t.PostWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
 		Secret: t.GetSecret(),
 		Users:  users,
-	}, nil)
+	}, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {

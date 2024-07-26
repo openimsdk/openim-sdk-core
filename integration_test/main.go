@@ -14,8 +14,10 @@ func Init(ctx context.Context) error {
 	initialization.InitFlag()
 	flag.Parse()
 	initialization.SetFlagLimit()
-	if err := initialization.InitSDK(ctx); err != nil {
-		return err
+	if !vars.ShouldRegister {
+		if err := initialization.InitSDK(ctx); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -39,6 +41,9 @@ func DoFlagFunc(ctx context.Context) (err error) {
 
 	if vars.ShouldRegister {
 		if err = userMng.RegisterUsers(ctx, vars.UserIDs...); err != nil {
+			return err
+		}
+		if err = initialization.InitSDK(ctx); err != nil {
 			return err
 		}
 	}
