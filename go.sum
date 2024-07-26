@@ -27,8 +27,8 @@ github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o
 github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/openimsdk/protocol v0.0.69-alpha.37 h1:2gtDkippSBfbXIP++BEQsz4e+qjk86ddnh4b7p40/HY=
 github.com/openimsdk/protocol v0.0.69-alpha.37/go.mod h1:OZQA9FR55lseYoN2Ql1XAHYKHJGu7OMNkUbuekrKCM8=
-github.com/openimsdk/tools v0.0.49-alpha.44 h1:anefO8hvQwJrYL+V4ifSge/CveZHIpjPeik6BgETuG8=
-github.com/openimsdk/tools v0.0.49-alpha.44/go.mod h1:zc0maZ2ohXlHd0ylY5JnCE8uqq/hslhcfcKa6iO5PCU=
+github.com/openimsdk/tools v0.0.49-alpha.56 h1:dPUgJEFBV7roleqDmOEezoDooFF222ZQG0qf7mYrFkw=
+github.com/openimsdk/tools v0.0.49-alpha.56/go.mod h1:oiSQU5Z6fzjxKFjbqDHImD8EmCIwClU1Rkur1sK12Po=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
 github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

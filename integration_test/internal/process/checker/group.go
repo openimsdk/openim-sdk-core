@@ -4,13 +4,14 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"time"
 )
 
-func CheckGroupNum(ctx context.Context) (map[string]*CountChecker, error) {
+func CheckGroupNum(ctx context.Context) error {
 	tm := time.Now()
 	log.ZDebug(ctx, "checkGroupNum begin")
 	defer func() {
@@ -42,10 +43,18 @@ func CheckGroupNum(ctx context.Context) (map[string]*CountChecker, error) {
 		})
 	}
 	if err := gr.Wait(); err != nil {
-		return nil, err
+		return err
 	}
 
-	return checkers, nil
+	if len(checkers) != 0 {
+		for k, ck := range checkers {
+			log.ZInfo(ctx, "group num un correct", "userID", k, "group num", ck.TotalCount, "correct num", ck.CorrectCount)
+		}
+		err := errs.New("check group number un correct!").Wrap()
+		InsertToErrChan(ctx, err)
+	}
+
+	return nil
 }
 
 func calCorrectGroupNum() int {

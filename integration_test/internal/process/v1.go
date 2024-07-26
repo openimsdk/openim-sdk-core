@@ -3,8 +3,7 @@ package process
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/manager"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/process/checker"
-	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 	"time"
 )
@@ -31,17 +30,6 @@ func ProV1(ctx context.Context) error {
 		return err
 	}
 
-	checkerMap, err := checker.CheckGroupNum(ctx)
-	if err != nil {
-		return err
-	}
-	if len(checkerMap) != 0 {
-		for k, ck := range checkerMap {
-			log.ZInfo(ctx, "group num un correct", "userID", k, "group num", ck.TotalCount, "correct num", ck.CorrectCount)
-		}
-		err = errs.New("check group number un correct!").Wrap()
-		return err
-	}
 	return nil
 }
 
@@ -49,12 +37,12 @@ func RegisterAndLogin(ctx context.Context, userMng *manager.TestUserManager) err
 	t := time.Now()
 	log.ZDebug(ctx, "registerAndLogin begin")
 
-	userIDs = userMng.GenUserIDs()
+	userIDs = vars.UserIDs
 	err := userMng.RegisterUsers(ctx, userIDs...)
 	if err != nil {
 		return err
 	}
-	err = userMng.InitSDKAndLogin(ctx, userIDs...)
+	err = userMng.InitSDK(ctx, userIDs...)
 	if err != nil {
 		return err
 	}
@@ -67,8 +55,8 @@ func Login(ctx context.Context, userMng *manager.TestUserManager) error {
 	t := time.Now()
 	log.ZDebug(ctx, "login begin")
 
-	userIDs = userMng.GenUserIDs()
-	err := userMng.InitSDKAndLogin(ctx, userIDs...)
+	userIDs = vars.UserIDs
+	err := userMng.Login(ctx, userIDs...)
 	if err != nil {
 		return err
 	}

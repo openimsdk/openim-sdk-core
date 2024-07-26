@@ -212,6 +212,11 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
+func (u *LoginMgr) SetToken(userID, token string) {
+	u.info.UserID = userID
+	u.info.Token = token
+}
+
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	u.conversationListener = conversationListener
 }
