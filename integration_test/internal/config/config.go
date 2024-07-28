@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	TestIP      = "125.124.195.201"
+	TestIP      = "127.0.0.1"
 	APIAddr     = "http://" + TestIP + ":10002"
 	WsAddr      = "ws://" + TestIP + ":10001"
 	Secret      = "openIM123"
