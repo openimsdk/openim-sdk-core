@@ -70,7 +70,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 			if err != nil {
 				return err
 			}
-			mgr, err := sdk_user_simulator.InitSDK(userID, token, t.IMConfig)
+			mgr, err := sdk_user_simulator.InitSDK(ctx, userID, token, t.IMConfig)
 			if err != nil {
 				return err
 			}
@@ -105,7 +105,7 @@ func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
 		gr.Go(func() error {
 			token, err := t.GetToken(userID, config.PlatformID)
 			userNum := utils.MustGetUserNum(userID)
-			err = sdk.TestSDKs[userNum].SDK.Login(ctx, userID, token)
+			err = sdk.TestSDKs[userNum].SDK.LoginWithOutInit(ctx, userID, token)
 			if err != nil {
 				return err
 			}

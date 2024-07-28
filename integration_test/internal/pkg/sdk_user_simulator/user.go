@@ -1,9 +1,11 @@
 package sdk_user_simulator
 
 import (
+	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
 	"sync"
 )
 
@@ -17,13 +19,20 @@ func GetRelativeServerTime() int64 {
 	return utils.GetCurrentTimestampByMill() + timeOffset
 }
 
-func InitSDK(userID, token string, cf sdk_struct.IMConfig) (*open_im_sdk.LoginMgr, error) {
+func InitSDK(ctx context.Context, userID, token string, cf sdk_struct.IMConfig) (*open_im_sdk.LoginMgr, error) {
 	userForSDK := open_im_sdk.NewLoginMgr()
 	var testConnListener testConnListener
-	userForSDK.InitSDK(cf, &testConnListener)
+	isInit := userForSDK.InitSDK(cf, &testConnListener)
+	if !isInit {
+		return nil, errs.New("sdk init failed").Wrap()
+	}
 
 	SetListener(userForSDK, userID)
-	userForSDK.SetToken(userID, token)
+
+	if err := userForSDK.InitMgr(ctx, userID, token); err != nil {
+		return nil, err
+	}
+
 	return userForSDK, nil
 }
 

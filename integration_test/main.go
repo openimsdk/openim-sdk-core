@@ -56,14 +56,14 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		}
 	}
 
+	if err = userMng.LoginByRate(ctx, vars.LoginRate); err != nil {
+		return err
+	}
+
 	if vars.ShouldImportFriends {
 		if err = relationMng.ImportFriends(ctx); err != nil {
 			return err
 		}
-	}
-
-	if err = userMng.LoginByRate(ctx, vars.LoginRate); err != nil {
-		return err
 	}
 
 	if vars.ShouldCreateGroup {
