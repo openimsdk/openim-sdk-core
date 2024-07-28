@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/manager"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/initialization"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/process/checker"
@@ -15,6 +16,9 @@ func Init(ctx context.Context) error {
 	flag.Parse()
 	initialization.SetFlagLimit()
 	initialization.GenUserIDs()
+	if err := initialization.InitLog(config.GetConf()); err != nil {
+		return err
+	}
 	if !vars.ShouldRegister {
 		if err := initialization.InitSDK(ctx); err != nil {
 			return err

@@ -1,12 +1,9 @@
 package sdk_user_simulator
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/version"
-	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
 
 var (
@@ -22,9 +19,7 @@ func InitSDK(userID, token string, cf sdk_struct.IMConfig) (*open_im_sdk.LoginMg
 	userForSDK := open_im_sdk.NewLoginMgr()
 	var testConnListener testConnListener
 	userForSDK.InitSDK(cf, &testConnListener)
-	if err := log.InitFromConfig(userID+"_open-im-sdk-core", "", int(cf.LogLevel), cf.IsLogStandardOutput, false, cf.DataDir, 0, 24, version.Version, true); err != nil {
-		return nil, err
-	}
+
 	SetListener(userForSDK, userID)
 	userForSDK.SetToken(userID, token)
 	return userForSDK, nil

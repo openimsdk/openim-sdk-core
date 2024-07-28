@@ -13,7 +13,7 @@ const (
 	PlatformID  = constant.WindowsPlatformID
 	LogLevel    = 6
 	DataDir     = "./logs/"
-	LogFilePath = "./"
+	LogFilePath = "./logs/"
 )
 
 func GetConf() sdk_struct.IMConfig {
