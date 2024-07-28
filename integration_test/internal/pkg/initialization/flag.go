@@ -20,7 +20,7 @@ func InitFlag() {
 
 	flag.BoolVar(&vars.ShouldCheckGroupNum, "ckgn", false, "determine whether check group num")
 
-	flag.Float64Var(&vars.LoginRate, "lgr", 100, "number of login user rate")
+	flag.Float64Var(&vars.LoginRate, "lgr", 1, "number of login user rate")
 }
 
 // SetFlagLimit prevent parameters from exceeding the limit
