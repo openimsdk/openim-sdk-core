@@ -18,6 +18,7 @@ func Init(ctx context.Context) error {
 	initialization.SetFlagLimit()
 	initialization.GenUserIDs()
 	sdk.TestSDKs = make([]*sdk.TestSDK, vars.UserNum)
+	vars.Contexts = make([]context.Context, vars.UserNum)
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
 	}
