@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
@@ -33,7 +34,7 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	for i, userID := range vars.SuperUserIDs {
 		i := i
 		userID := userID

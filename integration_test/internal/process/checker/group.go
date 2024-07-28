@@ -2,6 +2,7 @@ package checker
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/errs"
@@ -24,7 +25,7 @@ func CheckGroupNum(ctx context.Context) error {
 		mapLock  = sync.RWMutex{}
 	)
 
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	correctGroupNum := calCorrectGroupNum()
 	for _, core := range sdk.TestSDKs {
 		core := core

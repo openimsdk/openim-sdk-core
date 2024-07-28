@@ -62,7 +62,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
@@ -100,7 +100,7 @@ func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {

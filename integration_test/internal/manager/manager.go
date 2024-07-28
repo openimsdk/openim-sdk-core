@@ -33,6 +33,8 @@ func (m *MetaManager) ApiPost(ctx context.Context, route string, req, resp any) 
 	return util.ApiPost(ctx, route, req, resp)
 }
 
+// PostWithCtx Should only be used for scenarios such as registration and login that do not require a token.
+// For scenarios that require a token, please obtain the context from vars.Contexts for the request.
 func (m *MetaManager) PostWithCtx(route string, req, resp any) error {
 	return m.ApiPost(m.BuildCtx(nil), route, req, resp)
 }
@@ -60,5 +62,6 @@ func (m *MetaManager) GetToken(userID string, platformID int32) (string, error) 
 	if err != nil {
 		return "", err
 	}
+	m.token = resp.Token
 	return resp.Token, nil
 }

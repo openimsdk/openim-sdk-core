@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
@@ -29,7 +30,7 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	m.createLargeGroups(ctx, gr)
 	m.createCommonGroups(ctx, gr)
 	return gr.Wait()

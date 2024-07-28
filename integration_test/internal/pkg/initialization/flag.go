@@ -2,6 +2,7 @@ package initialization
 
 import (
 	"flag"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 )
 
@@ -25,7 +26,7 @@ func InitFlag() {
 
 // SetFlagLimit prevent parameters from exceeding the limit
 func SetFlagLimit() {
-	vars.UserNum = min(vars.UserNum, vars.MaxUserNum)
+	vars.UserNum = min(vars.UserNum, config.MaxUserNum)
 	vars.CommonGroupNum = min(vars.CommonGroupMemberNum, vars.UserNum)
 
 	vars.LoginRate = min(vars.LoginRate, 1)
