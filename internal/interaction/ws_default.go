@@ -49,10 +49,8 @@ func (d *Default) SetPingHandler(handler PingPongHandler) {
 }
 
 func (d *Default) SetPongHandler(handler PingPongHandler) {
-	if !d.isSetConf {
-		d.conn.SetPongHandler(handler)
-		d.isSetConf = true
-	}
+	d.conn.SetPongHandler(handler)
+	d.isSetConf = true
 }
 
 func (d *Default) LocalAddr() string {
