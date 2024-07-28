@@ -30,6 +30,10 @@ import (
 	"github.com/openimsdk/tools/mcontext"
 )
 
+func GetSdkVersion() string {
+	return version.Version
+}
+
 const (
 	rotateCount  uint = 0
 	rotationTime uint = 24
