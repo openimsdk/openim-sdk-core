@@ -7,7 +7,7 @@ import (
 )
 
 func GenUserIDs() {
-	vars.UserIDs = manager.NewUserManager(manager.NewMetaManager()).GenAllUserIDs()
+	manager.NewUserManager(manager.NewMetaManager()).GenAllUserIDs()
 }
 
 func InitSDK(ctx context.Context) error {
