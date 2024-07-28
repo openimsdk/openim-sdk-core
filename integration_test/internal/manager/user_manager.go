@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/sdk_user_simulator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
@@ -65,7 +66,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
-			token, err := t.GetToken(userID, vars.PlatformID)
+			token, err := t.GetToken(userID, config.PlatformID)
 			if err != nil {
 				return err
 			}
@@ -102,7 +103,7 @@ func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
-			token, err := t.GetToken(userID, vars.PlatformID)
+			token, err := t.GetToken(userID, config.PlatformID)
 			userNum := utils.MustGetUserNum(userID)
 			err = sdk.TestSDKs[userNum].SDK.Login(ctx, userID, token)
 			if err != nil {

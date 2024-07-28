@@ -2,7 +2,7 @@ package manager
 
 import (
 	"context"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -22,10 +22,10 @@ type MetaManager struct {
 }
 
 func NewMetaManager() *MetaManager {
-	conf := vars.GetConf()
+	conf := config.GetConf()
 	return &MetaManager{
 		IMConfig: conf,
-		secret:   vars.Secret,
+		secret:   config.Secret,
 	}
 }
 

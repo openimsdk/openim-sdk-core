@@ -1,4 +1,4 @@
-package vars
+package config
 
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
