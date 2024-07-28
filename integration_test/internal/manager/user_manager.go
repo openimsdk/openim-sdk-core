@@ -7,9 +7,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
@@ -73,13 +71,12 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 			if err != nil {
 				return err
 			}
-			mgr, err := sdk_user_simulator.InitSDK(ctx, userID, token, t.IMConfig)
+			ctx, mgr, err := sdk_user_simulator.InitSDK(ctx, userID, token, t.IMConfig)
 			if err != nil {
 				return err
 			}
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
-			uctx := ccontext.WithOperationID(sdk.TestSDKs[userNum].SDK.Context(), sdkUtils.OperationIDGenerator())
-			vars.Contexts[userNum] = uctx // init ctx
+			vars.Contexts[userNum] = ctx                                 // init ctx
 			return nil
 		})
 	}
