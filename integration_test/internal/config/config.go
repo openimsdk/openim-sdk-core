@@ -12,8 +12,8 @@ const (
 	Secret      = "openIM123"
 	PlatformID  = constant.WindowsPlatformID
 	LogLevel    = uint32(5)
-	DataDir     = "../"
-	LogFilePath = "../"
+	DataDir     = "./"
+	LogFilePath = "./"
 )
 
 func GetConf() sdk_struct.IMConfig {
