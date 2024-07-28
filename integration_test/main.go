@@ -7,6 +7,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/manager"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/initialization"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/process/checker"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 )
@@ -16,6 +17,7 @@ func Init(ctx context.Context) error {
 	flag.Parse()
 	initialization.SetFlagLimit()
 	initialization.GenUserIDs()
+	sdk.TestSDKs = make([]*sdk.TestSDK, vars.UserNum)
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
 	}
