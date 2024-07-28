@@ -35,9 +35,10 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		}
 	}()
 	var (
-		m        = manager.NewMetaManager()
-		userMng  = manager.NewUserManager(m)
-		groupMng = manager.NewGroupManager(m)
+		m           = manager.NewMetaManager()
+		userMng     = manager.NewUserManager(m)
+		groupMng    = manager.NewGroupManager(m)
+		relationMng = manager.NewRelationManager(m)
 	)
 
 	if vars.ShouldRegister {
@@ -45,6 +46,12 @@ func DoFlagFunc(ctx context.Context) (err error) {
 			return err
 		}
 		if err = initialization.InitSDK(ctx); err != nil {
+			return err
+		}
+	}
+
+	if vars.ShouldImportFriends {
+		if err = relationMng.ImportFriends(ctx); err != nil {
 			return err
 		}
 	}
