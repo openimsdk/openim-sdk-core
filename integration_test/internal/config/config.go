@@ -12,7 +12,7 @@ const (
 	Secret      = "openIM123"
 	PlatformID  = constant.WindowsPlatformID
 	LogLevel    = 6
-	DataDir     = "./logs/"
+	DataDir     = "./data/"
 	LogFilePath = "./logs/"
 )
 

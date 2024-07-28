@@ -76,6 +76,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 			}
 			userNum := utils.MustGetUserNum(userID)
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
+			vars.Contexts[userNum] = sdk.TestSDKs[userNum].SDK.Context() // init ctx
 			return nil
 		})
 	}
@@ -105,7 +106,7 @@ func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
 		gr.Go(func() error {
 			token, err := t.GetToken(userID, config.PlatformID)
 			userNum := utils.MustGetUserNum(userID)
-			err = sdk.TestSDKs[userNum].SDK.LoginWithOutInit(ctx, userID, token)
+			err = sdk.TestSDKs[userNum].SDK.LoginWithOutInit(vars.Contexts[userNum], userID, token)
 			if err != nil {
 				return err
 			}
