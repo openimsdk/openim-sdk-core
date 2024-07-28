@@ -66,6 +66,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
+			userNum := utils.MustGetUserNum(userID)
 			token, err := t.GetToken(userID, config.PlatformID)
 			if err != nil {
 				return err
@@ -74,7 +75,6 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 			if err != nil {
 				return err
 			}
-			userNum := utils.MustGetUserNum(userID)
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
 			vars.Contexts[userNum] = sdk.TestSDKs[userNum].SDK.Context() // init ctx
 			return nil

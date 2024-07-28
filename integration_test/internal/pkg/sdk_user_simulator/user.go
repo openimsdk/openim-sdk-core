@@ -29,6 +29,7 @@ func InitSDK(ctx context.Context, userID, token string, cf sdk_struct.IMConfig) 
 
 	SetListener(userForSDK, userID)
 
+	ctx = userForSDK.Context()
 	if err := userForSDK.InitMgr(ctx, userID, token); err != nil {
 		return nil, err
 	}
