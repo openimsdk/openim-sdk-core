@@ -4,9 +4,11 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"sync"
 )
 
 var (
+	MapLock        sync.Mutex
 	UserMessageMap = make(map[string]*MsgListenerCallBak)
 	timeOffset     int64
 )
@@ -32,7 +34,9 @@ func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {
 	userForSDK.SetUserListener(testUser)
 
 	msgCallBack := NewMsgListenerCallBak(userID)
+	MapLock.Lock()
 	UserMessageMap[userID] = msgCallBack
+	MapLock.Unlock()
 	userForSDK.SetAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
