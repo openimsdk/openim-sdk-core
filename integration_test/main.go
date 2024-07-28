@@ -92,8 +92,6 @@ func main() {
 		log.ZError(ctx, "do flag err", err)
 		panic(err)
 	}
-	//if err := process.ProV1(ctx); err != nil {
-	//	panic(err)
-	//}
+
 	log.ZInfo(ctx, "start success!")
 }

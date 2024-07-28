@@ -61,7 +61,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 		log.ZDebug(ctx, "InitSDK end", "time consuming", time.Since(tm))
 	}()
 
-	gr, ctx := errgroup.WithContext(ctx)
+	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(vars.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
@@ -99,7 +99,7 @@ func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
 		log.ZDebug(ctx, "login end", "time consuming", time.Since(tm))
 	}()
 
-	gr, ctx := errgroup.WithContext(ctx)
+	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(vars.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
