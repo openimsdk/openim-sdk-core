@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -44,7 +43,7 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 				OwnerUserID:   userID,
 				FriendUserIDs: friendIDs,
 			}
-			_, err := util.CallApi[relation.ImportFriendResp](vars.Contexts[utils.MustGetUserNum(userID)], constant.ImportFriendListRouter, req)
+			_, err := util.CallApi[relation.ImportFriendResp](m.BuildCtx(ctx), constant.ImportFriendListRouter, req)
 			if err != nil {
 				return err
 			}

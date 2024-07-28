@@ -14,6 +14,7 @@ const (
 	LogLevel    = 6
 	DataDir     = "./data/"
 	LogFilePath = "./logs/"
+	AdminUserID = "imAdmin"
 )
 
 func GetConf() sdk_struct.IMConfig {

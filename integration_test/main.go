@@ -47,6 +47,9 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		groupMng    = manager.NewGroupManager(m)
 		relationMng = manager.NewRelationManager(m)
 	)
+	if err = m.WithAdminToken(); err != nil {
+		return err
+	}
 
 	if vars.ShouldRegister {
 		if err = userMng.RegisterUsers(ctx, vars.UserIDs...); err != nil {
