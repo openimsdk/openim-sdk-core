@@ -83,10 +83,12 @@ func DoFlagFunc(ctx context.Context) (err error) {
 func main() {
 	ctx := context.Background()
 	if err := Init(ctx); err != nil {
+		log.ZError(ctx, "init err", err)
 		panic(err)
 	}
 
 	if err := DoFlagFunc(ctx); err != nil {
+		log.ZError(ctx, "do flag err", err)
 		panic(err)
 	}
 	//if err := process.ProV1(ctx); err != nil {
