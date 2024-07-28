@@ -29,7 +29,7 @@ var (
 	ErrResourceLoad = errs.NewCodeError(ResourceLoadNotCompleteError, "ResourceLoadNotCompleteError")
 
 	//消息相关
-	ErrFileNotFound             = errs.NewCodeError(FileNotFoundError, "RecordNotFoundError")
+	ErrFileNotFound             = errs.NewCodeError(FileNotFoundError, "FileNotFoundError")
 	ErrMsgDecodeBinaryWs        = errs.NewCodeError(MsgDecodeBinaryWsError, "MsgDecodeBinaryWsError")
 	ErrMsgDeCompression         = errs.NewCodeError(MsgDeCompressionError, "MsgDeCompressionError")
 	ErrMsgBinaryTypeNotSupport  = errs.NewCodeError(MsgBinaryTypeNotSupportError, "MsgTypeNotSupportError")
