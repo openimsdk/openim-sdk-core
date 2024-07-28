@@ -28,5 +28,5 @@ func SetFlagLimit() {
 	vars.UserNum = min(vars.UserNum, vars.MaxUserNum)
 	vars.CommonGroupNum = min(vars.CommonGroupMemberNum, vars.UserNum)
 
-	vars.LoginRate = min(vars.LoginRate, 100)
+	vars.LoginRate = min(vars.LoginRate, 1)
 }

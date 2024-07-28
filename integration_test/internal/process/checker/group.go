@@ -52,8 +52,9 @@ func CheckGroupNum(ctx context.Context) error {
 		}
 		err := errs.New("check group number un correct!").Wrap()
 		InsertToErrChan(ctx, err)
+	} else {
+		log.ZInfo(ctx, "group num check success")
 	}
-
 	return nil
 }
 
