@@ -8,4 +8,11 @@ var (
 	CommonGroupMemberNum int // number of common group member num
 	SingleMessageNum     int // number of single message each user send
 	GroupMessageNum      int // number of group message each user send
+
+	ShouldRegister    bool // determine whether register
+	ShouldCreateGroup bool // determine whether create group
+
+	ShouldCheckGroupNum bool // determine whether check group num
+
+	LoginRate float64 // number of login user rate
 )

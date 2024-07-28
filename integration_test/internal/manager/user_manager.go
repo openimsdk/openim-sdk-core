@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/sdk_user_simulator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
@@ -11,6 +12,7 @@ import (
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
 	"golang.org/x/sync/errgroup"
+	"math"
 	"time"
 )
 
@@ -22,7 +24,7 @@ func NewUserManager(m *MetaManager) *TestUserManager {
 	return &TestUserManager{m}
 }
 
-func (t *TestUserManager) GenUserIDs() []string {
+func (t *TestUserManager) GenAllUserIDs() []string {
 	ids := make([]string, vars.UserNum)
 	for i := 0; i < vars.UserNum; i++ {
 		ids[i] = utils.GetUserID(i)
@@ -43,13 +45,16 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 	for _, userID := range userIDs {
 		users = append(users, &sdkws.UserInfo{UserID: userID, Nickname: userID})
 	}
-	return t.PostWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
+	if err := t.PostWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
 		Secret: t.GetSecret(),
 		Users:  users,
-	}, nil)
+	}, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (t *TestUserManager) InitSDKAndLogin(ctx context.Context, userIDs ...string) error {
+func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
 	tm := time.Now()
 	log.ZDebug(ctx, "initSDKAndLogin begin", "len userIDs", len(userIDs))
 	defer func() {
@@ -61,16 +66,49 @@ func (t *TestUserManager) InitSDKAndLogin(ctx context.Context, userIDs ...string
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
-			token, err := t.GetToken(userID, vars.PlatformID)
+			token, err := t.GetToken(userID, config.PlatformID)
 			if err != nil {
 				return err
 			}
-			mgr, err := sdk_user_simulator.InitSDKAndLogin(userID, token, t.IMConfig)
+			mgr, err := sdk_user_simulator.InitSDK(userID, token, t.IMConfig)
 			if err != nil {
 				return err
 			}
 			userNum := utils.MustGetUserNum(userID)
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
+			return nil
+		})
+	}
+	if err := gr.Wait(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TestUserManager) LoginByRate(ctx context.Context, rate float64) error {
+	right := int(math.Ceil(rate * float64(vars.UserNum)))
+	userIDs := vars.UserIDs[:right]
+	return t.Login(ctx, userIDs...)
+}
+
+func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
+	tm := time.Now()
+	log.ZDebug(ctx, "login begin", "len userIDs", len(userIDs))
+	defer func() {
+		log.ZDebug(ctx, "login end", "time consuming", time.Since(tm))
+	}()
+
+	gr, ctx := errgroup.WithContext(ctx)
+	gr.SetLimit(vars.ErrGroupCommonLimit)
+	for _, userID := range userIDs {
+		userID := userID
+		gr.Go(func() error {
+			token, err := t.GetToken(userID, config.PlatformID)
+			userNum := utils.MustGetUserNum(userID)
+			err = sdk.TestSDKs[userNum].SDK.Login(ctx, userID, token)
+			if err != nil {
+				return err
+			}
 			return nil
 		})
 	}
