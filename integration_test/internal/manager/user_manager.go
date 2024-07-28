@@ -56,9 +56,9 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 
 func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "initSDKAndLogin begin", "len userIDs", len(userIDs))
+	log.ZDebug(ctx, "InitSDK begin", "len userIDs", len(userIDs))
 	defer func() {
-		log.ZDebug(ctx, "initSDKAndLogin end", "time consuming", time.Since(tm))
+		log.ZDebug(ctx, "InitSDK end", "time consuming", time.Since(tm))
 	}()
 
 	gr, ctx := errgroup.WithContext(ctx)

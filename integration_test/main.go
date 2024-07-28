@@ -14,6 +14,7 @@ func Init(ctx context.Context) error {
 	initialization.InitFlag()
 	flag.Parse()
 	initialization.SetFlagLimit()
+	initialization.GenUserIDs()
 	if !vars.ShouldRegister {
 		if err := initialization.InitSDK(ctx); err != nil {
 			return err
