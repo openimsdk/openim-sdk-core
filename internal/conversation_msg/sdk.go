@@ -156,6 +156,9 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 }
 
 func (c *Conversation) setConversationAndSync(ctx context.Context, conversationID string, req *pbConversation.ConversationReq) error {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err

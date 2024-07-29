@@ -16,6 +16,7 @@ package conversation_msg
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -26,7 +27,6 @@ import (
 
 	"github.com/jinzhu/copier"
 	pbMsg "github.com/openimsdk/protocol/msg"
-	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -207,39 +207,4 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 	}
 	c.msgListener().OnMsgDeleted(utils.StructToJsonString(s))
 	return nil
-}
-
-func (c *Conversation) doDeleteMsgs(ctx context.Context, msg *sdkws.MsgData) {
-	tips := sdkws.DeleteMsgsTips{}
-	utils.UnmarshalNotificationElem(msg.Content, &tips)
-	log.ZDebug(ctx, "doDeleteMsgs", "seqs", tips.Seqs)
-	for _, v := range tips.Seqs {
-		msg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, v)
-		if err != nil {
-			log.ZError(ctx, "GetMessageBySeq err", err, "conversationID", tips.ConversationID, "seq", v)
-			continue
-		}
-		var s sdk_struct.MsgStruct
-		copier.Copy(&s, msg)
-		err = c.msgConvert(&s)
-		if err != nil {
-			log.ZError(ctx, "parsing data error", err, "msg", msg)
-		}
-		if err := c.deleteMessageFromLocal(ctx, tips.ConversationID, msg.ClientMsgID); err != nil {
-			log.ZError(ctx, "deleteMessageFromLocal err", err, "conversationID", tips.ConversationID, "seq", v)
-		}
-	}
-}
-
-func (c *Conversation) doClearConversations(ctx context.Context, msg *sdkws.MsgData) {
-	tips := sdkws.ClearConversationTips{}
-	utils.UnmarshalNotificationElem(msg.Content, &tips)
-	log.ZDebug(ctx, "doClearConversations", "tips", tips)
-	for _, v := range tips.ConversationIDs {
-		if err := c.clearConversationAndDeleteAllMsg(ctx, v, false, c.db.ClearConversation); err != nil {
-			log.ZError(ctx, "clearConversation err", err, "conversationID", v)
-		}
-	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: tips.ConversationIDs}})
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 }

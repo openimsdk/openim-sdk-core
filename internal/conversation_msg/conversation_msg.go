@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
@@ -83,6 +84,7 @@ type Conversation struct {
 	IsExternalExtensions bool
 	msgOffset            int
 	progress             int
+	conversationSyncMutex sync.Mutex
 
 	startTime time.Time
 

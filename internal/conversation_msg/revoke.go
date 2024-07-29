@@ -17,6 +17,7 @@ package conversation_msg
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -30,16 +31,6 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
-
-func (c *Conversation) doRevokeMsg(ctx context.Context, msg *sdkws.MsgData) {
-	var tips sdkws.RevokeMsgTips
-	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-		log.ZError(ctx, "unmarshal failed", err, "msg", msg)
-		return
-	}
-	log.ZDebug(ctx, "do revokeMessage", "tips", &tips)
-	c.revokeMessage(ctx, &tips)
-}
 
 func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgTips) {
 	revokedMsg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, tips.Seq)

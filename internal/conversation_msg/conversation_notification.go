@@ -23,14 +23,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -55,7 +56,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		c.doUpdateMessage(c2v)
 	case constant.CmSyncReactionExtensions:
 	case constant.CmdNotification:
-		c.doNotification(c2v)
+		c.doGeneralNotification(c2v)
 	case constant.CmdSyncData:
 		c.syncData(c2v)
 	case constant.CmdSyncFlag:
@@ -66,6 +67,9 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+
 	ctx := c2v.Ctx
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
 	switch syncFlag {
@@ -120,7 +124,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 	}
 }
 
-func (c *Conversation) doNotification(c2v common.Cmd2Value) {
+func (c *Conversation) doGeneralNotification(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 
@@ -135,54 +139,153 @@ func (c *Conversation) doNotification(c2v common.Cmd2Value) {
 				}
 			}
 		}
-		for _, v := range msgs.Msgs {
-			switch {
-			case v.ContentType == constant.ConversationChangeNotification:
-				c.DoConversationChangedNotification(ctx, v)
-			case v.ContentType == constant.ConversationPrivateChatNotification:
-				c.DoConversationIsPrivateChangedNotification(ctx, v)
-			case v.ContentType == constant.ConversationUnreadNotification:
-				var tips sdkws.ConversationHasReadTips
-				_ = json.Unmarshal(v.Content, &tips)
-				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: tips.ConversationID, Action: constant.UnreadCountSetZero}})
-				c.db.DeleteConversationUnreadMessageList(ctx, tips.ConversationID, tips.UnreadCountTime)
-				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
+		for _, msg := range msgs.Msgs {
+			if msg.ContentType > constant.FriendNotificationBegin && msg.ContentType < constant.FriendNotificationEnd {
+				c.friend.DoNotification(ctx, msg)
+			} else if msg.ContentType > constant.UserNotificationBegin && msg.ContentType < constant.UserNotificationEnd {
+				c.user.DoNotification(ctx, msg)
+			} else if msg.ContentType > constant.GroupNotificationBegin && msg.ContentType < constant.GroupNotificationEnd {
+				c.group.DoNotification(ctx, msg)
+			} else if msg.ContentType > constant.SignalingNotificationBegin && msg.ContentType < constant.SignalingNotificationEnd {
 				continue
-			case v.ContentType == constant.BusinessNotification:
-				c.business.DoNotification(ctx, v)
-				continue
-			case v.ContentType == constant.RevokeNotification:
-				c.doRevokeMsg(ctx, v)
-			case v.ContentType == constant.ClearConversationNotification:
-				c.doClearConversations(ctx, v)
-			case v.ContentType == constant.DeleteMsgsNotification:
-				c.doDeleteMsgs(ctx, v)
-			case v.ContentType == constant.HasReadReceipt:
-				c.doReadDrawing(ctx, v)
-			}
-
-			switch v.SessionType {
-			case constant.SingleChatType:
-				if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
-					c.friend.DoNotification(ctx, v)
-				} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
-					c.user.DoNotification(ctx, v)
-				} else if datautil.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
-					c.group.DoNotification(ctx, v)
-				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-
-					continue
-				}
-			case constant.GroupChatType, constant.SuperGroupChatType:
-				if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
-					c.group.DoNotification(ctx, v)
-				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					continue
-				}
+			} else {
+				c.doNotification(ctx, msg)
 			}
 		}
 	}
+}
 
+func (c *Conversation) doNotification(ctx context.Context, msg *sdkws.MsgData) {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+
+	switch msg.ContentType {
+	case constant.ConversationChangeNotification:
+		var tips sdkws.ConversationUpdateTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+			log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
+			return
+		}
+
+		err := c.IncrSyncConversations(ctx)
+		if err != nil {
+			log.ZWarn(ctx, "IncrSyncConversations err", err)
+			return
+		}
+
+	case constant.ConversationPrivateChatNotification: // 1701
+		var tips sdkws.ConversationSetPrivateTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+			log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
+			return
+		}
+
+		err := c.IncrSyncConversations(ctx)
+		if err != nil {
+			log.ZWarn(ctx, "IncrSyncConversations err", err)
+		}
+	case constant.RevokeNotification: // 2101
+		var tips sdkws.RevokeMsgTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+			log.ZError(ctx, "unmarshal failed", err, "msg", msg)
+			return
+		}
+
+		log.ZDebug(ctx, "do revokeMessage", "tips", &tips)
+		c.revokeMessage(ctx, &tips)
+	case constant.ClearConversationNotification: // 1703
+		var tips sdkws.ClearConversationTips
+		utils.UnmarshalNotificationElem(msg.Content, &tips)
+		log.ZDebug(ctx, "doClearConversations", "tips", &tips)
+		for _, v := range tips.ConversationIDs {
+			if err := c.clearConversationAndDeleteAllMsg(ctx, v, false, c.db.ClearConversation); err != nil {
+				log.ZError(ctx, "clearConversation err", err, "conversationID", v)
+			}
+		}
+
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: tips.ConversationIDs}})
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
+	case constant.DeleteMsgsNotification:
+		var tips sdkws.DeleteMsgsTips
+		utils.UnmarshalNotificationElem(msg.Content, &tips)
+		log.ZDebug(ctx, "doDeleteMsgs", "seqs", tips.Seqs)
+		for _, v := range tips.Seqs {
+			msg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, v)
+			if err != nil {
+				log.ZError(ctx, "GetMessageBySeq err", err, "conversationID", tips.ConversationID, "seq", v)
+				continue
+			}
+			var s sdk_struct.MsgStruct
+			copier.Copy(&s, msg)
+			err = c.msgConvert(&s)
+			if err != nil {
+				log.ZError(ctx, "parsing data error", err, "msg", msg)
+			}
+
+			if err := c.deleteMessageFromLocal(ctx, tips.ConversationID, msg.ClientMsgID); err != nil {
+				log.ZError(ctx, "deleteMessageFromLocal err", err, "conversationID", tips.ConversationID, "seq", v)
+			}
+		}
+	case constant.HasReadReceipt: // 2200
+		var tips sdkws.MarkAsReadTips
+		err := utils.UnmarshalNotificationElem(msg.Content, &tips)
+		if err != nil {
+			log.ZWarn(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
+			return
+		}
+		log.ZDebug(ctx, "do readDrawing", "tips", &tips)
+		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
+		if err != nil {
+			log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
+			return
+		}
+		if tips.MarkAsReadUserID != c.loginUserID {
+			if len(tips.Seqs) == 0 {
+				return
+			}
+			messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)
+			if err != nil {
+				log.ZError(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
+				return
+			}
+			if conversation.ConversationType == constant.SingleChatType {
+				latestMsg := &sdk_struct.MsgStruct{}
+				if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
+					log.ZError(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
+				}
+				var successMsgIDs []string
+				for _, message := range messages {
+					attachInfo := sdk_struct.AttachedInfoElem{}
+					_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+					attachInfo.HasReadTime = msg.SendTime
+					message.AttachedInfo = utils.StructToJsonString(attachInfo)
+					message.IsRead = true
+					if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
+						log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
+					} else {
+						if latestMsg.ClientMsgID == message.ClientMsgID {
+							latestMsg.IsRead = message.IsRead
+							conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+							_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
+
+						}
+						successMsgIDs = append(successMsgIDs, message.ClientMsgID)
+					}
+				}
+				var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
+					SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
+				c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+			}
+		} else {
+			c.doUnreadCount(ctx, conversation, tips.HasReadSeq, tips.Seqs)
+		}
+	case constant.BusinessNotification:
+		c.business.DoNotification(ctx, msg)
+	default:
+		err := errs.New("unknown tips type", "contentType", msg.ContentType).Wrap()
+		log.ZError(ctx, "Do Conversation Notification failed", err)
+		return
+	}
 }
 
 func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string {
@@ -377,6 +480,9 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) syncData(c2v common.Cmd2Value) {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+
 	ctx := c2v.Ctx
 	c.startTime = time.Now()
 	//clear SubscriptionStatusMap
@@ -755,32 +861,3 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 //	}
 //
 // }
-
-func (c *Conversation) DoConversationChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	//var notification sdkws.ConversationChangedNotification
-	tips := &sdkws.ConversationUpdateTips{}
-	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
-		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
-		return
-	}
-
-	err := c.IncrSyncConversations(ctx)
-	if err != nil {
-		log.ZWarn(ctx, "IncrSyncConversations err", err)
-	}
-
-}
-
-func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Context, msg *sdkws.MsgData) {
-	tips := &sdkws.ConversationSetPrivateTips{}
-	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
-		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
-		return
-	}
-
-	err := c.IncrSyncConversations(ctx)
-	if err != nil {
-		log.ZWarn(ctx, "IncrSyncConversations err", err)
-	}
-
-}

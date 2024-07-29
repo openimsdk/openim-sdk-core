@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -28,7 +29,6 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 
 	pbMsg "github.com/openimsdk/protocol/msg"
-	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -222,59 +222,4 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 
-}
-
-func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
-	tips := &sdkws.MarkAsReadTips{}
-	err := utils.UnmarshalNotificationElem(msg.Content, tips)
-	if err != nil {
-		log.ZWarn(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
-		return
-	}
-	log.ZDebug(ctx, "do readDrawing", "tips", tips)
-	conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
-	if err != nil {
-		log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
-		return
-	}
-	if tips.MarkAsReadUserID != c.loginUserID {
-		if len(tips.Seqs) == 0 {
-			return
-		}
-		messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)
-		if err != nil {
-			log.ZError(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
-			return
-		}
-		if conversation.ConversationType == constant.SingleChatType {
-			latestMsg := &sdk_struct.MsgStruct{}
-			if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
-				log.ZError(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
-			}
-			var successMsgIDs []string
-			for _, message := range messages {
-				attachInfo := sdk_struct.AttachedInfoElem{}
-				_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-				attachInfo.HasReadTime = msg.SendTime
-				message.AttachedInfo = utils.StructToJsonString(attachInfo)
-				message.IsRead = true
-				if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
-					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
-				} else {
-					if latestMsg.ClientMsgID == message.ClientMsgID {
-						latestMsg.IsRead = message.IsRead
-						conversation.LatestMsg = utils.StructToJsonString(latestMsg)
-						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
-
-					}
-					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
-				}
-			}
-			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
-				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
-			c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
-		}
-	} else {
-		c.doUnreadCount(ctx, conversation, tips.HasReadSeq, tips.Seqs)
-	}
 }
