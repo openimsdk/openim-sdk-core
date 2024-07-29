@@ -40,9 +40,10 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *errgroup.Group) {
 	userNum := 0
 	for i := 0; i < vars.LargeGroupNum; i++ {
+		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
-			_, err := testSDK.CreateLargeGroup(vars.Contexts[userNum])
+			_, err := testSDK.CreateLargeGroup(ctx)
 			if err != nil {
 				return err
 			}
@@ -56,10 +57,11 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *errgroup.G
 // createLargeGroups see CreateGroups
 func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *errgroup.Group) {
 	for userNum := 0; userNum < vars.UserNum; userNum++ {
+		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
 			for i := 0; i < vars.CommonGroupNum; i++ {
-				_, err := testSDK.CreateCommonGroup(vars.Contexts[userNum], vars.CommonGroupMemberNum)
+				_, err := testSDK.CreateCommonGroup(ctx, vars.CommonGroupMemberNum)
 				if err != nil {
 					return err
 				}
