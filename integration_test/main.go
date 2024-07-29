@@ -50,6 +50,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	if err = m.WithAdminToken(); err != nil {
 		return err
 	}
+	ctx = m.BuildCtx(ctx)
 
 	if vars.ShouldRegister {
 		if err = userMng.RegisterUsers(ctx, vars.UserIDs...); err != nil {
