@@ -126,7 +126,7 @@ func registerFunc() {
 	js.Global().Set("changeInputStates", js.FuncOf(wrapperConMsg.ChangeInputStates))
 	js.Global().Set("getInputStates", js.FuncOf(wrapperConMsg.GetInputStates))
 
-	//register group funcation
+	//register group func
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)
 	js.Global().Set("createGroup", js.FuncOf(wrapperGroup.CreateGroup))
 	js.Global().Set("getSpecifiedGroupsInfo", js.FuncOf(wrapperGroup.GetSpecifiedGroupsInfo))

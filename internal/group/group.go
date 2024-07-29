@@ -59,8 +59,6 @@ type Group struct {
 	groupMemberSyncer       *syncer.Syncer[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string]
 	groupRequestSyncer      *syncer.Syncer[*model_struct.LocalGroupRequest, syncer.NoResp, [2]string]
 	groupAdminRequestSyncer *syncer.Syncer[*model_struct.LocalAdminGroupRequest, syncer.NoResp, [2]string]
-	joinedSuperGroupCh      chan common.Cmd2Value
-	heartbeatCmdCh          chan common.Cmd2Value
 
 	conversationCh chan common.Cmd2Value
 	//	memberSyncMutex sync.RWMutex

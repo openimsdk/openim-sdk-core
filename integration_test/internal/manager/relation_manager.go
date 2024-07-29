@@ -2,10 +2,13 @@ package manager
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 	"golang.org/x/sync/errgroup"
 	"time"
 )
@@ -31,18 +34,17 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	for i, userID := range vars.SuperUserIDs {
 		i := i
 		userID := userID
 		gr.Go(func() error {
-			friendIDs := append(vars.UserIDs[:i], vars.UserIDs[i+1:]...) // excluding oneself
+			friendIDs := datautil.Delete(datautil.CopySlice(vars.UserIDs), i) // excluding oneself
 			req := &relation.ImportFriendReq{
 				OwnerUserID:   userID,
 				FriendUserIDs: friendIDs,
 			}
-			resp := &relation.ImportFriendResp{}
-			err := m.PostWithCtx(constant.ImportFriendListRouter, req, resp)
+			_, err := util.CallApi[relation.ImportFriendResp](m.BuildCtx(ctx), constant.ImportFriendListRouter, req)
 			if err != nil {
 				return err
 			}

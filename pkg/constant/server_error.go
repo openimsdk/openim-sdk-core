@@ -57,6 +57,6 @@ package constant
 //	IntentionalError     = 10007
 //)
 //
-//funcation (e *ErrInfo) Code() int32 {
+//func (e *ErrInfo) Code() int32 {
 //	return e.ErrCode
 //}

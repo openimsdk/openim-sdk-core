@@ -11,9 +11,10 @@ const (
 	WsAddr      = "ws://" + TestIP + ":10001"
 	Secret      = "openIM123"
 	PlatformID  = constant.WindowsPlatformID
-	LogLevel    = uint32(5)
-	DataDir     = "../"
-	LogFilePath = "../"
+	LogLevel    = 6
+	DataDir     = "./data/"
+	LogFilePath = "./logs/"
+	AdminUserID = "imAdmin"
 )
 
 func GetConf() sdk_struct.IMConfig {

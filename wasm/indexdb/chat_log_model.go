@@ -202,7 +202,7 @@ func (i *LocalChatLogs) SearchMessageByContentType(ctx context.Context, contentT
 	}
 }
 
-//funcation (i *LocalChatLogs) SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+//func (i *LocalChatLogs) SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
 //	msgList, err := Exec(utils.StructToJsonString(contentType), sourceID, startTime, endTime, sessionType, offset, count)
 //	if err != nil {
 //		return nil, err

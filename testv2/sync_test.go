@@ -15,43 +15,10 @@
 package testv2
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"testing"
+
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 )
-
-//func Test_SyncJoinGroup(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Group().SyncJoinedGroup(ctx)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//}
-
-func Test_SyncGroupMember(t *testing.T) {
-	//groups, err := open_im_sdk.UserForSDK.Group().GetServerJoinGroup(ctx)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//for _, group := range groups {
-	//	err := open_im_sdk.UserForSDK.Group().SyncGroupMember(ctx, group.GroupID)
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//}
-}
-
-//func Test_SyncSelfGroupApplication(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Group().SyncSelfGroupApplication(ctx)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//}
-
-//func Test_SyncAdminGroupApplication(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Group().SyncAdminGroupApplication(ctx)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//}
 
 func Test_SyncSelfFriendApplication(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Friend().SyncAllSelfFriendApplication(ctx)
@@ -80,10 +47,3 @@ func Test_SyncBlack(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
-//func Test_SyncAllConversation(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Conversation().SyncAllConversations(ctx)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//}

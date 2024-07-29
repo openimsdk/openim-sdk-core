@@ -22,6 +22,7 @@ import (
 
 	//	"encoding/json"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/log"
 	//"open_im_sdk/internal/open_im_sdk"
@@ -326,7 +327,7 @@ func DotestCos() {
 	//test(storage, callback)
 }
 
-//funcation DotestMinio() {
+//func DotestMinio() {
 //	var callback baseCallback
 //	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NzgyNDY0LCJuYmYiOjE2NDUxNzc2NjQsImlhdCI6MTY0NTE3NzY2NH0.T-SDoLxdlwRGOMZPIKriPtAlOGWCLodsGi1dWxN8kto"
 //	p := ws.NewPostApi(token, "https://storage.rentsoft.cn")
@@ -336,26 +337,26 @@ func DotestCos() {
 //	test(storage, callback)
 //}
 //
-//funcation test(storage common.ObjectStorage, callback baseCallback) {
-//	dir, newName, err := storage.UploadFile("./cmd/main.go", funcation(progress int) {
+//func test(storage common.ObjectStorage, callback baseCallback) {
+//	dir, newName, err := storage.UploadFile("./cmd/main.go", func(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err)
-//	dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", funcation(progress int) {
+//	dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err, err)
-//	dir, newName, err = storage.UploadSound("./cmd/main.go", funcation(progress int) {
+//	dir, newName, err = storage.UploadSound("./cmd/main.go", func(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
 //	})
 //	log.NewInfo("0", dir, newName, err, err)
-//	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./cmd/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", funcation(progress int) {
+//	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./cmd/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
 //		if progress == 100 {
 //			callback.OnSuccess("")
 //		}
@@ -375,7 +376,7 @@ func (testGetGroupMembersInfo) OnSuccess(data string) {
 }
 
 //
-//funcation DotestGetGroupMembersInfo() {
+//func DotestGetGroupMembersInfo() {
 //	var test testGetGroupMembersInfo
 //	var memlist []string
 //	memlist = append(memlist, "307edc814bb0d04a")
@@ -452,7 +453,7 @@ func DotestGetRecvGroupApplicationList() string {
 	return ""
 }
 
-//	funcation DoGroupApplicationList() {
+//	func DoGroupApplicationList() {
 //		var test testGroupX
 //		fmt.Println("test DoGetGroupApplicationList....")
 //		sdk_interface.GetGroupApplicationList(test)

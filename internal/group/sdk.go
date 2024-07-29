@@ -299,7 +299,7 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 	return groups, nil
 }
 
-// funcation (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
+// func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
 //	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
 //		GroupID:          groupID,
 //		GroupName:        groupInfo.GroupName,

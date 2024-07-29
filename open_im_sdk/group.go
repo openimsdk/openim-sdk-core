@@ -16,7 +16,7 @@ package open_im_sdk
 
 import "github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 
-//funcation CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupBaseInfo string, memberList string) {
+//func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupBaseInfo string, memberList string) {
 //	call(callback, operationID, UserForSDK.Group().CreateGroup, groupBaseInfo, memberList)
 //}
 
