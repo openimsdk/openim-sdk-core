@@ -14,7 +14,7 @@
 
 package test
 
-//funcation OnlineTest(number int) {
+//func OnlineTest(number int) {
 //	t1 := time.Now()
 //	RegisterOnlineAccounts(number)
 //	log.Info("", "RegisterAccounts  cost time: ", time.Since(t1), "Online client number ", number)
@@ -22,7 +22,7 @@ package test
 //	var wg sync.WaitGroup
 //	wg.Add(number)
 //	for i := 0; i < number; i++ {
-//		go funcation(t int) {
+//		go func(t int) {
 //			GenWsConn(t)
 //			log.Info("GenWsConn, the: ", t, " user")
 //			wg.Done()
@@ -32,7 +32,7 @@ package test
 //	log.Info("", "OnlineTest finish cost time: ", time.Since(t2), "Online client number ", number)
 //}
 
-//funcation GenWsConn(id int) {
+//func GenWsConn(id int) {
 //	userID := GenUid(id, "online")
 //	token := RunGetToken(userID)
 //	wsRespAsyn := interaction.NewWsRespAsyn()

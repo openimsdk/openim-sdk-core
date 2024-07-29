@@ -18,10 +18,11 @@
 package wasm_wrapper
 
 import (
+	"syscall/js"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/event_listener"
-	"syscall/js"
 )
 
 // ------------------------------------message---------------------------
@@ -134,24 +135,24 @@ func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface
 	return event_listener.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
 }
 
-//funcation (w *WrapperConMsg) SetMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//func (w *WrapperConMsg) SetMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.SetMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
-//funcation (w *WrapperConMsg) AddMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//func (w *WrapperConMsg) AddMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.AddMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
 //
-//funcation (w *WrapperConMsg) DeleteMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//func (w *WrapperConMsg) DeleteMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.DeleteMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
-//funcation (w *WrapperConMsg) GetMessageListReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//func (w *WrapperConMsg) GetMessageListReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.GetMessageListReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
-//funcation (w *WrapperConMsg) GetMessageListSomeReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//func (w *WrapperConMsg) GetMessageListSomeReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.GetMessageListSomeReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
@@ -183,7 +184,7 @@ func (w *WrapperConMsg) GetAdvancedHistoryMessageListReverse(_ js.Value, args []
 	return event_listener.NewCaller(open_im_sdk.GetAdvancedHistoryMessageListReverse, callback, &args).AsyncCallWithCallback()
 }
 
-//funcation (w *WrapperConMsg) GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
+//func (w *WrapperConMsg) GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.GetHistoryMessageList, callback, &args).AsyncCallWithCallback()
 //}

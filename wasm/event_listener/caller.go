@@ -21,13 +21,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
-	"github.com/openimsdk/tools/log"
 	"reflect"
 	"strconv"
 	"strings"
 	"syscall/js"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
+	"github.com/openimsdk/tools/log"
 )
 
 type Caller interface {
@@ -42,7 +43,7 @@ type Caller interface {
 type FuncLogic func()
 
 var ErrNotSetCallback = errors.New("not set callback to call")
-var ErrNotSetFunc = errors.New("not set funcation to call")
+var ErrNotSetFunc = errors.New("not set func to call")
 
 type ReflectCall struct {
 	funcName  interface{}
