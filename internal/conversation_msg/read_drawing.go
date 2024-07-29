@@ -95,16 +95,16 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 		if len(seqs) == 0 {
 			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
-			return nil
-		}
-		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
-			seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-		if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
-			return err
-		}
-		_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
-		if err != nil {
-			log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
+		} else {
+			log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
+				seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
+			if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+				return err
+			}
+			_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
+			if err != nil {
+				log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
+			}
 		}
 	case constant.SuperGroupChatType, constant.NotificationChatType:
 		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
