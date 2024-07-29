@@ -302,6 +302,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	}
 
 }
+
 func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
@@ -317,8 +318,8 @@ func (c *LongConnMgr) sendPingMessage(ctx context.Context) {
 	} else {
 		log.ZDebug(ctx, "ping Message failed, connection", "connStatus", c.GetConnectionStatus(), "goroutine ID:", getGoroutineID(), "opid", opid)
 	}
-
 }
+
 func getGoroutineID() int64 {
 	buf := make([]byte, 64)
 	buf = buf[:runtime.Stack(buf, false)]
@@ -744,6 +745,7 @@ func (c *LongConnMgr) SetBackground(isBackground bool) {
 	c.IsBackground = isBackground
 }
 
+// receive ping and send pong.
 func (c *LongConnMgr) pingHandler(_ string) error {
 	if err := c.conn.SetReadDeadline(pongWait); err != nil {
 		return err
@@ -752,6 +754,7 @@ func (c *LongConnMgr) pingHandler(_ string) error {
 	return c.writePongMsg()
 }
 
+// when client send pong.
 func (c *LongConnMgr) pongHandler(appData string) error {
 	log.ZDebug(c.ctx, "server Pong Message Received", "appData", appData)
 	if err := c.conn.SetReadDeadline(pongWait); err != nil {

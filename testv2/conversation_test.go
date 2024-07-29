@@ -16,10 +16,11 @@ package testv2
 
 import (
 	"context"
+	"testing"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"testing"
 )
 
 func Test_GetAllConversationList(t *testing.T) {
@@ -41,13 +42,6 @@ func Test_GetConversationListSplit(t *testing.T) {
 		t.Log(conversation)
 	}
 }
-
-//func Test_SetConversationRecvMessageOpt(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Conversation().SetConversationRecvMessageOpt(ctx, []string{"asdasd"}, 1)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//}
 
 func Test_HideConversation(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().HideConversation(ctx, "asdasd")
@@ -83,15 +77,6 @@ func Test_GetGetMultipleConversation(t *testing.T) {
 		t.Log(v)
 	}
 }
-
-// funcation Test_DeleteConversation(t *testing.T) {
-//	err := open_im_sdk.UserForSDK.Conversation().DeleteConversation(ctx, "group_17729585012")
-//	if err != nil {
-//		if !strings.Contains(err.Error(), "no update") {
-//			t.Fatal(err)
-//		}
-//	}
-// }
 
 func Test_SetConversationDraft(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().SetConversationDraft(ctx, "group_17729585012", "draft")

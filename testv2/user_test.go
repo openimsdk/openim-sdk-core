@@ -16,10 +16,11 @@ package testv2
 
 import (
 	"fmt"
-	"github.com/openimsdk/protocol/user"
-	"github.com/openimsdk/protocol/wrapperspb"
 	"testing"
 	"time"
+
+	"github.com/openimsdk/protocol/user"
+	"github.com/openimsdk/protocol/wrapperspb"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 
@@ -133,49 +134,6 @@ func Test_SetSetGlobalRecvMessageOpt(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
-//func Test_Sub(t *testing.T) {
-//	var users []string
-//	users = append(users, "2926672950")
-//	status, err := open_im_sdk.UserForSDK.User().SubscribeUsersStatus(ctx, users)
-//	if err != nil {
-//		t.Error(err)
-//	}
-//	t.Log(status)
-//
-//	for i := 0; i < 20; i++ {
-//		status, err = open_im_sdk.UserForSDK.User().SubscribeUsersStatus(ctx, users)
-//		t.Log(status)
-//		time.Sleep(time.Second * 3)
-//	}
-//}
-//
-//func Test_GetSubscribeUsersStatus(t *testing.T) {
-//	status, err := open_im_sdk.UserForSDK.User().GetSubscribeUsersStatus(ctx)
-//	if err != nil {
-//		return
-//	}
-//	t.Log(status)
-//}
-
-//func Test_GetUserStatus(t *testing.T) {
-//	var UserIDs []string
-//	UserIDs = append(UserIDs, "2926672950")
-//	status, err := open_im_sdk.UserForSDK.User().GetUserStatus(ctx, UserIDs)
-//	if err != nil {
-//		return
-//	}
-//	t.Log(status)
-//}
-//
-//func Test_UnSub(t *testing.T) {
-//	var users []string
-//	users = append(users, "2926672950")
-//	err := open_im_sdk.UserForSDK.User().UnsubscribeUsersStatus(ctx, users)
-//	if err != nil {
-//		t.Error(err)
-//	}
-//}
 
 func Test_UserCommandAdd(t *testing.T) {
 	// Creating a request with a pointer
