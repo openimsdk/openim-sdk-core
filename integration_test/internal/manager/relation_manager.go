@@ -8,7 +8,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/log"
-	"github.com/openimsdk/tools/utils/datautil"
 	"golang.org/x/sync/errgroup"
 	"time"
 )
@@ -39,7 +38,7 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 		i := i
 		userID := userID
 		gr.Go(func() error {
-			friendIDs := datautil.Delete(datautil.CopySlice(vars.UserIDs), i) // excluding oneself
+			friendIDs := vars.UserIDs[i+1:] // excluding oneself
 			req := &relation.ImportFriendReq{
 				OwnerUserID:   userID,
 				FriendUserIDs: friendIDs,
