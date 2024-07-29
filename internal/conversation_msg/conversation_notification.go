@@ -492,7 +492,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 
 }
 
-// funcation (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
+// func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 //	if c.ConversationListener == nil {
 //		// log.Error("internal", "not set conversationListener")
 //		return
@@ -525,7 +525,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 //		// for _, result := range apiResp {
 //		// 	log.Warn(node.OperationID, "api return reslut is:", result.ClientMsgID, result.ReactionExtensionList)
 //		// }
-//		onLocal := funcation(data []*model_struct.LocalChatLogReactionExtensions) []*server_api_params.SingleMessageExtensionResult {
+//		onLocal := func(data []*model_struct.LocalChatLogReactionExtensions) []*server_api_params.SingleMessageExtensionResult {
 //			var result []*server_api_params.SingleMessageExtensionResult
 //			for _, v := range data {
 //				temp := new(server_api_params.SingleMessageExtensionResult)
@@ -596,7 +596,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 //					c.msgListener.OnRecvMessageExtensionsDeleted(v.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 //				}
 //			} else {
-//				deleteKeyList, changedKv := funcation(local, server map[string]*sdkws.KeyValue) ([]string, []*sdkws.KeyValue) {
+//				deleteKeyList, changedKv := func(local, server map[string]*sdkws.KeyValue) ([]string, []*sdkws.KeyValue) {
 //					var deleteKeyList []string
 //					var changedKv []*sdkws.KeyValue
 //					for k, v := range local {

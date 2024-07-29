@@ -17,8 +17,6 @@ package test
 import (
 	"errors"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/tools/log"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -27,6 +25,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/log"
 )
 
 func GetFileContentAsStringLines(filePath string) ([]string, error) {
@@ -535,7 +536,7 @@ func WorkGroupMsgDelayOne(index int, beforeLoginSleep int, isSendMsg bool, inter
 }
 
 //
-//funcation WorkGroupMsgDelayOne(sendID1 string, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int, groupID string) {
+//func WorkGroupMsgDelayOne(sendID1 string, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int, groupID string) {
 //	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 //	strMyUid := allLoginMgr[index].userID
 //	token := allLoginMgr[index].token
