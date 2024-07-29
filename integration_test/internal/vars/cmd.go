@@ -9,8 +9,9 @@ var (
 	SingleMessageNum     int // number of single message each user send
 	GroupMessageNum      int // number of group message each user send
 
-	ShouldRegister    bool // determine whether register
-	ShouldCreateGroup bool // determine whether create group
+	ShouldRegister      bool // determine whether register
+	ShouldImportFriends bool // determine whether import friends
+	ShouldCreateGroup   bool // determine whether create group
 
 	ShouldCheckGroupNum bool // determine whether check group num
 

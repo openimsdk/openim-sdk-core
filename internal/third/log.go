@@ -1,14 +1,9 @@
 package third
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"io"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -16,34 +11,97 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/version"
 	"github.com/openimsdk/protocol/third"
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
+	"io"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
-func (c *Third) UploadLogs(ctx context.Context, ex string, progress Progress) error {
+// UploadLogs uploadLogs.
+func (c *Third) UploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
 	if c.logUploadLock.TryLock() {
 		defer c.logUploadLock.Unlock()
 	} else {
 		return errs.New("log file is uploading").Wrap()
 	}
+	if line < 0 {
+		return errs.New("line is illegal").Wrap()
+	}
+
 	logFilePath := c.LogFilePath
 	entrys, err := os.ReadDir(logFilePath)
 	if err != nil {
 		return err
 	}
 	files := make([]string, 0, len(entrys))
-	for _, entry := range entrys {
-		if (!entry.IsDir()) && (!strings.HasSuffix(entry.Name(), ".zip")) && checkLogPath(entry.Name()) {
-			files = append(files, filepath.Join(logFilePath, entry.Name()))
+	switch line {
+	case 0:
+		// all logs
+		for _, entry := range entrys {
+			if (!entry.IsDir()) && (!strings.HasSuffix(entry.Name(), ".zip")) && checkLogPath(entry.Name()) {
+				files = append(files, filepath.Join(logFilePath, entry.Name()))
+			}
 		}
+		if len(files) == 0 {
+			return errs.New("not found log file").Wrap()
+		}
+		defer func() {
+			if err == nil {
+				// remove old file
+				for _, f := range files[:len(files)-1] {
+					if err := os.Remove(f); err != nil {
+						log.ZError(ctx, "remove file failed", err, "file name", f)
+					}
+				}
+				// truncate now log file
+				f, err := os.OpenFile(files[len(files)-1], os.O_WRONLY|os.O_TRUNC, 0644)
+				if err != nil {
+					log.ZError(ctx, "remove file failed", err, "file name", f)
+				}
+				_ = f.Close()
+			}
+		}()
+	default:
+		for i := len(entrys) - 1; i >= 0; i-- {
+			// get newest log file
+			if (!entrys[i].IsDir()) && (!strings.HasSuffix(entrys[i].Name(), ".zip")) && checkLogPath(entrys[i].Name()) {
+				files = append(files, filepath.Join(logFilePath, entrys[i].Name()))
+				break
+			}
+		}
+		if len(files) == 0 {
+			return errs.New("not found log file").Wrap()
+		}
+		lines, err := readLastNLines(files[0], line)
+		if err != nil {
+			return err
+		}
+		data := strings.Join(lines, "\n")
+
+		// create tmp file
+		filename := fmt.Sprintf("%s_temp%s", strings.TrimSuffix(filepath.Base(files[0]), filepath.Ext(files[0])), filepath.Ext(files[0]))
+		files[0] = filepath.Join(logFilePath, filename)
+		err = os.WriteFile(files[0], []byte(data), 0644)
+		if err != nil {
+			return errs.Wrap(err)
+		}
+		defer func() {
+			if err := os.Remove(files[0]); err != nil {
+				log.ZError(ctx, "remove file failed", err, "file name", files[0])
+			}
+		}()
 	}
-	if len(files) == 0 {
-		return errs.New("not found log file").Wrap()
-	}
+
 	zippath := filepath.Join(logFilePath, fmt.Sprintf("%d_%d.zip", time.Now().UnixMilli(), rand.Uint32()))
 	defer os.Remove(zippath)
 	if err := zipFiles(zippath, files); err != nil {
 		return err
 	}
-	reqUpload := &file.UploadFileReq{Filepath: zippath, Name: fmt.Sprintf("sdk_log_%s_%s", c.loginUserID, filepath.Base(zippath)), Cause: "sdklog", ContentType: "application/zip"}
+	reqUpload := &file.UploadFileReq{Filepath: zippath, Name: fmt.Sprintf("sdk_log_%s_%s_%s_%s_%s",
+		c.loginUserID, c.systemType, constant.PlatformID2Name[int(c.platformID)], version.Version, filepath.Base(zippath)), Cause: "sdklog", ContentType: "application/zip"}
 	resp, err := c.fileUploader.UploadFile(ctx, reqUpload, &progressConvert{ctx: ctx, p: progress})
 	if err != nil {
 		return err
@@ -89,4 +147,36 @@ func (c *Third) fileCopy(src, dst string) error {
 	defer dstFile.Close()
 	_, err = io.Copy(dstFile, srcFile)
 	return err
+}
+
+func readLastNLines(filename string, n int) ([]string, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	lines := make([]string, n)
+	count := 0
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		lines[count%n] = scanner.Text()
+		count++
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	start := count - n
+	if start < 0 {
+		start = 0
+	}
+	result := make([]string, 0, n)
+	for i := start; i < count; i++ {
+		result = append(result, lines[i%n])
+	}
+
+	return result, nil
 }

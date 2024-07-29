@@ -114,8 +114,16 @@ func GetLoginUserID() string {
 	return UserForSDK.GetLoginUserID()
 }
 
+func (u *LoginMgr) InitMgr(ctx context.Context, userID, token string) error {
+	return u.initMgr(ctx, userID, token)
+}
+
 func (u *LoginMgr) Login(ctx context.Context, userID, token string) error {
 	return u.login(ctx, userID, token)
+}
+
+func (u *LoginMgr) LoginWithOutInit(ctx context.Context, userID, token string) error {
+	return u.loginWithOutInit(ctx, userID, token)
 }
 
 func (u *LoginMgr) Logout(ctx context.Context) error {
