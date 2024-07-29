@@ -30,7 +30,7 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(config.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupSmallLimit)
 	m.createLargeGroups(ctx, gr)
 	m.createCommonGroups(ctx, gr)
 	return gr.Wait()
