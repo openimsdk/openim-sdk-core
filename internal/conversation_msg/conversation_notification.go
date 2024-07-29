@@ -40,6 +40,9 @@ const (
 	asyncWait
 )
 
+// InitSyncProgress is initialize Sync when reinstall.
+const InitSyncProgress = 10
+
 func (c *Conversation) Work(c2v common.Cmd2Value) {
 	log.ZDebug(c2v.Ctx, "NotificationCmd start", "cmd", c2v.Cmd, "value", c2v.Value)
 	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "cmd", c2v.Cmd, "value", c2v.Value)
@@ -57,6 +60,8 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		c.syncData(c2v)
 	case constant.CmdSyncFlag:
 		c.syncFlag(c2v)
+	case constant.CmdMsgSyncInReinstall:
+		c.doMsgSyncByReinstalled(c2v)
 	}
 }
 
@@ -68,18 +73,23 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		log.ZDebug(ctx, "AppDataSyncStart")
 		c.startTime = time.Now()
 		c.ConversationListener().OnSyncServerStart(true)
+		c.ConversationListener().OnSyncServerProgress(1)
 		asyncWaitFunctions := []func(c context.Context) error{
 			c.group.SyncAllJoinedGroupsAndMembers,
 			c.friend.IncrSyncFriends,
 		}
-		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait, c.ConversationListener().OnSyncServerProgress)
+		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait)
+		c.addInitProgress(InitSyncProgress * 4 / 10)              // add 40% of InitSyncProgress as progress
+		c.ConversationListener().OnSyncServerProgress(c.progress) // notify server current Progress
 
 		syncWaitFunctions := []func(c context.Context) error{
 			c.IncrSyncConversations,
 			c.SyncAllConversationHashReadSeqs,
 		}
-		runSyncFunctions(ctx, syncWaitFunctions, syncWait, c.ConversationListener().OnSyncServerProgress)
+		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
 		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
+		c.addInitProgress(InitSyncProgress * 6 / 10)              // add 60% of InitSyncProgress as progress
+		c.ConversationListener().OnSyncServerProgress(c.progress) // notify server current Progress
 
 		asyncNoWaitFunctions := []func(c context.Context) error{
 			c.user.SyncLoginUserInfoWithoutNotice,
@@ -90,17 +100,18 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.group.SyncAllSelfGroupApplicationWithoutNotice,
 			c.user.SyncAllCommandWithoutNotice,
 		}
-		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait, c.ConversationListener().OnSyncServerProgress)
+		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
 	case constant.AppDataSyncFinish:
 		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).Milliseconds())
+		c.progress = 100
+		c.ConversationListener().OnSyncServerProgress(c.progress)
 		c.ConversationListener().OnSyncServerFinish(true)
 	case constant.MsgSyncBegin:
 		log.ZDebug(ctx, "MsgSyncBegin")
 		c.ConversationListener().OnSyncServerStart(false)
 
 		c.syncData(c2v)
-
 	case constant.MsgSyncFailed:
 		c.ConversationListener().OnSyncServerFailed(false)
 	case constant.MsgSyncEnd:
@@ -376,7 +387,7 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 		c.SyncAllConversationHashReadSeqs,
 	}
 
-	runSyncFunctions(ctx, syncFuncs, syncWait, nil)
+	runSyncFunctions(ctx, syncFuncs, syncWait)
 
 	// Asynchronous sync functions
 	asyncFuncs := []func(c context.Context) error{
@@ -392,22 +403,21 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 		c.IncrSyncConversations,
 	}
 
-	runSyncFunctions(ctx, asyncFuncs, asyncNoWait, nil)
+	runSyncFunctions(ctx, asyncFuncs, asyncNoWait)
 }
 
-func runSyncFunctions(ctx context.Context, funcs []func(c context.Context) error, mode int, progressCallback func(progress int)) {
-	totalFuncs := len(funcs)
+func runSyncFunctions(ctx context.Context, funcs []func(c context.Context) error, mode int) {
 	var wg sync.WaitGroup
 
-	for i, fn := range funcs {
+	for _, fn := range funcs {
 		switch mode {
 		case asyncWait:
 			wg.Add(1)
-			go executeSyncFunction(ctx, fn, i, totalFuncs, progressCallback, &wg)
+			go executeSyncFunction(ctx, fn, &wg)
 		case asyncNoWait:
-			go executeSyncFunction(ctx, fn, i, totalFuncs, progressCallback, nil)
+			go executeSyncFunction(ctx, fn, nil)
 		case syncWait:
-			executeSyncFunction(ctx, fn, i, totalFuncs, progressCallback, nil)
+			executeSyncFunction(ctx, fn, nil)
 		}
 	}
 
@@ -416,7 +426,7 @@ func runSyncFunctions(ctx context.Context, funcs []func(c context.Context) error
 	}
 }
 
-func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, index, total int, progressCallback func(progress int), wg *sync.WaitGroup) {
+func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, wg *sync.WaitGroup) {
 	if wg != nil {
 		defer wg.Done()
 	}
@@ -429,13 +439,6 @@ func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, 
 		log.ZWarn(ctx, fmt.Sprintf("%s sync error", funcName), err, "duration", duration.Seconds())
 	} else {
 		log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
-	}
-	if progressCallback != nil {
-		progress := int(float64(index+1) / float64(total) * 100)
-		if progress == 0 {
-			progress = 1
-		}
-		progressCallback(progress)
 	}
 }
 

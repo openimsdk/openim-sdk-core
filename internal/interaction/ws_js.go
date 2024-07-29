@@ -71,6 +71,9 @@ func (w *JSWebSocket) Close() error {
 }
 
 func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
+	if messageType == PingMessage || messageType == PongMessage {
+		return nil
+	}
 	return w.conn.Write(context.Background(), websocket.MessageType(messageType), message)
 }
 

@@ -96,6 +96,12 @@ func (d *DataBase) UpdateMessageBySeq(ctx context.Context, conversationID string
 }
 
 func (d *DataBase) BatchInsertMessageList(ctx context.Context, conversationID string, MessageList []*model_struct.LocalChatLog) error {
+	err := d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return err
+	}
+
 	if MessageList == nil {
 		return nil
 	}

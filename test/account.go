@@ -85,7 +85,7 @@ var AdminToken = ""
 
 func init() {
 	AdminToken = getToken("openIM123456")
-	if err := log.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0, 24, "23432"); err != nil {
+	if err := log.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0, 24, "23432", true); err != nil {
 		//fmt.Println("123456", "log init failed ", err.Error())
 	}
 

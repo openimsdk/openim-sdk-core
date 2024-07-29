@@ -212,6 +212,11 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
+func (u *LoginMgr) SetToken(userID, token string) {
+	u.info.UserID = userID
+	u.info.Token = token
+}
+
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	u.conversationListener = conversationListener
 }
@@ -346,7 +351,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.db)
 	u.business = business.NewBusiness(u.db)
-	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, constant.SdkVersion, u.info.SystemType, u.info.LogFilePath, u.file)
+	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, u.info.SystemType, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
