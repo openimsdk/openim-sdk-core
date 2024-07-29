@@ -33,7 +33,7 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(config.ErrGroupCommonLimit)
+	gr.SetLimit(config.ErrGroupSmallLimit)
 	for i, userID := range vars.SuperUserIDs {
 		i := i
 		userID := userID
