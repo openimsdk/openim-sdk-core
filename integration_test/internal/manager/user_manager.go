@@ -56,26 +56,27 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 
 func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "initSDKAndLogin begin", "len userIDs", len(userIDs))
+	log.ZDebug(ctx, "InitSDK begin", "len userIDs", len(userIDs))
 	defer func() {
-		log.ZDebug(ctx, "initSDKAndLogin end", "time consuming", time.Since(tm))
+		log.ZDebug(ctx, "InitSDK end", "time consuming", time.Since(tm))
 	}()
 
-	gr, ctx := errgroup.WithContext(ctx)
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr, _ := errgroup.WithContext(ctx)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
+			userNum := utils.MustGetUserNum(userID)
 			token, err := t.GetToken(userID, config.PlatformID)
 			if err != nil {
 				return err
 			}
-			mgr, err := sdk_user_simulator.InitSDK(userID, token, t.IMConfig)
+			ctx, mgr, err := sdk_user_simulator.InitSDK(ctx, userID, token, t.IMConfig)
 			if err != nil {
 				return err
 			}
-			userNum := utils.MustGetUserNum(userID)
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
+			vars.Contexts[userNum] = ctx                                 // init ctx
 			return nil
 		})
 	}
@@ -98,14 +99,14 @@ func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
 		log.ZDebug(ctx, "login end", "time consuming", time.Since(tm))
 	}()
 
-	gr, ctx := errgroup.WithContext(ctx)
-	gr.SetLimit(vars.ErrGroupCommonLimit)
+	gr, _ := errgroup.WithContext(ctx)
+	gr.SetLimit(config.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
 			token, err := t.GetToken(userID, config.PlatformID)
 			userNum := utils.MustGetUserNum(userID)
-			err = sdk.TestSDKs[userNum].SDK.Login(ctx, userID, token)
+			err = sdk.TestSDKs[userNum].SDK.LoginWithOutInit(vars.Contexts[userNum], userID, token)
 			if err != nil {
 				return err
 			}

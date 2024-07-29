@@ -1,16 +1,17 @@
 package sdk_user_simulator
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
+	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/version"
-	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
+	"sync"
 )
 
 var (
+	MapLock        sync.Mutex
 	UserMessageMap = make(map[string]*MsgListenerCallBak)
 	timeOffset     int64
 )
@@ -19,16 +20,23 @@ func GetRelativeServerTime() int64 {
 	return utils.GetCurrentTimestampByMill() + timeOffset
 }
 
-func InitSDK(userID, token string, cf sdk_struct.IMConfig) (*open_im_sdk.LoginMgr, error) {
+func InitSDK(ctx context.Context, userID, token string, cf sdk_struct.IMConfig) (context.Context, *open_im_sdk.LoginMgr, error) {
 	userForSDK := open_im_sdk.NewLoginMgr()
 	var testConnListener testConnListener
-	userForSDK.InitSDK(cf, &testConnListener)
-	if err := log.InitFromConfig(userID+"_open-im-sdk-core", "", int(config.LogLevel), true, false, cf.DataDir, 0, 24, version.Version, true); err != nil {
-		return nil, err
+	isInit := userForSDK.InitSDK(cf, &testConnListener)
+	if !isInit {
+		return nil, nil, errs.New("sdk init failed").Wrap()
 	}
+
 	SetListener(userForSDK, userID)
-	userForSDK.SetToken(userID, token)
-	return userForSDK, nil
+
+	ctx = userForSDK.Context()
+	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+	if err := userForSDK.InitMgr(ctx, userID, token); err != nil {
+		return nil, nil, err
+	}
+
+	return ctx, userForSDK, nil
 }
 
 func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {
@@ -38,7 +46,9 @@ func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {
 	userForSDK.SetUserListener(testUser)
 
 	msgCallBack := NewMsgListenerCallBak(userID)
+	MapLock.Lock()
 	UserMessageMap[userID] = msgCallBack
+	MapLock.Unlock()
 	userForSDK.SetAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
