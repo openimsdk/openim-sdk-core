@@ -194,7 +194,7 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 			_, err := c.db.MarkConversationMessageAsReadBySeqs(ctx, conversation.ConversationID, seqs)
 			if err != nil {
 				log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversation.ConversationID, "seqs", seqs)
-				return errs.Wrap(err)
+				return err
 			}
 		} else {
 			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversation.ConversationID, "hasReadSeq", hasReadSeq)
@@ -204,17 +204,17 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 			decrUnreadCount := hasReadSeq - conversation.HasReadSeq
 			if err := c.db.DecrConversationUnreadCount(ctx, conversation.ConversationID, decrUnreadCount); err != nil {
 				log.ZError(ctx, "DecrConversationUnreadCount err", err, "conversationID", conversation.ConversationID, "decrUnreadCount", decrUnreadCount)
-				return errs.Wrap(err)
+				return err
 			}
 			if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"has_read_seq": hasReadSeq}); err != nil {
 				log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
-				return errs.Wrap(err)
+				return err
 			}
 		}
 		latestMsg := &sdk_struct.MsgStruct{}
 		if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
 			log.ZError(ctx, "Unmarshal err", err, "conversationID", conversation.ConversationID, "latestMsg", conversation.LatestMsg)
-			return errs.Wrap(err)
+			return err
 		}
 		if (!latestMsg.IsRead) && datautil.Contain(latestMsg.Seq, seqs...) {
 			latestMsg.IsRead = true
@@ -224,7 +224,7 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 	} else {
 		if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"unread_count": 0}); err != nil {
 			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
-			return errs.Wrap(err)
+			return err
 		}
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}})
@@ -238,13 +238,13 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) er
 	err := utils.UnmarshalNotificationElem(msg.Content, tips)
 	if err != nil {
 		log.ZWarn(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
-		return errs.Wrap(err)
+		return err
 	}
 	log.ZDebug(ctx, "do readDrawing", "tips", tips)
 	conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
 	if err != nil {
-		log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
-		return errs.Wrap(err)
+		log.ZWarn(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
+		return err
 
 	}
 	if tips.MarkAsReadUserID != c.loginUserID {
@@ -253,15 +253,15 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) er
 		}
 		messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)
 		if err != nil {
-			log.ZError(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
-			return errs.Wrap(err)
+			log.ZWarn(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
+			return err
 
 		}
 		if conversation.ConversationType == constant.SingleChatType {
 			latestMsg := &sdk_struct.MsgStruct{}
 			if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
-				log.ZError(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
-				return errs.Wrap(err)
+				log.ZWarn(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
+				return err
 			}
 			var successMsgIDs []string
 			for _, message := range messages {
@@ -271,8 +271,8 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) er
 				message.AttachedInfo = utils.StructToJsonString(attachInfo)
 				message.IsRead = true
 				if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
-					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
-					return errs.Wrap(err)
+					log.ZWarn(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
+					return err
 				} else {
 					if latestMsg.ClientMsgID == message.ClientMsgID {
 						latestMsg.IsRead = message.IsRead

@@ -761,14 +761,14 @@ func (c *Conversation) DoConversationChangedNotification(ctx context.Context, ms
 	//var notification sdkws.ConversationChangedNotification
 	tips := &sdkws.ConversationUpdateTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
-		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
-		return errs.Wrap(err)
+		log.ZWarn(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
+		return err
 	}
 
 	err := c.IncrSyncConversations(ctx)
 	if err != nil {
 		log.ZWarn(ctx, "IncrSyncConversations err", err)
-		return errs.Wrap(err)
+		return err
 	}
 	return nil
 }
@@ -779,14 +779,14 @@ func (c *Conversation) DoConversationIsPrivateChangedNotification(ctx context.Co
 
 	tips := &sdkws.ConversationSetPrivateTips{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, tips); err != nil {
-		log.ZError(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
-		return errs.Wrap(err)
+		log.ZWarn(ctx, "UnmarshalNotificationElem err", err, "msg", msg)
+		return err
 	}
 
 	err := c.IncrSyncConversations(ctx)
 	if err != nil {
 		log.ZWarn(ctx, "IncrSyncConversations err", err)
-		return errs.Wrap(err)
+		return err
 	}
 	return nil
 }

@@ -36,7 +36,7 @@ import (
 func (c *Conversation) doRevokeMsg(ctx context.Context, msg *sdkws.MsgData) error {
 	var tips sdkws.RevokeMsgTips
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-		log.ZError(ctx, "unmarshal failed", err, "msg", msg)
+		log.ZWarn(ctx, "unmarshal failed", err, "msg", msg)
 		return errs.Wrap(err)
 	}
 	log.ZDebug(ctx, "do revokeMessage", "tips", &tips)
