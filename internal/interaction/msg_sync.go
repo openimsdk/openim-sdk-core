@@ -16,9 +16,10 @@ package interaction
 
 import (
 	"context"
-	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -206,10 +207,13 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 			m.syncedMaxSeqs[conversationID] = seq
 		}
 
-		err := m.db.BatchInsertNotificationSeq(ctx, notificationSeqs)
-		if err != nil {
-			log.ZWarn(ctx, "BatchInsertNotificationSeq err", err)
+		if len(notificationSeqs) > 0 {
+			err := m.db.BatchInsertNotificationSeq(ctx, notificationSeqs)
+			if err != nil {
+				log.ZWarn(ctx, "BatchInsertNotificationSeq err", err)
+			}
 		}
+
 		for conversationID, maxSeq := range messagesSeqMap {
 			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
 				if maxSeq > syncedMaxSeq {
@@ -385,7 +389,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 			total      = len(seqMap)
 			gr         *errgroup.Group
 		)
-		gr, ctx = errgroup.WithContext(ctx)
+		gr, _ = errgroup.WithContext(ctx)
 		gr.SetLimit(pullMsgGoroutineLimit)
 		for k, v := range seqMap {
 			oneConversationSyncNum := min(v[1]-v[0]+1, syncMsgNum)
@@ -394,7 +398,11 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				msgNum += int(oneConversationSyncNum)
 			}
 			if msgNum >= SplitPullMsgNum {
-				tpSeqMap := tempSeqMap
+				tpSeqMap := make(map[string][2]int64, len(tempSeqMap))
+				for k, v := range tempSeqMap {
+					tpSeqMap[k] = v
+				}
+
 				gr.Go(func() error {
 					resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
 					if err != nil {

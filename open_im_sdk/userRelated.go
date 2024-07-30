@@ -321,14 +321,9 @@ func (u *LoginMgr) handlerSendingMsg(ctx context.Context, sendingMsg *model_stru
 	return nil
 }
 
-func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
-	if u.getLoginStatus(ctx) == Logged {
-		return sdkerrs.ErrLoginRepeat
-	}
-	u.setLoginStatus(Logging)
+func (u *LoginMgr) initMgr(ctx context.Context, userID, token string) error {
 	u.info.UserID = userID
 	u.info.Token = token
-	log.ZDebug(ctx, "login start... ", "userID", userID, "token", token)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
@@ -346,16 +341,41 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.db)
 	u.business = business.NewBusiness(u.db)
-	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, constant.SdkVersion, u.info.SystemType, u.info.LogFilePath, u.file)
+	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, u.info.SystemType, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.business, u.full, u.file)
 	u.setListener(ctx)
+	return nil
+}
+
+func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
+	if u.getLoginStatus(ctx) == Logged {
+		return sdkerrs.ErrLoginRepeat
+	}
+	u.setLoginStatus(Logging)
+	log.ZDebug(ctx, "login start... ", "userID", userID, "token", token)
+	t1 := time.Now()
+
+	if err := u.initMgr(ctx, userID, token); err != nil {
+		return err
+	}
+
 	u.run(ctx)
 	u.setLoginStatus(Logged)
 	log.ZDebug(ctx, "login success...", "login cost time: ", time.Since(t1))
+	return nil
+}
+
+func (u *LoginMgr) loginWithOutInit(ctx context.Context, userID, token string) error {
+	if u.getLoginStatus(ctx) == Logged {
+		return sdkerrs.ErrLoginRepeat
+	}
+	u.setLoginStatus(Logging)
+	u.run(ctx)
+	u.setLoginStatus(Logged)
 	return nil
 }
 

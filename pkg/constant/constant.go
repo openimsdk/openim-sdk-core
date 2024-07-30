@@ -131,6 +131,7 @@ const (
 
 	ConversationPrivateChatNotification = 1701
 	ConversationUnreadNotification      = 1702
+	ClearConversationNotification       = 1703
 
 	WorkMomentNotificationBegin = 1900
 	WorkMomentNotification      = 1901
@@ -143,8 +144,8 @@ const (
 
 	HasReadReceiptNotification      = 2150
 	GroupHasReadReceiptNotification = 2155
-	ClearConversationNotification   = 2101
-	DeleteMsgsNotification          = 2102
+
+	DeleteMsgsNotification = 2102
 
 	HasReadReceipt = 2200
 
@@ -385,15 +386,6 @@ const (
 )
 
 const BigVersion = "v3"
-const UpdateVersion = ".0.0"
-const SdkVersion = "openim-sdk-core-"
-const LogFileName = "sdk"
-
-func GetSdkVersion() string {
-	return SdkVersion + BigVersion + UpdateVersion
-}
-
-var HeartbeatInterval = 5
 
 const (
 	MsgSyncModelDefault  = 0   //SyncFlag

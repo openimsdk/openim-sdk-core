@@ -31,17 +31,13 @@ import (
 )
 
 func GetSdkVersion() string {
-	return constant.GetSdkVersion()
+	return version.Version
 }
 
 const (
 	rotateCount  uint = 0
 	rotationTime uint = 24
 )
-
-func SetHeartbeatInterval(heartbeatInterval int) {
-	constant.HeartbeatInterval = heartbeatInterval
-}
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
 	if UserForSDK != nil {
@@ -56,7 +52,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	if configArgs.PlatformID == 0 {
 		return false
 	}
-	if err := log.InitFromConfig("open-im-sdk-core", "", int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version); err != nil {
+	if err := log.InitFromConfig("open-im-sdk-core", "", int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version, true); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 	}
 	fmt.Println("init log success")
@@ -71,7 +67,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		return false
 	}
 
-	log.ZInfo(ctx, "InitSDK info", "config", configArgs, "sdkVersion", GetSdkVersion())
+	log.ZInfo(ctx, "InitSDK info", "config", configArgs)
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
@@ -118,8 +114,16 @@ func GetLoginUserID() string {
 	return UserForSDK.GetLoginUserID()
 }
 
+func (u *LoginMgr) InitMgr(ctx context.Context, userID, token string) error {
+	return u.initMgr(ctx, userID, token)
+}
+
 func (u *LoginMgr) Login(ctx context.Context, userID, token string) error {
 	return u.login(ctx, userID, token)
+}
+
+func (u *LoginMgr) LoginWithOutInit(ctx context.Context, userID, token string) error {
+	return u.loginWithOutInit(ctx, userID, token)
 }
 
 func (u *LoginMgr) Logout(ctx context.Context) error {

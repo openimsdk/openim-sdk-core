@@ -19,16 +19,17 @@ package wasm_wrapper
 
 import (
 	"errors"
+	"syscall/js"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/event_listener"
-	"syscall/js"
 )
 
 const COMMONEVENTFUNC = "commonEventFunc"
 
 var ErrArgsLength = errors.New("from javascript args length err")
-var ErrFunNameNotSet = errors.New("reflect funcation not to set")
+var ErrFunNameNotSet = errors.New("reflect func not to set")
 
 type SetListener struct {
 	*WrapperCommon

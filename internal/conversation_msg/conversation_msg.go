@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
@@ -40,6 +41,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -60,27 +62,29 @@ var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*interaction.LongConnMgr
-	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
-	db                   db_interface.DataBase
-	ConversationListener func() open_im_sdk_callback.OnConversationListener
-	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
-	msgKvListener        func() open_im_sdk_callback.OnMessageKvInfoListener
-	batchMsgListener     func() open_im_sdk_callback.OnBatchMsgListener
-	recvCH               chan common.Cmd2Value
-	loginUserID          string
-	platformID           int32
-	DataDir              string
-	friend               *friend.Friend
-	group                *group.Group
-	user                 *user.User
-	file                 *file.File
-	business             *business.Business
-	messageController    *MessageController
-	cache                *cache.Cache[string, *model_struct.LocalConversation]
-	full                 *full.Full
-	maxSeqRecorder       MaxSeqRecorder
-	IsExternalExtensions bool
-	progress             int
+	conversationSyncer    *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
+	db                    db_interface.DataBase
+	ConversationListener  func() open_im_sdk_callback.OnConversationListener
+	msgListener           func() open_im_sdk_callback.OnAdvancedMsgListener
+	msgKvListener         func() open_im_sdk_callback.OnMessageKvInfoListener
+	batchMsgListener      func() open_im_sdk_callback.OnBatchMsgListener
+	recvCH                chan common.Cmd2Value
+	loginUserID           string
+	platformID            int32
+	DataDir               string
+	friend                *friend.Friend
+	group                 *group.Group
+	user                  *user.User
+	file                  *file.File
+	business              *business.Business
+	messageController     *MessageController
+	cache                 *cache.Cache[string, *model_struct.LocalConversation]
+	full                  *full.Full
+	maxSeqRecorder        MaxSeqRecorder
+	IsExternalExtensions  bool
+	msgOffset             int
+	progress              int
+	conversationSyncMutex sync.Mutex
 
 	startTime time.Time
 
@@ -118,6 +122,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
+		msgOffset:            0,
 		progress:             0,
 	}
 	n.typing = newTyping(n)
@@ -447,20 +452,26 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	allMsg := c2v.Value.(sdk_struct.CmdMsgSyncInReinstall).Msgs
 	ctx := c2v.Ctx
 	msgLen := len(allMsg)
+	c.msgOffset += msgLen
 	total := c2v.Value.(sdk_struct.CmdMsgSyncInReinstall).Total
 
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	conversationList := make([]*model_struct.LocalConversation, 0)
 
-	log.ZDebug(ctx, "message come here conversation ch", "conversation length", msgLen)
+	log.ZDebug(ctx, "message come here conversation ch in reinstalled", "conversation length", msgLen)
 	b := time.Now()
 
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
-			conversationID, "message length", msgLen)
+			conversationID, "message length", len(msgs.Msgs))
 		var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
 		var latestMsg *sdk_struct.MsgStruct
+		if len(msgs.Msgs) == 0 {
+			log.ZWarn(ctx, "msg.Msgs is empty", errs.New("msg.Msgs is empty"), "conversationID", conversationID)
+			continue
+		}
 		for _, v := range msgs.Msgs {
+
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			msg := &sdk_struct.MsgStruct{}
 			// TODO need replace when after.
@@ -491,7 +502,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 			log.ZDebug(ctx, "decode message", "msg", msg)
 			if v.SendID == c.loginUserID {
 				// Messages sent by myself  //if  sent through  this terminal
-				log.ZInfo(ctx, "sync message", "msg", msg)
+				log.ZInfo(ctx, "sync message in reinstalled", "msg", msg)
 
 				latestMsg = msg
 
@@ -502,11 +513,16 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 				latestMsg = msg
 			}
 		}
-		conversationList = append(conversationList, &model_struct.LocalConversation{
-			LatestMsg:         utils.StructToJsonString(latestMsg),
-			LatestMsgSendTime: latestMsg.SendTime,
-			ConversationID:    conversationID,
-		})
+
+		if latestMsg != nil {
+			conversationList = append(conversationList, &model_struct.LocalConversation{
+				LatestMsg:         utils.StructToJsonString(latestMsg),
+				LatestMsgSendTime: latestMsg.SendTime,
+				ConversationID:    conversationID,
+			})
+		} else {
+			log.ZWarn(ctx, "latestMsg is nil", errs.New("latestMsg is nil"), "conversationID", conversationID)
+		}
 
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
 	}
@@ -520,20 +536,15 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	c.addProgress(msgLen / total * 90)
-	c.ConversationListener().OnSyncServerProgress(c.getProgress())
-
+	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
+	c.ConversationListener().OnSyncServerProgress((c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
 }
 
-func (c *Conversation) addProgress(progress int) {
+func (c *Conversation) addInitProgress(progress int) {
 	c.progress += progress
 	if c.progress > 100 {
 		c.progress = 100
 	}
-}
-
-func (c *Conversation) getProgress() int {
-	return c.progress
 }
 
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
@@ -964,7 +975,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	}
 	msg.Content = ""
 
-	return utils.Wrap(err, "")
+	return errs.Wrap(err)
 }
 
 func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs map[string]*model_struct.LocalConversation) {
