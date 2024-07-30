@@ -7,11 +7,11 @@ import (
 )
 
 func InitFlag() {
-	flag.IntVar(&vars.UserNum, "u", 1000, "user num")
-	flag.IntVar(&vars.SuperUserNum, "su", 50, "number of users with all friends")
-	flag.IntVar(&vars.LargeGroupNum, "gl", 50, "number of big group")
+	flag.IntVar(&vars.UserNum, "u", 100, "user num")
+	flag.IntVar(&vars.SuperUserNum, "su", 10, "number of users with all friends")
+	flag.IntVar(&vars.LargeGroupNum, "gl", 5, "number of big group")
 	flag.IntVar(&vars.CommonGroupNum, "gs", 10, "number of small group")
-	flag.IntVar(&vars.CommonGroupMemberNum, "gsm", 10, "number of small group member num")
+	flag.IntVar(&vars.CommonGroupMemberNum, "gsm", 20, "number of small group member num")
 	flag.IntVar(&vars.SingleMessageNum, "sm", 5, "number of single message each user send")
 	flag.IntVar(&vars.GroupMessageNum, "gm", 1, "number of group message each user send")
 
