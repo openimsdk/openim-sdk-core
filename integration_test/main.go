@@ -104,4 +104,5 @@ func main() {
 	}
 
 	log.ZInfo(ctx, "start success!")
+	select {}
 }
