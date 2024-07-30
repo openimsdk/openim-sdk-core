@@ -13,7 +13,8 @@ var (
 	ShouldImportFriends bool // determine whether import friends
 	ShouldCreateGroup   bool // determine whether create group
 
-	ShouldCheckGroupNum bool // determine whether check group num
+	ShouldCheckGroupNum        bool // determine whether check group num
+	ShouldCheckConversationNum bool // determine whether check conversation num
 
 	LoginRate float64 // number of login user rate
 )

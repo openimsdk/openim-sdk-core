@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/checker"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/manager"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/initialization"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/process/checker"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
@@ -79,6 +79,12 @@ func DoFlagFunc(ctx context.Context) (err error) {
 
 	if vars.ShouldCheckGroupNum {
 		if err = checker.CheckGroupNum(ctx); err != nil {
+			return err
+		}
+	}
+
+	if vars.ShouldCheckConversationNum {
+		if err = checker.CheckConvNumAfterImpFriAndCrGro(ctx); err != nil {
 			return err
 		}
 	}
