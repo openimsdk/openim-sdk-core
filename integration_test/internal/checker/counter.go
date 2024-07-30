@@ -43,7 +43,7 @@ type CounterChecker[T any, K comparable] struct {
 }
 
 func (c *CounterChecker[T, K]) Init() {
-	c.CheckName = stringutil.LowerFirst(c.CheckerKeyName)
+	c.CheckName = stringutil.LowerFirst(c.CheckName)
 	c.checkNumName = strings.TrimPrefix(c.CheckName, "check")
 }
 
