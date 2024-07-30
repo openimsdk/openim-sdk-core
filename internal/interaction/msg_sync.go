@@ -536,7 +536,7 @@ func (m *MsgSyncer) triggerNotification(ctx context.Context, msgs map[string]*sd
 	if len(msgs) > 0 {
 		common.TriggerCmdNotification(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
 	} else {
-		log.ZDebug(ctx, "triggerNotification is nil", "msgs", msgs)
+		log.ZDebug(ctx, "triggerNotification is nil", "notifications", msgs)
 	}
 	return nil
 
