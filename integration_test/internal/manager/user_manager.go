@@ -36,9 +36,9 @@ func (t *TestUserManager) GenAllUserIDs() []string {
 
 func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "register begin", "len userIDs", len(userIDs))
+	log.ZInfo(ctx, "register begin", "len userIDs", len(userIDs))
 	defer func() {
-		log.ZDebug(ctx, "register end", "time consuming", time.Since(tm))
+		log.ZInfo(ctx, "register end", "time consuming", time.Since(tm))
 	}()
 
 	var users []*sdkws.UserInfo
@@ -56,9 +56,9 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 
 func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "InitSDK begin", "len userIDs", len(userIDs))
+	log.ZInfo(ctx, "InitSDK begin", "len userIDs", len(userIDs))
 	defer func() {
-		log.ZDebug(ctx, "InitSDK end", "time consuming", time.Since(tm))
+		log.ZInfo(ctx, "InitSDK end", "time consuming", time.Since(tm))
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
@@ -94,9 +94,9 @@ func (t *TestUserManager) LoginByRate(ctx context.Context, rate float64) error {
 
 func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "login begin", "len userIDs", len(userIDs))
+	log.ZInfo(ctx, "login begin", "len userIDs", len(userIDs))
 	defer func() {
-		log.ZDebug(ctx, "login end", "time consuming", time.Since(tm))
+		log.ZInfo(ctx, "login end", "time consuming", time.Since(tm))
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)

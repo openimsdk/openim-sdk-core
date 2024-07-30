@@ -49,7 +49,6 @@ func (c *CounterChecker[T, K]) Init() {
 
 func (c *CounterChecker[T, K]) Check(ctx context.Context) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "checkGroupNum begin")
 	log.ZDebug(ctx, fmt.Sprintf("%s begin", c.checkNumName))
 	defer func() {
 		log.ZDebug(ctx, fmt.Sprintf("%s end", c.checkNumName), "time consuming", time.Since(tm))

@@ -24,9 +24,9 @@ func NewGroupManager(m *MetaManager) *TestGroupManager {
 // Every user creates regular group chats, and the number of regular group chats to be created is specified by vars.CommonGroupNum.
 func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "createGroups begin")
+	log.ZInfo(ctx, "createGroups begin")
 	defer func() {
-		log.ZDebug(ctx, "createGroups end", "time consuming", time.Since(tm))
+		log.ZInfo(ctx, "createGroups end", "time consuming", time.Since(tm))
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)

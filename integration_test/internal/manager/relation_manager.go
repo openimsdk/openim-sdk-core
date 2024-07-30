@@ -27,9 +27,9 @@ func NewRelationManager(m *MetaManager) *TestRelationManager {
 // their IDs range from 0 to vars.SuperUserNum.
 func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 	tm := time.Now()
-	log.ZDebug(ctx, "importFriends begin")
+	log.ZInfo(ctx, "importFriends begin")
 	defer func() {
-		log.ZDebug(ctx, "importFriends end", "time consuming", time.Since(tm))
+		log.ZInfo(ctx, "importFriends end", "time consuming", time.Since(tm))
 	}()
 
 	gr, _ := errgroup.WithContext(ctx)
