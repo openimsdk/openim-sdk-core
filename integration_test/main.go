@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/checker"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/manager"
@@ -10,6 +11,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
+	"time"
 )
 
 func Init(ctx context.Context) error {
@@ -46,6 +48,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		userMng     = manager.NewUserManager(m)
 		groupMng    = manager.NewGroupManager(m)
 		relationMng = manager.NewRelationManager(m)
+		msgMng      = manager.NewMsgManager(m)
 	)
 	if err = m.WithAdminToken(); err != nil {
 		return err
@@ -70,7 +73,8 @@ func DoFlagFunc(ctx context.Context) (err error) {
 			return err
 		}
 	}
-
+	fmt.Println("sleep~")
+	time.Sleep(time.Second * 60)
 	if vars.ShouldCreateGroup {
 		if err = groupMng.CreateGroups(ctx); err != nil {
 			return err
@@ -85,6 +89,12 @@ func DoFlagFunc(ctx context.Context) (err error) {
 
 	if vars.ShouldCheckConversationNum {
 		if err = checker.CheckConvNumAfterImpFriAndCrGro(ctx); err != nil {
+			return err
+		}
+	}
+
+	if vars.ShouldSendMsg {
+		if err = msgMng.SendMessages(ctx); err != nil {
 			return err
 		}
 	}

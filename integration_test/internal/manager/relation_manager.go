@@ -3,13 +3,12 @@ package manager
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/relation"
-	"github.com/openimsdk/tools/log"
 	"golang.org/x/sync/errgroup"
-	"time"
 )
 
 type TestRelationManager struct {
@@ -26,11 +25,7 @@ func NewRelationManager(m *MetaManager) *TestRelationManager {
 // A superuser is defined as a user who has all users as friends,
 // their IDs range from 0 to vars.SuperUserNum.
 func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
-	tm := time.Now()
-	log.ZInfo(ctx, "importFriends begin")
-	defer func() {
-		log.ZInfo(ctx, "importFriends end", "time consuming", time.Since(tm))
-	}()
+	defer decorator.FuncLog(ctx)()
 
 	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(config.ErrGroupSmallLimit)

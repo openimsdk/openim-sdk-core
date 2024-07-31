@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/sdk_user_simulator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
@@ -10,10 +11,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
-	"github.com/openimsdk/tools/log"
 	"golang.org/x/sync/errgroup"
 	"math"
-	"time"
 )
 
 type TestUserManager struct {
@@ -35,11 +34,7 @@ func (t *TestUserManager) GenAllUserIDs() []string {
 }
 
 func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) error {
-	tm := time.Now()
-	log.ZInfo(ctx, "register begin", "len userIDs", len(userIDs))
-	defer func() {
-		log.ZInfo(ctx, "register end", "time consuming", time.Since(tm))
-	}()
+	defer decorator.FuncLog(ctx)()
 
 	var users []*sdkws.UserInfo
 	for _, userID := range userIDs {
@@ -55,11 +50,7 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 }
 
 func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
-	tm := time.Now()
-	log.ZInfo(ctx, "InitSDK begin", "len userIDs", len(userIDs))
-	defer func() {
-		log.ZInfo(ctx, "InitSDK end", "time consuming", time.Since(tm))
-	}()
+	decorator.FuncLog(ctx)
 
 	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(config.ErrGroupCommonLimit)
@@ -93,11 +84,7 @@ func (t *TestUserManager) LoginByRate(ctx context.Context, rate float64) error {
 }
 
 func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
-	tm := time.Now()
-	log.ZInfo(ctx, "login begin", "len userIDs", len(userIDs))
-	defer func() {
-		log.ZInfo(ctx, "login end", "time consuming", time.Since(tm))
-	}()
+	decorator.FuncLog(ctx)
 
 	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(config.ErrGroupCommonLimit)

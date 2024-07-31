@@ -3,12 +3,11 @@ package manager
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
-	"github.com/openimsdk/tools/log"
 	"golang.org/x/sync/errgroup"
-	"time"
 )
 
 type TestGroupManager struct {
@@ -23,11 +22,7 @@ func NewGroupManager(m *MetaManager) *TestGroupManager {
 // The number of large group chats to be created is specified by vars.LargeGroupNum, and the group owner cycles from 0 to vars.UserNum.
 // Every user creates regular group chats, and the number of regular group chats to be created is specified by vars.CommonGroupNum.
 func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
-	tm := time.Now()
-	log.ZInfo(ctx, "createGroups begin")
-	defer func() {
-		log.ZInfo(ctx, "createGroups end", "time consuming", time.Since(tm))
-	}()
+	defer decorator.FuncLog(ctx)()
 
 	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(config.ErrGroupCommonLimit)

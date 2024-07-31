@@ -12,6 +12,7 @@ var (
 	ShouldRegister      bool // determine whether register
 	ShouldImportFriends bool // determine whether import friends
 	ShouldCreateGroup   bool // determine whether create group
+	ShouldSendMsg       bool // determine whether send messages
 
 	ShouldCheckGroupNum        bool // determine whether check group num
 	ShouldCheckConversationNum bool // determine whether check conversation num

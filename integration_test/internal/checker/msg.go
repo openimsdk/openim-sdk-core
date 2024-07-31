@@ -3,30 +3,43 @@ package checker
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 )
 
-func CheckGroupNum(ctx context.Context) error {
-	correct := func() int {
+// CheckMessageNum check message num.
+func CheckMessageNum(ctx context.Context) error {
+	corrects := func() [2]int {
+		// corrects[0] :super user conversion num
+		// corrects[1] :common user conversion num
 		largeNum := vars.LargeGroupNum
 		commonNum := vars.CommonGroupNum * vars.CommonGroupMemberNum
-		return largeNum + commonNum
+		groupNum := largeNum + commonNum
+
+		superNum := vars.UserNum - 1 + groupNum
+		commonUserNum := vars.SuperUserNum + groupNum
+
+		return [2]int{superNum, commonUserNum}
 	}()
 
 	c := &CounterChecker[*sdk.TestSDK, string]{
-		CheckName:      "checkGroupNum",
+		CheckName:      "checkConversationNum",
 		CheckerKeyName: "userID",
 		GoroutineLimit: config.ErrGroupCommonLimit,
 		GetTotalCount: func(ctx context.Context, t *sdk.TestSDK) (int, error) {
-			_, groupNum, err := t.GetAllJoinedGroups(ctx)
+			totalNum, err := t.GetTotalConversationCount(ctx)
 			if err != nil {
 				return 0, err
 			}
-			return groupNum, nil
+			return totalNum, nil
 		},
 		CalCorrectCount: func(userID string) int {
-			return correct
+			if utils.IsSuperUser(userID) {
+				return corrects[0]
+			} else {
+				return corrects[1]
+			}
 		},
 		LoopSlice: sdk.TestSDKs,
 		GetKey: func(t *sdk.TestSDK) string {

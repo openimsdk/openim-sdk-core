@@ -3,6 +3,7 @@ package checker
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -10,7 +11,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
-	"time"
 )
 
 type Counter struct {
@@ -48,11 +48,8 @@ func (c *CounterChecker[T, K]) Init() {
 }
 
 func (c *CounterChecker[T, K]) Check(ctx context.Context) error {
-	tm := time.Now()
-	log.ZDebug(ctx, fmt.Sprintf("%s begin", c.checkNumName))
-	defer func() {
-		log.ZDebug(ctx, fmt.Sprintf("%s end", c.checkNumName), "time consuming", time.Since(tm))
-	}()
+	defer decorator.FuncLogSkip(ctx, 1)()
+
 	c.Init()
 
 	var (

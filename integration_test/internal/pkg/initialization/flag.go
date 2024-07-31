@@ -18,6 +18,7 @@ func InitFlag() {
 	flag.BoolVar(&vars.ShouldRegister, "reg", false, "determine whether register")
 	flag.BoolVar(&vars.ShouldImportFriends, "imf", false, "determine whether import friends")
 	flag.BoolVar(&vars.ShouldCreateGroup, "crg", false, "determine whether create group")
+	flag.BoolVar(&vars.ShouldSendMsg, "sem", false, "determine whether send messages")
 
 	flag.BoolVar(&vars.ShouldCheckGroupNum, "ckgn", false, "determine whether check group num")
 	flag.BoolVar(&vars.ShouldCheckConversationNum, "ckcon", false, "determine whether check conversation num")
