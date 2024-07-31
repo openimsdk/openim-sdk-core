@@ -40,10 +40,6 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *errgroup.Gr
 			if err != nil {
 				return err
 			}
-			msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx, fmt.Sprintf("my userID is %s", testSDK.UserID))
-			if err != nil {
-				return err
-			}
 
 			grr, _ := errgroup.WithContext(ctx)
 			grr.SetLimit(config.ErrGroupSmallLimit)
@@ -52,6 +48,10 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *errgroup.Gr
 				if friend.FriendInfo != nil {
 					for i := 0; i < vars.SingleMessageNum; i++ {
 						grr.Go(func() error {
+							msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx, fmt.Sprintf("my userID is %s", testSDK.UserID))
+							if err != nil {
+								return err
+							}
 							_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
 							if err != nil {
 								return err
@@ -85,17 +85,16 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *errgroup.Gro
 				}
 			}
 
-			msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx, fmt.Sprintf("my userID is %s", testSDK.UserID))
-			if err != nil {
-				return err
-			}
-
 			grr, _ := errgroup.WithContext(ctx)
 			grr.SetLimit(config.ErrGroupSmallLimit)
 			for _, group := range sendGroups {
 				group := group
 				for i := 0; i < vars.GroupMessageNum; i++ {
 					grr.Go(func() error {
+						msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx, fmt.Sprintf("my userID is %s", testSDK.UserID))
+						if err != nil {
+							return err
+						}
 						_, err = testSDK.SendGroupMsg(ctx, msg, group)
 						if err != nil {
 							return err
