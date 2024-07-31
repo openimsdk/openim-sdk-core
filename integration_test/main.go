@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+const (
+	sleepSec = 10
+)
+
 func Init(ctx context.Context) error {
 	initialization.InitFlag()
 	flag.Parse()
@@ -75,8 +79,12 @@ func DoFlagFunc(ctx context.Context) (err error) {
 			return err
 		}
 	}
-	fmt.Println("sleep~")
-	time.Sleep(time.Second * 60)
+
+	// sync data
+	if vars.ShouldRegister {
+		Sleep()
+	}
+
 	if vars.ShouldCreateGroup {
 		if err = groupMng.CreateGroups(ctx); err != nil {
 			return err
@@ -97,6 +105,13 @@ func DoFlagFunc(ctx context.Context) (err error) {
 
 	if vars.ShouldSendMsg {
 		if err = msgMng.SendMessages(ctx); err != nil {
+			return err
+		}
+		Sleep()
+	}
+
+	if vars.ShouldCheckMessageNum {
+		if err = checker.CheckMessageNum(ctx); err != nil {
 			return err
 		}
 	}
@@ -121,4 +136,12 @@ func main() {
 	log.ZInfo(ctx, "start success!")
 	fmt.Println("start success!")
 	select {}
+}
+
+func Sleep() {
+	fmt.Printf("sleep %d s for sync data~\n", sleepSec)
+	for i := 0; i < sleepSec; i++ {
+		time.Sleep(time.Second)
+		fmt.Println(1)
+	}
 }

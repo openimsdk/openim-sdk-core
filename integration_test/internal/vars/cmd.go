@@ -16,6 +16,7 @@ var (
 
 	ShouldCheckGroupNum        bool // determine whether check group num
 	ShouldCheckConversationNum bool // determine whether check conversation num
+	ShouldCheckMessageNum      bool // determine whether check message num
 
 	LoginRate float64 // number of login user rate
 )

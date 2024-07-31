@@ -22,6 +22,7 @@ func InitFlag() {
 
 	flag.BoolVar(&vars.ShouldCheckGroupNum, "ckgn", false, "determine whether check group num")
 	flag.BoolVar(&vars.ShouldCheckConversationNum, "ckcon", false, "determine whether check conversation num")
+	flag.BoolVar(&vars.ShouldCheckMessageNum, "ckmsn", false, "determine whether check message num")
 
 	flag.Float64Var(&vars.LoginRate, "lgr", 0, "number of login user rate")
 }
