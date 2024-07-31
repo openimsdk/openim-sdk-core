@@ -2,9 +2,10 @@ package testv2
 
 import (
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"testing"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 )
 
 type SProgress struct{}

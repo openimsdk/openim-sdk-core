@@ -16,6 +16,7 @@ package conversation_msg
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -209,37 +210,46 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 	return nil
 }
 
-func (c *Conversation) doDeleteMsgs(ctx context.Context, msg *sdkws.MsgData) {
+func (c *Conversation) doDeleteMsgs(ctx context.Context, msg *sdkws.MsgData) error {
 	tips := sdkws.DeleteMsgsTips{}
 	utils.UnmarshalNotificationElem(msg.Content, &tips)
 	log.ZDebug(ctx, "doDeleteMsgs", "seqs", tips.Seqs)
 	for _, v := range tips.Seqs {
 		msg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, v)
 		if err != nil {
-			log.ZError(ctx, "GetMessageBySeq err", err, "conversationID", tips.ConversationID, "seq", v)
+			log.ZWarn(ctx, "GetMessageBySeq err", err, "conversationID", tips.ConversationID, "seq", v)
 			continue
 		}
 		var s sdk_struct.MsgStruct
 		copier.Copy(&s, msg)
 		err = c.msgConvert(&s)
 		if err != nil {
-			log.ZError(ctx, "parsing data error", err, "msg", msg)
+			log.ZWarn(ctx, "parsing data error", err, "msg", msg)
+			return err
 		}
 		if err := c.deleteMessageFromLocal(ctx, tips.ConversationID, msg.ClientMsgID); err != nil {
-			log.ZError(ctx, "deleteMessageFromLocal err", err, "conversationID", tips.ConversationID, "seq", v)
+			log.ZWarn(ctx, "deleteMessageFromLocal err", err, "conversationID", tips.ConversationID, "seq", v)
+			return err
 		}
 	}
+	return nil
 }
 
-func (c *Conversation) doClearConversations(ctx context.Context, msg *sdkws.MsgData) {
-	tips := sdkws.ClearConversationTips{}
-	utils.UnmarshalNotificationElem(msg.Content, &tips)
+func (c *Conversation) doClearConversations(ctx context.Context, msg *sdkws.MsgData) error {
+	tips := &sdkws.ClearConversationTips{}
+	err := utils.UnmarshalNotificationElem(msg.Content, tips)
+	if err != nil {
+		return err
+	}
+
 	log.ZDebug(ctx, "doClearConversations", "tips", tips)
 	for _, v := range tips.ConversationIDs {
 		if err := c.clearConversationAndDeleteAllMsg(ctx, v, false, c.db.ClearConversation); err != nil {
-			log.ZError(ctx, "clearConversation err", err, "conversationID", v)
+			log.ZWarn(ctx, "clearConversation err", err, "conversationID", v)
+			return err
 		}
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: tips.ConversationIDs}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
+	return nil
 }

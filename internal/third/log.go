@@ -20,6 +20,10 @@ import (
 	"time"
 )
 
+const (
+	buffer = 10 * 1024 * 1024
+)
+
 // UploadLogs uploadLogs.
 func (c *Third) UploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
 	if c.logUploadLock.TryLock() {
@@ -160,6 +164,9 @@ func readLastNLines(filename string, n int) ([]string, error) {
 	count := 0
 
 	scanner := bufio.NewScanner(f)
+	buf := make([]byte, buffer)
+	scanner.Buffer(buf, buffer)
+
 	for scanner.Scan() {
 		lines[count%n] = scanner.Text()
 		count++
