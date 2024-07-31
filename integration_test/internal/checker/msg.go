@@ -2,6 +2,7 @@ package checker
 
 import (
 	"context"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
@@ -17,10 +18,12 @@ func CheckMessageNum(ctx context.Context) error {
 		commonGroupNum := (vars.GroupMessageNum)*(vars.CommonGroupNum*(vars.CommonGroupMemberNum-1)) +
 			vars.CommonGroupMemberNum*vars.CommonGroupMemberNum
 		groupMsgNum := largeGroupNum + commonGroupNum
+		fmt.Printf("large group num: %d, common group num: %d", groupMsgNum, commonGroupNum)
 
 		superUserMsgNum := (vars.UserNum - 1) * (vars.SingleMessageNum + 1) // send message + become friend message
 		commonUserMsgNum := vars.SuperUserNum * (vars.SingleMessageNum + 1)
 
+		fmt.Printf("super user msg num: %d, common user num: %d", superUserMsgNum, commonUserMsgNum)
 		return [2]int{superUserMsgNum + groupMsgNum, commonUserMsgNum + groupMsgNum}
 	}()
 
