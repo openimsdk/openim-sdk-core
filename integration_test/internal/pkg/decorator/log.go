@@ -32,9 +32,9 @@ func FuncLogSkip(ctx context.Context, skip int) func() {
 	t := time.Now()
 	funcName := stringutil.GetFuncName(skip + 1) // +1 is FuncLogSkip
 	log.ZInfo(ctx, fmt.Sprintf("%s begin", funcName))
-	fmt.Print(fmt.Sprintf("%s begin", funcName))
+	fmt.Println(fmt.Sprintf("%s begin", funcName))
 	return func() {
 		log.ZInfo(ctx, fmt.Sprintf("%s end", funcName), "time consuming", time.Since(t))
-		fmt.Print(fmt.Sprintf("%s end", funcName))
+		fmt.Println(fmt.Sprintf("%s end", funcName))
 	}
 }
