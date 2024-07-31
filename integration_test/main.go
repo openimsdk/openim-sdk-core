@@ -142,6 +142,6 @@ func Sleep() {
 	fmt.Printf("sleep %d s for sync data~\n", sleepSec)
 	for i := 0; i < sleepSec; i++ {
 		time.Sleep(time.Second)
-		fmt.Println(1)
+		fmt.Println(i + 1)
 	}
 }
