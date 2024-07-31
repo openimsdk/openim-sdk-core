@@ -43,6 +43,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *errgroup.Gr
 
 			grr, _ := errgroup.WithContext(ctx)
 			grr.SetLimit(config.ErrGroupSmallLimit)
+			fmt.Printf("sendFriends: %d\n", len(friends))
 			for _, friend := range friends {
 				friend := friend
 				if friend.FriendInfo != nil {
@@ -59,6 +60,8 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *errgroup.Gr
 							return nil
 						})
 					}
+				} else {
+					fmt.Println("what`s this???")
 				}
 			}
 			return grr.Wait()
@@ -84,7 +87,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *errgroup.Gro
 					sendGroups = append(sendGroups, group.GroupID)
 				}
 			}
-
+			fmt.Printf("sendGroups: %d\n", len(sendGroups))
 			grr, _ := errgroup.WithContext(ctx)
 			grr.SetLimit(config.ErrGroupSmallLimit)
 			for _, group := range sendGroups {
