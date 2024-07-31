@@ -50,7 +50,7 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 }
 
 func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
-	decorator.FuncLog(ctx)
+	defer decorator.FuncLog(ctx)()
 
 	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(config.ErrGroupCommonLimit)
@@ -84,7 +84,7 @@ func (t *TestUserManager) LoginByRate(ctx context.Context, rate float64) error {
 }
 
 func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
-	decorator.FuncLog(ctx)
+	defer decorator.FuncLog(ctx)()
 
 	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(config.ErrGroupCommonLimit)
