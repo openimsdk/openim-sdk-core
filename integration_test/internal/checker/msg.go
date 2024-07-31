@@ -10,22 +10,17 @@ import (
 
 // CheckMessageNum check message num.
 func CheckMessageNum(ctx context.Context) error {
-	corrects := func() [3]int {
+	corrects := func() [2]int {
 		// corrects[0] :super user conversion num
 		// corrects[1] :common user conversion num
-
-		createdLargeGroupNum := vars.LargeGroupNum / vars.UserNum
-		remainder := vars.LargeGroupNum % vars.UserNum
-		createdCommonGroupNum := vars.CommonGroupNum
-
-		largeGroupNum := ((vars.UserNum-1)*vars.GroupMessageNum+1)*vars.LargeGroupNum - createdLargeGroupNum
-		commonGroupNum := (vars.GroupMessageNum+1)*(vars.CommonGroupNum*(vars.CommonGroupMemberNum-1)) - createdCommonGroupNum
+		largeGroupNum := ((vars.UserNum-1)*vars.GroupMessageNum + 1) * vars.LargeGroupNum
+		commonGroupNum := (vars.GroupMessageNum + 1) * (vars.CommonGroupNum * (vars.CommonGroupMemberNum - 1))
 		groupMsgNum := largeGroupNum + commonGroupNum
 
 		superUserMsgNum := (vars.UserNum - 1) * (vars.SingleMessageNum + 1) // send message + become friend message
 		commonUserMsgNum := vars.SuperUserNum * (vars.SingleMessageNum + 1)
 
-		return [3]int{superUserMsgNum + groupMsgNum, commonUserMsgNum + groupMsgNum, remainder}
+		return [2]int{superUserMsgNum + groupMsgNum, commonUserMsgNum + groupMsgNum}
 	}()
 
 	c := &CounterChecker[*sdk.TestSDK, string]{
@@ -37,16 +32,11 @@ func CheckMessageNum(ctx context.Context) error {
 			return int(totalNum), nil
 		},
 		CalCorrectCount: func(userID string) int {
-			var res int
 			if utils.IsSuperUser(userID) {
-				res = corrects[0]
+				return corrects[0]
 			} else {
-				res = corrects[1]
+				return corrects[1]
 			}
-			if utils.MustGetUserNum(userID) < corrects[2] {
-				res--
-			}
-			return res
 		},
 		LoopSlice: sdk.TestSDKs,
 		GetKey: func(t *sdk.TestSDK) string {
