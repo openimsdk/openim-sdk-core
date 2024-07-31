@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/manager"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/initialization"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
@@ -104,12 +105,11 @@ func DoFlagFunc(ctx context.Context) (err error) {
 func main() {
 	ctx := context.Background()
 	if err := Init(ctx); err != nil {
-		log.ZError(ctx, "init err", err)
+		log.ZError(ctx, "init err", err, "stack", utils.PrintErrorStack(err))
 		panic(err)
 	}
-
 	if err := DoFlagFunc(ctx); err != nil {
-		log.ZError(ctx, "do flag err", err)
+		log.ZError(ctx, "do flag err", err, "stack", utils.PrintErrorStack(err))
 		panic(err)
 	}
 
