@@ -7,7 +7,7 @@ import (
 )
 
 func InitFlag() {
-	flag.IntVar(&vars.UserNum, " ", 100, "user num")
+	flag.IntVar(&vars.UserNum, "u", 100, "user num")
 	flag.IntVar(&vars.SuperUserNum, "su", 10, "number of users with all friends")
 	flag.IntVar(&vars.LargeGroupNum, "gl", 5, "number of big group")
 	flag.IntVar(&vars.CommonGroupNum, "gs", 10, "number of small group")
