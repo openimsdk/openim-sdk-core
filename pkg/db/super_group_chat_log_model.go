@@ -225,7 +225,7 @@ func (d *DataBase) SuperGroupUpdateSpecificContentTypeMessage(ctx context.Contex
 	return errs.WrapMsg(t.Error, "UpdateMessage failed")
 }
 
-//funcation (d *DataBase) SuperGroupDeleteAllMessage(ctx context.Context, ) error {
+//func (d *DataBase) SuperGroupDeleteAllMessage(ctx context.Context, ) error {
 //	d.mRWMutex.Lock()
 //	defer d.mRWMutex.Unlock()
 //	err := d.conn.WithContext(ctx).Model(&model_struct.LocalChatLog{}).Exec("update local_chat_logs set status = ?,content = ? ", constant.MsgStatusHasDeleted, "").Error

@@ -16,15 +16,16 @@ package common
 
 import (
 	"encoding/json"
+	"runtime"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"runtime"
 )
 
 //var validate *validator.Validate
 
-//funcation init() {
+//func init() {
 //	validate = validator.New()
 //}
 
@@ -57,7 +58,7 @@ func CheckArgsErrCallback(callback open_im_sdk_callback.Base, err error, operati
 }
 
 //
-//funcation CheckErrAndResp2(err error, resp []byte, output interface{}) error {
+//func CheckErrAndResp2(err error, resp []byte, output interface{}) error {
 //	if err != nil {
 //		return utils.Wrap(err, "api resp failed")
 //	}

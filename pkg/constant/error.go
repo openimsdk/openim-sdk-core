@@ -85,7 +85,7 @@ package constant
 //	InBlackList = errors.New("in blackList")
 //)
 //
-//funcation (e *ErrInfo) Error() string {
+//func (e *ErrInfo) Error() string {
 //	return e.ErrMsg
 //}
 //
@@ -107,6 +107,6 @@ package constant
 //	StatusErrTokenKicked:      &ErrTokenKicked,
 //}
 //
-//funcation StatusText(code int) *ErrInfo {
+//func StatusText(code int) *ErrInfo {
 //	return statusText[code]
 //}

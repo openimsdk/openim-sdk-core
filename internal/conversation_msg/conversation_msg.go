@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
@@ -61,28 +62,29 @@ var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*interaction.LongConnMgr
-	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
-	db                   db_interface.DataBase
-	ConversationListener func() open_im_sdk_callback.OnConversationListener
-	msgListener          func() open_im_sdk_callback.OnAdvancedMsgListener
-	msgKvListener        func() open_im_sdk_callback.OnMessageKvInfoListener
-	batchMsgListener     func() open_im_sdk_callback.OnBatchMsgListener
-	recvCH               chan common.Cmd2Value
-	loginUserID          string
-	platformID           int32
-	DataDir              string
-	friend               *friend.Friend
-	group                *group.Group
-	user                 *user.User
-	file                 *file.File
-	business             *business.Business
-	messageController    *MessageController
-	cache                *cache.Cache[string, *model_struct.LocalConversation]
-	full                 *full.Full
-	maxSeqRecorder       MaxSeqRecorder
-	IsExternalExtensions bool
-	msgOffset            int
-	progress             int
+	conversationSyncer    *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
+	db                    db_interface.DataBase
+	ConversationListener  func() open_im_sdk_callback.OnConversationListener
+	msgListener           func() open_im_sdk_callback.OnAdvancedMsgListener
+	msgKvListener         func() open_im_sdk_callback.OnMessageKvInfoListener
+	batchMsgListener      func() open_im_sdk_callback.OnBatchMsgListener
+	recvCH                chan common.Cmd2Value
+	loginUserID           string
+	platformID            int32
+	DataDir               string
+	friend                *friend.Friend
+	group                 *group.Group
+	user                  *user.User
+	file                  *file.File
+	business              *business.Business
+	messageController     *MessageController
+	cache                 *cache.Cache[string, *model_struct.LocalConversation]
+	full                  *full.Full
+	maxSeqRecorder        MaxSeqRecorder
+	IsExternalExtensions  bool
+	msgOffset             int
+	progress              int
+	conversationSyncMutex sync.Mutex
 
 	startTime time.Time
 
@@ -973,7 +975,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	}
 	msg.Content = ""
 
-	return utils.Wrap(err, "")
+	return errs.Wrap(err)
 }
 
 func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs map[string]*model_struct.LocalConversation) {
