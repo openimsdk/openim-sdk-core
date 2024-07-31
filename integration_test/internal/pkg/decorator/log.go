@@ -35,6 +35,6 @@ func FuncLogSkip(ctx context.Context, skip int) func() {
 	fmt.Println(fmt.Sprintf("%s begin", funcName))
 	return func() {
 		log.ZInfo(ctx, fmt.Sprintf("%s end", funcName), "time consuming", time.Since(t))
-		fmt.Println(fmt.Sprintf("%s end", funcName))
+		fmt.Println(fmt.Sprintf("%s end. Time consuming: %v", funcName, time.Since(t)))
 	}
 }
