@@ -105,14 +105,19 @@ func DoFlagFunc(ctx context.Context) (err error) {
 func main() {
 	ctx := context.Background()
 	if err := Init(ctx); err != nil {
-		log.ZError(ctx, "init err", err, "stack", utils.PrintErrorStack(err))
+		log.ZError(ctx, "init err", err, "stack", utils.FormatErrorStack(err))
+		fmt.Println("init err")
+		fmt.Println(utils.FormatErrorStack(err))
 		panic(err)
 	}
 	if err := DoFlagFunc(ctx); err != nil {
-		log.ZError(ctx, "do flag err", err, "stack", utils.PrintErrorStack(err))
+		log.ZError(ctx, "do flag err", err, "stack", utils.FormatErrorStack(err))
+		fmt.Println("do flag err")
+		fmt.Println(utils.FormatErrorStack(err))
 		panic(err)
 	}
 
 	log.ZInfo(ctx, "start success!")
+	fmt.Println("start success!")
 	select {}
 }

@@ -1,27 +1,21 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
+	"strings"
 )
 
-// PrintErrorStack print err stack
-func PrintErrorStack(err error) string {
-	var stack []string
-
-	for err != nil {
-		stack = append(stack, err.Error())
-		err = errors.Unwrap(err)
+func FormatErrorStack(err error) string {
+	if err == nil {
+		return ""
 	}
 
-	return fmt.Sprintf("Error stack:\n%s", formatStack(stack))
-}
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("%+v", err))
 
-// formatStack
-func formatStack(stack []string) string {
-	var result string
-	for i := len(stack) - 1; i >= 0; i-- {
-		result += fmt.Sprintf("%d: %s\n", len(stack)-i, stack[i])
-	}
-	return result
+	stack := sb.String()
+	stack = strings.ReplaceAll(stack, "\n", " => ")
+	stack = strings.ReplaceAll(stack, "\t", " ")
+
+	return stack
 }
