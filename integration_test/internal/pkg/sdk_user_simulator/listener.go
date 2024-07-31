@@ -1,9 +1,12 @@
 package sdk_user_simulator
 
 import (
+	testUtils "github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"sync/atomic"
 )
 
 type conversationCallBack struct {
@@ -81,6 +84,7 @@ func NewMsgListenerCallBak(userID string) *MsgListenerCallBak {
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	var sm sdk_struct.MsgStruct
+	atomic.AddInt64(&vars.ReceiveMsgNum[testUtils.MustGetUserNum(m.userID)], 1)
 	utils.JsonStringToStruct(message, &sm)
 	switch sm.SessionType {
 	case constant.SingleChatType:

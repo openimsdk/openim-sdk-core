@@ -13,26 +13,23 @@ func CheckMessageNum(ctx context.Context) error {
 	corrects := func() [2]int {
 		// corrects[0] :super user conversion num
 		// corrects[1] :common user conversion num
-		largeNum := vars.LargeGroupNum
-		commonNum := vars.CommonGroupNum * vars.CommonGroupMemberNum
-		groupNum := largeNum + commonNum
+		largeGroupNum := vars.UserNum * vars.GroupMessageNum
+		commonGroupNum := (vars.CommonGroupNum * vars.CommonGroupMemberNum) * vars.GroupMessageNum
+		groupMsgNum := largeGroupNum + commonGroupNum
 
-		superNum := vars.UserNum - 1 + groupNum
-		commonUserNum := vars.SuperUserNum + groupNum
+		superUserMsgNum := (vars.UserNum - 1) * vars.SingleMessageNum * 2
+		commonUserMsgNum := vars.SuperUserNum * vars.SingleMessageNum * 2
 
-		return [2]int{superNum, commonUserNum}
+		return [2]int{superUserMsgNum + groupMsgNum, commonUserMsgNum + groupMsgNum}
 	}()
 
 	c := &CounterChecker[*sdk.TestSDK, string]{
-		CheckName:      "checkConversationNum",
+		CheckName:      "checkMessageNum",
 		CheckerKeyName: "userID",
 		GoroutineLimit: config.ErrGroupCommonLimit,
 		GetTotalCount: func(ctx context.Context, t *sdk.TestSDK) (int, error) {
-			totalNum, err := t.GetTotalConversationCount(ctx)
-			if err != nil {
-				return 0, err
-			}
-			return totalNum, nil
+			totalNum := vars.ReceiveMsgNum[utils.MustGetUserNum(t.UserID)]
+			return int(totalNum), nil
 		},
 		CalCorrectCount: func(userID string) int {
 			if utils.IsSuperUser(userID) {
