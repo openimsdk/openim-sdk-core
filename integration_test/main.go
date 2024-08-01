@@ -81,6 +81,8 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		}
 	}
 
+	Sleep()
+
 	if vars.ShouldCreateGroup {
 		if err = groupMng.CreateGroups(ctx); err != nil {
 			return err
@@ -91,7 +93,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		if err = msgMng.SendMessages(ctx); err != nil {
 			return err
 		}
-		Sleep()
 	}
 
 	if err = userMng.LoginLastUsers(ctx); err != nil {
