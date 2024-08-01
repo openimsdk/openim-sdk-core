@@ -11,6 +11,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
+	"github.com/openimsdk/tools/log"
 	"golang.org/x/sync/errgroup"
 	"math"
 )
@@ -80,6 +81,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 func (t *TestUserManager) LoginByRate(ctx context.Context, rate float64) error {
 	right := int(math.Ceil(rate * float64(vars.UserNum)))
 	userIDs := vars.UserIDs[:right]
+	log.ZDebug(ctx, "login users", "len", len(userIDs))
 	return t.Login(ctx, userIDs...)
 }
 

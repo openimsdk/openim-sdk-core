@@ -13,9 +13,8 @@ func CheckMessageNum(ctx context.Context) error {
 	corrects := func() [2]int {
 		// corrects[0] :super user conversion num
 		// corrects[1] :common user conversion num
-		largeGroupNum := ((vars.UserNum-1)*vars.GroupMessageNum + 1) * vars.LargeGroupNum
-		commonGroupNum := (vars.GroupMessageNum)*(vars.CommonGroupNum*(vars.CommonGroupMemberNum-1)) +
-			vars.CommonGroupMemberNum*vars.CommonGroupMemberNum
+		largeGroupNum := ((vars.UserNum - 1) * vars.GroupMessageNum) * vars.LargeGroupNum
+		commonGroupNum := (vars.GroupMessageNum) * (vars.CommonGroupNum * (vars.CommonGroupMemberNum - 1))
 		groupMsgNum := largeGroupNum + commonGroupNum
 
 		superUserMsgNum := (vars.UserNum - 1) * (vars.SingleMessageNum + 1) // send message + become friend message

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	sleepSec = 10
+	sleepSec = 30
 )
 
 func Init(ctx context.Context) error {
