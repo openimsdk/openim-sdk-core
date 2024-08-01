@@ -2,7 +2,6 @@ package checker
 
 import (
 	"context"
-	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
@@ -33,8 +32,6 @@ func CheckMessageNum(ctx context.Context) error {
 			if err != nil {
 				return 0, err
 			}
-			fmt.Println("totalNum", totalNum)
-			fmt.Println("userID", t.UserID)
 			return int(totalNum), nil
 		},
 		CalCorrectCount: func(userID string) int {
