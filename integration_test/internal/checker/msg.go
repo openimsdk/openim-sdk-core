@@ -18,13 +18,41 @@ func CheckMessageNum(ctx context.Context) error {
 		createdLargeGroupNum := vars.LargeGroupNum / vars.UserNum
 		// if a user num smaller than remainder, it means this user created more one large group
 		remainder := vars.LargeGroupNum % vars.UserNum
-		createdCommonGroupNum := vars.CommonGroupNum
 
 		largeGroupNum := ((vars.UserNum-1)*vars.GroupMessageNum+1)*vars.LargeGroupNum - createdLargeGroupNum
-		commonGroupNum := (vars.GroupMessageNum+1)*(vars.CommonGroupNum*(vars.CommonGroupMemberNum-1)) - createdCommonGroupNum
+		// Formula:
+		// largeGroupNum =
+		//	// total send message num
+		//	vars.GroupMessageNum*vars.UserNum*vars.LargeGroupNum +
+		//	// total create group notification message
+		//	vars.LargeGroupNum -
+		//	// self send group message
+		//	vars.GroupMessageNum*vars.LargeGroupNum -
+		//	// self create group notification message. Complete the calculation based on user ID in CalCorrectCount.
+		//	createdLargeGroupNum
+
+		commonGroupNum := (vars.GroupMessageNum + 1) * (vars.CommonGroupNum * (vars.CommonGroupMemberNum - 1))
+		// Formula:
+		// commonGroupNum =
+		// // total send group message
+		// vars.GroupMessageNum*(vars.CommonGroupMemberNum*vars.CommonGroupNum) +
+		// // total create group notification message
+		//	(vars.CommonGroupMemberNum * vars.CommonGroupNum) -
+		// // self send group message
+		//	vars.GroupMessageNum*vars.CommonGroupNum -
+		// // self create group notification message
+		//	vars.CommonGroupNum
+
 		groupMsgNum := largeGroupNum + commonGroupNum
 
 		superUserMsgNum := (vars.UserNum - 1) * (vars.SingleMessageNum + 1) // send message + become friend message
+		// Formula:
+		// superUserMsgNum =
+		//	// friend send message num
+		//	(vars.UserNum-1)*vars.GroupMessageNum +
+		//	// become friend notification message num. it`s number of friends applied for
+		//	userNum
+
 		commonUserMsgNum := vars.SuperUserNum * (vars.SingleMessageNum + 1)
 
 		return [3]int{superUserMsgNum + groupMsgNum, commonUserMsgNum + groupMsgNum, remainder}
@@ -43,12 +71,13 @@ func CheckMessageNum(ctx context.Context) error {
 		},
 		CalCorrectCount: func(userID string) int {
 			var res int
+			useNum := utils.MustGetUserNum(userID)
 			if utils.IsSuperUser(userID) {
-				res = corrects[0]
+				res = corrects[0] + useNum
 			} else {
 				res = corrects[1]
 			}
-			if utils.MustGetUserNum(userID) < corrects[2] {
+			if useNum < corrects[2] {
 				res--
 			}
 			return res
