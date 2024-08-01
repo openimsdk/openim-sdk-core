@@ -13,7 +13,6 @@ import (
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
 	"golang.org/x/sync/errgroup"
-	"math"
 )
 
 type TestUserManager struct {
@@ -34,7 +33,11 @@ func (t *TestUserManager) GenAllUserIDs() []string {
 	return ids
 }
 
-func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) error {
+func (t *TestUserManager) RegisterAllUsers(ctx context.Context) error {
+	return t.registerUsers(ctx, vars.UserIDs...)
+}
+
+func (t *TestUserManager) registerUsers(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
 	var users []*sdkws.UserInfo
@@ -50,7 +53,11 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 	return nil
 }
 
-func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
+func (t *TestUserManager) InitAllSDK(ctx context.Context) error {
+	return t.initSDK(ctx, vars.UserIDs...)
+}
+
+func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
 	gr, _ := errgroup.WithContext(ctx)
@@ -78,16 +85,20 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 	return nil
 }
 
-func (t *TestUserManager) LoginByRate(ctx context.Context, rate float64) error {
-	right := int(math.Ceil(rate * float64(vars.UserNum)))
-	userIDs := vars.UserIDs[:right]
-	log.ZDebug(ctx, "login users", "len", len(userIDs))
-	return t.Login(ctx, userIDs...)
+func (t *TestUserManager) LoginByRate(ctx context.Context) error {
+	userIDs := vars.UserIDs[:vars.LoginEndUserNum]
+	return t.login(ctx, userIDs...)
 }
 
-func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
+func (t *TestUserManager) LoginLastUsers(ctx context.Context) error {
+	userIDs := vars.UserIDs[vars.LoginEndUserNum:]
+	return t.login(ctx, userIDs...)
+}
+
+func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
+	log.ZDebug(ctx, "login users", "len", len(userIDs))
 	gr, _ := errgroup.WithContext(ctx)
 	gr.SetLimit(config.ErrGroupCommonLimit)
 	for _, userID := range userIDs {

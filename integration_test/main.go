@@ -12,6 +12,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
+	"math"
 	"time"
 )
 
@@ -26,11 +27,12 @@ func Init(ctx context.Context) error {
 	initialization.GenUserIDs()
 	sdk.TestSDKs = make([]*sdk.TestSDK, vars.UserNum)
 	vars.Contexts = make([]context.Context, vars.UserNum)
+	vars.LoginEndUserNum = int(math.Floor(vars.LoginRate * float64(vars.UserNum)))
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
 	}
 	if !vars.ShouldRegister {
-		if err := initialization.InitSDK(ctx); err != nil {
+		if err := initialization.InitAllSDK(ctx); err != nil {
 			return err
 		}
 	}
@@ -61,15 +63,15 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	ctx = m.BuildCtx(ctx)
 
 	if vars.ShouldRegister {
-		if err = userMng.RegisterUsers(ctx, vars.UserIDs...); err != nil {
+		if err = userMng.RegisterAllUsers(ctx); err != nil {
 			return err
 		}
-		if err = initialization.InitSDK(ctx); err != nil {
+		if err = initialization.InitAllSDK(ctx); err != nil {
 			return err
 		}
 	}
 
-	if err = userMng.LoginByRate(ctx, vars.LoginRate); err != nil {
+	if err = userMng.LoginByRate(ctx); err != nil {
 		return err
 	}
 
@@ -79,16 +81,25 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		}
 	}
 
-	// sync data
-	if vars.ShouldRegister {
-		Sleep()
-	}
-
 	if vars.ShouldCreateGroup {
 		if err = groupMng.CreateGroups(ctx); err != nil {
 			return err
 		}
 	}
+
+	if vars.ShouldSendMsg {
+		if err = msgMng.SendMessages(ctx); err != nil {
+			return err
+		}
+		Sleep()
+	}
+
+	if err = userMng.LoginLastUsers(ctx); err != nil {
+		return err
+	}
+
+	// sync data
+	Sleep()
 
 	if vars.ShouldCheckGroupNum {
 		if err = checker.CheckGroupNum(ctx); err != nil {
@@ -100,13 +111,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		if err = checker.CheckConvNumAfterImpFriAndCrGro(ctx); err != nil {
 			return err
 		}
-	}
-
-	if vars.ShouldSendMsg {
-		if err = msgMng.SendMessages(ctx); err != nil {
-			return err
-		}
-		Sleep()
 	}
 
 	if vars.ShouldCheckMessageNum {

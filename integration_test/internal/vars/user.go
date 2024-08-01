@@ -11,4 +11,6 @@ var (
 	SuperUserIDs []string // user ids of users with all friends
 
 	Contexts []context.Context // users contexts
+
+	LoginEndUserNum int
 )
