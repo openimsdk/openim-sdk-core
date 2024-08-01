@@ -26,7 +26,6 @@ func Init(ctx context.Context) error {
 	initialization.GenUserIDs()
 	sdk.TestSDKs = make([]*sdk.TestSDK, vars.UserNum)
 	vars.Contexts = make([]context.Context, vars.UserNum)
-	vars.ReceiveMsgNum = make([]int64, vars.UserNum)
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
 	}
