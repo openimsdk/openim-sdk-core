@@ -326,7 +326,6 @@ func (d *DataBase) GetTotalUnreadMsgCountDB(ctx context.Context) (totalUnreadCou
 	if err != nil {
 		return totalUnreadCount, errs.WrapMsg(errors.New("GetTotalUnreadMsgCount err"), "GetTotalUnreadMsgCount err")
 	}
-	fmt.Println(result)
 	for _, v := range result {
 		totalUnreadCount += int32(v)
 	}

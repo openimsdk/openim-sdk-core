@@ -12,6 +12,7 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/mcontext"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -76,6 +77,7 @@ func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error 
 			}
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
 			vars.Contexts[userNum] = ctx                                 // init ctx
+			log.ZDebug(ctx, "init sdk", "operationID", mcontext.GetOperationID(ctx), "op userID", userID)
 			return nil
 		})
 	}
