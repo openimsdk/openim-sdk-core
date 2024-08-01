@@ -11,7 +11,7 @@ const (
 	WsAddr              = "ws://" + TestIP + ":10001"
 	Secret              = "openIM123"
 	PlatformID          = constant.WindowsPlatformID
-	LogLevel            = 4
+	LogLevel            = 5
 	DataDir             = "./data/"
 	LogFilePath         = "./logs/"
 	AdminUserID         = "imAdmin"
