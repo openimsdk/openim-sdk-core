@@ -12,12 +12,12 @@ require (
 	nhooyr.io/websocket v1.8.10
 )
 
-require golang.org/x/net v0.22.0
+require golang.org/x/net v0.22.0 // indirect
 
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/openimsdk/protocol v0.0.69-alpha.37
-	github.com/openimsdk/tools v0.0.49-alpha.57
+	github.com/openimsdk/tools v0.0.49-alpha.60
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	golang.org/x/image v0.15.0
 	golang.org/x/sync v0.6.0
