@@ -17,6 +17,7 @@ var (
 	ShouldCheckGroupNum        bool // determine whether check group num
 	ShouldCheckConversationNum bool // determine whether check conversation num
 	ShouldCheckMessageNum      bool // determine whether check message num
+	ShouldCheckUninsAndReins   bool // determine whether check again after uninstall and reinstall
 
 	LoginRate float64 // number of login user rate
 )

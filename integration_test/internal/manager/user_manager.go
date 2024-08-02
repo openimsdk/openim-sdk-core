@@ -87,6 +87,10 @@ func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error 
 	return nil
 }
 
+func (t *TestUserManager) LoginAllUsers(ctx context.Context) error {
+	return t.login(ctx, vars.UserIDs...)
+}
+
 func (t *TestUserManager) LoginByRate(ctx context.Context) error {
 	userIDs := vars.UserIDs[:vars.LoginEndUserNum]
 	return t.login(ctx, userIDs...)
