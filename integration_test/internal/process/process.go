@@ -114,7 +114,7 @@ func (p *Process) call(fn any, args ...any) (err error) {
 	if nin != 0 {
 		argsLen := len(args)
 		// If there are parameters, the first parameter must be ctx
-		if fnt.In(1).Implements(reflect.ValueOf(new(context.Context)).Elem().Type()) {
+		if fnt.In(0).Implements(reflect.ValueOf(new(context.Context)).Elem().Type()) {
 			ins = append(ins, reflect.ValueOf(p.ctx))
 			argsLen++
 		}
