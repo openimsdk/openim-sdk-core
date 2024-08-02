@@ -99,8 +99,9 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(true, process.AddConditions, pro, vars.ShouldCheckUninsAndReins),
 		process.NewTask(true, offline),
 		process.NewTask(true, fileMng.DeleteLocalDB),
-		process.NewTask(true, initialization.InitAllSDK),
+		process.NewTask(true, userMng.InitAllSDK),
 		process.NewTask(true, userMng.LoginAllUsers),
+		process.NewTask(true, Sleep),
 		process.NewTask(true, Sleep),
 	)
 	pro.AddTasks(checkTasks...)
