@@ -129,11 +129,16 @@ func (p *Process) call(fn any, args ...any) (err error) {
 
 	fnt := fnv.Type()
 	nin := fnt.NumIn()
-	ins := make([]reflect.Value, 0, nin)
+	var (
+		ins         = make([]reflect.Value, 0, nin)
+		fieldOffset = 0 // if have ctx, parse field offset = 1
+	)
+
 	if nin != 0 {
 		argsLen := len(args)
 		// If there are parameters, the first parameter must be ctx
 		if fnt.In(0).Implements(reflect.ValueOf(new(context.Context)).Elem().Type()) {
+			fieldOffset = 1
 			ins = append(ins, reflect.ValueOf(p.ctx))
 			argsLen++
 		}
@@ -143,7 +148,7 @@ func (p *Process) call(fn any, args ...any) (err error) {
 	}
 
 	for i := 0; i < len(args); i++ {
-		inFnField := fnt.In(i + 1)
+		inFnField := fnt.In(i + fieldOffset)
 		arg := reflect.TypeOf(args[i])
 		if arg.String() == inFnField.String() || inFnField.Kind() == reflect.Interface {
 			ins = append(ins, reflect.ValueOf(args[i]))
@@ -175,7 +180,7 @@ func (p *Process) call(fn any, args ...any) (err error) {
 			}
 		}
 		return errs.New(fmt.Sprintf("go code error: fn in args type is not match. index:%d, field type:%s, arg type:%s",
-			inFnField.String(), i, arg.String())).Wrap()
+			i, inFnField.String(), arg.String())).Wrap()
 	}
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
