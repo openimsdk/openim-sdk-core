@@ -112,9 +112,13 @@ func (p *Process) call(fn any, args ...any) (err error) {
 	nin := fnt.NumIn()
 	ins := make([]reflect.Value, 0, nin)
 	if nin != 0 {
+		argsLen := len(args)
 		// If there are parameters, the first parameter must be ctx
-		ins = append(ins, reflect.ValueOf(p.ctx))
-		if len(args)+1 != nin {
+		if fnt.In(1).Implements(reflect.ValueOf(new(context.Context)).Elem().Type()) {
+			ins = append(ins, reflect.ValueOf(p.ctx))
+			argsLen++
+		}
+		if argsLen != nin {
 			return errs.New("call input args num not equal").Wrap()
 		}
 	}
