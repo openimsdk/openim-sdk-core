@@ -174,7 +174,8 @@ func (p *Process) call(fn any, args ...any) (err error) {
 				continue
 			}
 		}
-		return errs.New(fmt.Sprintf("go code error: fn in args type is not match. index:%d, type:%s", i, arg.String())).Wrap()
+		return errs.New(fmt.Sprintf("go code error: fn in args type is not match. index:%d, field type:%s, arg type:%s",
+			inFnField.String(), i, arg.String())).Wrap()
 	}
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
