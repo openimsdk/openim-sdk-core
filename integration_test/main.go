@@ -73,7 +73,8 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	}
 
 	pro.AddTasks(
-		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers).AddNegativeFunc(initialization.InitAllSDK),
+		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers),
+		process.NewTask(vars.ShouldRegister, userMng.InitAllSDK),
 		process.NewTask(true, userMng.LoginByRate),
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
