@@ -8,9 +8,6 @@ import (
 type Process struct {
 	ctx   context.Context
 	Tasks []*Task
-	// Used to exit exec. For example, if there are two interrupt values [1,3], exec will exit after completing task[0].
-	// When exec is restarted from task[1], it will exit after completing task[2].
-	Interrupt []int
 
 	// Only all RunCondition is true, process will exec tasks.
 	RunConditions []bool
@@ -27,19 +24,19 @@ func (p *Process) GetTaskNum() int {
 }
 
 func (p *Process) AddTasks(task ...*Task) {
-	if len(p.Tasks) != 0 {
+	if len(task) != 0 {
 		p.Tasks = append(p.Tasks, task...)
 	}
 }
 
-func (p *Process) AddNowInterrupt() {
-	p.Interrupt = append(p.Interrupt, len(p.Tasks))
+func (p *Process) AddConditions(condition ...bool) {
+	if len(condition) != 0 {
+		p.RunConditions = append(p.RunConditions, condition...)
+	}
 }
 
-func (p *Process) AddInterrupts(is ...int) {
-	if len(is) != 0 {
-		p.Interrupt = append(p.Interrupt, is...)
-	}
+func (p *Process) ResetConditions(condition ...bool) {
+	p.RunConditions = condition
 }
 
 func (p *Process) Exec() error {
@@ -57,12 +54,6 @@ func (p *Process) ExecOffset(offset int) error {
 	var (
 		interrupt = -1
 	)
-	for _, i := range p.Interrupt {
-		if offset < i {
-			interrupt = i
-			break
-		}
-	}
 
 	return p.execTasks(offset, interrupt)
 }
@@ -109,7 +100,6 @@ func (p *Process) shouldRun() bool {
 
 func (p *Process) Clear() {
 	p.Tasks = nil
-	p.Interrupt = nil
 	p.RunConditions = nil
 	p.nowTaskNum = 0
 }
