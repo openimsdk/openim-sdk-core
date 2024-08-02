@@ -93,7 +93,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	}
 
 	// Uninstall and reinstall
-	offline := func(ctx context.Context) {
+	offline := func() {
 		ctx = utils.CancelAndReBuildCtx(m.BuildCtx, cancel) // Offline
 		log.ZInfo(ctx, "cancel ctx. Offline", err, "stack", utils.FormatErrorStack(err))
 		Sleep()

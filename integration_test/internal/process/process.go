@@ -107,13 +107,18 @@ func (p *Process) call(fn any, args ...any) (err error) {
 	if fnv.IsNil() {
 		return nil
 	}
+
 	fnt := fnv.Type()
 	nin := fnt.NumIn()
-	if len(args)+1 != nin {
-		return errs.New("call input args num not equal").Wrap()
-	}
 	ins := make([]reflect.Value, 0, nin)
-	ins = append(ins, reflect.ValueOf(p.ctx))
+	if nin != 0 {
+		// If there are parameters, the first parameter must be ctx
+		ins = append(ins, reflect.ValueOf(p.ctx))
+		if len(args)+1 != nin {
+			return errs.New("call input args num not equal").Wrap()
+		}
+	}
+
 	for i := 0; i < len(args); i++ {
 		inFnField := fnt.In(i + 1)
 		arg := reflect.TypeOf(args[i])
