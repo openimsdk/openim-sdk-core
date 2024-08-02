@@ -132,6 +132,7 @@ func (p *Process) call(fn any, args ...any) (err error) {
 	var (
 		ins         = make([]reflect.Value, 0, nin)
 		fieldOffset = 0 // if have ctx, parse field offset = 1
+		isVariadic  = fnt.IsVariadic()
 	)
 
 	if nin != 0 {
@@ -142,15 +143,27 @@ func (p *Process) call(fn any, args ...any) (err error) {
 			ins = append(ins, reflect.ValueOf(p.ctx))
 			argsLen++
 		}
-		if argsLen != nin {
-			return errs.New(fmt.Sprintf("call input args num not equal. nin: %d, argsLen: %d", nin, args)).Wrap()
+		if isVariadic {
+			nin--
+		}
+		if (isVariadic && argsLen < nin) || (!isVariadic && argsLen != nin) {
+			return errs.New(fmt.Sprintf("call input args num not correct. nin: %d, argsLen: %d", nin, args)).Wrap()
 		}
 	}
 
 	for i := 0; i < len(args); i++ {
 		inFnField := fnt.In(i + fieldOffset)
+
 		arg := reflect.TypeOf(args[i])
-		if arg.String() == inFnField.String() || inFnField.Kind() == reflect.Interface {
+
+		var expectedType reflect.Type
+		if isVariadic && i+fieldOffset >= nin {
+			expectedType = fnt.In(nin).Elem()
+		} else {
+			expectedType = fnt.In(i + fieldOffset)
+		}
+
+		if arg.AssignableTo(expectedType) {
 			ins = append(ins, reflect.ValueOf(args[i]))
 			continue
 		}
