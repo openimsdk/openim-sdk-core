@@ -73,15 +73,16 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	}
 
 	pro.AddTasks(
-		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers, initialization.InitAllSDK).
-			AddNegativeFuncs(initialization.InitAllSDK),
+		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers).AddNegativeFunc(initialization.InitAllSDK),
 		process.NewTask(true, userMng.LoginByRate),
 
-		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends, process.WrapFunc(Sleep)),
+		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
+		process.NewTask(vars.ShouldImportFriends, Sleep),
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
 
-		process.NewTask(true, userMng.LoginLastUsers, process.WrapFunc(Sleep)),
+		process.NewTask(true, userMng.LoginLastUsers),
+		process.NewTask(true, Sleep),
 	)
 
 	pro.AddTasks(checkTasks...)
@@ -91,19 +92,23 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	}
 
 	// Uninstall and reinstall
-	ctx = utils.CancelAndReBuildCtx(m.BuildCtx, cancel) // Offline
+	offline := func(ctx context.Context) {
+		ctx = utils.CancelAndReBuildCtx(m.BuildCtx, cancel) // Offline
+		log.ZInfo(ctx, "cancel ctx. Offline", err, "stack", utils.FormatErrorStack(err))
+		Sleep()
+		pro.SetContext(ctx)
+	}
 	pro.AddTasks(
+		process.NewTask(true, process.AddConditions, pro, vars.ShouldCheckUninsAndReins),
+		process.NewTask(true, offline),
 		process.NewTask(true, fileMng.DeleteLocalDB),
 		process.NewTask(true, initialization.InitAllSDK),
-		process.NewTask(true, userMng.LoginAllUsers, process.WrapFunc(Sleep)),
+		process.NewTask(true, userMng.LoginAllUsers),
+		process.NewTask(true, Sleep),
 	)
 	pro.AddTasks(checkTasks...)
 
-	pro.SetContext(ctx)
-	if err = pro.ContinueExec(); err != nil {
-		return err
-	}
-	return nil
+	return pro.Exec()
 }
 
 func main() {

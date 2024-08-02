@@ -2,7 +2,10 @@ package process
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/openimsdk/tools/errs"
+	"reflect"
 )
 
 type Process struct {
@@ -65,14 +68,12 @@ func (p *Process) execTasks(offset, interrupt int) error {
 			return nil
 		}
 		if p.shouldRun() && task.ShouldRun {
-			for _, f := range task.Funcs {
-				if err := f(p.ctx); err != nil {
+			if task.ShouldRun {
+				if err := p.call(task.Func, task.Args...); err != nil {
 					return err
 				}
-			}
-		} else {
-			for _, f := range task.NegativeFuncs {
-				if err := f(p.ctx); err != nil {
+			} else {
+				if err := p.call(task.NegativeFunc, task.NegativeArgs...); err != nil {
 					return err
 				}
 			}
@@ -98,34 +99,70 @@ func (p *Process) shouldRun() bool {
 	return true
 }
 
+func (p *Process) call(fn any, args ...any) (err error) {
+	fnv := reflect.ValueOf(fn)
+	if fnv.Kind() != reflect.Func {
+		return errs.New("call input type is not func").Wrap()
+	}
+	if fnv.IsNil() {
+		return nil
+	}
+	fnt := fnv.Type()
+	nin := fnt.NumIn()
+	if len(args)+1 != nin {
+		return errs.New("call input args num not equal").Wrap()
+	}
+	ins := make([]reflect.Value, 0, nin)
+	ins = append(ins, reflect.ValueOf(p.ctx))
+	for i := 0; i < len(args); i++ {
+		inFnField := fnt.In(i + 1)
+		arg := reflect.TypeOf(args[i])
+		if arg.String() == inFnField.String() || inFnField.Kind() == reflect.Interface {
+			ins = append(ins, reflect.ValueOf(args[i]))
+			continue
+		}
+		if arg.Kind() == reflect.String { // json
+			var ptr int
+			for inFnField.Kind() == reflect.Ptr {
+				inFnField = inFnField.Elem()
+				ptr++
+			}
+			switch inFnField.Kind() {
+			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map:
+				v := reflect.New(inFnField)
+				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
+					return errs.New(fmt.Sprintf("go call json.Unmarshal error: %s", err)).Wrap()
+				}
+				if ptr == 0 {
+					v = v.Elem()
+				} else if ptr != 1 {
+					for i := ptr - 1; i > 0; i-- {
+						temp := reflect.New(v.Type())
+						temp.Elem().Set(v)
+						v = temp
+					}
+				}
+				ins = append(ins, v)
+				continue
+			}
+		}
+		return errs.New(fmt.Sprintf("go code error: fn in args type is not match")).Wrap()
+	}
+	outs := fnv.Call(ins)
+	if len(outs) == 0 {
+		return nil
+	}
+	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
+		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
+			return errValueOf.Interface().(error)
+		}
+	}
+
+	return nil
+}
+
 func (p *Process) Clear() {
 	p.Tasks = nil
 	p.RunConditions = nil
 	p.nowTaskNum = 0
-}
-
-type Task struct {
-	ShouldRun     bool                              // determine if task will run
-	Funcs         []func(ctx context.Context) error // run funcs
-	NegativeFuncs []func(ctx context.Context) error // if !ShouldRun, will run this
-}
-
-func NewTask(shouldRun bool, funcs ...func(ctx context.Context) error) *Task {
-	return &Task{
-		ShouldRun: shouldRun,
-		Funcs:     funcs,
-	}
-}
-
-func (t *Task) AddNegativeFuncs(funcs ...func(ctx context.Context) error) *Task {
-	t.NegativeFuncs = append(t.NegativeFuncs, funcs...)
-	return t
-}
-
-// WrapFunc wrap common func
-func WrapFunc(f func()) func(ctx context.Context) error {
-	return func(ctx context.Context) error {
-		f()
-		return nil
-	}
 }
