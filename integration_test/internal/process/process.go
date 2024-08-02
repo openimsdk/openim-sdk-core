@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 	"reflect"
+	"runtime"
+	"runtime/debug"
 )
 
 type Process struct {
@@ -100,6 +103,22 @@ func (p *Process) shouldRun() bool {
 }
 
 func (p *Process) call(fn any, args ...any) (err error) {
+	funcPtr := reflect.ValueOf(fn).Pointer()
+	funcName := runtime.FuncForPC(funcPtr).Name()
+	defer func() {
+		ctx := context.TODO()
+		if r := recover(); r != nil {
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			err = fmt.Errorf("call panic: %+v", r)
+		} else {
+			if err == nil {
+				log.ZInfo(ctx, "fn call success", "function name", funcName)
+			} else {
+				log.ZError(ctx, "fn call error", err, "function name", funcName)
+			}
+		}
+	}()
+
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
 		return errs.New("call input type is not func").Wrap()
@@ -155,7 +174,7 @@ func (p *Process) call(fn any, args ...any) (err error) {
 				continue
 			}
 		}
-		return errs.New(fmt.Sprintf("go code error: fn in args type is not match")).Wrap()
+		return errs.New(fmt.Sprintf("go code error: fn in args type is not match. index:%d, type:%s", i, arg.String())).Wrap()
 	}
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
