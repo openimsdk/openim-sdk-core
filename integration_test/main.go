@@ -88,10 +88,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 
 	pro.AddTasks(checkTasks...)
 
-	if err = pro.Exec(); err != nil {
-		return err
-	}
-
 	// Uninstall and reinstall
 	offline := func() {
 		ctx = utils.CancelAndReBuildCtx(m.BuildCtx, cancel) // Offline
