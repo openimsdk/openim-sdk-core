@@ -119,7 +119,7 @@ func (p *Process) call(fn any, args ...any) (err error) {
 			argsLen++
 		}
 		if argsLen != nin {
-			return errs.New("call input args num not equal").Wrap()
+			return errs.New(fmt.Sprintf("call input args num not equal. nin: %d, argsLen: %d", nin, args)).Wrap()
 		}
 	}
 
