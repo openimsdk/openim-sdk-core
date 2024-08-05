@@ -68,6 +68,10 @@ func (ds *DataFetcher[T]) FetchWithPagination(ctx context.Context, offset, limit
 
 // FetchMissingAndFillLocal fetches missing data from server and fills local database
 func (ds *DataFetcher[T]) FetchMissingAndFillLocal(ctx context.Context, uids []string) ([]T, error) {
+	if len(uids) == 0 {
+		return nil, nil
+	}
+
 	localData, needServer, err := ds.FetchFromLocal(ctx, uids)
 	if err != nil {
 		return nil, err
