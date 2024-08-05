@@ -66,9 +66,6 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
-	c.conversationSyncMutex.Lock()
-	defer c.conversationSyncMutex.Unlock()
-
 	ctx := c2v.Ctx
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
 	switch syncFlag {
@@ -113,7 +110,6 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 	case constant.MsgSyncBegin:
 		log.ZDebug(ctx, "MsgSyncBegin")
 		c.ConversationListener().OnSyncServerStart(false)
-
 		c.syncData(c2v)
 	case constant.MsgSyncFailed:
 		c.ConversationListener().OnSyncServerFailed(false)
