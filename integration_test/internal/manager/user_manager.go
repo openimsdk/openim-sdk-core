@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/sdk_user_simulator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
@@ -13,7 +14,6 @@ import (
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/mcontext"
-	"golang.org/x/sync/errgroup"
 )
 
 type TestUserManager struct {
@@ -61,8 +61,7 @@ func (t *TestUserManager) InitAllSDK(ctx context.Context) error {
 func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(config.ErrGroupCommonLimit)
+	gr := reerrgroup.NewGroup(config.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
@@ -105,8 +104,7 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
 	log.ZDebug(ctx, "login users", "len", len(userIDs))
-	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(config.ErrGroupCommonLimit)
+	gr := reerrgroup.NewGroup(config.ErrGroupCommonLimit)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {

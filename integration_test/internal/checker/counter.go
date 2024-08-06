@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/stringutil"
-	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
 )
@@ -53,12 +53,11 @@ func (c *CounterChecker[T, K]) Check(ctx context.Context) error {
 	c.Init()
 
 	var (
-		gr, _    = errgroup.WithContext(ctx)
+		gr       = reerrgroup.NewGroup(c.GoroutineLimit)
 		checkers = make(map[K]*Counter, len(sdk.TestSDKs))
 		mapLock  = sync.RWMutex{}
 	)
 
-	gr.SetLimit(c.GoroutineLimit)
 	for _, t := range c.LoopSlice {
 		t := t
 		gr.Go(func() error {

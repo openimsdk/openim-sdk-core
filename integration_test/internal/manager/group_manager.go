@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
-	"golang.org/x/sync/errgroup"
 )
 
 type TestGroupManager struct {
@@ -24,15 +24,14 @@ func NewGroupManager(m *MetaManager) *TestGroupManager {
 func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(config.ErrGroupCommonLimit)
+	gr := reerrgroup.NewGroup(config.ErrGroupCommonLimit)
 	m.createLargeGroups(ctx, gr)
 	m.createCommonGroups(ctx, gr)
 	return gr.Wait()
 }
 
 // createLargeGroups see CreateGroups
-func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *errgroup.Group) {
+func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup.Group) {
 	userNum := 0
 	for i := 0; i < vars.LargeGroupNum; i++ {
 		ctx := vars.Contexts[userNum]
@@ -50,7 +49,7 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *errgroup.G
 }
 
 // createLargeGroups see CreateGroups
-func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *errgroup.Group) {
+func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgroup.Group) {
 	for userNum := 0; userNum < vars.UserNum; userNum++ {
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
