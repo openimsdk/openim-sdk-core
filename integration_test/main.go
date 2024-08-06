@@ -13,7 +13,10 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/formatutil"
 	"math"
+	"net/http"
+	_ "net/http/pprof"
 	"time"
 )
 
@@ -110,6 +113,9 @@ func DoFlagFunc(ctx context.Context) (err error) {
 }
 
 func main() {
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
 	ctx := context.Background()
 	if err := Init(ctx); err != nil {
 		log.ZError(ctx, "init err", err, "stack", utils.FormatErrorStack(err))
@@ -131,8 +137,10 @@ func main() {
 
 func Sleep() {
 	fmt.Printf("sleep %d s for sync data~\n", sleepSec)
+	fmt.Print(formatutil.ProgressBar("Sleep", 0, sleepSec))
 	for i := 0; i < sleepSec; i++ {
+		fmt.Print(formatutil.ProgressBar("Sleep", i+1, sleepSec))
 		time.Sleep(time.Second)
-		fmt.Println(i + 1)
 	}
+	fmt.Print("\n")
 }

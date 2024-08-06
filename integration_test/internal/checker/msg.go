@@ -45,7 +45,7 @@ func CheckMessageNum(ctx context.Context) error {
 
 		groupMsgNum := largeGroupNum + commonGroupNum
 
-		superUserMsgNum := (vars.UserNum - 1) * vars.SingleMessageNum // send message + become friend message
+		superUserMsgNum := (vars.UserNum - 1) * vars.SingleMessageNum // send message + become friend message(in CalCorrectCount)
 		// Formula:
 		// superUserMsgNum =
 		//	// friend send message num
@@ -73,7 +73,7 @@ func CheckMessageNum(ctx context.Context) error {
 			var res int
 			useNum := utils.MustGetUserNum(userID)
 			if utils.IsSuperUser(userID) {
-				res = corrects[0] + vars.UserNum - 1 - useNum
+				res = corrects[0] + vars.UserNum - 1 - useNum // become friend message
 			} else {
 				res = corrects[1]
 			}

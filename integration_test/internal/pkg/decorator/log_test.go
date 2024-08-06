@@ -2,6 +2,7 @@ package decorator
 
 import (
 	"context"
+	"fmt"
 	"testing"
 )
 
@@ -14,6 +15,7 @@ func FuncName(ctx context.Context) {
 }
 
 func middleFunc(ctx context.Context) {
-	FuncLogSkip(ctx, 1)
+	defer FuncLogSkip(ctx, 1)()
 	//...
+	fmt.Println("middle func")
 }
