@@ -14,6 +14,7 @@ import (
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/mcontext"
+	"sync/atomic"
 )
 
 type TestUserManager struct {
@@ -61,7 +62,15 @@ func (t *TestUserManager) InitAllSDK(ctx context.Context) error {
 func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr := reerrgroup.NewGroup(config.ErrGroupCommonLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+
+	var (
+		total    atomic.Int64
+		progress atomic.Int64
+	)
+	total.Add(int64(len(userIDs)))
+	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
@@ -104,7 +113,15 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
 	log.ZDebug(ctx, "login users", "len", len(userIDs))
-	gr := reerrgroup.NewGroup(config.ErrGroupCommonLimit)
+
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+
+	var (
+		total    atomic.Int64
+		progress atomic.Int64
+	)
+	total.Add(int64(len(userIDs)))
+	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {

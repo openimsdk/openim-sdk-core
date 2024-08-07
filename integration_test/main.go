@@ -20,9 +20,7 @@ import (
 	"time"
 )
 
-const (
-	sleepSec = 30
-)
+const ()
 
 func Init(ctx context.Context) error {
 	initialization.InitFlag()
@@ -77,7 +75,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 
 	pro.AddTasks(
 		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers),
-		process.NewTask(vars.ShouldRegister, userMng.InitAllSDK),
+		process.NewTask(true, userMng.InitAllSDK),
 		process.NewTask(true, userMng.LoginByRate),
 		process.NewTask(true, Sleep),
 
@@ -137,10 +135,10 @@ func main() {
 }
 
 func Sleep() {
-	fmt.Printf("sleep %d s for sync data~\n", sleepSec)
-	fmt.Print(formatutil.ProgressBar("Sleep", 0, sleepSec))
-	for i := 0; i < sleepSec; i++ {
-		fmt.Print(formatutil.ProgressBar("Sleep", i+1, sleepSec))
+	fmt.Printf("sleep %d s for sync data~\n", config.SleepSec)
+	fmt.Print(formatutil.ProgressBar("Sleep", 0, config.SleepSec))
+	for i := 0; i < config.SleepSec; i++ {
+		fmt.Print(formatutil.ProgressBar("Sleep", i+1, config.SleepSec))
 		time.Sleep(time.Second)
 	}
 	fmt.Print("\n")

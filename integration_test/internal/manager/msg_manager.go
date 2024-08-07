@@ -6,8 +6,10 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"sync/atomic"
 )
 
 type TestMsgManager struct {
@@ -23,7 +25,15 @@ func NewMsgManager(m *MetaManager) *TestMsgManager {
 func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr := reerrgroup.NewGroup(config.ErrGroupCommonLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+
+	var (
+		total    atomic.Int64
+		progress atomic.Int64
+	)
+	total.Add(int64(vars.UserNum * 2))
+	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+
 	m.sendSingleMessages(ctx, gr)
 	m.sendGroupMessages(ctx, gr)
 	return gr.Wait()
@@ -40,7 +50,8 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 				return err
 			}
 
-			grr := reerrgroup.NewGroup(config.ErrGroupSmallLimit)
+			grr, _ := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
+
 			for _, friend := range friends {
 				friend := friend
 				if friend.FriendInfo != nil {
@@ -84,7 +95,8 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					sendGroups = append(sendGroups, group.GroupID)
 				}
 			}
-			grr := reerrgroup.NewGroup(config.ErrGroupSmallLimit)
+			grr, _ := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
+
 			for _, group := range sendGroups {
 				group := group
 				for i := 0; i < vars.GroupMessageNum; i++ {

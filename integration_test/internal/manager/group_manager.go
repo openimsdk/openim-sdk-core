@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"sync/atomic"
 )
 
 type TestGroupManager struct {
@@ -24,7 +25,15 @@ func NewGroupManager(m *MetaManager) *TestGroupManager {
 func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr := reerrgroup.NewGroup(config.ErrGroupCommonLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+
+	var (
+		total    atomic.Int64
+		progress atomic.Int64
+	)
+	total.Add(int64(vars.LargeGroupNum + vars.UserNum*vars.CommonGroupNum))
+	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+
 	m.createLargeGroups(ctx, gr)
 	m.createCommonGroups(ctx, gr)
 	return gr.Wait()

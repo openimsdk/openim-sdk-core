@@ -6,9 +6,9 @@
 package reerrgroup
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 // A Group is a collection of goroutines working on subtasks that are part of
@@ -17,7 +17,8 @@ import (
 // A zero Group is valid, has no limit on the number of active goroutines,
 // and does not cancel on error.
 type Group struct {
-	wg sync.WaitGroup // worker wg
+	cancel func(error)
+	wg     sync.WaitGroup // worker wg
 
 	taskChan  chan func() error
 	taskCount atomic.Int64
@@ -34,11 +35,17 @@ func (g *Group) done() {
 	g.wg.Done()
 }
 
-// NewGroup new a group
-func NewGroup(workerCount int) *Group {
+// WithContext returns a new Group and an associated Context derived from ctx.
+//
+// The derived Context is canceled the first time a function passed to Go
+// returns a non-nil error or the first time Wait returns, whichever occurs
+// first.
+func WithContext(ctx context.Context, workerCount int) (*Group, context.Context) {
 	g := &Group{}
 	g.initialize(workerCount)
-	return g
+	ctx, cancel := context.WithCancelCause(ctx)
+	g.cancel = cancel
+	return g, ctx
 }
 
 func (g *Group) initialize(workerCount int) {
@@ -51,12 +58,11 @@ func (g *Group) initialize(workerCount int) {
 			for task := range g.taskChan {
 				doTask := func() error {
 					defer g.taskCount.Add(-1)
-					if g.err != nil {
-						return nil
-					}
-
 					tasks := append(append(g.beforeTasks, task), g.afterTasks...)
 					for _, t := range tasks { // Execute the function
+						if g.err != nil {
+							return nil
+						}
 						if err := t(); err != nil {
 							return err
 						}
@@ -67,6 +73,9 @@ func (g *Group) initialize(workerCount int) {
 					g.errOnce.Do(func() {
 						g.err = err
 					})
+					if g.cancel != nil {
+						g.cancel(g.err)
+					}
 				}
 
 			}
@@ -77,10 +86,13 @@ func (g *Group) initialize(workerCount int) {
 // Wait blocks until all function calls from the Go method have returned, then
 // returns the first non-nil error (if any) from them.
 func (g *Group) Wait() error {
-	for g.taskCount.Load() != 0 {
-		time.Sleep(time.Millisecond * 100)
-	}
+	close(g.taskChan)
 
+	g.wg.Wait()
+
+	if g.cancel != nil {
+		g.cancel(g.err)
+	}
 	return g.err
 }
 

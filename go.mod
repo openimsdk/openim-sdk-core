@@ -37,3 +37,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 	google.golang.org/grpc v1.62.1 // indirect
 )
+
+replace github.com/openimsdk/tools v0.0.50-alpha.1 => C:\App\Project\tools
