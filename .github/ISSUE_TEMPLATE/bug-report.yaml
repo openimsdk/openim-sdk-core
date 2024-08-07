@@ -2,7 +2,7 @@ name: Bug Report
 title: "[BUG] "
 labels: ["bug"]
 description: "Create a detailed report to help us identify and resolve issues."
-assignees: []
+# assignees: []
 
 body:
   - type: markdown
@@ -19,17 +19,18 @@ body:
       required: true
 
   - type: dropdown
-    id: sdk-version
+    id: sdk-platform
     attributes:
-      label: SDK Version
-      description: "Please specify the SDK version you are using."
+      label: SDK Platform
+      description: "Please specify the SDK platform you are using."
       options:
         - iOS SDK
         - Android SDK
-        - Web SDK
+        - Web WASM SDK
         - Windows SDK
-        - fluter SDK
-        - miniProgram SDK
+        - Fluter SDK
+        - MiniProgram SDK
+        - Mac SDK
     validations:
       required: true
 
