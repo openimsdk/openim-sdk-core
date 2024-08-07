@@ -23,7 +23,6 @@ func ProgressBarPrint(ctx context.Context, title string, gr *reerrgroup.Group, p
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("bar print exist")
 				return
 			default:
 				fmt.Print(formatutil.ProgressBar(title, int(progress.Load()), int(total.Load())))

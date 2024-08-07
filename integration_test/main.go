@@ -29,6 +29,8 @@ func Init(ctx context.Context) error {
 	initialization.GenUserIDs()
 	sdk.TestSDKs = make([]*sdk.TestSDK, vars.UserNum)
 	vars.Contexts = make([]context.Context, vars.UserNum)
+	vars.SingleMsgReceiveNum = make([]int, vars.UserNum)
+	vars.GroupMsgReceiveNum = make([]int, vars.UserNum)
 	vars.LoginEndUserNum = int(math.Floor(vars.LoginRate * float64(vars.UserNum)))
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
