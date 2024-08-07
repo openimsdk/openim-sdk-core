@@ -2,7 +2,7 @@ name: Bug Report
 title: "[BUG] "
 labels: ["bug"]
 description: "Create a detailed report to help us identify and resolve issues."
-assignees: []
+# assignees: []
 
 body:
   - type: markdown
@@ -19,17 +19,38 @@ body:
       required: true
 
   - type: dropdown
-    id: sdk-version
+    id: sdk-platform
     attributes:
-      label: SDK Version
-      description: "Please specify the SDK version you are using."
+      label: SDK Platform
+      description: "Please specify the SDK platform you are using."
       options:
         - iOS SDK
         - Android SDK
-        - Web SDK
-        - Windows SDK
-        - fluter SDK
-        - miniProgram SDK
+        - Web WASM SDK
+        - Electron FFI SDK
+        - Flutter SDK
+        - uni-app SDK
+        - Unity SDK
+        - .NET SDK
+        - React Native SDK
+    validations:
+      required: true
+
+  - type: input
+    id: device-model
+    attributes:
+      label: Device Model
+      description: "Please provide the model of the device you are using."
+      placeholder: "e.g., iPhone 12, Samsung Galaxy S21"
+    validations:
+      required: true
+
+  - type: input
+    id: operating-system-version
+    attributes:
+      label: Operating System Version
+      description: "Please provide the version number of the operating system you are using."
+      placeholder: "e.g., iOS 14.4, Android 11"
     validations:
       required: true
 
