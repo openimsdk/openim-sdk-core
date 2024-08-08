@@ -4,9 +4,12 @@ import (
 	"flag"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 )
 
 func InitFlag() {
+	flag.BoolVar(&flagconst.TestMode, "test", true, "mark is test mode")
+
 	flag.IntVar(&vars.UserNum, "u", 100, "user num")
 	flag.IntVar(&vars.SuperUserNum, "su", 10, "number of users with all friends")
 	flag.IntVar(&vars.LargeGroupNum, "gl", 5, "number of big group")

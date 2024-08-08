@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 	"path/filepath"
 	"sync"
 	"time"
@@ -154,13 +155,25 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	} else {
 		zLogLevel = logger.Silent
 	}
-	dbFileName = fmt.Sprintf("file:%s?cache=shared&_busy_timeout=5000", dbFileName)
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
-	if err != nil {
-		return errs.WrapMsg(err, "open db failed "+dbFileName)
-	}
+	var (
+		db *gorm.DB
+	)
 
-	db.Exec("PRAGMA journal_mode=WAL;") // open WAL mode
+	if flagconst.TestMode {
+		dbFileName = fmt.Sprintf("file:%s?cache=shared&_busy_timeout=5000", dbFileName)
+		db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+		if err != nil {
+			return errs.WrapMsg(err, "open db failed "+dbFileName)
+		}
+
+		db.Exec("PRAGMA journal_mode=WAL;") // open WAL mode
+	} else {
+		// common mode
+		db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+		if err != nil {
+			return errs.WrapMsg(err, "open db failed "+dbFileName)
+		}
+	}
 
 	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
