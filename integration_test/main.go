@@ -79,6 +79,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
 		process.NewTask(vars.ShouldImportFriends, relationMng.LoginUsersSyncFriends),
+		process.NewTask(true, Sleep),
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
 
