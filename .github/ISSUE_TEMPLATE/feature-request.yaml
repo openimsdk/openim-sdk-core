@@ -1,6 +1,6 @@
 name: Feature Request
 title: "[FEATURE REQUEST] "
-labels: ["feature request"]
+labels: ["feature request","enhancement"]
 description: "Propose a new feature or improvement that you believe will help enhance the project."
 # assignees: []
 
