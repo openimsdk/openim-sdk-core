@@ -15,12 +15,8 @@ import (
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/formatutil"
 	"math"
-	"net/http"
-	_ "net/http/pprof"
 	"time"
 )
-
-const ()
 
 func Init(ctx context.Context) error {
 	initialization.InitFlag()
@@ -82,7 +78,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(true, Sleep),
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
-		process.NewTask(vars.ShouldImportFriends, Sleep),
+		process.NewTask(vars.ShouldImportFriends, relationMng.LoginUsersSyncFriends),
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
 
@@ -114,9 +110,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 }
 
 func main() {
-	go func() {
-		http.ListenAndServe("localhost:6060", nil)
-	}()
 	ctx := context.Background()
 	if err := Init(ctx); err != nil {
 		log.ZError(ctx, "init err", err, "stack", utils.FormatErrorStack(err))

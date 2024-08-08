@@ -12,7 +12,7 @@ import (
 )
 
 func FuncProgressBarPrint(ctx context.Context, gr *reerrgroup.Group, progress, total *atomic.Int64) {
-	ProgressBarPrint(ctx, stringutil.CamelCaseToSpaceSeparated(stringutil.GetFuncName(1)), gr, progress, total)
+	ProgressBarPrint(ctx, stringutil.GetFuncName(1), gr, progress, total)
 }
 func ProgressBarPrint(ctx context.Context, title string, gr *reerrgroup.Group, progress, total *atomic.Int64) {
 	gr.SetAfterTasks(func() error {
