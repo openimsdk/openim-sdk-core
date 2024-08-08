@@ -47,5 +47,5 @@ func CheckConvNumAfterImpFriAndCrGro(ctx context.Context) error {
 		},
 	}
 
-	return c.Check(ctx)
+	return c.LoopCheck(ctx)
 }

@@ -67,7 +67,7 @@ func (m *TestRelationManager) LoginUsersSyncFriends(ctx context.Context) error {
 		total    atomic.Int64
 		progress atomic.Int64
 	)
-	total.Add(int64(vars.SuperUserNum))
+	total.Add(int64(vars.LoginEndUserNum))
 	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
 	for i := range vars.UserIDs[:vars.LoginEndUserNum] {
 		i := i
