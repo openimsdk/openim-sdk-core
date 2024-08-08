@@ -78,6 +78,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(true, Sleep),
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
+		process.NewTask(true, Sleep), // todo: change sync lock
 		process.NewTask(vars.ShouldImportFriends, relationMng.LoginUsersSyncFriends),
 		process.NewTask(true, Sleep),
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
