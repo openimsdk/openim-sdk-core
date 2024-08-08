@@ -10,11 +10,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/initialization"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/process"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/formatutil"
-	"math"
 	"time"
 )
 
@@ -23,11 +21,7 @@ func Init(ctx context.Context) error {
 	flag.Parse()
 	initialization.SetFlagLimit()
 	initialization.GenUserIDs()
-	sdk.TestSDKs = make([]*sdk.TestSDK, vars.UserNum)
-	vars.Contexts = make([]context.Context, vars.UserNum)
-	vars.SingleMsgReceiveNum = make([]int, vars.UserNum)
-	vars.GroupMsgReceiveNum = make([]int, vars.UserNum)
-	vars.LoginEndUserNum = int(math.Floor(vars.LoginRate * float64(vars.UserNum)))
+	initialization.InitGlobalData()
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
 	}
@@ -75,17 +69,16 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers),
 		process.NewTask(true, userMng.InitAllSDK),
 		process.NewTask(true, userMng.LoginByRate),
-		process.NewTask(true, Sleep),
+		process.NewTask(true, checker.CheckLoginByRateNum),
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
-		process.NewTask(true, Sleep), // todo: change sync lock
-		process.NewTask(vars.ShouldImportFriends, relationMng.LoginUsersSyncFriends),
-		process.NewTask(true, Sleep),
+		process.NewTask(vars.ShouldImportFriends, checker.CheckLoginUsersFriends),
+
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
 
 		process.NewTask(true, userMng.LoginLastUsers),
-		process.NewTask(true, Sleep),
+		process.NewTask(true, checker.CheckAllLoginNum),
 	)
 
 	pro.AddTasks(checkTasks...)
@@ -103,8 +96,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(true, fileMng.DeleteLocalDB),
 		process.NewTask(true, userMng.InitAllSDK),
 		process.NewTask(true, userMng.LoginAllUsers),
-		process.NewTask(true, Sleep),
-		process.NewTask(true, Sleep),
 	)
 	pro.AddTasks(checkTasks...)
 

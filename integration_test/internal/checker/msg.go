@@ -11,8 +11,8 @@ import (
 // CheckMessageNum check message num.
 func CheckMessageNum(ctx context.Context) error {
 	corrects := func() [3]int {
-		// corrects[0]: super user conversion num
-		// corrects[1]: common user conversion num
+		// corrects[0]: super user msg num
+		// corrects[1]: common user msg num
 		// corrects[2]: create more one large group largest user no + 1
 
 		createdLargeGroupNum := vars.LargeGroupNum / vars.UserNum

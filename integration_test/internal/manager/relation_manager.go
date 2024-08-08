@@ -6,7 +6,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -49,30 +48,6 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 			}
 			_, err := util.CallApi[relation.ImportFriendResp](m.BuildCtx(ctx), constant.ImportFriendListRouter, req)
 			if err != nil {
-				return err
-			}
-			return nil
-		})
-	}
-	return gr.Wait()
-}
-
-// LoginUsersSyncFriends sync friends for login users
-func (m *TestRelationManager) LoginUsersSyncFriends(ctx context.Context) error {
-	defer decorator.FuncLog(ctx)()
-
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
-
-	var (
-		total    atomic.Int64
-		progress atomic.Int64
-	)
-	total.Add(int64(vars.LoginEndUserNum))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
-	for i := range vars.UserIDs[:vars.LoginEndUserNum] {
-		i := i
-		gr.Go(func() error {
-			if err := sdk.TestSDKs[i].SDK.Friend().IncrSyncFriends(ctx); err != nil {
 				return err
 			}
 			return nil

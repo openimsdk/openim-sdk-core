@@ -1,11 +1,13 @@
 package sdk_user_simulator
 
 import (
-	testUtils "github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"math/rand"
+	"time"
 )
 
 type conversationCallBack struct {
@@ -85,13 +87,14 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	var sm sdk_struct.MsgStruct
 	_ = utils.JsonStringToStruct(message, &sm)
 
+	if rand.Float64() < config.CheckMsgRate {
+		vars.MsgConsuming <- time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond)))
+	}
 	switch sm.SessionType {
 	case constant.SingleChatType:
-		vars.SingleMsgReceiveNum[testUtils.MustGetUserNum(m.userID)]++
 		m.SingleDelay[sm.SendID] =
 			append(m.SingleDelay[sm.SendID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
 	case constant.SuperGroupChatType:
-		vars.GroupMsgReceiveNum[testUtils.MustGetUserNum(m.userID)]++
 		m.GroupDelay[sm.GroupID] =
 			append(m.GroupDelay[sm.GroupID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
 	default:
@@ -225,7 +228,7 @@ func (t *testConnListener) OnConnecting() {
 }
 
 func (t *testConnListener) OnConnectSuccess() {
-
+	vars.NowLoginNum.Add(1)
 }
 
 func (t *testConnListener) OnConnectFailed(ErrCode int32, ErrMsg string) {
