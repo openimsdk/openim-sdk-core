@@ -160,7 +160,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	)
 
 	if flagconst.TestMode {
-		dbFileName = fmt.Sprintf("file:%s?cache=shared&_busy_timeout=5000", dbFileName)
+		dbFileName = fmt.Sprintf("file:%s?cache=shared&_busy_timeout=500000", dbFileName)
 		db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 		if err != nil {
 			return errs.WrapMsg(err, "open db failed "+dbFileName)
