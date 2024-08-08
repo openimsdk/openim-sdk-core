@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
@@ -25,7 +26,7 @@ func NewGroupManager(m *MetaManager) *TestGroupManager {
 func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupMiddleSmallLimit)
 
 	var (
 		total    atomic.Int64
@@ -50,6 +51,7 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 			if err != nil {
 				return err
 			}
+			fmt.Println("create large group success!!!!!!!!!!!!")
 			return nil
 		})
 		userNum = utils.NextNum(userNum)
