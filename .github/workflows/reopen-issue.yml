@@ -27,14 +27,17 @@ jobs:
               labels: 'lifecycle/stale',
               per_page: 100
             });
-
-            const issueNumbers = issues.map(issue => issue.number);
+            const issueNumbers = issues
+              .filter(issue => !issue.pull_request) // 排除PR
+              .map(issue => issue.number);
             console.log(`Fetched issues: ${issueNumbers}`);
-            return issueNumbers;
+            return { issue_numbers: issueNumbers.join(',') };
 
       - name: Set issue numbers
         id: set_issue_numbers
-        run: echo "ISSUE_NUMBERS=${{ steps.fetch_issues.outputs.result }}" >> $GITHUB_ENV
+        run:  |
+             echo "ISSUE_NUMBERS=${{ steps.fetch_issues.outputs.result }}" >> $GITHUB_ENV
+             echo "Issue numbers: ${{ steps.fetch_issues.outputs.result }}"
 
       - name: Reopen Issues
         uses: actions/github-script@v7
