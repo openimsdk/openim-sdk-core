@@ -103,11 +103,15 @@ func (g *Group) Wait() error {
 
 // WaitTaskDone only wait all task done without cancel ctx and close taskChan.
 func (g *Group) WaitTaskDone() {
+	ticker := time.NewTicker(checkTaskDoneMilSec * time.Millisecond)
+	defer ticker.Stop()
 	for {
-		if g.taskCount.Load() == 0 {
-			return
+		select {
+		case <-ticker.C:
+			if g.taskCount.Load() == 0 {
+				return
+			}
 		}
-		time.Sleep(time.Millisecond * checkTaskDoneMilSec)
 	}
 }
 

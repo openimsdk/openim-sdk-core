@@ -31,7 +31,7 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 		total    atomic.Int64
 		progress atomic.Int64
 	)
-	total.Add(int64(vars.LargeGroupNum + vars.UserNum*vars.CommonGroupNum))
+	total.Add(int64(vars.LargeGroupNum + vars.UserNum))
 	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
 
 	m.createLargeGroups(ctx, gr)
