@@ -1077,13 +1077,22 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, err := c.db.GetLoginUser(ctx, c.loginUserID)
-	if err != nil {
-		return err
-	} else {
-		message.SenderFaceURL = userInfo.FaceURL
-		message.SenderNickname = userInfo.Nickname
+	var (
+		userInfo *sdk_struct.BasicInfo
+		ok       bool
+	)
+	if userInfo, ok = c.user.UserBasicCache.Load(c.loginUserID); !ok {
+		info, err := c.db.GetLoginUser(ctx, c.loginUserID)
+		if err != nil {
+			return err
+		}
+		c.user.UserBasicCache.Store(c.loginUserID, &sdk_struct.BasicInfo{
+			Nickname: info.Nickname,
+			FaceURL:  info.FaceURL,
+		})
 	}
+	message.SenderFaceURL = userInfo.FaceURL
+	message.SenderNickname = userInfo.Nickname
 	ClientMsgID := utils.GetMsgID(message.SendID)
 	message.ClientMsgID = ClientMsgID
 	message.MsgFrom = msgFrom
