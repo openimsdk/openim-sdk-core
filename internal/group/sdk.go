@@ -493,7 +493,9 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 			case constant.GroupFilterOwnerAndAdmin:
 				return localGroupMembers, false, nil
 			case constant.GroupFilterAll:
+				fallthrough
 			case constant.GroupFilterOrdinaryUsers:
+				fallthrough
 			case constant.GroupFilterAdminAndOrdinaryUsers:
 				return localGroupMembers, true, nil
 			}
