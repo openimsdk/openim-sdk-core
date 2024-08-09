@@ -36,7 +36,7 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 
 	m.sendSingleMessages(ctx, gr)
 	// prevent lock database
-	gr.UnCancelWait()
+	gr.WaitTaskDone()
 	m.sendGroupMessages(ctx, gr)
 	return gr.Wait()
 }

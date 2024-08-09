@@ -9,6 +9,11 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
+	"time"
+)
+
+const (
+	checkTaskDoneMilSec = 100 // Check task completion interval (unit: Milliseconds)
 )
 
 // A Group is a collection of goroutines working on subtasks that are part of
@@ -96,11 +101,14 @@ func (g *Group) Wait() error {
 	return g.err
 }
 
-// UnCancelWait only wait without cancel ctx and close taskChan.
-func (g *Group) UnCancelWait() {
-	g.wg.Wait()
-
-	return
+// WaitTaskDone only wait all task done without cancel ctx and close taskChan.
+func (g *Group) WaitTaskDone() {
+	for {
+		if g.taskCount.Load() == 0 {
+			return
+		}
+		time.Sleep(time.Millisecond * checkTaskDoneMilSec)
+	}
 }
 
 // Go calls the given function in a new goroutine.

@@ -36,7 +36,7 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 
 	m.createLargeGroups(ctx, gr)
 	// prevent lock database
-	gr.UnCancelWait()
+	gr.WaitTaskDone()
 	m.createCommonGroups(ctx, gr)
 	return gr.Wait()
 }
@@ -58,7 +58,7 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 		if i != 0 && userNum == 0 {
 			// A new round of user creation
 			// prevent lock database
-			gr.UnCancelWait()
+			gr.WaitTaskDone()
 		}
 	}
 	return
