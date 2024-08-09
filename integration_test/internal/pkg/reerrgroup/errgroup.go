@@ -96,6 +96,13 @@ func (g *Group) Wait() error {
 	return g.err
 }
 
+// UnCancelWait only wait without cancel ctx and close taskChan.
+func (g *Group) UnCancelWait() {
+	g.wg.Wait()
+
+	return
+}
+
 // Go calls the given function in a new goroutine.
 // It blocks until the new goroutine can be added without the number of
 // active goroutines in the group exceeding the configured limit.

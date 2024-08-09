@@ -8,7 +8,7 @@ import (
 )
 
 func InitFlag() {
-	flag.BoolVar(&flagconst.TestMode, "test", true, "mark is test mode")
+	flag.BoolVar(&flagconst.TestMode, "test", false, "mark is test mode")
 
 	flag.IntVar(&vars.UserNum, "u", 100, "user num")
 	flag.IntVar(&vars.SuperUserNum, "su", 10, "number of users with all friends")

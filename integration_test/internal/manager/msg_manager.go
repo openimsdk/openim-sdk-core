@@ -35,6 +35,8 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
 
 	m.sendSingleMessages(ctx, gr)
+	// prevent lock database
+	gr.UnCancelWait()
 	m.sendGroupMessages(ctx, gr)
 	return gr.Wait()
 }
@@ -49,31 +51,24 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 			if err != nil {
 				return err
 			}
-
-			grr, _ := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
-
 			for _, friend := range friends {
-				friend := friend
 				if friend.FriendInfo != nil {
 					for i := 0; i < vars.SingleMessageNum; i++ {
-						grr.Go(func() error {
-							msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
-								fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
-							if err != nil {
-								return err
-							}
-							_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
-							if err != nil {
-								return err
-							}
-							return nil
-						})
+						msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
+							fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
+						if err != nil {
+							return err
+						}
+						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
+						if err != nil {
+							return err
+						}
 					}
 				} else {
 					fmt.Println("what`s this???")
 				}
 			}
-			return grr.Wait()
+			return nil
 		})
 	}
 	return
@@ -96,26 +91,21 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					sendGroups = append(sendGroups, group.GroupID)
 				}
 			}
-			grr, _ := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
-
 			for _, group := range sendGroups {
 				group := group
 				for i := 0; i < vars.GroupMessageNum; i++ {
-					grr.Go(func() error {
-						msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
-							fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
-						if err != nil {
-							return err
-						}
-						_, err = testSDK.SendGroupMsg(ctx, msg, group)
-						if err != nil {
-							return err
-						}
-						return nil
-					})
+					msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
+						fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
+					if err != nil {
+						return err
+					}
+					_, err = testSDK.SendGroupMsg(ctx, msg, group)
+					if err != nil {
+						return err
+					}
 				}
 			}
-			return grr.Wait()
+			return nil
 		})
 	}
 	return
