@@ -20,7 +20,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 	"path/filepath"
 	"sync"
@@ -160,13 +159,13 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	)
 
 	if flagconst.TestMode {
-		dbFileName = fmt.Sprintf("file:%s?_busy_timeout=500000", dbFileName)
 		db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 		if err != nil {
 			return errs.WrapMsg(err, "open db failed "+dbFileName)
 		}
 
 		db.Exec("PRAGMA journal_mode=WAL;") // open WAL mode
+		db.Exec("PRAGMA busy_timeout = 500000;")
 	} else {
 		// common mode
 		db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
