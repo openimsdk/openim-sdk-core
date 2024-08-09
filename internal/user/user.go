@@ -23,6 +23,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	authPb "github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/sdkws"
 	userPb "github.com/openimsdk/protocol/user"
@@ -36,11 +37,6 @@ import (
 	PbConstant "github.com/openimsdk/protocol/constant"
 )
 
-type BasicInfo struct {
-	Nickname string
-	FaceURL  string
-}
-
 // User is a struct that represents a user in the system.
 type User struct {
 	db_interface.DataBase
@@ -49,7 +45,7 @@ type User struct {
 	userSyncer     *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
 	commandSyncer  *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
 	conversationCh chan common.Cmd2Value
-	UserBasicCache *cache.Cache[string, *BasicInfo]
+	UserBasicCache *cache.Cache[string, *sdk_struct.BasicInfo]
 
 	//OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
@@ -78,7 +74,7 @@ func (u *User) UserOnlineStatusChange(users map[string][]int32) {
 func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
 	user.initSyncer()
-	user.UserBasicCache = cache.NewCache[string, *BasicInfo]()
+	user.UserBasicCache = cache.NewCache[string, *sdk_struct.BasicInfo]()
 	//user.OnlineStatusCache = cache.NewCache[string, *userPb.OnlineStatus]()
 	return user
 }

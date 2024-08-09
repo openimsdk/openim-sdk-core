@@ -1111,9 +1111,9 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 	return nil
 }
 
-func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*user.BasicInfo,
+func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*sdk_struct.BasicInfo,
 	error) {
-	m := make(map[string]*user.BasicInfo)
+	m := make(map[string]*sdk_struct.BasicInfo)
 	var notCachedUserIDs []string
 	var notInFriend []string
 
@@ -1131,7 +1131,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}))
 	}
 	for _, localFriend := range friendList {
-		userInfo := &user.BasicInfo{FaceURL: localFriend.FaceURL}
+		userInfo := &sdk_struct.BasicInfo{FaceURL: localFriend.FaceURL}
 		if localFriend.Remark != "" {
 			userInfo.Nickname = localFriend.Remark
 		} else {
@@ -1154,7 +1154,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 			return nil, err
 		}
 		for _, u := range users {
-			userInfo := &user.BasicInfo{FaceURL: u.FaceURL, Nickname: u.Nickname}
+			userInfo := &sdk_struct.BasicInfo{FaceURL: u.FaceURL, Nickname: u.Nickname}
 			m[u.UserID] = userInfo
 			c.user.UserBasicCache.Store(u.UserID, userInfo)
 		}
@@ -1186,7 +1186,7 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 	if len(users) == 0 {
 		return "", "", sdkerrs.ErrUserIDNotFound.WrapMsg(userID)
 	}
-	c.user.UserBasicCache.Store(userID, &user.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
+	c.user.UserBasicCache.Store(userID, &sdk_struct.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
 	return users[0].FaceURL, users[0].Nickname, nil
 }
 
