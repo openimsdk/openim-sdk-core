@@ -26,7 +26,7 @@ func NewMsgManager(m *MetaManager) *TestMsgManager {
 func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
 
 	var (
 		total    atomic.Int64
