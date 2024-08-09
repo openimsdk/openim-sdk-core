@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/openimsdk/tools/utils/stringutil"
 	"math"
 	"sync"
 
@@ -372,9 +373,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
-	log.ZDebug(ctx, "listToMap: ", "local conversation", list, "generated c map", conversationSet)
+	log.ZDebug(ctx, "listToMap: ", "local conversation", list, "generated c map",
+		string(stringutil.StructToJsonBytes(conversationSet)))
 	c.diff(ctx, m, conversationSet, conversationChangedSet, newConversationSet)
-	log.ZInfo(ctx, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
+	log.ZInfo(ctx, "trigger map is :", "newConversations", string(stringutil.StructToJsonBytes(newConversationSet)),
+		"changedConversations", string(stringutil.StructToJsonBytes(conversationChangedSet)))
 
 	//seq sync message update
 	if err := c.messageController.BatchUpdateMessageList(ctx, updateMsg); err != nil {

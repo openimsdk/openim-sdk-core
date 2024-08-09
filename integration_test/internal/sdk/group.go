@@ -43,7 +43,7 @@ func (s *TestSDK) createGroup(ctx context.Context, memberUserIds []string, group
 	})
 }
 
-func (s *TestSDK) GetAllJoinedGroup(ctx context.Context) ([]*sdkws.GroupInfo, int, error) {
+func (s *TestSDK) GetAllJoinedGroups(ctx context.Context) ([]*sdkws.GroupInfo, int, error) {
 	res, err := s.SDK.Group().GetServerJoinGroup(ctx)
 	if err != nil {
 		return nil, 0, err

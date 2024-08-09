@@ -17,6 +17,7 @@ package group
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -33,11 +34,17 @@ const (
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	go func() {
+	if flagconst.TestMode {
 		if err := g.doNotification(ctx, msg); err != nil {
 			log.ZError(ctx, "DoGroupNotification failed", err)
 		}
-	}()
+	} else {
+		go func() {
+			if err := g.doNotification(ctx, msg); err != nil {
+				log.ZError(ctx, "DoGroupNotification failed", err)
+			}
+		}()
+	}
 }
 
 func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
