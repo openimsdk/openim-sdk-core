@@ -10,6 +10,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/initialization"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/process"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/statistics"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/formatutil"
@@ -82,6 +83,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	)
 
 	pro.AddTasks(checkTasks...)
+	pro.AddTasks(process.NewTask(vars.ShouldCheckMessageNum, statistics.MsgConsuming))
 
 	// Uninstall and reinstall
 	offline := func() {

@@ -88,7 +88,10 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	_ = utils.JsonStringToStruct(message, &sm)
 
 	if rand.Float64() < config.CheckMsgRate {
-		vars.MsgConsuming <- time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond)))
+		select {
+		case vars.MsgConsuming <- time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond))):
+		default:
+		}
 	}
 	switch sm.SessionType {
 	case constant.SingleChatType:
