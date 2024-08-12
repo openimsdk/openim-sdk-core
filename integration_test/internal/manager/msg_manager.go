@@ -9,7 +9,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
-	"github.com/openimsdk/tools/log"
 	"sync/atomic"
 )
 
@@ -26,7 +25,7 @@ func NewMsgManager(m *MetaManager) *TestMsgManager {
 func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupMiddleSmallLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
 
 	var (
 		total    atomic.Int64
@@ -69,7 +68,6 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 					fmt.Println("what`s this???")
 				}
 			}
-			log.ZError(ctx, "send over", nil, "userID", userNum)
 			return nil
 		})
 	}
