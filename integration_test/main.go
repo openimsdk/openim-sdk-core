@@ -73,7 +73,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(true, checker.CheckLoginByRateNum),
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
-		process.NewTask(vars.ShouldImportFriends, checker.CheckLoginUsersFriends),
+		//process.NewTask(vars.ShouldImportFriends, checker.CheckLoginUsersFriends),
 
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
