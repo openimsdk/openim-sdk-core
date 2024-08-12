@@ -1,6 +1,6 @@
 name: Remove Unused Labels
 on:
-  workflow_dispatch: # 手动触发
+  workflow_dispatch: 
 
 jobs:
   cleanup:
@@ -69,6 +69,7 @@ jobs:
               });
               console.log(`Deleted label: ${label}`);
             }
+              
         env:
           LABELS_IN_USE: ${{ steps.fetch_issues_prs.outputs.result }}
           ALL_LABELS: ${{ steps.fetch_labels.outputs.result }}

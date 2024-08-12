@@ -10,7 +10,6 @@ permissions:
   packages: write
   issues: write
 
-  
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
@@ -29,8 +28,8 @@ jobs:
           distribution: goreleaser
           version: latest
           workdir: .
-          args: release --clean  --release-footer-tmpl=scripts/template/footer.md.tmpl --release-header-tmpl=scripts/template/head.md.tmpl
+          args: release --clean --release-footer-tmpl=scripts/template/footer.md.tmpl --release-header-tmpl=scripts/template/head.md.tmpl
         env:
           USERNAME: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
+          # FURY_TOKEN: ${{ secrets.FURY_TOKEN }}

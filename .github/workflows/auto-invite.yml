@@ -46,7 +46,7 @@ jobs:
       - name: Close Issue
         uses: peter-evans/close-issue@v3
         with:
-          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          token: ${{ secrets.BOT_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           comment: 🤖 Auto-closing issue, if you still need help please reopen the issue or ask for help in the community above
           labels: |
