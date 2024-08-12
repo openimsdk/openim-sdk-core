@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	timeOut = 100
+	timeOut = 10000
 )
 
 var ErrChanNil = errs.New("channal == nil")
