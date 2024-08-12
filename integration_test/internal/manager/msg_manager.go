@@ -10,7 +10,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"sync/atomic"
-	"time"
 )
 
 type TestMsgManager struct {
@@ -64,7 +63,6 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						if err != nil {
 							return err
 						}
-						time.Sleep(time.Second)
 					}
 				} else {
 					fmt.Println("what`s this???")
@@ -105,7 +103,6 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					if err != nil {
 						return err
 					}
-					time.Sleep(time.Second)
 				}
 			}
 			return nil
