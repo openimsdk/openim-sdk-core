@@ -9,6 +9,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/tools/log"
 	"sync/atomic"
 )
 
@@ -68,6 +69,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 					fmt.Println("what`s this???")
 				}
 			}
+			log.ZError(ctx, "send over", nil, "userID", userNum)
 			return nil
 		})
 	}
