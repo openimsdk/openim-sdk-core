@@ -7,7 +7,6 @@ package reerrgroup
 
 import (
 	"context"
-	"github.com/openimsdk/tools/log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -105,18 +104,12 @@ func (g *Group) Wait() error {
 // WaitTaskDone only wait all task done without cancel ctx and close taskChan.
 func (g *Group) WaitTaskDone() {
 	ticker := time.NewTicker(checkTaskDoneMilSec * time.Millisecond)
-	count := 0
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
 			if g.taskCount.Load() == 0 {
 				return
-			}
-
-			count++
-			if count%100 == 0 {
-				log.ZError(context.Background(), "wait!", nil, "last task", g.taskCount.Load())
 			}
 		}
 	}
