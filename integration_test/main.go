@@ -78,8 +78,8 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
 
-		process.NewTask(true, userMng.LoginLastUsers),
-		process.NewTask(true, checker.CheckAllLoginNum),
+		//process.NewTask(true, userMng.LoginLastUsers),
+		//process.NewTask(true, checker.CheckAllLoginNum),
 	)
 
 	pro.AddTasks(checkTasks...)
