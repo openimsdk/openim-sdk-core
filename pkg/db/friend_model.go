@@ -41,8 +41,8 @@ func (d *DataBase) DeleteFriendDB(ctx context.Context, friendUserID string) erro
 }
 
 func (d *DataBase) GetFriendListCount(ctx context.Context) (int64, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var count int64
 	return count, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalFriend{}).Count(&count).Error, "GetFriendListCount failed")
 }
@@ -59,16 +59,16 @@ func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalF
 
 }
 func (d *DataBase) GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var friendList []*model_struct.LocalFriend
 	return friendList, errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Find(&friendList).Error,
 		"GetFriendList failed")
 }
 
 func (d *DataBase) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var friendList []*model_struct.LocalFriend
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Offset(offset).Limit(count).Order("name").Find(&friendList).Error,
 		"GetFriendList failed")
@@ -91,8 +91,8 @@ func (d *DataBase) DeleteAllFriend(ctx context.Context) error {
 }
 
 func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var count int
 	var friendList []*model_struct.LocalFriend
 	var condition string
@@ -118,16 +118,16 @@ func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearc
 }
 
 func (d *DataBase) GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID string) (*model_struct.LocalFriend, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var friend model_struct.LocalFriend
 	return &friend, errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id = ? AND friend_user_id = ?",
 		d.loginUserID, FriendUserID).Take(&friend).Error, "GetFriendInfoByFriendUserID failed")
 }
 
 func (d *DataBase) GetFriendInfoList(ctx context.Context, friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var friendList []*model_struct.LocalFriend
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
 	return friendList, err

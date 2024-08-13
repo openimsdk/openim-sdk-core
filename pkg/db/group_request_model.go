@@ -46,8 +46,8 @@ func (d *DataBase) UpdateGroupRequest(ctx context.Context, groupRequest *model_s
 }
 
 func (d *DataBase) GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var groupRequestList []*model_struct.LocalGroupRequest
 	return groupRequestList, errs.Wrap(d.conn.WithContext(ctx).Order("create_time DESC").Find(&groupRequestList).Error)
 }

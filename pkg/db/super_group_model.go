@@ -39,8 +39,8 @@ func (d *DataBase) DeleteAllSuperGroup(ctx context.Context) error {
 }
 
 func (d *DataBase) GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var g model_struct.LocalGroup
 	return &g, errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }

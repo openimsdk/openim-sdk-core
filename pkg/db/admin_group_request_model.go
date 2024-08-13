@@ -48,8 +48,8 @@ func (d *DataBase) UpdateAdminGroupRequest(ctx context.Context, groupRequest *mo
 }
 
 func (d *DataBase) GetAdminGroupApplication(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var groupRequestList []*model_struct.LocalAdminGroupRequest
 	err := errs.Wrap(d.conn.WithContext(ctx).Order("create_time DESC").Find(&groupRequestList).Error)
 	if err != nil {

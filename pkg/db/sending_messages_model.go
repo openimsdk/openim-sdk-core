@@ -37,7 +37,7 @@ func (d *DataBase) DeleteSendingMessage(ctx context.Context, conversationID, cli
 	return errs.WrapMsg(d.conn.WithContext(ctx).Delete(&localSendingMessage).Error, "DeleteSendingMessage failed")
 }
 func (d *DataBase) GetAllSendingMessages(ctx context.Context) (friendRequests []*model_struct.LocalSendingMessages, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	return friendRequests, errs.WrapMsg(d.conn.WithContext(ctx).Find(&friendRequests).Error, "GetAllSendingMessages failed")
 }
