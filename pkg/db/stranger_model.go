@@ -27,8 +27,8 @@ import (
 )
 
 func (d *DataBase) GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error) {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	var friendList []*model_struct.LocalStranger
 	return friendList, errs.WrapMsg(d.conn.WithContext(ctx).Where("user_id IN ?", userIDs).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
 }

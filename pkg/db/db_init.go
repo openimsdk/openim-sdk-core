@@ -70,16 +70,11 @@ func (tc *TableChecker) UpdateTable(tableName string) {
 }
 
 type DataBase struct {
-	loginUserID   string
-	dbDir         string
-	conn          *gorm.DB
-	tableChecker  *TableChecker
-	mRWMutex      sync.RWMutex
-	groupMtx      sync.RWMutex
-	friendMtx     sync.RWMutex
-	userMtx       sync.RWMutex
-	versionMtx    sync.RWMutex
-	superGroupMtx sync.RWMutex
+	loginUserID  string
+	dbDir        string
+	conn         *gorm.DB
+	tableChecker *TableChecker
+	mRWMutex     sync.RWMutex
 }
 
 func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {

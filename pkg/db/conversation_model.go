@@ -70,15 +70,15 @@ func (d *DataBase) GetAllConversations(ctx context.Context) ([]*model_struct.Loc
 }
 
 func (d *DataBase) GetAllConversationIDList(ctx context.Context) (result []string, err error) {
-	d.groupMtx.Lock()
-	defer d.groupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalConversation
 	return result, errs.WrapMsg(d.conn.WithContext(ctx).Model(&c).Pluck("conversation_id", &result).Error, "GetAllConversationIDList failed ")
 }
 
 func (d *DataBase) GetAllSingleConversationIDList(ctx context.Context) (result []string, err error) {
-	d.groupMtx.Lock()
-	defer d.groupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalConversation
 	return result, errs.WrapMsg(d.conn.WithContext(ctx).Model(&c).Where("conversation_type = ?", constant.SingleChatType).Pluck("conversation_id", &result).Error, "GetAllConversationIDList failed ")
 }
