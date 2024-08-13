@@ -3,6 +3,8 @@ package manager
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/sdk_user_simulator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
@@ -11,9 +13,8 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
-	"golang.org/x/sync/errgroup"
-	"math"
-	"time"
+	"github.com/openimsdk/tools/mcontext"
+	"sync/atomic"
 )
 
 type TestUserManager struct {
@@ -34,12 +35,12 @@ func (t *TestUserManager) GenAllUserIDs() []string {
 	return ids
 }
 
-func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) error {
-	tm := time.Now()
-	log.ZDebug(ctx, "register begin", "len userIDs", len(userIDs))
-	defer func() {
-		log.ZDebug(ctx, "register end", "time consuming", time.Since(tm))
-	}()
+func (t *TestUserManager) RegisterAllUsers(ctx context.Context) error {
+	return t.registerUsers(ctx, vars.UserIDs...)
+}
+
+func (t *TestUserManager) registerUsers(ctx context.Context, userIDs ...string) error {
+	defer decorator.FuncLog(ctx)()
 
 	var users []*sdkws.UserInfo
 	for _, userID := range userIDs {
@@ -54,15 +55,22 @@ func (t *TestUserManager) RegisterUsers(ctx context.Context, userIDs ...string) 
 	return nil
 }
 
-func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error {
-	tm := time.Now()
-	log.ZDebug(ctx, "InitSDK begin", "len userIDs", len(userIDs))
-	defer func() {
-		log.ZDebug(ctx, "InitSDK end", "time consuming", time.Since(tm))
-	}()
+func (t *TestUserManager) InitAllSDK(ctx context.Context) error {
+	return t.initSDK(ctx, vars.UserIDs...)
+}
 
-	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(config.ErrGroupCommonLimit)
+func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error {
+	defer decorator.FuncLog(ctx)()
+
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+
+	var (
+		total    atomic.Int64
+		progress atomic.Int64
+	)
+	total.Add(int64(len(userIDs)))
+	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
@@ -77,6 +85,7 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 			}
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
 			vars.Contexts[userNum] = ctx                                 // init ctx
+			log.ZDebug(ctx, "init sdk", "operationID", mcontext.GetOperationID(ctx), "op userID", userID)
 			return nil
 		})
 	}
@@ -86,21 +95,33 @@ func (t *TestUserManager) InitSDK(ctx context.Context, userIDs ...string) error 
 	return nil
 }
 
-func (t *TestUserManager) LoginByRate(ctx context.Context, rate float64) error {
-	right := int(math.Ceil(rate * float64(vars.UserNum)))
-	userIDs := vars.UserIDs[:right]
-	return t.Login(ctx, userIDs...)
+func (t *TestUserManager) LoginAllUsers(ctx context.Context) error {
+	return t.login(ctx, vars.UserIDs...)
 }
 
-func (t *TestUserManager) Login(ctx context.Context, userIDs ...string) error {
-	tm := time.Now()
-	log.ZDebug(ctx, "login begin", "len userIDs", len(userIDs))
-	defer func() {
-		log.ZDebug(ctx, "login end", "time consuming", time.Since(tm))
-	}()
+func (t *TestUserManager) LoginByRate(ctx context.Context) error {
+	userIDs := vars.UserIDs[:vars.LoginEndUserNum]
+	return t.login(ctx, userIDs...)
+}
 
-	gr, _ := errgroup.WithContext(ctx)
-	gr.SetLimit(config.ErrGroupCommonLimit)
+func (t *TestUserManager) LoginLastUsers(ctx context.Context) error {
+	userIDs := vars.UserIDs[vars.LoginEndUserNum:]
+	return t.login(ctx, userIDs...)
+}
+
+func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
+	defer decorator.FuncLog(ctx)()
+
+	log.ZDebug(ctx, "login users", "len", len(userIDs))
+
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+
+	var (
+		total    atomic.Int64
+		progress atomic.Int64
+	)
+	total.Add(int64(len(userIDs)))
+	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {

@@ -7,6 +7,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/mcontext"
 	"sync"
 )
 
@@ -32,6 +33,7 @@ func InitSDK(ctx context.Context, userID, token string, cf sdk_struct.IMConfig) 
 
 	ctx = userForSDK.Context()
 	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+	ctx = mcontext.SetOpUserID(ctx, userID)
 	if err := userForSDK.InitMgr(ctx, userID, token); err != nil {
 		return nil, nil, err
 	}

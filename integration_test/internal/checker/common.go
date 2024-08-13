@@ -17,7 +17,7 @@ func InsertToErrChan(ctx context.Context, err error) {
 	select {
 	case checkErrChan <- err:
 	default:
-		log.ZInfo(ctx, "checkErrChan is full")
+		log.ZDebug(ctx, "checkErrChan is full")
 	}
 }
 
