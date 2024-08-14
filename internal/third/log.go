@@ -13,7 +13,6 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util/sdklog"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
@@ -190,15 +189,19 @@ func readLastNLines(filename string, n int) ([]string, error) {
 	return result, nil
 }
 
-func (c *Third) Log(ctx context.Context, logLevel int, path string, line string, err, msg string, keysAndValues map[string]string) {
+func (c *Third) Log(ctx context.Context, logLevel int, path string, line string, err, msg string, keysAndValues []any) {
 	switch logLevel {
 	case 6:
-		sdklog.SDKDebug(ctx, path, line, msg, keysAndValues)
+		// sdklog.SDKDebug(ctx, path, line, msg, keysAndValues)
+		log.ZDebug(ctx, msg, keysAndValues...)
 	case 4:
-		sdklog.SDKInfo(ctx, path, line, msg, keysAndValues)
+		// sdklog.SDKInfo(ctx, path, line, msg, keysAndValues)
+		log.ZInfo(ctx, msg, keysAndValues...)
 	case 3:
-		sdklog.SDKWarn(ctx, path, line, msg, errs.New(err), keysAndValues)
+		// sdklog.SDKWarn(ctx, path, line, msg, errs.New(err), keysAndValues)
+		log.ZWarn(ctx, msg, errs.New(err), keysAndValues...)
 	case 2:
-		sdklog.SDKError(ctx, path, line, msg, errs.New(err), keysAndValues)
+		// sdklog.SDKError(ctx, path, line, msg, errs.New(err), keysAndValues)
+		log.ZError(ctx, msg, errs.New(err), keysAndValues...)
 	}
 }
