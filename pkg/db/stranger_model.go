@@ -27,14 +27,16 @@ import (
 )
 
 func (d *DataBase) GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error) {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var friendList []*model_struct.LocalStranger
 	return friendList, errs.WrapMsg(d.conn.WithContext(ctx).Where("user_id IN ?", userIDs).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
 }
 
 func (d *DataBase) SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error {
 	//TODO Can be optimized into two chan batch update or insert operations
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	for _, existingData := range localStrangerList {
 		result := d.conn.First(&existingData, "user_id = ?", existingData.UserID)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

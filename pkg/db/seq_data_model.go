@@ -25,11 +25,15 @@ import (
 )
 
 func (d *DataBase) GetMinSeq(ctx context.Context, ID string) (uint32, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var seqData model_struct.LocalSeq
 	return seqData.MinSeq, errs.WrapMsg(d.conn.WithContext(ctx).First(&seqData).Error, "GetMinSeq failed")
 }
 
 func (d *DataBase) SetMinSeq(ctx context.Context, ID string, minSeq uint32) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	seqData := model_struct.LocalSeq{ID: ID, MinSeq: minSeq}
 	t := d.conn.WithContext(ctx).Updates(&seqData)
 	if t.RowsAffected == 0 {

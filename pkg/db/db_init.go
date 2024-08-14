@@ -20,6 +20,7 @@ package db
 import (
 	"context"
 	"errors"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 	"path/filepath"
 	"sync"
 	"time"
@@ -69,16 +70,11 @@ func (tc *TableChecker) UpdateTable(tableName string) {
 }
 
 type DataBase struct {
-	loginUserID   string
-	dbDir         string
-	conn          *gorm.DB
-	tableChecker  *TableChecker
-	mRWMutex      sync.RWMutex
-	groupMtx      sync.RWMutex
-	friendMtx     sync.RWMutex
-	userMtx       sync.RWMutex
-	versionMtx    sync.RWMutex
-	superGroupMtx sync.RWMutex
+	loginUserID  string
+	dbDir        string
+	conn         *gorm.DB
+	tableChecker *TableChecker
+	mRWMutex     sync.RWMutex
 }
 
 func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
@@ -153,10 +149,26 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	} else {
 		zLogLevel = logger.Silent
 	}
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
-	if err != nil {
-		return errs.WrapMsg(err, "open db failed "+dbFileName)
+	var (
+		db *gorm.DB
+	)
+
+	if flagconst.TestMode {
+		db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+		if err != nil {
+			return errs.WrapMsg(err, "open db failed "+dbFileName)
+		}
+
+		db.Exec("PRAGMA journal_mode=WAL;") // open WAL mode
+		db.Exec("PRAGMA busy_timeout = 500000;")
+	} else {
+		// common mode
+		db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+		if err != nil {
+			return errs.WrapMsg(err, "open db failed "+dbFileName)
+		}
 	}
+
 	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {

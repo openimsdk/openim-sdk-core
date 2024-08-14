@@ -6,15 +6,16 @@ import (
 )
 
 const (
-	TestIP      = "127.0.0.1"
-	APIAddr     = "http://" + TestIP + ":10002"
-	WsAddr      = "ws://" + TestIP + ":10001"
-	Secret      = "openIM123"
-	PlatformID  = constant.WindowsPlatformID
-	LogLevel    = 6
-	DataDir     = "./data/"
-	LogFilePath = "./logs/"
-	AdminUserID = "imAdmin"
+	TestIP              = "127.0.0.1"
+	APIAddr             = "http://" + TestIP + ":10002"
+	WsAddr              = "ws://" + TestIP + ":10001"
+	Secret              = "openIM123"
+	PlatformID          = constant.WindowsPlatformID
+	LogLevel            = 5
+	DataDir             = "./data/"
+	LogFilePath         = "./logs/"
+	AdminUserID         = "imAdmin"
+	IsLogStandardOutput = false
 )
 
 func GetConf() sdk_struct.IMConfig {
@@ -26,6 +27,6 @@ func GetConf() sdk_struct.IMConfig {
 	cf.IsExternalExtensions = true
 	cf.PlatformID = int32(PlatformID)
 	cf.LogFilePath = LogFilePath
-	cf.IsLogStandardOutput = true
+	cf.IsLogStandardOutput = IsLogStandardOutput
 	return cf
 }

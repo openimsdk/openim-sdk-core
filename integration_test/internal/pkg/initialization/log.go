@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	rotateCount  uint = 0
+	rotateCount  uint = 1
 	rotationTime uint = 24
 )
 
