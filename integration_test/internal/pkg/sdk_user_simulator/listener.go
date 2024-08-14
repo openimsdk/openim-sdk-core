@@ -1,9 +1,13 @@
 package sdk_user_simulator
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"math/rand"
+	"time"
 )
 
 type conversationCallBack struct {
@@ -81,7 +85,14 @@ func NewMsgListenerCallBak(userID string) *MsgListenerCallBak {
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	var sm sdk_struct.MsgStruct
-	utils.JsonStringToStruct(message, &sm)
+	_ = utils.JsonStringToStruct(message, &sm)
+
+	if rand.Float64() < config.CheckMsgRate {
+		select {
+		case vars.MsgConsuming <- time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond))):
+		default:
+		}
+	}
 	switch sm.SessionType {
 	case constant.SingleChatType:
 		m.SingleDelay[sm.SendID] =
@@ -220,7 +231,7 @@ func (t *testConnListener) OnConnecting() {
 }
 
 func (t *testConnListener) OnConnectSuccess() {
-
+	vars.NowLoginNum.Add(1)
 }
 
 func (t *testConnListener) OnConnectFailed(ErrCode int32, ErrMsg string) {

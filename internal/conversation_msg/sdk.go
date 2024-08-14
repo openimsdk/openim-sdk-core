@@ -1086,10 +1086,11 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 		if err != nil {
 			return err
 		}
-		c.user.UserBasicCache.Store(c.loginUserID, &sdk_struct.BasicInfo{
+		userInfo = &sdk_struct.BasicInfo{
 			Nickname: info.Nickname,
 			FaceURL:  info.FaceURL,
-		})
+		}
+		c.user.UserBasicCache.Store(c.loginUserID, userInfo)
 	}
 	message.SenderFaceURL = userInfo.FaceURL
 	message.SenderNickname = userInfo.Nickname

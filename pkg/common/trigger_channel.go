@@ -28,6 +28,10 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 )
 
+const (
+	timeOut = 10000
+)
+
 var ErrChanNil = errs.New("channal == nil")
 
 func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
@@ -36,7 +40,7 @@ func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToCon
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg, Ctx: ctx}
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 func TriggerCmdMsgSyncInReinstall(ctx context.Context, msg sdk_struct.CmdMsgSyncInReinstall, conversationCh chan Cmd2Value) error {
@@ -45,12 +49,12 @@ func TriggerCmdMsgSyncInReinstall(ctx context.Context, msg sdk_struct.CmdMsgSync
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdMsgSyncInReinstall, Value: msg, Ctx: ctx}
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
-	err := sendCmd(conversationCh, c2v, 100)
+	err := sendCmd(conversationCh, c2v, timeOut)
 	if err != nil {
 		log.ZWarn(ctx, "TriggerCmdNotification error", err, "msg", msg)
 	}
@@ -58,7 +62,7 @@ func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToC
 
 func TriggerCmdSyncFlag(ctx context.Context, syncFlag int, conversationCh chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdSyncFlag, Value: sdk_struct.CmdNewMsgComeToConversation{SyncFlag: syncFlag}, Ctx: ctx}
-	err := sendCmd(conversationCh, c2v, 100)
+	err := sendCmd(conversationCh, c2v, timeOut)
 	if err != nil {
 		log.ZWarn(ctx, "TriggerCmdNotification error", err, "syncFlag", syncFlag)
 	}
@@ -69,7 +73,7 @@ func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) error {
@@ -77,7 +81,7 @@ func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) error {
 		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdSyncData, Value: nil, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
@@ -89,7 +93,7 @@ func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversat
 		Value: node,
 	}
 
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conversationCh chan<- Cmd2Value) error {
@@ -99,7 +103,7 @@ func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conve
 		Ctx:   ctx,
 	}
 
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 func TriggerCmdUpdateMessage(ctx context.Context, node UpdateMessageNode, conversationCh chan Cmd2Value) error {
@@ -109,7 +113,7 @@ func TriggerCmdUpdateMessage(ctx context.Context, node UpdateMessageNode, conver
 		Ctx:   ctx,
 	}
 
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 // Push message, msg for msgData slice
@@ -119,7 +123,7 @@ func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 // seq trigger
@@ -128,7 +132,7 @@ func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, c
 		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
@@ -136,7 +140,7 @@ func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
 		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdLogOut, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 // Connection success trigger
@@ -145,7 +149,7 @@ func TriggerCmdConnected(ctx context.Context, ch chan Cmd2Value) error {
 		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdConnSuccesss, Value: nil, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 type DeleteConNode struct {
@@ -195,7 +199,7 @@ type SourceIDAndSessionType struct {
 
 func UnInitAll(conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdUnInit}
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 type goroutine interface {
