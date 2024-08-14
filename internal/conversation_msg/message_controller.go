@@ -72,9 +72,10 @@ func (m *MessageController) BatchUpdateMessageList(ctx context.Context, updateMs
 				latestMsg.SendTime = v.SendTime
 				latestMsg.Status = v.Status
 				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+				log.ZDebug(ctx, "BatchUpdateMessageList TriggerCmdUpdateConversation begin")
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID,
 					Action: constant.AddConOrUpLatMsg, Args: *conversation}, m.ch)
-
+				log.ZDebug(ctx, "BatchUpdateMessageList TriggerCmdUpdateConversation end")
 			}
 		}
 
