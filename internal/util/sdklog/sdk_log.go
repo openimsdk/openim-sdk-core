@@ -263,16 +263,20 @@ func (l *SDKLogger) ToZap() *zap.SugaredLogger {
 	return l.zapLogger
 }
 
-func SDKLog(ctx context.Context, logLevel int, sdkType string, platformID int, path string, line string, msg, err string, keysAndValues ...any) {
+func SDKLog(ctx context.Context, logLevel int, path string, line string, msg, err string, keysAndValues map[string]string) {
+	var kvSlice []any
+	for k, v := range keysAndValues {
+		kvSlice = append(kvSlice, k, v)
+	}
 	switch logLevel {
 	case 6:
-		SDKDebug(ctx, sdkType, platformID, path, line, msg, keysAndValues...)
+		SDKDebug(ctx, path, line, msg, kvSlice...)
 	case 4:
-		SDKInfo(ctx, sdkType, platformID, path, line, msg, keysAndValues...)
+		SDKInfo(ctx, path, line, msg, kvSlice...)
 	case 3:
-		SDKWarn(ctx, sdkType, platformID, path, line, msg, errs.New(err), keysAndValues...)
+		SDKWarn(ctx, path, line, msg, errs.New(err), kvSlice...)
 	case 2:
-		SDKError(ctx, sdkType, platformID, path, line, msg, errs.New(err), keysAndValues...)
+		SDKError(ctx, path, line, msg, errs.New(err), kvSlice...)
 	}
 }
 
@@ -329,28 +333,28 @@ func (l *SDKLogger) kvAppend(ctx context.Context, keysAndValues []any) []any {
 	return keysAndValues
 }
 
-func SDKDebug(ctx context.Context, sdkType string, platformID int, path string, line string, msg string, keysAndValues ...any) {
+func SDKDebug(ctx context.Context, path string, line string, msg string, keysAndValues ...any) {
 	if pkgLogger == nil {
 		return
 	}
 	pkgLogger.Debug(ctx, msg, keysAndValues...)
 }
 
-func SDKInfo(ctx context.Context, sdkType string, platformID int, path string, line string, msg string, keysAndValues ...any) {
+func SDKInfo(ctx context.Context, path string, line string, msg string, keysAndValues ...any) {
 	if pkgLogger == nil {
 		return
 	}
 	pkgLogger.Info(ctx, msg, keysAndValues...)
 }
 
-func SDKWarn(ctx context.Context, sdkType string, platformID int, path string, line string, msg string, err error, keysAndValues ...any) {
+func SDKWarn(ctx context.Context, path string, line string, msg string, err error, keysAndValues ...any) {
 	if pkgLogger == nil {
 		return
 	}
 	pkgLogger.Warn(ctx, msg, err, keysAndValues...)
 }
 
-func SDKError(ctx context.Context, sdkType string, platformID int, path string, line string, msg string, err error, keysAndValues ...any) {
+func SDKError(ctx context.Context, path string, line string, msg string, err error, keysAndValues ...any) {
 	if pkgLogger == nil {
 		return
 	}
