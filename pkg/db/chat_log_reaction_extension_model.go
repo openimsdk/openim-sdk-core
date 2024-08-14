@@ -26,8 +26,8 @@ import (
 )
 
 func (d *DataBase) GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var l model_struct.LocalChatLogReactionExtensions
 	return &l, errs.WrapMsg(d.conn.WithContext(ctx).Where("client_msg_id = ?",
 		msgID).Take(&l).Error, "GetMessageReactionExtension failed")

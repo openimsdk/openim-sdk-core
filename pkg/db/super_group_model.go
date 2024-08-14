@@ -27,27 +27,27 @@ import (
 )
 
 func (d *DataBase) InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
-	d.superGroupMtx.Lock()
-	defer d.superGroupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Create(groupInfo).Error, "InsertSuperGroup failed")
 }
 
 func (d *DataBase) DeleteAllSuperGroup(ctx context.Context) error {
-	d.superGroupMtx.Lock()
-	defer d.superGroupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
 }
 
 func (d *DataBase) GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
-	d.superGroupMtx.Lock()
-	defer d.superGroupMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var g model_struct.LocalGroup
 	return &g, errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }
 
 func (d *DataBase) UpdateSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
-	d.superGroupMtx.Lock()
-	defer d.superGroupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 
 	t := d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Select("*").Updates(*groupInfo)
 	if t.RowsAffected == 0 {
@@ -57,8 +57,8 @@ func (d *DataBase) UpdateSuperGroup(ctx context.Context, groupInfo *model_struct
 }
 
 func (d *DataBase) DeleteSuperGroup(ctx context.Context, groupID string) error {
-	d.superGroupMtx.Lock()
-	defer d.superGroupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	localGroup := model_struct.LocalGroup{GroupID: groupID}
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
 }

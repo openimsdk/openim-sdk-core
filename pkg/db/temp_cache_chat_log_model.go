@@ -25,13 +25,16 @@ import (
 )
 
 func (d *DataBase) BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	if MessageList == nil {
 		return nil
 	}
 	return errs.WrapMsg(d.conn.WithContext(ctx).Create(MessageList).Error, "BatchInsertTempCacheMessageList failed")
 }
 func (d *DataBase) InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error {
-
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Create(Message).Error, "InsertTempCacheMessage failed")
 
 }

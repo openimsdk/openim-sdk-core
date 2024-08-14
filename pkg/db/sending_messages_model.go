@@ -31,13 +31,13 @@ func (d *DataBase) InsertSendingMessage(ctx context.Context, message *model_stru
 }
 
 func (d *DataBase) DeleteSendingMessage(ctx context.Context, conversationID, clientMsgID string) error {
-	d.groupMtx.Lock()
-	defer d.groupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	localSendingMessage := model_struct.LocalSendingMessages{ConversationID: conversationID, ClientMsgID: clientMsgID}
 	return errs.WrapMsg(d.conn.WithContext(ctx).Delete(&localSendingMessage).Error, "DeleteSendingMessage failed")
 }
 func (d *DataBase) GetAllSendingMessages(ctx context.Context) (friendRequests []*model_struct.LocalSendingMessages, err error) {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	return friendRequests, errs.WrapMsg(d.conn.WithContext(ctx).Find(&friendRequests).Error, "GetAllSendingMessages failed")
 }
