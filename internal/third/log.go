@@ -4,6 +4,13 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -12,12 +19,6 @@ import (
 	"github.com/openimsdk/protocol/third"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
-	"io"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 const (
@@ -186,4 +187,21 @@ func readLastNLines(filename string, n int) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+func (c *Third) Log(ctx context.Context, logLevel int, path string, line string, err, msg string, keysAndValues []any) {
+	switch logLevel {
+	case 6:
+		// sdklog.SDKDebug(ctx, path, line, msg, keysAndValues)
+		log.ZDebug(ctx, msg, keysAndValues...)
+	case 4:
+		// sdklog.SDKInfo(ctx, path, line, msg, keysAndValues)
+		log.ZInfo(ctx, msg, keysAndValues...)
+	case 3:
+		// sdklog.SDKWarn(ctx, path, line, msg, errs.New(err), keysAndValues)
+		log.ZWarn(ctx, msg, errs.New(err), keysAndValues...)
+	case 2:
+		// sdklog.SDKError(ctx, path, line, msg, errs.New(err), keysAndValues)
+		log.ZError(ctx, msg, errs.New(err), keysAndValues...)
+	}
 }

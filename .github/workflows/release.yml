@@ -32,4 +32,3 @@ jobs:
         env:
           USERNAME: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
