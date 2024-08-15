@@ -252,42 +252,6 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 	return dataFetcher.FetchMissingAndCombineLocal(ctx, groupIDs)
 }
 
-func (g *Group) GetJoinedGroupListPageV2(ctx context.Context, offset, count int32) (*GetGroupListV2Response, error) {
-	dataFetcher := datafetcher.NewDataFetcher(
-		g.db,
-		g.groupTableName(),
-		g.loginUserID,
-		func(localGroup *model_struct.LocalGroup) string {
-			return localGroup.GroupID
-		},
-		func(ctx context.Context, values []*model_struct.LocalGroup) error {
-			return g.db.BatchInsertGroup(ctx, values)
-		},
-		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, bool, error) {
-			localGroups, err := g.db.GetGroups(ctx, groupIDs)
-			return localGroups, true, err
-		},
-		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
-			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
-			if err != nil {
-				return nil, err
-			}
-			return datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo), nil
-		},
-	)
-
-	groupsList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &GetGroupListV2Response{
-		GroupsList: groupsList,
-		IsEnd:      isEnd,
-	}
-	return resp, nil
-}
-
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
 		return nil, sdkerrs.ErrArgs.WrapMsg("keyword is null or search field all false")
@@ -298,18 +262,6 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 	}
 	return groups, nil
 }
-
-// func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
-//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
-//		GroupID:          groupID,
-//		GroupName:        groupInfo.GroupName,
-//		Notification:     groupInfo.Notification,
-//		Introduction:     groupInfo.Introduction,
-//		FaceURL:          groupInfo.FaceURL,
-//		Ex:               groupInfo.Ex,
-//		NeedVerification: wrapperspb.Int32Ptr(groupInfo.NeedVerification),
-//	})
-// }
 
 func (g *Group) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	return g.db.GetGroupMemberOwnerAndAdminDB(ctx, groupID)
@@ -344,45 +296,6 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 	)
 
 	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
-}
-
-func (g *Group) GetGroupMemberListByJoinTimeFilterV2(ctx context.Context, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, userIDs []string) (*GetGroupMemberListV2Response, error) {
-	if joinTimeEnd == 0 {
-		joinTimeEnd = time.Now().UnixMilli()
-	}
-
-	dataFetcher := datafetcher.NewDataFetcher(
-		g.db,
-		g.groupAndMemberVersionTableName(),
-		groupID,
-		func(localGroupMember *model_struct.LocalGroupMember) string {
-			return localGroupMember.UserID
-		},
-		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
-			return g.db.BatchInsertGroupMember(ctx, values)
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
-			localGroupMembers, err := g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
-			return localGroupMembers, true, err
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
-			if err != nil {
-				return nil, err
-			}
-			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
-		},
-	)
-
-	groupMembersList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
-	if err != nil {
-		return nil, err
-	}
-	resp := &GetGroupMemberListV2Response{
-		GroupMembersList: groupMembersList,
-		IsEnd:            isEnd,
-	}
-	return resp, nil
 }
 
 func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
@@ -526,41 +439,6 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 }
 
-func (g *Group) GetGroupMemberListV2(ctx context.Context, groupID string, filter, offset, count int32) (*GetGroupMemberListV2Response, error) {
-	dataFetcher := datafetcher.NewDataFetcher(
-		g.db,
-		g.groupAndMemberVersionTableName(),
-		groupID,
-		func(localGroupMember *model_struct.LocalGroupMember) string {
-			return localGroupMember.UserID
-		},
-		func(ctx context.Context, values []*model_struct.LocalGroupMember) error {
-			return g.db.BatchInsertGroupMember(ctx, values)
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, bool, error) {
-			localGroupMembers, err := g.db.GetGroupMemberListByUserIDs(ctx, groupID, filter, userIDs)
-			return localGroupMembers, true, err
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
-			if err != nil {
-				return nil, err
-			}
-			return datautil.Batch(ServerGroupMemberToLocalGroupMember, serverGroupMember), nil
-		},
-	)
-	groupMembersList, isEnd, err := dataFetcher.FetchWithPaginationV2(ctx, int(offset), int(count))
-	if err != nil {
-		return nil, err
-	}
-	resp := &GetGroupMemberListV2Response{
-		GroupMembersList: groupMembersList,
-		IsEnd:            isEnd,
-	}
-
-	return resp, nil
-}
-
 func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
 	return g.db.GetAdminGroupApplication(ctx)
 }
@@ -646,40 +524,4 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	}
 	// SyncAdminGroupApplication todo
 	return nil
-}
-
-//func (g *Group) SearchGroupMembersV2(ctx context.Context, req *group.SearchGroupMemberReq) ([]*model_struct.LocalGroupMember, error) {
-//	if err := req.Check(); err != nil {
-//		return nil, err
-//	}
-//	info, err := g.db.GetGroupInfoByGroupID(ctx, req.GroupID)
-//	if err != nil {
-//		return nil, err
-//	}
-//	if info.MemberCount <= pconstant.MaxSyncPullNumber {
-//		return g.db.SearchGroupMembersDB(ctx, req.Keyword, req.GroupID, true, false,
-//			int((req.Pagination.PageNumber-1)*req.Pagination.ShowNumber), int(req.Pagination.ShowNumber))
-//	}
-//	resp, err := util.CallApi[group.SearchGroupMemberResp](ctx, constant.SearchGroupMember, req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return datautil.Slice(resp.Members, g.pbGroupMemberToLocal), nil
-//}
-
-func (g *Group) pbGroupMemberToLocal(pb *sdkws.GroupMemberFullInfo) *model_struct.LocalGroupMember {
-	return &model_struct.LocalGroupMember{
-		GroupID:        pb.GroupID,
-		UserID:         pb.UserID,
-		Nickname:       pb.Nickname,
-		FaceURL:        pb.FaceURL,
-		RoleLevel:      pb.RoleLevel,
-		JoinTime:       pb.JoinTime,
-		JoinSource:     pb.JoinSource,
-		InviterUserID:  pb.InviterUserID,
-		MuteEndTime:    pb.MuteEndTime,
-		OperatorUserID: pb.OperatorUserID,
-		Ex:             pb.Ex,
-		// AttachedInfo:   pb.AttachedInfo,
-	}
 }

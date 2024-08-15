@@ -25,8 +25,7 @@ const (
 	buffer = 10 * 1024 * 1024
 )
 
-// UploadLogs uploadLogs.
-func (c *Third) UploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
+func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
 	if c.logUploadLock.TryLock() {
 		defer c.logUploadLock.Unlock()
 	} else {
@@ -189,7 +188,7 @@ func readLastNLines(filename string, n int) ([]string, error) {
 	return result, nil
 }
 
-func (c *Third) Log(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
+func (c *Third) printLog(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
 	switch logLevel {
 	case 6:
 		// sdklog.SDKDebug(ctx, path, line, msg, keysAndValues)

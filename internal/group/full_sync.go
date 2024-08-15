@@ -104,10 +104,7 @@ func (g *Group) syncGroupMembers(ctx context.Context, groupID string, members []
 		if v.MemberCount != count {
 			v.MemberCount = count
 			if v.GroupType == constant.SuperGroupChatType {
-				if err := g.db.UpdateSuperGroup(ctx, v); err != nil {
-					//return err
-					log.ZError(ctx, "SyncGroupMember UpdateSuperGroup", err, "groupID", groupID, "info", v)
-				}
+				log.ZError(ctx, "SyncGroupMember UpdateSuperGroup", errors.New("received a removed super group"), "info", v)
 			} else {
 				if err := g.db.UpdateGroup(ctx, v); err != nil {
 					log.ZError(ctx, "SyncGroupMember UpdateGroup", err, "groupID", groupID, "info", v)

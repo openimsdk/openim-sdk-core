@@ -28,7 +28,6 @@ type IndexDB struct {
 	*indexdb.LocalUsers
 	*indexdb.LocalConversations
 	*indexdb.LocalChatLogs
-	*indexdb.LocalSuperGroup
 	*indexdb.LocalConversationUnreadMessages
 	*indexdb.LocalGroups
 	*indexdb.LocalGroupMember
@@ -64,7 +63,6 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		LocalUsers:                      indexdb.NewLocalUsers(),
 		LocalConversations:              indexdb.NewLocalConversations(),
 		LocalChatLogs:                   indexdb.NewLocalChatLogs(loginUserID),
-		LocalSuperGroup:                 indexdb.NewLocalSuperGroup(),
 		LocalConversationUnreadMessages: indexdb.NewLocalConversationUnreadMessages(),
 		LocalGroups:                     indexdb.NewLocalGroups(),
 		LocalGroupMember:                indexdb.NewLocalGroupMember(),

@@ -105,17 +105,3 @@ func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyw
 	err := d.conn.WithContext(ctx).Where(condition).Order("create_time DESC").Find(&groupList).Error
 	return groupList, errs.WrapMsg(err, "GetAllGroupInfoByGroupIDOrGroupName failed ")
 }
-
-func (d *DataBase) AddMemberCount(ctx context.Context, groupID string) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	group := model_struct.LocalGroup{GroupID: groupID}
-	return errs.WrapMsg(d.conn.WithContext(ctx).Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count+1")}).Error, "")
-}
-
-func (d *DataBase) SubtractMemberCount(ctx context.Context, groupID string) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	group := model_struct.LocalGroup{GroupID: groupID}
-	return errs.WrapMsg(d.conn.WithContext(ctx).Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count-1")}).Error, "")
-}
