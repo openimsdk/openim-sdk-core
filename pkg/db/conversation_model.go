@@ -397,6 +397,8 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 }
 
 func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	// Define the search condition based on the searchParam
 	condition := fmt.Sprintf("show_name like %q ", "%"+searchParam+"%")
 	var conversationList []*model_struct.LocalConversation
