@@ -1,4 +1,4 @@
-package friend
+package relation
 
 import "github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 

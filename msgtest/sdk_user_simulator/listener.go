@@ -121,47 +121,47 @@ func (m *MsgListenerCallBak) OnRecvOnlineOnlyMessage(message string) {
 
 }
 
-type testFriendListener struct {
+type testFriendshipListener struct {
 }
 
-func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAdded(callbackInfo string) {
 
 }
-func (testFriendListener) OnFriendApplicationDeleted(callbackInfo string) {
-
-}
-
-func (testFriendListener) OnFriendApplicationAccepted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnFriendApplicationRejected(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAccepted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnFriendAdded(callbackInfo string) {
-}
-
-func (testFriendListener) OnFriendDeleted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationRejected(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnBlackAdded(callbackInfo string) {
-
-}
-func (testFriendListener) OnBlackDeleted(callbackInfo string) {
-
+func (testFriendshipListener) OnFriendAdded(callbackInfo string) {
 }
 
-func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
+func (testFriendshipListener) OnFriendDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnSuccess() {
+func (testFriendshipListener) OnBlackAdded(callbackInfo string) {
+
+}
+func (testFriendshipListener) OnBlackDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnError(code int32, msg string) {
+func (testFriendshipListener) OnFriendInfoChanged(callbackInfo string) {
+
+}
+
+func (testFriendshipListener) OnSuccess() {
+
+}
+
+func (testFriendshipListener) OnError(code int32, msg string) {
 
 }
 

@@ -18,16 +18,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	X "log"
+	"os"
+	"runtime"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/log"
-	X "log"
-	"os"
-	"runtime"
-	"time"
 
 	"github.com/openimsdk/protocol/sdkws"
 
@@ -399,7 +400,7 @@ func SetListenerAndLogin(uid, tk string) {
 	//var batchMsg BatchMsg
 	//open_im_sdk.SetBatchMsgListener(&batchMsg)
 	//
-	//var friendListener testFriendListener
+	//var friendListener testFriendshipListener
 	//open_im_sdk.SetFriendListener(friendListener)
 	//
 	//var groupListener testGroupListener
@@ -472,8 +473,8 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var msgCallBack MsgListenerCallBak
 	lg.SetAdvancedMsgListener(&msgCallBack)
 
-	var friendListener testFriendListener
-	lg.SetFriendListener(friendListener)
+	var friendshipListener testFriendshipListener
+	lg.SetFriendshipListener(friendshipListener)
 
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
@@ -519,8 +520,8 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	var msgCallBack MsgListenerCallBak
 	lg.SetAdvancedMsgListener(&msgCallBack)
 
-	var friendListener testFriendListener
-	lg.SetFriendListener(friendListener)
+	var friendListener testFriendshipListener
+	lg.SetFriendshipListener(friendListener)
 
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
@@ -558,7 +559,7 @@ func DoTest(uid, tk, ws, api string) {
 	//var msgCallBack MsgListenerCallBak
 	//open_im_sdk.AddAdvancedMsgListener(msgCallBack)
 
-	var friendListener testFriendListener
+	var friendListener testFriendshipListener
 	open_im_sdk.SetFriendListener(friendListener)
 
 	var groupListener testGroupListener
@@ -743,50 +744,50 @@ func (testLogin) OnError(code int32, msg string) {
 	fmt.Println("testLogin, OnError", code, msg)
 }
 
-type testFriendListener struct {
+type testFriendshipListener struct {
 	x int
 }
 
-func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAdded(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnFriendApplicationDeleted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationDeleted(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnFriendApplicationAccepted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAccepted(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnFriendApplicationRejected(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationRejected(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnFriendAdded(callbackInfo string) {
+func (testFriendshipListener) OnFriendAdded(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnFriendDeleted(callbackInfo string) {
+func (testFriendshipListener) OnFriendDeleted(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnBlackAdded(callbackInfo string) {
+func (testFriendshipListener) OnBlackAdded(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnBlackDeleted(callbackInfo string) {
+func (testFriendshipListener) OnBlackDeleted(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
+func (testFriendshipListener) OnFriendInfoChanged(callbackInfo string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "CallbackInfo", callbackInfo)
 }
 
-func (testFriendListener) OnSuccess() {
+func (testFriendshipListener) OnSuccess() {
 	log.ZInfo(ctx, utils.GetSelfFuncName())
 }
 
-func (testFriendListener) OnError(code int32, msg string) {
+func (testFriendshipListener) OnError(code int32, msg string) {
 	log.ZInfo(ctx, utils.GetSelfFuncName(), "Code", code, "Message", msg)
 }

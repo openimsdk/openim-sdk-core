@@ -17,70 +17,70 @@ package open_im_sdk
 import "github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 
 func GetSpecifiedFriendsInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
-	call(callback, operationID, UserForSDK.Friend().GetSpecifiedFriendsInfo, userIDList)
+	call(callback, operationID, UserForSDK.Relation().GetSpecifiedFriendsInfo, userIDList)
 }
 
 func GetFriendList(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Friend().GetFriendList)
+	call(callback, operationID, UserForSDK.Relation().GetFriendList)
 }
 
 func GetFriendListPage(callback open_im_sdk_callback.Base, operationID string, offset int32, count int32) {
-	call(callback, operationID, UserForSDK.Friend().GetFriendListPage, offset, count)
+	call(callback, operationID, UserForSDK.Relation().GetFriendListPage, offset, count)
 }
 
 // func GetFriendListPageV2(callback open_im_sdk_callback.Base, operationID string, offset int32, count int32) {
-// 	call(callback, operationID, UserForSDK.Friend().GetFriendListPageV2, offset, count)
+// 	call(callback, operationID, UserForSDK.Relation().GetFriendListPageV2, offset, count)
 // }
 
 func SearchFriends(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
-	call(callback, operationID, UserForSDK.Friend().SearchFriends, searchParam)
+	call(callback, operationID, UserForSDK.Relation().SearchFriends, searchParam)
 }
 
 func CheckFriend(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
-	call(callback, operationID, UserForSDK.Friend().CheckFriend, userIDList)
+	call(callback, operationID, UserForSDK.Relation().CheckFriend, userIDList)
 }
 
 func AddFriend(callback open_im_sdk_callback.Base, operationID string, userIDReqMsg string) {
-	call(callback, operationID, UserForSDK.Friend().AddFriend, userIDReqMsg)
+	call(callback, operationID, UserForSDK.Relation().AddFriend, userIDReqMsg)
 }
 
 func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, userIDRemark string) {
-	call(callback, operationID, UserForSDK.Friend().SetFriendRemark, userIDRemark)
+	call(callback, operationID, UserForSDK.Relation().SetFriendRemark, userIDRemark)
 }
 func PinFriends(callback open_im_sdk_callback.Base, operationID string, pinFriendsParams string) {
-	call(callback, operationID, UserForSDK.Friend().PinFriends, pinFriendsParams)
+	call(callback, operationID, UserForSDK.Relation().PinFriends, pinFriendsParams)
 }
 func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friendUserID string) {
-	call(callback, operationID, UserForSDK.Friend().DeleteFriend, friendUserID)
+	call(callback, operationID, UserForSDK.Relation().DeleteFriend, friendUserID)
 }
 
 func GetFriendApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Friend().GetFriendApplicationListAsRecipient)
+	call(callback, operationID, UserForSDK.Relation().GetFriendApplicationListAsRecipient)
 }
 
 func GetFriendApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Friend().GetFriendApplicationListAsApplicant)
+	call(callback, operationID, UserForSDK.Relation().GetFriendApplicationListAsApplicant)
 }
 
 func AcceptFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
-	call(callback, operationID, UserForSDK.Friend().AcceptFriendApplication, userIDHandleMsg)
+	call(callback, operationID, UserForSDK.Relation().AcceptFriendApplication, userIDHandleMsg)
 }
 
 func RefuseFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
-	call(callback, operationID, UserForSDK.Friend().RefuseFriendApplication, userIDHandleMsg)
+	call(callback, operationID, UserForSDK.Relation().RefuseFriendApplication, userIDHandleMsg)
 }
 
 func AddBlack(callback open_im_sdk_callback.Base, operationID string, blackUserID string, ex string) {
-	call(callback, operationID, UserForSDK.Friend().AddBlack, blackUserID, ex)
+	call(callback, operationID, UserForSDK.Relation().AddBlack, blackUserID, ex)
 }
 
 func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Friend().GetBlackList)
+	call(callback, operationID, UserForSDK.Relation().GetBlackList)
 }
 
 func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeUserID string) {
-	call(callback, operationID, UserForSDK.Friend().RemoveBlack, removeUserID)
+	call(callback, operationID, UserForSDK.Relation().RemoveBlack, removeUserID)
 }
 func SetFriendsEx(callback open_im_sdk_callback.Base, operationID string, friendIDs string, ex string) {
-	call(callback, operationID, UserForSDK.Friend().SetFriendsEx, friendIDs, ex)
+	call(callback, operationID, UserForSDK.Relation().SetFriendsEx, friendIDs, ex)
 }
