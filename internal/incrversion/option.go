@@ -101,7 +101,7 @@ func (o *VersionSynchronizer[V, R]) Sync() error {
 		}
 	} else {
 		if len(delIDs) > 0 {
-			lvs.UIDList = DeleteElements(lvs.UIDList, delIDs)
+			lvs.UIDList = datautil.DeleteElems(lvs.UIDList, delIDs...)
 		}
 		if len(insert) > 0 {
 			lvs.UIDList = append(lvs.UIDList, datautil.Slice(insert, o.Key)...)
@@ -179,7 +179,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	}
 	if lvs.Version+1 == version {
 		if len(delIDs) > 0 {
-			lvs.UIDList = DeleteElements(lvs.UIDList, delIDs)
+			lvs.UIDList = datautil.DeleteElems(lvs.UIDList, delIDs...)
 		}
 		if len(insert) > 0 {
 			lvs.UIDList = append(lvs.UIDList, datautil.Slice(insert, o.Key)...)
@@ -231,37 +231,6 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		o.ServerVersion = nil
 		return o.Sync()
 	}
-}
-
-// DeleteElements removes elements from a slice that are contained in another slice, while maintaining the order of the slice
-func DeleteElements[E comparable](es []E, toDelete []E) []E {
-	// Store the elements to be deleted in a hash set
-	deleteSet := make(map[E]struct{}, len(toDelete))
-	for _, e := range toDelete {
-		deleteSet[e] = struct{}{}
-	}
-
-	// Use an index j to track the new slice position
-	j := 0
-	for _, e := range es {
-		if _, found := deleteSet[e]; !found {
-			es[j] = e
-			j++
-		}
-	}
-	return es[:j]
-}
-
-// DeleteElement removes a specified element from a slice while maintaining the order of the slice
-func DeleteElement[E comparable](es []E, element E) []E {
-	j := 0
-	for _, e := range es {
-		if e != element {
-			es[j] = e
-			j++
-		}
-	}
-	return es[:j]
 }
 
 // Slice converts slice types in batches and sorts the resulting slice using a custom comparator
