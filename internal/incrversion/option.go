@@ -3,7 +3,6 @@ package incrversion
 import (
 	"context"
 	"reflect"
-	"sort"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -231,20 +230,4 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		o.ServerVersion = nil
 		return o.Sync()
 	}
-}
-
-// Slice converts slice types in batches and sorts the resulting slice using a custom comparator
-func Slice[E any, T any](es []E, fn func(e E) T, less func(a, b T) bool) []T {
-	// Convert the slice
-	v := make([]T, len(es))
-	for i := 0; i < len(es); i++ {
-		v[i] = fn(es[i])
-	}
-
-	// Sort the slice
-	sort.Slice(v, func(i, j int) bool {
-		return less(v[i], v[j])
-	})
-
-	return v
 }
