@@ -171,6 +171,8 @@ func (d *DataBase) DeleteAllConversation(ctx context.Context) error {
 }
 
 func (d *DataBase) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var c model_struct.LocalConversation
 	return &c, errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id = ?",
 		conversationID).Take(&c).Error, "GetConversation failed, conversationID: "+conversationID)
