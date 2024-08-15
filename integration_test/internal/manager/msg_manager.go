@@ -43,7 +43,7 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 
 // sendSingleMessages see SendMessages
 func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.Group) {
-	for userNum := 0; userNum < vars.UserNum; userNum++ {
+	for userNum := 0; userNum < vars.LoginEndUserNum; userNum++ {
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
