@@ -17,16 +17,16 @@ package conversation_msg
 import (
 	"context"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
 func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
-	conversationSyncer := incrversion.VersionSynchronizer[*model_struct.LocalConversation, *pbConversation.GetIncrementalConversationResp]{
+	conversationSyncer := syncer.VersionSynchronizer[*model_struct.LocalConversation, *pbConversation.GetIncrementalConversationResp]{
 		Ctx:       ctx,
 		DB:        c.db,
 		TableName: c.conversationTableName(),
@@ -92,7 +92,7 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 		},
 	}
 
-	return conversationSyncer.Sync()
+	return conversationSyncer.IncrementalSync()
 }
 
 func (c *Conversation) conversationTableName() string {

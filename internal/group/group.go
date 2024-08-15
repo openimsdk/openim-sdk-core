@@ -48,7 +48,6 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 	return g
 }
 
-// //utils.GetCurrentTimestampByMill()
 type Group struct {
 	listener                func() open_im_sdk_callback.OnGroupListener
 	loginUserID             string

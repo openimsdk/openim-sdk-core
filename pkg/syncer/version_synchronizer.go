@@ -1,4 +1,4 @@
-package incrversion
+package syncer
 
 import (
 	"context"
@@ -54,7 +54,7 @@ func judgeInterfaceIsNil(data any) bool {
 	return reflect.ValueOf(data).Kind() == reflect.Ptr && reflect.ValueOf(data).IsNil()
 }
 
-func (o *VersionSynchronizer[V, R]) Sync() error {
+func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 	var lvs *model_struct.LocalVersionSync
 	var resp R
 	var extraData any
@@ -175,7 +175,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	if versionID != lvs.VersionID {
 		log.ZDebug(o.Ctx, "version id not match", errs.New("version id not match"), "versionID", versionID, "localVersionID", lvs.VersionID)
 		o.ServerVersion = nil
-		return o.Sync()
+		return o.IncrementalSync()
 	}
 	if lvs.Version+1 == version {
 		if len(delIDs) > 0 {
@@ -229,7 +229,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		//it indicates that some pushed data might be missing.
 		//Trigger the complete client-server incremental synchronization.
 		o.ServerVersion = nil
-		return o.Sync()
+		return o.IncrementalSync()
 	}
 }
 

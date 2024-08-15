@@ -18,13 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
+
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
@@ -88,7 +88,6 @@ type LoginMgr struct {
 	conversation *conv.Conversation
 	user         *user.User
 	file         *file.File
-	business     *business.Business
 
 	full         *full.Full
 	db           db_interface.DataBase
@@ -341,13 +340,12 @@ func (u *LoginMgr) initMgr(ctx context.Context, userID, token string) error {
 
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.db)
-	u.business = business.NewBusiness(u.db)
 	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, u.info.SystemType, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.business, u.full, u.file)
+		u.friend, u.group, u.user, u.full, u.file)
 	u.setListener(ctx)
 	return nil
 }
@@ -387,7 +385,7 @@ func (u *LoginMgr) setListener(ctx context.Context) {
 	setListener(ctx, &u.conversationListener, u.ConversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
 	setListener(ctx, &u.advancedMsgListener, u.AdvancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
 	setListener(ctx, &u.batchMsgListener, u.BatchMsgListener, u.conversation.SetBatchMsgListener, nil)
-	setListener(ctx, &u.businessListener, u.BusinessListener, u.business.SetListener, newEmptyCustomBusinessListener)
+	setListener(ctx, &u.businessListener, u.BusinessListener, u.conversation.SetBusinessListener, newEmptyCustomBusinessListener)
 }
 
 func setListener[T any](ctx context.Context, listener *T, getter func() T, setFunc func(listener func() T), newFunc func(context.Context) T) {
