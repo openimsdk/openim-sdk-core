@@ -275,12 +275,12 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 		updateMsg[conversationID] = updateMessage
 
 		//update message
-		if err6 := c.messageController.BatchUpdateMessageList(ctx, updateMsg); err6 != nil {
+		if err6 := c.batchUpdateMessageList(ctx, updateMsg); err6 != nil {
 			log.ZError(ctx, "sync seq normal message err  :", err6)
 		}
 		b3 := utils.GetCurrentTimestampByMill()
 		//Normal message storage
-		_ = c.messageController.BatchInsertMessageList(ctx, insertMsg)
+		_ = c.batchInsertMessageList(ctx, insertMsg)
 		b4 := utils.GetCurrentTimestampByMill()
 		log.ZDebug(ctx, "BatchInsertMessageListController, ", "cost time", b4-b3)
 
