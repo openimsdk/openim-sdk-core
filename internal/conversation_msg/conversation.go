@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/openimsdk/openim-sdk-core/v3/internal/common"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"

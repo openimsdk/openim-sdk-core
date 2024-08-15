@@ -3,16 +3,16 @@ package friend
 import (
 	"context"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	friend "github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
 func (f *Friend) IncrSyncFriends(ctx context.Context) error {
-	friendSyncer := incrversion.VersionSynchronizer[*model_struct.LocalFriend, *friend.GetIncrementalFriendsResp]{
+	friendSyncer := syncer.VersionSynchronizer[*model_struct.LocalFriend, *friend.GetIncrementalFriendsResp]{
 		Ctx:       ctx,
 		DB:        f.db,
 		TableName: f.friendListTableName(),
@@ -67,7 +67,7 @@ func (f *Friend) IncrSyncFriends(ctx context.Context) error {
 			return false
 		},
 	}
-	return friendSyncer.Sync()
+	return friendSyncer.IncrementalSync()
 }
 
 func (f *Friend) friendListTableName() string {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/incrversion"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	constantpb "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/sdkws"
@@ -103,7 +103,7 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 }
 
 func (g *Group) syncGroupAndMember(ctx context.Context, groupID string, resp *group.GetIncrementalGroupMemberResp) error {
-	groupMemberSyncer := incrversion.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
+	groupMemberSyncer := syncer.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
 		Ctx:       ctx,
 		DB:        g.db,
 		TableName: g.groupAndMemberVersionTableName(),
@@ -181,12 +181,12 @@ func (g *Group) syncGroupAndMember(ctx context.Context, groupID string, resp *gr
 			return false
 		},
 	}
-	return groupMemberSyncer.Sync()
+	return groupMemberSyncer.IncrementalSync()
 }
 
 func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, deleteGroupMembers, updateGroupMembers, insertGroupMembers []*sdkws.GroupMemberFullInfo,
 	updateGroup *sdkws.GroupInfo, sortVersion uint64, version uint64, versionID string) error {
-	groupMemberSyncer := incrversion.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
+	groupMemberSyncer := syncer.VersionSynchronizer[*model_struct.LocalGroupMember, *group.GetIncrementalGroupMemberResp]{
 		Ctx:       ctx,
 		DB:        g.db,
 		TableName: g.groupAndMemberVersionTableName(),
@@ -300,7 +300,7 @@ func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, de
 }
 
 func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
-	opt := incrversion.VersionSynchronizer[*model_struct.LocalGroup, *group.GetIncrementalJoinGroupResp]{
+	joinedGroupSyncer := syncer.VersionSynchronizer[*model_struct.LocalGroup, *group.GetIncrementalJoinGroupResp]{
 		Ctx:       ctx,
 		DB:        g.db,
 		TableName: g.groupTableName(),
@@ -356,5 +356,5 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 			return false
 		},
 	}
-	return opt.Sync()
+	return joinedGroupSyncer.IncrementalSync()
 }

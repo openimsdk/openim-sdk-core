@@ -21,10 +21,9 @@ import (
 	"math"
 	"sync"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/utils/stringutil"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
@@ -70,6 +69,7 @@ type Conversation struct {
 	msgListener           func() open_im_sdk_callback.OnAdvancedMsgListener
 	msgKvListener         func() open_im_sdk_callback.OnMessageKvInfoListener
 	batchMsgListener      func() open_im_sdk_callback.OnBatchMsgListener
+	businessListener      func() open_im_sdk_callback.OnCustomBusinessListener
 	recvCH                chan common.Cmd2Value
 	loginUserID           string
 	platformID            int32
@@ -78,7 +78,6 @@ type Conversation struct {
 	group                 *group.Group
 	user                  *user.User
 	file                  *file.File
-	business              *business.Business
 	messageController     *MessageController
 	cache                 *cache.Cache[string, *model_struct.LocalConversation]
 	full                  *full.Full
@@ -105,9 +104,13 @@ func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_c
 	c.batchMsgListener = batchMsgListener
 }
 
+func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_callback.OnCustomBusinessListener) {
+	c.businessListener = businessListener
+}
+
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	ch chan common.Cmd2Value, friend *friend.Friend, group *group.Group, user *user.User, business *business.Business,
-	full *full.Full, file *file.File) *Conversation {
+	ch chan common.Cmd2Value, friend *friend.Friend, group *group.Group, user *user.User, full *full.Full,
+	file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -119,7 +122,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		group:                group,
 		user:                 user,
 		full:                 full,
-		business:             business,
 		file:                 file,
 		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
