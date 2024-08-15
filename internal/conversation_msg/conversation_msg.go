@@ -18,9 +18,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/openimsdk/tools/utils/stringutil"
 	"math"
 	"sync"
+
+	"github.com/openimsdk/tools/utils/stringutil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
@@ -380,12 +381,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		"changedConversations", string(stringutil.StructToJsonBytes(conversationChangedSet)))
 
 	//seq sync message update
-	if err := c.messageController.BatchUpdateMessageList(ctx, updateMsg); err != nil {
+	if err := c.batchUpdateMessageList(ctx, updateMsg); err != nil {
 		log.ZError(ctx, "sync seq normal message err  :", err)
 	}
 
 	//Normal message storage
-	_ = c.messageController.BatchInsertMessageList(ctx, insertMsg)
+	_ = c.batchInsertMessageList(ctx, insertMsg)
 
 	hList, _ := c.db.GetHiddenConversationList(ctx)
 	for _, v := range hList {
@@ -531,7 +532,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	}
 
 	// message storage
-	_ = c.messageController.BatchInsertMessageList(ctx, insertMsg)
+	_ = c.batchInsertMessageList(ctx, insertMsg)
 
 	// conversation storage
 	if err := c.db.BatchUpdateConversationList(ctx, conversationList); err != nil {
@@ -623,6 +624,75 @@ func (c *Conversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_
 			}
 		}
 	}
+}
+
+func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map[string][]*model_struct.LocalChatLog) error {
+	if updateMsg == nil {
+		return nil
+	}
+	for conversationID, messages := range updateMsg {
+		conversation, err := c.db.GetConversation(ctx, conversationID)
+		if err != nil {
+			log.ZError(ctx, "GetConversation err", err, "conversationID", conversationID)
+			continue
+		}
+		latestMsg := &sdk_struct.MsgStruct{}
+		if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
+			log.ZError(ctx, "Unmarshal err", err, "conversationID",
+				conversationID, "latestMsg", conversation.LatestMsg, "messages", messages)
+			continue
+		}
+		for _, v := range messages {
+			v1 := new(model_struct.LocalChatLog)
+			v1.ClientMsgID = v.ClientMsgID
+			v1.Seq = v.Seq
+			v1.Status = v.Status
+			v1.RecvID = v.RecvID
+			v1.SessionType = v.SessionType
+			v1.ServerMsgID = v.ServerMsgID
+			v1.SendTime = v.SendTime
+			err := c.db.UpdateMessage(ctx, conversationID, v1)
+			if err != nil {
+				return utils.Wrap(err, "BatchUpdateMessageList failed")
+			}
+			if latestMsg.ClientMsgID == v.ClientMsgID {
+				latestMsg.ServerMsgID = v.ServerMsgID
+				latestMsg.Seq = v.Seq
+				latestMsg.SendTime = v.SendTime
+				latestMsg.Status = v.Status
+				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID,
+					Action: constant.AddConOrUpLatMsg, Args: *conversation}})
+
+			}
+		}
+
+	}
+	return nil
+}
+
+func (c *Conversation) batchInsertMessageList(ctx context.Context, insertMsg map[string][]*model_struct.LocalChatLog) error {
+	if insertMsg == nil {
+		return nil
+	}
+	for conversationID, messages := range insertMsg {
+		if len(messages) == 0 {
+			continue
+		}
+		err := c.db.BatchInsertMessageList(ctx, conversationID, messages)
+		if err != nil {
+			log.ZError(ctx, "insert GetMessage detail err:", err, "conversationID", conversationID, "messages", messages)
+			for _, v := range messages {
+				e := c.db.InsertMessage(ctx, conversationID, v)
+				if e != nil {
+					log.ZError(ctx, "InsertMessage err", err, "conversationID", conversationID, "message", v)
+				}
+			}
+		}
+
+	}
+	return nil
 }
 
 func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
