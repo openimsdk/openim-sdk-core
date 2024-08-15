@@ -17,8 +17,6 @@ package conversation_msg
 import (
 	"context"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
@@ -38,11 +36,7 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 			return c.db.GetAllConversations(ctx)
 		},
 		Server: func(version *model_struct.LocalVersionSync) (*pbConversation.GetIncrementalConversationResp, error) {
-			return util.CallApi[pbConversation.GetIncrementalConversationResp](ctx, constant.GetIncrementalConversation, &pbConversation.GetIncrementalConversationReq{
-				UserID:    c.loginUserID,
-				Version:   version.Version,
-				VersionID: version.VersionID,
-			})
+			return c.getIncrementalConversationFromSvr(ctx, version.Version, version.VersionID)
 		},
 		Full: func(resp *pbConversation.GetIncrementalConversationResp) bool {
 			return resp.Full
@@ -74,17 +68,16 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
-				server, err := c.getServerConversationList(ctx)
+				resp, err := c.getAllConversationListFromSvr(ctx)
 				if err != nil {
 					return err
 				}
+				server := datautil.Batch(ServerConversationToLocal, resp.Conversations)
 				return c.conversationSyncer.Sync(ctx, server, local, nil, true)
 			}
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[pbConversation.GetFullOwnerConversationIDsResp](ctx, constant.GetFullConversationIDs, &pbConversation.GetFullOwnerConversationIDsReq{
-				UserID: c.loginUserID,
-			})
+			resp, err := c.getAllConversationIDsFromSvr(ctx)
 			if err != nil {
 				return nil, err
 			}

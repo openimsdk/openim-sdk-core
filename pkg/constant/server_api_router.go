@@ -61,8 +61,6 @@ const (
 	ClearAllMsgRouter                      = RouterMsg + "/user_clear_all_msg"     // Clear all messages of the current user
 	DeleteMsgsRouter                       = RouterMsg + "/delete_msgs"            // Delete the specified message
 	RevokeMsgRouter                        = RouterMsg + "/revoke_msg"
-	SetMessageReactionExtensionsRouter     = RouterMsg + "/set_message_reaction_extensions"
-	AddMessageReactionExtensionsRouter     = RouterMsg + "/add_message_reaction_extensions"
 	MarkMsgsAsReadRouter                   = RouterMsg + "/mark_msgs_as_read"
 	GetConversationsHasReadAndMaxSeqRouter = RouterMsg + "/get_conversations_has_read_and_max_seq"
 
@@ -71,14 +69,6 @@ const (
 	SetConversationHasReadSeq = RouterMsg + "/set_conversation_has_read_seq"
 	SendMsgRouter             = RouterMsg + "/send_msg"
 	GetServerTimeRouter       = RouterMsg + "/get_server_time"
-
-	GetMessageListReactionExtensionsRouter = RouterMsg + "/get_message_list_reaction_extensions"
-	DeleteMessageReactionExtensionsRouter  = RouterMsg + "/delete_message_reaction_extensions"
-
-	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
-	AliOSSCredentialRouter              = "/third/ali_oss_credential"
-	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
-	AwsStorageCredentialRouter          = "/third/aws_storage_credential"
 
 	// group
 	CreateGroupRouter                 = RouterGroup + "/create_group"
@@ -111,19 +101,15 @@ const (
 	GetFullJoinedGroupIDs          = RouterGroup + "/get_full_join_group_ids"
 	GetFullGroupMemberUserIDs      = RouterGroup + "/get_full_group_member_user_ids"
 
-	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
-	GetReceiveMessageOptRouter         = "/conversation/get_receive_message_opt"
-	GetAllConversationMessageOptRouter = "/conversation/get_all_conversation_message_opt"
-	SetConversationOptRouter           = ConversationGroup + "/set_conversation"
-	GetConversationsRouter             = ConversationGroup + "/get_conversations"
-	GetAllConversationsRouter          = ConversationGroup + "/get_all_conversations"
-	GetConversationRouter              = ConversationGroup + "/get_conversation"
-	BatchSetConversationRouter         = ConversationGroup + "/batch_set_conversation"
-	ModifyConversationFieldRouter      = ConversationGroup + "/modify_conversation_field"
-	SetConversationsRouter             = ConversationGroup + "/set_conversations"
-	GetIncrementalConversation         = ConversationGroup + "/get_incremental_conversations"
-	GetFullConversationIDs             = ConversationGroup + "/get_full_conversation_ids"
-	GetOwnerConversationRouter         = ConversationGroup + "/get_owner_conversation"
+	GetConversationsRouter        = ConversationGroup + "/get_conversations"
+	GetAllConversationsRouter     = ConversationGroup + "/get_all_conversations"
+	GetConversationRouter         = ConversationGroup + "/get_conversation"
+	BatchSetConversationRouter    = ConversationGroup + "/batch_set_conversation"
+	ModifyConversationFieldRouter = ConversationGroup + "/modify_conversation_field"
+	SetConversationsRouter        = ConversationGroup + "/set_conversations"
+	GetIncrementalConversation    = ConversationGroup + "/get_incremental_conversations"
+	GetFullConversationIDs        = ConversationGroup + "/get_full_conversation_ids"
+	GetOwnerConversationRouter    = ConversationGroup + "/get_owner_conversation"
 
 	// organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"

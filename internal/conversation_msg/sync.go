@@ -30,13 +30,13 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	startTime := time.Now()
 	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
 
-	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
+	resp, err := c.getHasReadAndMaxSeqsFromSvr(ctx)
 	if err != nil {
 		return err
 	}
 	log.ZDebug(ctx, "getServerHasReadAndMaxSeqs completed", "duration", time.Since(startTime).Seconds())
 
-	if len(seqs) == 0 {
+	if len(resp.Seqs) == 0 {
 		return nil
 	}
 	var conversationChangedIDs []string
@@ -55,7 +55,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	})
 
 	stepStartTime = time.Now()
-	for conversationID, v := range seqs {
+	for conversationID, v := range resp.Seqs {
 		var unreadCount int32
 		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
 		if v.MaxSeq-v.HasReadSeq < 0 {
@@ -81,13 +81,13 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 
 	if len(conversationIDsNeedSync) > 0 {
 		stepStartTime = time.Now()
-		conversationsOnServer, err := c.getServerConversationsByIDs(ctx, conversationIDsNeedSync)
+		r, err := c.getConversationsByIDsFromSvr(ctx, conversationIDsNeedSync)
 		if err != nil {
 			log.ZWarn(ctx, "getServerConversationsByIDs err", err, "conversationIDs", conversationIDsNeedSync)
 			return err
 		}
 		log.ZDebug(ctx, "getServerConversationsByIDs completed", "duration", time.Since(stepStartTime).Seconds())
-
+		conversationsOnServer := datautil.Batch(ServerConversationToLocal, r.Conversations)
 		stepStartTime = time.Now()
 		if err := c.batchAddFaceURLAndName(ctx, conversationsOnServer...); err != nil {
 			log.ZWarn(ctx, "batchAddFaceURLAndName err", err, "conversationsOnServer", conversationsOnServer)
@@ -97,7 +97,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 
 		for _, conversation := range conversationsOnServer {
 			var unreadCount int32
-			v, ok := seqs[conversation.ConversationID]
+			v, ok := resp.Seqs[conversation.ConversationID]
 			if !ok {
 				continue
 			}

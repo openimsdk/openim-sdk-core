@@ -898,26 +898,6 @@ func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip st
 	return c.typingStatusUpdate(ctx, recvID, msgTip)
 }
 
-// func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
-// 	if len(msgIDList) == 0 {
-// 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-// 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-// 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-// 		return nil
-// 	}
-// 	return nil
-
-// }
-
-// deprecated
-// func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
-// 	conversationID := c.getConversationIDBySessionType(groupID, constant.GroupChatType)
-// 	_ = c.setOneConversationUnread(ctx, conversationID, 0)
-// 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-// 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-// }
-
-// read draw
 func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conversationID string) error {
 	return c.markConversationMessageAsRead(ctx, conversationID)
 }
@@ -926,7 +906,6 @@ func (c *Conversation) MarkMessagesAsReadByMsgID(ctx context.Context, conversati
 	return c.markMessagesAsReadByMsgID(ctx, conversationID, clientMsgIDs)
 }
 
-// delete
 func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, conversationID string, clientMsgID string) error {
 	return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
 }
@@ -951,7 +930,6 @@ func (c *Conversation) DeleteConversationAndDeleteAllMsg(ctx context.Context, co
 	return c.clearConversationFromLocalAndSvr(ctx, conversationID, c.db.ResetConversation)
 }
 
-// insert
 func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, sendID string) (*sdk_struct.MsgStruct, error) {
 	if recvID == "" || sendID == "" {
 		return nil, sdkerrs.ErrArgs
@@ -1130,24 +1108,6 @@ func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID
 	}
 }
 
-func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req []*server_api_params.KeyValue) ([]*server_api_params.ExtensionResult, error) {
-	return c.setMessageReactionExtensions(ctx, s, req)
-
-}
-
-func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionList []*server_api_params.KeyValue) ([]*server_api_params.ExtensionResult, error) {
-	return c.addMessageReactionExtensions(ctx, s, reactionExtensionList)
-
-}
-
-func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionKeyList []string) ([]*server_api_params.ExtensionResult, error) {
-	return c.deleteMessageReactionExtensions(ctx, s, reactionExtensionKeyList)
-}
-
-func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, conversationID string, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
-	return c.getMessageListReactionExtensions(ctx, conversationID, messageList)
-
-}
 func (c *Conversation) SearchConversation(ctx context.Context, searchParam string) ([]*server_api_params.Conversation, error) {
 	// Check if search parameter is empty
 	if searchParam == "" {
@@ -1186,39 +1146,3 @@ func (c *Conversation) SearchConversation(ctx context.Context, searchParam strin
 	// Return the list of conversations
 	return apiConversations, nil
 }
-
-/**
-**Get some reaction extensions in reactionExtensionKeyList of message list
- */
-//func (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
-//	var messagelist []*sdk_struct.MsgStruct
-//	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
-//	var list []string
-//	common.JsonUnmarshalAndArgsValidate(reactionExtensionKeyList, &list, callback, operationID)
-//	result := c.getMessageListSomeReactionExtensions(callback, messagelist, list, operationID)
-//	callback.OnSuccess(utils.StructToJsonString(result))
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-//}
-//func (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
-//	s := sdk_struct.MsgStruct{}
-//	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-//	result := c.setTypeKeyInfo(callback, &s, typeKey, ex, isCanRepeat, operationID)
-//	callback.OnSuccess(utils.StructToJsonString(result))
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-//}
-//func (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
-//	s := sdk_struct.MsgStruct{}
-//	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-//	var list []string
-//	common.JsonUnmarshalAndArgsValidate(typeKeyList, &list, callback, operationID)
-//	result := c.getTypeKeyListInfo(callback, &s, list, operationID)
-//	callback.OnSuccess(utils.StructToJsonString(result))
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-//}
-//func (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
-//	s := sdk_struct.MsgStruct{}
-//	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-//	result := c.getAllTypeKeyInfo(callback, &s, operationID)
-//	callback.OnSuccess(utils.StructToJsonString(result))
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-//}
