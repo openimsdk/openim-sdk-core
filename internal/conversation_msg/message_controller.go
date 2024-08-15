@@ -16,17 +16,13 @@ package conversation_msg
 
 import (
 	"context"
-	"encoding/json"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
 	"github.com/openimsdk/protocol/sdkws"
-	"github.com/openimsdk/tools/log"
 )
 
 type MessageController struct {
@@ -36,73 +32,6 @@ type MessageController struct {
 
 func NewMessageController(db db_interface.DataBase, ch chan common.Cmd2Value) *MessageController {
 	return &MessageController{db: db, ch: ch}
-}
-func (m *MessageController) BatchUpdateMessageList(ctx context.Context, updateMsg map[string][]*model_struct.LocalChatLog) error {
-	if updateMsg == nil {
-		return nil
-	}
-	for conversationID, messages := range updateMsg {
-		conversation, err := m.db.GetConversation(ctx, conversationID)
-		if err != nil {
-			log.ZError(ctx, "GetConversation err", err, "conversationID", conversationID)
-			continue
-		}
-		latestMsg := &sdk_struct.MsgStruct{}
-		if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
-			log.ZError(ctx, "Unmarshal err", err, "conversationID",
-				conversationID, "latestMsg", conversation.LatestMsg, "messages", messages)
-			continue
-		}
-		for _, v := range messages {
-			v1 := new(model_struct.LocalChatLog)
-			v1.ClientMsgID = v.ClientMsgID
-			v1.Seq = v.Seq
-			v1.Status = v.Status
-			v1.RecvID = v.RecvID
-			v1.SessionType = v.SessionType
-			v1.ServerMsgID = v.ServerMsgID
-			v1.SendTime = v.SendTime
-			err := m.db.UpdateMessage(ctx, conversationID, v1)
-			if err != nil {
-				return utils.Wrap(err, "BatchUpdateMessageList failed")
-			}
-			if latestMsg.ClientMsgID == v.ClientMsgID {
-				latestMsg.ServerMsgID = v.ServerMsgID
-				latestMsg.Seq = v.Seq
-				latestMsg.SendTime = v.SendTime
-				latestMsg.Status = v.Status
-				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
-				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID,
-					Action: constant.AddConOrUpLatMsg, Args: *conversation}, m.ch)
-
-			}
-		}
-
-	}
-	return nil
-}
-
-func (m *MessageController) BatchInsertMessageList(ctx context.Context, insertMsg map[string][]*model_struct.LocalChatLog) error {
-	if insertMsg == nil {
-		return nil
-	}
-	for conversationID, messages := range insertMsg {
-		if len(messages) == 0 {
-			continue
-		}
-		err := m.db.BatchInsertMessageList(ctx, conversationID, messages)
-		if err != nil {
-			log.ZError(ctx, "insert GetMessage detail err:", err, "conversationID", conversationID, "messages", messages)
-			for _, v := range messages {
-				e := m.db.InsertMessage(ctx, conversationID, v)
-				if e != nil {
-					log.ZError(ctx, "InsertMessage err", err, "conversationID", conversationID, "message", v)
-				}
-			}
-		}
-
-	}
-	return nil
 }
 
 func (c *Conversation) PullMessageBySeqs(ctx context.Context, seqs []*sdkws.SeqRange) (*sdkws.PullMessageBySeqsResp, error) {
