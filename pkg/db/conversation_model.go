@@ -37,6 +37,8 @@ const (
 )
 
 func (d *DataBase) GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversation model_struct.LocalConversation
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("user_id=?", userID).Find(&conversation).Error, "GetConversationByUserID error")
 	return &conversation, err
@@ -55,6 +57,8 @@ func (d *DataBase) GetAllConversationListDB(ctx context.Context) ([]*model_struc
 }
 
 func (d *DataBase) FindAllConversationConversationID(ctx context.Context) (conversationIDs []string, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	return conversationIDs, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error, "")
 }
 
@@ -67,6 +71,8 @@ func (d *DataBase) GetHiddenConversationList(ctx context.Context) ([]*model_stru
 }
 
 func (d *DataBase) GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversationList []*model_struct.LocalConversation
 	return conversationList, errs.WrapMsg(d.conn.WithContext(ctx).Find(&conversationList).Error, "GetAllConversations failed")
 }
@@ -117,6 +123,8 @@ func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversation
 }
 
 func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	var conversationIDs []string
 	if err := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Pluck("conversation_id", &conversationIDs).Error; err != nil {
 		return err
@@ -389,6 +397,8 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 }
 
 func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	// Define the search condition based on the searchParam
 	condition := fmt.Sprintf("show_name like %q ", "%"+searchParam+"%")
 	var conversationList []*model_struct.LocalConversation

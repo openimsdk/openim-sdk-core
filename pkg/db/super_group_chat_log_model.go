@@ -210,6 +210,8 @@ func (d *DataBase) SuperGroupGetMessage(ctx context.Context, msg *sdk_struct.Msg
 }
 
 func (d *DataBase) SuperGroupGetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var seqList []uint32
 	return seqList, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalChatLog{}).Where("status != 4").Select("seq").Find(&seqList).Error, "")
 }
@@ -340,6 +342,8 @@ func (d *DataBase) SuperGroupGetNormalMsgSeq(ctx context.Context) (int64, error)
 }
 
 func (d *DataBase) SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (int64, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var seq int64
 	return seq, errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(groupID)).Select("IFNULL(min(seq),0)").Where("seq >?", 0).Find(&seq).Error, "SuperGroupGetNormalMinSeq")
 }
