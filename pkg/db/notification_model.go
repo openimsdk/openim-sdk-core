@@ -44,8 +44,8 @@ func (d *DataBase) BatchInsertNotificationSeq(ctx context.Context, notificationS
 }
 
 func (d *DataBase) GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqs, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var seqs []*model_struct.NotificationSeqs
 	return seqs, errs.WrapMsg(d.conn.WithContext(ctx).Where("1=1").Find(&seqs).Error, "GetNotificationAllSeqs failed")
 }

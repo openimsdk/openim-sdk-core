@@ -20,16 +20,16 @@ import (
 )
 
 const (
-	APIADDR = "http://172.16.8.48:10002"
-	WSADDR  = "ws://172.16.8.48:10001"
+	//APIADDR = "http://172.16.8.48:10002"
+	//WSADDR  = "ws://172.16.8.48:10001"
+
+	APIADDR = "http://127.0.0.1:10002"
+	WSADDR  = "ws://127.0.0.1:10001"
 
 	//APIADDR = "http://127.0.0.1:10002"
 	//WSADDR  = "ws://127.0.0.1:10001"
 
-	//APIADDR = "http://127.0.0.1:10002"
-	//WSADDR  = "ws://127.0.0.1:10001"
-
-	UserID       = "7327731536"
+	UserID       = "3717417654"
 	friendUserID = "3281432310"
 )
 
@@ -41,7 +41,7 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.LogLevel = 6
 	cf.IsExternalExtensions = true
 	cf.PlatformID = constant.LinuxPlatformID
-	cf.LogFilePath = ""
+	cf.LogFilePath = "./"
 	cf.IsLogStandardOutput = true
 	return cf
 }

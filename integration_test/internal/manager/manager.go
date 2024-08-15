@@ -9,6 +9,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	authPB "github.com/openimsdk/protocol/auth"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 type MetaManager struct {
@@ -46,6 +47,7 @@ func (m *MetaManager) BuildCtx(ctx context.Context) context.Context {
 		IMConfig: m.IMConfig,
 	})
 	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+	ctx = mcontext.SetOpUserID(ctx, "admin")
 	return ctx
 }
 

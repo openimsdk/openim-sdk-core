@@ -336,3 +336,8 @@ type CmdPushMsgToMsgSync struct {
 type CmdMaxSeqToMsgSync struct {
 	ConversationMaxSeqOnSvr map[string]int64
 }
+
+type BasicInfo struct {
+	Nickname string
+	FaceURL  string
+}
