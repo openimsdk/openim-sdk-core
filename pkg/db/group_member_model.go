@@ -42,13 +42,6 @@ func (d *DataBase) GetAllGroupMemberList(ctx context.Context) ([]model_struct.Lo
 	return groupMemberList, errs.WrapMsg(d.conn.WithContext(ctx).Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
 
-func (d *DataBase) GetAllGroupMemberUserIDList(ctx context.Context) ([]model_struct.LocalGroupMember, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var groupMemberList []model_struct.LocalGroupMember
-	return groupMemberList, errs.WrapMsg(d.conn.WithContext(ctx).Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
-}
-
 func (d *DataBase) GetGroupMemberCount(ctx context.Context, groupID string) (int32, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
@@ -63,13 +56,6 @@ func (d *DataBase) GetGroupSomeMemberInfo(ctx context.Context, groupID string, u
 	var groupMemberList []*model_struct.LocalGroupMember
 	err := d.conn.WithContext(ctx).Where("group_id = ? And user_id IN ? ", groupID, userIDList).Find(&groupMemberList).Error
 	return groupMemberList, errs.WrapMsg(err, "GetGroupMemberListByGroupID failed ")
-}
-
-func (d *DataBase) GetGroupAdminID(ctx context.Context, groupID string) ([]string, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var adminIDList []string
-	return adminIDList, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalGroupMember{}).Select("user_id").Where("group_id = ? And role_level = ?", groupID, constant.GroupAdmin).Find(&adminIDList).Error, "")
 }
 
 func (d *DataBase) GetGroupMemberListByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
@@ -140,14 +126,6 @@ func (d *DataBase) GetGroupMemberOwnerAndAdminDB(ctx context.Context, groupID st
 	return groupMemberList, errs.WrapMsg(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberOwner(ctx context.Context, groupID string) (*model_struct.LocalGroupMember, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var groupMember model_struct.LocalGroupMember
-	err := d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupOwner).Find(&groupMember).Error
-	return &groupMember, errs.WrapMsg(err, "GetGroupMemberListSplit failed ")
-}
-
 func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(ctx context.Context, groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
@@ -159,23 +137,6 @@ func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(ctx context.Context, 
 		err = d.conn.WithContext(ctx).Where("group_id = ? And join_time  between ? and ? And user_id NOT IN ?", groupID, joinTimeBegin, joinTimeEnd, userIDList).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	}
 	return groupMemberList, errs.WrapMsg(err, "GetGroupMemberListSplitByJoinTimeFilter failed ")
-}
-
-func (d *DataBase) GetGroupOwnerAndAdminByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var groupMemberList []*model_struct.LocalGroupMember
-	err := d.conn.WithContext(ctx).Where("group_id = ?  AND (role_level = ? Or role_level = ?)", groupID, constant.GroupOwner, constant.GroupAdmin).Find(&groupMemberList).Error
-	return groupMemberList, errs.WrapMsg(err, "GetGroupMemberListByGroupID failed ")
-}
-
-func (d *DataBase) GetGroupMemberUIDListByGroupID(ctx context.Context, groupID string) (result []string, err error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var g model_struct.LocalGroupMember
-	g.GroupID = groupID
-	err = d.conn.WithContext(ctx).Model(&g).Where("group_id = ?", groupID).Pluck("user_id", &result).Error
-	return result, errs.WrapMsg(err, "GetGroupMemberListByGroupID failed ")
 }
 
 func (d *DataBase) InsertGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error {
@@ -214,33 +175,6 @@ func (d *DataBase) UpdateGroupMember(ctx context.Context, groupMember *model_str
 	return errs.WrapMsg(t.Error, "")
 }
 
-func (d *DataBase) UpdateGroupMemberField(ctx context.Context, groupID, userID string, args map[string]interface{}) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	c := model_struct.LocalGroupMember{GroupID: groupID, UserID: userID}
-	t := d.conn.WithContext(ctx).Model(&c).Updates(args)
-	if t.RowsAffected == 0 {
-		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
-	}
-	return errs.WrapMsg(t.Error, "UpdateGroupMemberField failed")
-}
-
-func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin(ctx context.Context) ([]*model_struct.LocalGroupMember, error) {
-	var ownerAndAdminList []*model_struct.LocalGroupMember
-	groupList, err := d.GetJoinedGroupListDB(ctx)
-	if err != nil {
-		return nil, errs.Wrap(err)
-	}
-	for _, v := range groupList {
-		memberList, err := d.GetGroupOwnerAndAdminByGroupID(ctx, v.GroupID)
-		if err != nil {
-			return nil, errs.Wrap(err)
-		}
-		ownerAndAdminList = append(ownerAndAdminList, memberList...)
-	}
-	return ownerAndAdminList, nil
-}
-
 func (d *DataBase) SearchGroupMembersDB(ctx context.Context, keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
@@ -276,22 +210,4 @@ func (d *DataBase) SearchGroupMembersDB(ctx context.Context, keyword string, gro
 		result = append(result, &v1)
 	}
 	return result, err
-}
-
-func (d *DataBase) GetGroupMemberAllGroupIDs(ctx context.Context) ([]string, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	// SELECT DISTINCT group_id FROM local_group_members;
-	var groupIDs []string
-	err := d.conn.WithContext(ctx).Select("DISTINCT group_id").Model(&model_struct.LocalGroupMember{}).Pluck("group_id", &groupIDs).Error
-	if err != nil {
-		return nil, err
-	}
-	return groupIDs, nil
-}
-
-func (d *DataBase) GetUserJoinedGroupIDs(ctx context.Context, userID string) (groupIDs []string, err error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	return groupIDs, d.conn.WithContext(ctx).Model(&model_struct.LocalGroupMember{}).Where("user_id = ?", userID).Pluck("group_id", &groupIDs).Error
 }

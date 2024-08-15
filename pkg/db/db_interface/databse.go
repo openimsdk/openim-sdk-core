@@ -30,11 +30,6 @@ type GroupModel interface {
 	GetGroups(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error)
 	GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
 	GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error)
-	AddMemberCount(ctx context.Context, groupID string) error
-	SubtractMemberCount(ctx context.Context, groupID string) error
-	GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error)
-	GetJoinedWorkingGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error)
-	GetUserJoinedGroupIDs(ctx context.Context, userID string) ([]string, error)
 
 	InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error
 	DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error
@@ -44,33 +39,19 @@ type GroupModel interface {
 	DeleteGroupRequest(ctx context.Context, groupID, userID string) error
 	UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
 	GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error)
-	InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
-	DeleteAllSuperGroup(ctx context.Context) error
-	GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
-	UpdateSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
-	DeleteSuperGroup(ctx context.Context, groupID string) error
 	GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error)
-	GetAllGroupMemberList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
-	GetAllGroupMemberUserIDList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
 	GetGroupMemberCount(ctx context.Context, groupID string) (int32, error)
 	GetGroupSomeMemberInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupAdminID(ctx context.Context, groupID string) ([]string, error)
 	GetGroupMemberListByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
 	GetGroupMemberListSplit(ctx context.Context, groupID string, filter int32, offset, count int) ([]*model_struct.LocalGroupMember, error)
 	GetGroupMemberListByUserIDs(ctx context.Context, groupID string, filter int32, userIDs []string) ([]*model_struct.LocalGroupMember, error)
 	GetGroupMemberOwnerAndAdminDB(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupMemberOwner(ctx context.Context, groupID string) (*model_struct.LocalGroupMember, error)
 	GetGroupMemberListSplitByJoinTimeFilter(ctx context.Context, groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupOwnerAndAdminByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupMemberUIDListByGroupID(ctx context.Context, groupID string) (result []string, err error)
-	GetGroupMemberAllGroupIDs(ctx context.Context) ([]string, error)
 	InsertGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error
 	BatchInsertGroupMember(ctx context.Context, groupMemberList []*model_struct.LocalGroupMember) error
 	DeleteGroupMember(ctx context.Context, groupID, userID string) error
 	DeleteGroupAllMembers(ctx context.Context, groupID string) error
 	UpdateGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error
-	UpdateGroupMemberField(ctx context.Context, groupID, userID string, args map[string]interface{}) error
-	GetGroupMemberInfoIfOwnerOrAdmin(ctx context.Context) ([]*model_struct.LocalGroupMember, error)
 	SearchGroupMembersDB(ctx context.Context, keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error)
 }
 
