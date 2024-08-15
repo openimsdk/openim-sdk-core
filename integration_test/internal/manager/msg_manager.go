@@ -10,6 +10,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 	"sync/atomic"
 )
 
@@ -36,15 +37,13 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
 
 	m.sendSingleMessages(ctx, gr)
-	// prevent lock database
-	//gr.WaitTaskDone()
 	m.sendGroupMessages(ctx, gr)
 	return gr.Wait()
 }
 
 // sendSingleMessages see SendMessages
 func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.Group) {
-	for userNum := 0; userNum < vars.UserNum; userNum++ {
+	for userNum := 0; userNum < vars.LoginEndUserNum; userNum++ {
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
@@ -52,6 +51,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 			if err != nil {
 				return err
 			}
+			friends = datautil.ShuffleSlice(friends)
 			for _, friend := range friends {
 				if friend.FriendInfo != nil {
 					for i := 0; i < vars.SingleMessageNum; i++ {
@@ -93,6 +93,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					sendGroups = append(sendGroups, group.GroupID)
 				}
 			}
+			sendGroups = datautil.ShuffleSlice(sendGroups)
 			for _, group := range sendGroups {
 				group := group
 				for i := 0; i < vars.GroupMessageNum; i++ {

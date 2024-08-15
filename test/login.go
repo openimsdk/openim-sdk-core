@@ -18,12 +18,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/log"
-	"time"
 )
 
 type BaseSuccessFailed struct {
@@ -81,8 +82,8 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var batchMsg BatchMsg
 	open_im_sdk.SetBatchMsgListener(&batchMsg)
 
-	var friendListener testFriendListener
-	open_im_sdk.SetFriendListener(friendListener)
+	var friendshipListener testFriendshipListener
+	open_im_sdk.SetFriendListener(friendshipListener)
 
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)

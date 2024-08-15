@@ -15,6 +15,6 @@ var (
 
 	Contexts []context.Context // users contexts
 
-	LoginEndUserNum int
+	LoginEndUserNum int // e.g. if LoginEndUserNum = 5, login user is [0,1,2,3,4]
 	NowLoginNum     atomic.Int64
 )

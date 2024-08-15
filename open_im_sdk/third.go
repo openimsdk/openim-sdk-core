@@ -30,6 +30,6 @@ func UploadLogs(callback open_im_sdk_callback.Base, operationID string, line int
 	call(callback, operationID, UserForSDK.Third().UploadLogs, line, ex, progress)
 }
 
-func Logs(callback open_im_sdk_callback.Base, operationID string, logLevel int, relativePath string, line string, msgs string, err string, keyAndValue string) {
-	call(callback, operationID, UserForSDK.Third().Log, logLevel, relativePath, line, msgs, err, keyAndValue)
+func Logs(callback open_im_sdk_callback.Base, operationID string, logLevel int, file string, line int, msgs string, err string, keyAndValue string) {
+	call(callback, operationID, UserForSDK.Third().Log, logLevel, file, line, msgs, err, keyAndValue)
 }

@@ -76,7 +76,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		c.ConversationListener().OnSyncServerProgress(1)
 		asyncWaitFunctions := []func(c context.Context) error{
 			c.group.SyncAllJoinedGroupsAndMembers,
-			c.friend.IncrSyncFriends,
+			c.relation.IncrSyncFriends,
 		}
 		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait)
 		c.addInitProgress(InitSyncProgress * 4 / 10)              // add 40% of InitSyncProgress as progress
@@ -93,9 +93,9 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 
 		asyncNoWaitFunctions := []func(c context.Context) error{
 			c.user.SyncLoginUserInfoWithoutNotice,
-			c.friend.SyncAllBlackListWithoutNotice,
-			c.friend.SyncAllFriendApplicationWithoutNotice,
-			c.friend.SyncAllSelfFriendApplicationWithoutNotice,
+			c.relation.SyncAllBlackListWithoutNotice,
+			c.relation.SyncAllFriendApplicationWithoutNotice,
+			c.relation.SyncAllSelfFriendApplicationWithoutNotice,
 			c.group.SyncAllAdminGroupApplicationWithoutNotice,
 			c.group.SyncAllSelfGroupApplicationWithoutNotice,
 			c.user.SyncAllCommandWithoutNotice,
@@ -136,7 +136,7 @@ func (c *Conversation) doNotificationManager(c2v common.Cmd2Value) {
 		}
 		for _, msg := range msgs.Msgs {
 			if msg.ContentType > constant.FriendNotificationBegin && msg.ContentType < constant.FriendNotificationEnd {
-				c.friend.DoNotification(ctx, msg)
+				c.relation.DoNotification(ctx, msg)
 			} else if msg.ContentType > constant.UserNotificationBegin && msg.ContentType < constant.UserNotificationEnd {
 				c.user.DoNotification(ctx, msg)
 			} else if msg.ContentType > constant.GroupNotificationBegin && msg.ContentType < constant.GroupNotificationEnd {
@@ -386,14 +386,14 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 	// Asynchronous sync functions
 	asyncFuncs := []func(c context.Context) error{
 		c.user.SyncLoginUserInfo,
-		c.friend.SyncAllBlackList,
-		c.friend.SyncAllFriendApplication,
-		c.friend.SyncAllSelfFriendApplication,
+		c.relation.SyncAllBlackList,
+		c.relation.SyncAllFriendApplication,
+		c.relation.SyncAllSelfFriendApplication,
 		c.group.SyncAllAdminGroupApplication,
 		c.group.SyncAllSelfGroupApplication,
 		c.user.SyncAllCommand,
 		c.group.SyncAllJoinedGroupsAndMembers,
-		c.friend.IncrSyncFriends,
+		c.relation.IncrSyncFriends,
 		c.IncrSyncConversations,
 	}
 

@@ -1,4 +1,4 @@
-package friend
+package relation
 
 import (
 	"crypto/md5"
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func (f *Friend) CalculateHash(friends []*model_struct.LocalFriend) uint64 {
+func (r *Relation) CalculateHash(friends []*model_struct.LocalFriend) uint64 {
 	datautil.SortAny(friends, func(a, b *model_struct.LocalFriend) bool {
 		return a.CreateTime > b.CreateTime
 	})

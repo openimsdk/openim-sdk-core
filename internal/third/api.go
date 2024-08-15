@@ -2,6 +2,7 @@ package third
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/third"
@@ -31,6 +32,6 @@ func (c *Third) UploadLogs(ctx context.Context, line int, ex string, progress Pr
 	return c.uploadLogs(ctx, line, ex, progress)
 }
 
-func (c *Third) Log(ctx context.Context, logLevel int, relativePath string, line string, msg, err string, keysAndValues []any) {
-	c.printLog(ctx, logLevel, relativePath, line, msg, err, keysAndValues)
+func (c *Third) Log(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
+	c.printLog(ctx, logLevel, file, line, msg, err, keysAndValues)
 }
