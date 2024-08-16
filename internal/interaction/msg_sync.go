@@ -16,6 +16,8 @@ package interaction
 
 import (
 	"context"
+	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -149,6 +151,12 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 // DoListener Listen to the message pipe of the message synchronizer
 // and process received and pushed messages
 func (m *MsgSyncer) DoListener(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			log.ZError(ctx, "DoListener panic", errs.New(err))
+		}
+	}()
 	for {
 		select {
 		case cmd := <-m.PushMsgAndMaxSeqCh:

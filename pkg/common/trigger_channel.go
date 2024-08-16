@@ -17,6 +17,8 @@ package common
 import (
 	"context"
 	"errors"
+	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -209,6 +211,13 @@ type goroutine interface {
 }
 
 func DoListener(Li goroutine, ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			log.ZError(ctx, "DoListener panic", errs.New(err))
+		}
+	}()
+
 	for {
 		select {
 		case cmd := <-Li.GetCh():
