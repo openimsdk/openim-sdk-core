@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -177,7 +178,9 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 func (c *LongConnMgr) readPump(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			err := fmt.Errorf("call panic: %+v", r)
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(err))
 		}
 	}()
 
@@ -241,10 +244,11 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 func (c *LongConnMgr) writePump(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			err := fmt.Errorf("call panic: %+v", r)
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(err))
 		}
 	}()
-
 	log.ZDebug(ctx, "writePump start", "goroutine ID:", getGoroutineID())
 
 	defer func() {
@@ -296,7 +300,9 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			err := fmt.Errorf("call panic: %+v", r)
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(err))
 		}
 	}()
 

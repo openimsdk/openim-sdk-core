@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -212,7 +213,9 @@ type goroutine interface {
 func DoListener(Li goroutine, ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			err := fmt.Errorf("call panic: %+v", r)
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(err))
 		}
 	}()
 
