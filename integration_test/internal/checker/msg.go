@@ -80,7 +80,7 @@ func CheckMessageNum(ctx context.Context) error {
 				}
 			} else {
 				res += corrects[1]
-				if userNum <= vars.LoginUserNum {
+				if userNum < vars.LoginUserNum {
 					// self send large group message
 					res -= vars.GroupMessageNum * vars.LargeGroupNum
 				} else {
