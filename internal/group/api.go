@@ -310,7 +310,7 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.Unwrap(err) != errs.ErrRecordNotFound {
+			if errs.ErrRecordNotFound.Is(err) {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
@@ -371,7 +371,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.Unwrap(err) != errs.ErrRecordNotFound {
+			if errs.ErrRecordNotFound.Is(err) {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
@@ -493,7 +493,6 @@ func (g *Group) GetUsersInGroup(ctx context.Context, groupID string, userIDList 
 	}
 
 	return usersInGroup, nil
-
 }
 
 func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, userIDList []string) error {

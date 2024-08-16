@@ -72,7 +72,7 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 			if err == nil {
 				req.VersionID = lvs.VersionID
 				req.Version = lvs.Version
-			} else if errs.Unwrap(err) != errs.ErrRecordNotFound {
+			} else if errs.ErrRecordNotFound.Is(err) {
 				return err
 			}
 			groups = append(groups, &req)
