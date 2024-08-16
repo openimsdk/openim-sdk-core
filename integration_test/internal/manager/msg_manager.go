@@ -55,15 +55,16 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 			for _, friend := range friends {
 				if friend.FriendInfo != nil {
 					for i := 0; i < vars.SingleMessageNum; i++ {
-						msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
+						_, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
 							fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
 						if err != nil {
 							return err
 						}
-						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
-						if err != nil {
-							return err
-						}
+						//_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
+						//if err != nil {
+						//	return err
+						//}
+						continue
 					}
 				} else {
 					fmt.Println("what`s this???")
