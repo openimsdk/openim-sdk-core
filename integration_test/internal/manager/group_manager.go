@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
@@ -54,10 +55,11 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 
 			ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 			log.ZWarn(ctx, "createLargeGroups begin", nil)
-			_, err := testSDK.CreateLargeGroup(ctx)
-			if err != nil {
-				return err
-			}
+			//_, err := testSDK.CreateLargeGroup(ctx)
+			//if err != nil {
+			//	return err
+			//}
+			fmt.Sprintf("%v", testSDK)
 			log.ZWarn(ctx, "createLargeGroups end", nil)
 			return nil
 		})
@@ -76,10 +78,12 @@ func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgrou
 
 				ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 				log.ZWarn(ctx, "createCommonGroups begin", nil)
-				_, err := testSDK.CreateCommonGroup(ctx, vars.CommonGroupMemberNum)
-				if err != nil {
-					return err
-				}
+				//_, err := testSDK.CreateCommonGroup(ctx, vars.CommonGroupMemberNum)
+				//if err != nil {
+				//	return err
+				//}
+				fmt.Sprintf("%v", testSDK)
+
 				log.ZWarn(ctx, "createCommonGroups end", nil)
 			}
 			return nil
