@@ -10,6 +10,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/tools/log"
 	"sync/atomic"
 )
 
@@ -46,10 +47,14 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 				OwnerUserID:   userID,
 				FriendUserIDs: friendIDs,
 			}
+
+			log.ZWarn(ctx, "ImportFriends begin", nil, "len", len(friendIDs))
 			_, err := util.CallApi[relation.ImportFriendResp](m.BuildCtx(ctx), constant.ImportFriendListRouter, req)
 			if err != nil {
 				return err
 			}
+			log.ZWarn(ctx, "ImportFriends end", nil, "len", len(friendIDs))
+
 			return nil
 		})
 	}

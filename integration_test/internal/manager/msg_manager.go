@@ -9,6 +9,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 	"sync/atomic"
@@ -60,10 +62,14 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						if err != nil {
 							return err
 						}
+						ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+						log.ZWarn(ctx, "sendSingleMessages begin", nil)
 						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
 						if err != nil {
 							return err
 						}
+						log.ZWarn(ctx, "sendSingleMessages end", nil)
+
 					}
 				} else {
 					fmt.Println("what`s this???")
@@ -101,10 +107,15 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					if err != nil {
 						return err
 					}
+
+					ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+					log.ZWarn(ctx, "sendGroupMessages begin", nil)
 					_, err = testSDK.SendGroupMsg(ctx, msg, group)
 					if err != nil {
 						return err
 					}
+					log.ZWarn(ctx, "sendGroupMessages end", nil)
+
 				}
 			}
 			return nil

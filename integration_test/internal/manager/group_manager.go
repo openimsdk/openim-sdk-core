@@ -8,6 +8,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/log"
 	"sync/atomic"
 )
 
@@ -48,10 +51,14 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
+
+			ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+			log.ZWarn(ctx, "createLargeGroups begin", nil)
 			_, err := testSDK.CreateLargeGroup(ctx)
 			if err != nil {
 				return err
 			}
+			log.ZWarn(ctx, "createLargeGroups end", nil)
 			return nil
 		})
 		userNum = utils.NextNum(userNum)
@@ -66,10 +73,14 @@ func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgrou
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
 			for i := 0; i < vars.CommonGroupNum; i++ {
+
+				ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+				log.ZWarn(ctx, "createCommonGroups begin", nil)
 				_, err := testSDK.CreateCommonGroup(ctx, vars.CommonGroupMemberNum)
 				if err != nil {
 					return err
 				}
+				log.ZWarn(ctx, "createCommonGroups end", nil)
 			}
 			return nil
 		})
