@@ -18,11 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
+
+	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
@@ -248,6 +249,12 @@ func (u *LoginMgr) GetLoginUserID() string {
 	return u.loginUserID
 }
 func (u *LoginMgr) logoutListener(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+		}
+	}()
+
 	for {
 		select {
 		case <-u.loginMgrCh:

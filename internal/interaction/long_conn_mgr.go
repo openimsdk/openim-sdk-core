@@ -175,6 +175,12 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // reads from this goroutine.
 
 func (c *LongConnMgr) readPump(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+		}
+	}()
+
 	log.ZDebug(ctx, "readPump start", "goroutine ID:", getGoroutineID())
 	defer func() {
 		_ = c.close()
@@ -233,6 +239,12 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *LongConnMgr) writePump(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+		}
+	}()
+
 	log.ZDebug(ctx, "writePump start", "goroutine ID:", getGoroutineID())
 
 	defer func() {
@@ -282,6 +294,12 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 }
 
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+		}
+	}()
+
 	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {

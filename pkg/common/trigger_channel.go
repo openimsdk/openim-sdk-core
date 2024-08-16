@@ -17,6 +17,7 @@ package common
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -209,6 +210,12 @@ type goroutine interface {
 }
 
 func DoListener(Li goroutine, ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.ZError(ctx, "logoutListener panic ", errs.Wrap(fmt.Errorf("%v", r)))
+		}
+	}()
+
 	for {
 		select {
 		case cmd := <-Li.GetCh():
