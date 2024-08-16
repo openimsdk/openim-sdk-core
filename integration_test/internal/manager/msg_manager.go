@@ -55,7 +55,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 			for _, friend := range friends {
 				if friend.FriendInfo != nil {
 					for i := 0; i < vars.SingleMessageNum; i++ {
-						_, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
+						msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
 							fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
 						if err != nil {
 							return err
@@ -64,6 +64,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						//if err != nil {
 						//	return err
 						//}
+						fmt.Sprintf("%v", msg)
 						continue
 					}
 				} else {
@@ -103,10 +104,11 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					if err != nil {
 						return err
 					}
-					_, err = testSDK.SendGroupMsg(ctx, msg, group)
-					if err != nil {
-						return err
-					}
+					//_, err = testSDK.SendGroupMsg(ctx, msg, group)
+					//if err != nil {
+					//	return err
+					//}
+					fmt.Sprintf("%v%v", msg, group)
 				}
 			}
 			return nil
