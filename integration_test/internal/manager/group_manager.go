@@ -25,7 +25,7 @@ func NewGroupManager(m *MetaManager) *TestGroupManager {
 func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
 
 	var (
 		total    atomic.Int64
@@ -55,11 +55,6 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 			return nil
 		})
 		userNum = utils.NextNum(userNum)
-		if i != 0 && userNum == 0 {
-			// A new round of user creation
-			// prevent lock database
-			gr.WaitTaskDone()
-		}
 	}
 	return
 }

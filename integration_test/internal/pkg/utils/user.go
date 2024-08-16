@@ -50,17 +50,13 @@ func NextOffsetNums(userNum, offset int) []int {
 
 // NextOffsetNum get num with an offset behind.
 func NextOffsetNum(num, offset int) int {
-	return (num + offset) % vars.UserNum
+	offset = offset % vars.UserNum
+	return (num + offset + vars.UserNum) % vars.UserNum
 }
 
 // NextNum get next num.
 func NextNum(num int) int {
 	return NextOffsetNum(num, 1)
-}
-
-// PreOffsetNum get num with an offset forward.
-func PreOffsetNum(num, offset int) int {
-	return (num + offset) % vars.UserNum
 }
 
 // NextOffsetUserIDs get userIDs with an offset behind.

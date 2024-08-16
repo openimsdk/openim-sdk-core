@@ -100,12 +100,12 @@ func (t *TestUserManager) LoginAllUsers(ctx context.Context) error {
 }
 
 func (t *TestUserManager) LoginByRate(ctx context.Context) error {
-	userIDs := vars.UserIDs[:vars.LoginEndUserNum]
+	userIDs := vars.UserIDs[:vars.LoginUserNum]
 	return t.login(ctx, userIDs...)
 }
 
 func (t *TestUserManager) LoginLastUsers(ctx context.Context) error {
-	userIDs := vars.UserIDs[vars.LoginEndUserNum:]
+	userIDs := vars.UserIDs[vars.LoginUserNum:]
 	return t.login(ctx, userIDs...)
 }
 

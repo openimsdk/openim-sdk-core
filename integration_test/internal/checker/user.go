@@ -8,7 +8,7 @@ import (
 
 func CheckLoginByRateNum(ctx context.Context) error {
 	correct := func() int {
-		return vars.LoginEndUserNum
+		return vars.LoginUserNum
 	}()
 
 	c := &CounterChecker[int, string]{

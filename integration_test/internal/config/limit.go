@@ -5,8 +5,8 @@ const (
 )
 
 const (
-	ErrGroupSmallLimit       = 1   // max goroutine of a small error group
-	ErrGroupMiddleSmallLimit = 5   // max goroutine of a middle small error group
+	ErrGroupSmallLimit       = 20  // max goroutine of a small error group
+	ErrGroupMiddleSmallLimit = 50  // max goroutine of a middle small error group
 	ErrGroupCommonLimit      = 100 // max goroutine of a common error group
 )
 
