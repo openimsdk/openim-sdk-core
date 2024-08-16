@@ -67,7 +67,7 @@ func CheckMessageNum(ctx context.Context) error {
 			if utils.IsSuperUser(userID) {
 				res += corrects[0]
 				res += vars.UserNum - 1 - userNum // become friend notification message num
-				if userNum <= vars.LoginUserNum {
+				if userNum < vars.LoginUserNum {
 					// friend send message num
 					res += vars.SingleMessageNum * (vars.LoginUserNum - 1)
 					// self send large group message
@@ -79,7 +79,7 @@ func CheckMessageNum(ctx context.Context) error {
 					res -= 0
 				}
 			} else {
-				res = corrects[1]
+				res += corrects[1]
 				if userNum <= vars.LoginUserNum {
 					// self send large group message
 					res -= vars.GroupMessageNum * vars.LargeGroupNum

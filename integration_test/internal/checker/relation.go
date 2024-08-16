@@ -35,7 +35,7 @@ func CheckLoginUsersFriends(ctx context.Context) error {
 				return corrects[1]
 			}
 		},
-		LoopSlice: sdk.TestSDKs,
+		LoopSlice: sdk.TestSDKs[:vars.LoginUserNum],
 		GetKey: func(t *sdk.TestSDK) string {
 			return t.UserID
 		},
