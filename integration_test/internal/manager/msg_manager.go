@@ -33,7 +33,7 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 		total    atomic.Int64
 		progress atomic.Int64
 	)
-	total.Add(int64(vars.UserNum * 2))
+	total.Add(int64(vars.LoginUserNum * 2))
 	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
 
 	m.sendSingleMessages(ctx, gr)
@@ -60,12 +60,10 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						if err != nil {
 							return err
 						}
-						//_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
-						//if err != nil {
-						//	return err
-						//}
-						fmt.Sprintf("%v", msg)
-						continue
+						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
+						if err != nil {
+							return err
+						}
 					}
 				} else {
 					fmt.Println("what`s this???")
@@ -97,18 +95,16 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 			}
 			sendGroups = datautil.ShuffleSlice(sendGroups)
 			for _, group := range sendGroups {
-				group := group
 				for i := 0; i < vars.GroupMessageNum; i++ {
 					msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
 						fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
 					if err != nil {
 						return err
 					}
-					//_, err = testSDK.SendGroupMsg(ctx, msg, group)
-					//if err != nil {
-					//	return err
-					//}
-					fmt.Sprintf("%v%v", msg, group)
+					_, err = testSDK.SendGroupMsg(ctx, msg, group)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			return nil
