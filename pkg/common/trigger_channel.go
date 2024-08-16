@@ -213,9 +213,8 @@ type goroutine interface {
 func DoListener(Li goroutine, ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
-			err := fmt.Errorf("call panic: %+v", r)
-			log.ZError(ctx, "logoutListener panic ", errs.Wrap(err))
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			log.ZError(ctx, "DoListener panic", errs.New(err))
 		}
 	}()
 
