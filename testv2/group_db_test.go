@@ -34,7 +34,7 @@ func Test_BatchInsertGroup(t *testing.T) {
 	localGroups := []*model_struct.LocalGroup{
 		{
 			GroupID:                "1234567",
-			GroupName:              "测试1234",
+			GroupName:              "test1234",
 			Notification:           "",
 			Introduction:           "",
 			FaceURL:                "",
@@ -54,9 +54,9 @@ func Test_BatchInsertGroup(t *testing.T) {
 		},
 		{
 			GroupID:                "1234568",
-			GroupName:              "测试5678",
-			Notification:           "新的通知",
-			Introduction:           "这是一个测试组",
+			GroupName:              "test5678",
+			Notification:           "New Notification",
+			Introduction:           "This is a test group",
 			FaceURL:                "https://example.com/face.png",
 			CreateTime:             1666777420,
 			Status:                 1,

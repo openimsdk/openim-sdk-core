@@ -99,7 +99,6 @@ func Test_CancelChangeGroupMemberMute(t *testing.T) {
 }
 
 func Test_SetGroupMemberRoleLevel(t *testing.T) {
-	// 1:普通成员 2:群主 3:管理员
 	err := open_im_sdk.UserForSDK.Group().SetGroupMemberRoleLevel(ctx, "3459296007", "45644221123", 1)
 	if err != nil {
 		t.Fatal(err)
@@ -116,7 +115,6 @@ func Test_SetGroupMemberNickname(t *testing.T) {
 }
 
 func Test_SetGroupMemberInfo(t *testing.T) {
-	// 1:普通成员 2:群主 3:管理员
 	err := open_im_sdk.UserForSDK.Group().SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{
 		GroupID:  "3889561099",
 		UserID:   UserID,
@@ -275,9 +273,9 @@ func Test_IsJoinGroup(t *testing.T) {
 func Test_GetGroupMemberList(t *testing.T) {
 	t.Log("--------------------------")
 	m := map[int32]string{
-		constant.GroupOwner:         "群主",
-		constant.GroupAdmin:         "管理员",
-		constant.GroupOrdinaryUsers: "成员",
+		constant.GroupOwner:         "Group Owner",
+		constant.GroupAdmin:         "Administrator",
+		constant.GroupOrdinaryUsers: "Members",
 	}
 
 	members, err := open_im_sdk.UserForSDK.Group().GetGroupMemberList(ctx, "3889561099", 0, 0, 9999999)
