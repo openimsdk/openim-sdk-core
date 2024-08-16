@@ -29,7 +29,7 @@ func NewRelationManager(m *MetaManager) *TestRelationManager {
 func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupMiddleSmallLimit)
 
 	var (
 		total    atomic.Int64
