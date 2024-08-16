@@ -90,7 +90,7 @@ func CheckMessageNum(ctx context.Context) error {
 			}
 
 			// total send common group message - self send group message
-			num := utils.NextOffsetNum(userNum, -vars.CommonGroupMemberNum-1)
+			num := utils.NextOffsetNum(userNum, -(vars.CommonGroupMemberNum - 1))
 			sendNum := 0
 			for i := 0; i < vars.CommonGroupMemberNum-1; i++ {
 				if num < vars.LoginUserNum {
@@ -98,7 +98,7 @@ func CheckMessageNum(ctx context.Context) error {
 				}
 				num = utils.NextNum(num)
 			}
-			res += sendNum * vars.GroupMessageNum
+			res += sendNum * vars.GroupMessageNum * vars.CommonGroupNum
 
 			// create more one large group
 			if userNum < corrects[2] {
