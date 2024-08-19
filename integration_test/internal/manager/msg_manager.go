@@ -14,6 +14,7 @@ import (
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 	"sync/atomic"
+	"time"
 )
 
 type TestMsgManager struct {
@@ -109,12 +110,13 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					}
 
 					ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+					t := time.Now()
 					log.ZWarn(ctx, "sendGroupMessages begin", nil)
 					_, err = testSDK.SendGroupMsg(ctx, msg, group)
 					if err != nil {
 						return err
 					}
-					log.ZWarn(ctx, "sendGroupMessages end", nil)
+					log.ZWarn(ctx, "sendGroupMessages end", nil, "time cost:", time.Since(t))
 
 				}
 			}

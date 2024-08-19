@@ -29,12 +29,16 @@ func FuncLog(ctx context.Context) func() {
 //
 // the funcName is `FuncName`
 func FuncLogSkip(ctx context.Context, skip int) func() {
-	t := time.Now()
 	funcName := stringutil.GetFuncName(skip + 1) // +1 is FuncLogSkip
-	log.ZInfo(ctx, fmt.Sprintf("%s begin", funcName))
-	fmt.Println(fmt.Sprintf("%s begin", funcName))
+	return ProgressLog(ctx, funcName)
+}
+
+func ProgressLog(ctx context.Context, name string) func() {
+	t := time.Now()
+	log.ZInfo(ctx, fmt.Sprintf("%s begin", name))
+	fmt.Println(fmt.Sprintf("%s begin", name))
 	return func() {
-		log.ZInfo(ctx, fmt.Sprintf("%s end", funcName), "time consuming", time.Since(t))
-		fmt.Println(fmt.Sprintf("%s end. Time consuming: %v", funcName, time.Since(t)))
+		log.ZInfo(ctx, fmt.Sprintf("%s end", name), "time consuming", time.Since(t))
+		fmt.Println(fmt.Sprintf("%s end. Time consuming: %v", name, time.Since(t)))
 	}
 }
