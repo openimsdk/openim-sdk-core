@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/openimsdk/openim-sdk-core/v3/version"
 	log2 "log"
 	"net/http"
 	_ "net/http/pprof"
@@ -13,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/version"
+
 	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
 	"github.com/openimsdk/tools/log"
 )
@@ -20,8 +21,8 @@ import (
 func init() {
 	_ = runtime.GOMAXPROCS(7)
 	InitWithFlag()
-	if err := log.InitFromConfig("sdk.log", "sdk", 3,
-		true, false, "./", 2, 24, version.Version); err != nil {
+	if err := log.InitLoggerFromConfig("sdk.log", "sdk", "", "", 3,
+		true, false, "./", 2, 24, version.Version, false); err != nil {
 		panic(err)
 	}
 }

@@ -47,7 +47,7 @@ func InitSDKAndLogin(userID, token string) error {
 	cf.LogFilePath = ""
 	var testConnListener testConnListener
 	userForSDK.InitSDK(cf, &testConnListener)
-	if err := log.InitFromConfig(userID+"_open-im-sdk-core", "", int(LogLevel), true, false, cf.DataDir, 0, 24, version.Version); err != nil {
+	if err := log.InitLoggerFromConfig(userID+"_open-im-sdk-core", "", cf.SystemType, constant.PlatformID2Name[int(cf.PlatformID)], int(LogLevel), true, false, cf.DataDir, 0, 24, version.Version, false); err != nil {
 		return err
 	}
 	ctx := ccontext.WithOperationID(userForSDK.BaseCtx(), utils.OperationIDGenerator())
