@@ -253,7 +253,7 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			log.ZError(ctx, "logoutListener panic", errs.New(err))
+			log.ZWarn(ctx, "logoutListener panic", nil, "panic info", err)
 		}
 	}()
 
