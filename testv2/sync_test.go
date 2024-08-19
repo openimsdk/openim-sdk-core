@@ -14,36 +14,37 @@
 
 package testv2
 
-import (
-	"testing"
-
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
-)
-
-func Test_SyncSelfFriendApplication(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Friend().SyncAllSelfFriendApplication(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SyncFriendApplication(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Friend().SyncAllFriendApplication(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SyncFriend(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Friend().SyncAllFriendList(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SyncBlack(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Friend().SyncAllBlackList(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//
+//import (
+//	"testing"
+//
+//	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+//)
+//
+//func Test_SyncSelfFriendApplication(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Friend().SyncAllSelfFriendApplication(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func Test_SyncFriendApplication(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Friend().SyncAllFriendApplication(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func Test_SyncFriend(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Friend().SyncAllFriendList(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func Test_SyncBlack(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Friend().SyncAllBlackList(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}

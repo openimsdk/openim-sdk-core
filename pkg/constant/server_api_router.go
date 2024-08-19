@@ -15,7 +15,6 @@
 package constant
 
 const (
-	GetSelfUserInfoRouter         = "/user/get_self_user_info"
 	GetUsersInfoRouter            = "/user/get_users_info"
 	UpdateSelfUserInfoRouter      = "/user/update_user_info"
 	UpdateSelfUserInfoExRouter    = "/user/update_user_info_ex"

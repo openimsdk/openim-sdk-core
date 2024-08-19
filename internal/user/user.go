@@ -35,7 +35,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	PbConstant "github.com/openimsdk/protocol/constant"
 )
 
 // User is a struct that represents a user in the system.
@@ -391,50 +390,50 @@ func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkw
 }
 
 // subscribeUsersStatus Presence status of subscribed users.
-func (u *User) subscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	resp, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
-		UserID:  u.loginUserID,
-		UserIDs: userIDs,
-		Genre:   PbConstant.SubscriberUser,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.StatusList, nil
-}
-
+//func (u *User) subscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
+//	resp, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
+//		UserID:  u.loginUserID,
+//		UserIDs: userIDs,
+//		Genre:   PbConstant.SubscriberUser,
+//	})
+//	if err != nil {
+//		return nil, err
+//	}
+//	return resp.StatusList, nil
+//}
+//
 // unsubscribeUsersStatus Unsubscribe a user's presence.
-func (u *User) unsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
-	_, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
-		UserID:  u.loginUserID,
-		UserIDs: userIDs,
-		Genre:   PbConstant.Unsubscribe,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
+//func (u *User) unsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
+//	_, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
+//		UserID:  u.loginUserID,
+//		UserIDs: userIDs,
+//		Genre:   PbConstant.Unsubscribe,
+//	})
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//
 // getSubscribeUsersStatus Get the online status of subscribers.
-func (u *User) getSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
-	resp, err := util.CallApi[userPb.GetSubscribeUsersStatusResp](ctx, constant.GetSubscribeUsersStatusRouter, &userPb.GetSubscribeUsersStatusReq{
-		UserID: u.loginUserID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.StatusList, nil
-}
-
+//func (u *User) getSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
+//	resp, err := util.CallApi[userPb.GetSubscribeUsersStatusResp](ctx, constant.GetSubscribeUsersStatusRouter, &userPb.GetSubscribeUsersStatusReq{
+//		UserID: u.loginUserID,
+//	})
+//	if err != nil {
+//		return nil, err
+//	}
+//	return resp.StatusList, nil
+//}
+//
 // getUserStatus Get the online status of users.
-func (u *User) getUserStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	resp, err := util.CallApi[userPb.GetUserStatusResp](ctx, constant.GetUserStatusRouter, &userPb.GetUserStatusReq{
-		UserID:  u.loginUserID,
-		UserIDs: userIDs,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.StatusList, nil
-}
+//func (u *User) getUserStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
+//	resp, err := util.CallApi[userPb.GetUserStatusResp](ctx, constant.GetUserStatusRouter, &userPb.GetUserStatusReq{
+//		UserID:  u.loginUserID,
+//		UserIDs: userIDs,
+//	})
+//	if err != nil {
+//		return nil, err
+//	}
+//	return resp.StatusList, nil
+//}
