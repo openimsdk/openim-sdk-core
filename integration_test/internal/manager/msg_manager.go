@@ -64,13 +64,13 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 							return err
 						}
 						ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+						t := time.Now()
 						log.ZWarn(ctx, "sendSingleMessages begin", nil)
 						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
 						if err != nil {
 							return err
 						}
-						log.ZWarn(ctx, "sendSingleMessages end", nil)
-
+						log.ZWarn(ctx, "sendSingleMessages end", nil, "time cost:", time.Since(t))
 					}
 				} else {
 					fmt.Println("what`s this???")
