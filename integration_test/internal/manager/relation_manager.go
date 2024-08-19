@@ -47,9 +47,9 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 				OwnerUserID:   userID,
 				FriendUserIDs: friendIDs,
 			}
-
+			ctx := m.BuildCtx(ctx)
 			log.ZWarn(ctx, "ImportFriends begin", nil, "len", len(friendIDs))
-			_, err := util.CallApi[relation.ImportFriendResp](m.BuildCtx(ctx), constant.ImportFriendListRouter, req)
+			_, err := util.CallApi[relation.ImportFriendResp](ctx, constant.ImportFriendListRouter, req)
 			if err != nil {
 				return err
 			}
