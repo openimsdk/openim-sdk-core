@@ -179,7 +179,8 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			log.ZError(ctx, "readPump panic", errs.New(err))
+
+			log.ZWarn(ctx, "readPump panic", nil, "panic info", err)
 		}
 	}()
 
@@ -244,7 +245,8 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			log.ZError(ctx, "writePump panic", errs.New(err))
+
+			log.ZWarn(ctx, "writePump panic", nil, "panic info", err)
 		}
 	}()
 	log.ZDebug(ctx, "writePump start", "goroutine ID:", getGoroutineID())
@@ -299,7 +301,8 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			log.ZError(ctx, "heartbeat panic", errs.New(err))
+
+			log.ZWarn(ctx, "heartbeat panic", nil, "panic info", err)
 		}
 	}()
 

@@ -154,7 +154,8 @@ func (m *MsgSyncer) DoListener(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			log.ZError(ctx, "DoListener panic", errs.New(err))
+
+			log.ZWarn(ctx, "DoListener panic", nil, "panic info", err)
 		}
 	}()
 	for {
