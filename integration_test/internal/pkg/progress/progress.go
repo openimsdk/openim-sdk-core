@@ -124,28 +124,27 @@ func (p *Progress) render() {
 	p.printLine = 0
 	donePrintLine := 0
 	for i, bar := range p.Bars {
-		if bar.shouldRemove() {
-			if len(p.Bars) > p.MaxPrintBar {
-				p.lock.Lock()
-				datautil.DeleteAt(&p.Bars, i)
-				p.lock.Unlock()
-				continue
-			}
+		if bar.shouldRemove() && len(p.Bars) > p.MaxPrintBar {
+			p.lock.Lock()
+			datautil.DeleteAt(&p.Bars, i)
+			p.lock.Unlock()
+			continue
+		}
+		if bar.isDone() {
 			donePrintLine++
 		}
-		printStr += clearLine()
-		printStr += formatutil.ProgressBar(bar.name, bar.now, bar.total)
-		printStr += nextLine()
-		p.printLine++
-		if p.printLine >= p.MaxPrintBar {
-			break
+		if p.printLine < p.MaxPrintBar {
+			printStr += clearLine()
+			printStr += formatutil.ProgressBar(bar.name, bar.now, bar.total)
+			printStr += nextLine()
+			p.printLine++
 		}
 	}
 	printStr += loadCursor()
 	p.print(printStr)
 
 	// auto close
-	if p.printLine-donePrintLine == 0 && p.mode&AutoClose == AutoClose {
+	if donePrintLine == len(p.Bars) && p.mode&AutoClose == AutoClose {
 		select {
 		case p.signal <- stop:
 		default:

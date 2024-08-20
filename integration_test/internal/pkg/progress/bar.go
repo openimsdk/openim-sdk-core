@@ -47,3 +47,7 @@ func (b *Bar) shouldRemove() bool {
 	}
 	return false
 }
+
+func (b *Bar) isDone() bool {
+	return b.now == b.total
+}
