@@ -122,12 +122,16 @@ func (p *Progress) render() {
 	printStr += saveCursor()
 	printStr += cursorUpHead(p.printLine)
 	p.printLine = 0
+	donePrintLine := 0
 	for i, bar := range p.Bars {
-		if bar.shouldRemove() && len(p.Bars) > p.MaxPrintBar {
-			p.lock.Lock()
-			datautil.DeleteAt(&p.Bars, i)
-			p.lock.Unlock()
-			continue
+		if bar.shouldRemove() {
+			if len(p.Bars) > p.MaxPrintBar {
+				p.lock.Lock()
+				datautil.DeleteAt(&p.Bars, i)
+				p.lock.Unlock()
+				continue
+			}
+			donePrintLine++
 		}
 		printStr += clearLine()
 		printStr += formatutil.ProgressBar(bar.name, bar.now, bar.total)
@@ -141,7 +145,7 @@ func (p *Progress) render() {
 	p.print(printStr)
 
 	// auto close
-	if p.printLine == 0 && p.mode&AutoClose == AutoClose {
+	if p.printLine-donePrintLine == 0 && p.mode&AutoClose == AutoClose {
 		select {
 		case p.signal <- stop:
 		default:
