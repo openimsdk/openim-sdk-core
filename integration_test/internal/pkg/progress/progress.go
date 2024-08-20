@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 )
 
 type proFlag uint8
@@ -101,6 +102,7 @@ func (p *Progress) notifyUpdate() {
 func (p *Progress) run() {
 	for {
 		signal := <-p.signal
+		p.print(fmt.Sprintf("%v, time:%d", signal, time.Now().Second()))
 		switch signal {
 		case start:
 			p.start()
