@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 )
 
 type proFlag uint8
@@ -35,7 +34,7 @@ func NewProgress(mode proFlag, m int) *Progress {
 		m = maxBars
 	}
 	return &Progress{
-		signal: make(chan signalType, 1),
+		signal: make(chan signalType, 100000),
 		stdout: os.Stdout,
 		buf:    bytes.Buffer{},
 		done:   make(chan struct{}),
@@ -100,31 +99,8 @@ func (p *Progress) notifyUpdate() {
 }
 
 func (p *Progress) run() {
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
-	p.print("RUN!!!!!!!!\n")
 	for {
 		signal := <-p.signal
-		p.print(fmt.Sprintf("si:%v, time:%d\n", signal, time.Now().Second()))
 		switch signal {
 		case start:
 			p.start()
