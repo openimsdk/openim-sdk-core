@@ -32,17 +32,22 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 		now   int
 	)
 	total = vars.LargeGroupNum + vars.UserNum
-	progress.FuncBarPrint(cctx, gr, now, total)
+	p := progress.FuncBarPrint(cctx, gr, now, total)
 
-	m.createLargeGroups(ctx, gr)
-	m.createCommonGroups(ctx, gr)
+	m.createLargeGroups(ctx, gr, p)
+	m.createCommonGroups(ctx, gr, p)
 	return gr.Wait()
 }
 
 // createLargeGroups see CreateGroups
-func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup.Group) {
+func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
 	userNum := 0
+
+	bar := progress.NewRemoveBar("createLargeGroups", 0, vars.LargeGroupNum)
+	p.AddBar(bar)
+
 	for i := 0; i < vars.LargeGroupNum; i++ {
+
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
@@ -52,6 +57,9 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 				return err
 			}
 			log.ZWarn(ctx, "createLargeGroups end", nil)
+
+			p.IncBar(bar)
+
 			return nil
 		})
 		userNum = utils.NextNum(userNum)
@@ -60,7 +68,11 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 }
 
 // createLargeGroups see CreateGroups
-func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgroup.Group) {
+func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
+
+	bar := progress.NewRemoveBar("createCommonGroups", 0, vars.LargeGroupNum)
+	p.AddBar(bar)
+
 	for userNum := 0; userNum < vars.UserNum; userNum++ {
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
@@ -72,6 +84,8 @@ func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgrou
 					return err
 				}
 				log.ZWarn(ctx, "createCommonGroups end", nil)
+
+				p.IncBar(bar)
 			}
 			return nil
 		})

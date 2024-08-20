@@ -11,6 +11,15 @@ func NewBar(name string, now, total int, ifRemove bool) *Bar {
 	}
 }
 
+func NewRemoveBar(name string, now, total int) *Bar {
+	return &Bar{
+		name:     name,
+		now:      now,
+		total:    total,
+		ifRemove: true,
+	}
+}
+
 type Bar struct {
 	name         string
 	now          int
