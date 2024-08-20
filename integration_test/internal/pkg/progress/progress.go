@@ -100,6 +100,22 @@ func (p *Progress) notifyUpdate() {
 }
 
 func (p *Progress) run() {
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
+	p.print("RUN!!!!!!!!")
 	for {
 		signal := <-p.signal
 		p.print(fmt.Sprintf("si:%v, time:%d\n", signal, time.Now().Second()))
