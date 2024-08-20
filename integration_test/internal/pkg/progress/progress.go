@@ -3,6 +3,7 @@ package progress
 import (
 	"bytes"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/utils/datautil"
 	"github.com/openimsdk/tools/utils/formatutil"
 	"io"
@@ -34,8 +35,8 @@ func NewProgress(mode proFlag, m int) *Progress {
 		m = maxBars
 	}
 	return &Progress{
-		signal: make(chan signalType, 100000),
-		stdout: os.Stdout,
+		signal: make(chan signalType, 1),
+		stdout: vars.OsStdout,
 		buf:    bytes.Buffer{},
 		done:   make(chan struct{}),
 
