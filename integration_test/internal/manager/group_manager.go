@@ -10,6 +10,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/stringutil"
 )
 
 type TestGroupManager struct {
@@ -43,7 +44,7 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
 	userNum := 0
 
-	bar := progress.NewRemoveBar("createLargeGroups", 0, vars.LargeGroupNum)
+	bar := progress.NewRemoveBar(stringutil.GetSelfFuncName(), 0, vars.LargeGroupNum)
 	p.AddBar(bar)
 
 	for i := 0; i < vars.LargeGroupNum; i++ {
@@ -70,12 +71,14 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 // createLargeGroups see CreateGroups
 func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
 
-	bar := progress.NewRemoveBar("createCommonGroups", 0, vars.CommonGroupNum*vars.UserNum)
+	bar := progress.NewRemoveBar(stringutil.GetSelfFuncName(), 0, vars.CommonGroupNum*vars.UserNum)
 	p.AddBar(bar)
 
 	for userNum := 0; userNum < vars.UserNum; userNum++ {
+		userNum := userNum
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
+
 		gr.Go(func() error {
 			ubar := progress.NewRemoveBar(utils.GetUserID(userNum), 0, vars.CommonGroupNum)
 			p.AddBar(ubar)

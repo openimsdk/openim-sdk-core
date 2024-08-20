@@ -1,22 +1,27 @@
 package progress
 
-import "time"
+import (
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"time"
+)
 
 func NewBar(name string, now, total int, ifRemove bool) *Bar {
 	return &Bar{
-		name:     name,
-		now:      now,
-		total:    total,
-		ifRemove: ifRemove,
+		name:        name,
+		now:         now,
+		total:       total,
+		ifRemove:    ifRemove,
+		delayRemove: config.BarRemoveWaiteSec * time.Second,
 	}
 }
 
 func NewRemoveBar(name string, now, total int) *Bar {
 	return &Bar{
-		name:     name,
-		now:      now,
-		total:    total,
-		ifRemove: true,
+		name:        name,
+		now:         now,
+		total:       total,
+		ifRemove:    true,
+		delayRemove: config.BarRemoveWaiteSec * time.Second,
 	}
 }
 

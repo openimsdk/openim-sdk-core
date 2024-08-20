@@ -7,12 +7,14 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
+	"github.com/openimsdk/tools/utils/stringutil"
 	"time"
 )
 
@@ -36,23 +38,30 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 		now   int
 	)
 	total = vars.LoginUserNum * 2
-	progress.FuncBarPrint(cctx, gr, now, total)
+	p := progress.FuncBarPrint(cctx, gr, now, total)
 
-	m.sendSingleMessages(ctx, gr)
-	m.sendGroupMessages(ctx, gr)
+	m.sendSingleMessages(ctx, gr, p)
+	m.sendGroupMessages(ctx, gr, p)
 	return gr.Wait()
 }
 
 // sendSingleMessages see SendMessages
-func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.Group) {
+func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
 	for userNum := 0; userNum < vars.LoginUserNum; userNum++ {
+		userNum := userNum
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
+
 			friends, err := testSDK.GetAllFriends(ctx)
 			if err != nil {
 				return err
 			}
+
+			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", stringutil.GetSelfFuncName(), utils.GetUserID(userNum)),
+				0, len(friends)*vars.SingleMessageNum)
+			p.AddBar(bar)
+
 			friends = datautil.ShuffleSlice(friends)
 			for _, friend := range friends {
 				if friend.FriendInfo != nil {
@@ -70,6 +79,8 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 							return err
 						}
 						log.ZWarn(ctx, "sendSingleMessages end", nil, "time cost:", time.Since(t))
+
+						p.IncBar(bar)
 					}
 				} else {
 					fmt.Println("what`s this???")
@@ -83,8 +94,9 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 }
 
 // sendGroupMessages see SendMessages
-func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.Group) {
+func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
 	for userNum := 0; userNum < vars.LoginUserNum; userNum++ {
+		userNum := userNum
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
@@ -99,6 +111,11 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					sendGroups = append(sendGroups, group.GroupID)
 				}
 			}
+
+			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", stringutil.GetSelfFuncName(), utils.GetUserID(userNum)),
+				0, len(sendGroups)*vars.GroupMessageNum)
+			p.AddBar(bar)
+
 			sendGroups = datautil.ShuffleSlice(sendGroups)
 			for _, group := range sendGroups {
 				group := group
@@ -118,6 +135,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					}
 					log.ZWarn(ctx, "sendGroupMessages end", nil, "time cost:", time.Since(t))
 
+					p.IncBar(bar)
 				}
 			}
 			return nil

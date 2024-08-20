@@ -206,6 +206,13 @@ func (p *Progress) IncBar(bs ...*Bar) {
 	p.notifyUpdate()
 }
 
+func (p *Progress) SetBarNow(b *Bar, now int) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	b.now = now
+	p.notifyUpdate()
+}
+
 func (p *Progress) SetMaxPrintBar(n int) {
 	p.MaxPrintBar = n
 }

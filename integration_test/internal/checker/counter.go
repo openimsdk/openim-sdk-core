@@ -114,7 +114,7 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 		checkers = make(map[K]*Counter, len(sdk.TestSDKs))
 	)
 	total = len(c.LoopSlice)
-	progress.FuncBarPrint(cctx, gr, now, total)
+	p := progress.FuncBarPrint(cctx, gr, now, total)
 
 	for _, t := range c.LoopSlice {
 		t := t
@@ -123,21 +123,23 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 		gr.Go(func() error {
 			key := c.GetKey(t)
 			correctNum := c.CalCorrectCount(key)
+
+			bar := progress.NewRemoveBar(fmt.Sprintf("%v", key), 0, correctNum)
+			p.AddBar(bar)
+
 			for !isEqual {
 
 				totalNum, err := c.GetTotalCount(ctx, t)
 				if err != nil {
 					return err
 				}
+
+				p.SetBarNow(bar, totalNum)
+
 				isEqual = totalNum == correctNum
 				if !isEqual {
 					checkCount++
 
-					logStr := fmt.Sprintf("check num:%d, %s un correct. %s: %s,%s: %d, %s: %d",
-						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName),
-						c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
-
-					fmt.Println(logStr)
 					log.ZWarn(ctx, fmt.Sprintf("check num:%d, %s un correct",
 						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
 						nil, c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
