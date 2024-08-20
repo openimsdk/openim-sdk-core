@@ -137,6 +137,9 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 				p.SetBarNow(bar, totalNum)
 
 				isEqual = totalNum == correctNum
+				if isEqual {
+					p.SetBarNow(bar, totalNum)
+				}
 				if !isEqual {
 					checkCount++
 
