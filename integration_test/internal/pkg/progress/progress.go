@@ -78,7 +78,6 @@ func (p *Progress) allowPrint() {
 
 	<-p.done
 	// print buf
-	fmt.Println()
 	fmt.Print(p.buf.String())
 }
 

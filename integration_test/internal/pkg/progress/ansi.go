@@ -11,7 +11,7 @@ func esc(suffix ...string) (ansis string) {
 }
 
 func clearLine() string {
-	return esc("2k")
+	return esc("2K")
 }
 
 func cursorHorizontalAbsolute(n int) string {
@@ -28,7 +28,7 @@ func cursorUp(n int) string {
 
 // cursorUpHead up and move to head
 func cursorUpHead(n int) string {
-	return esc(fmt.Sprintf("%dE", n))
+	return esc(fmt.Sprintf("%dF", n))
 }
 
 func saveCursor() string {
