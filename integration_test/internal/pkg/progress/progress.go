@@ -102,7 +102,7 @@ func (p *Progress) notifyUpdate() {
 func (p *Progress) run() {
 	for {
 		signal := <-p.signal
-		p.print(fmt.Sprintf("%v, time:%d", signal, time.Now().Second()))
+		p.print(fmt.Sprintf("si:%v, time:%d\n", signal, time.Now().Second()))
 		switch signal {
 		case start:
 			p.start()
