@@ -112,7 +112,7 @@ func (t *TestUserManager) LoginLastUsers(ctx context.Context) error {
 func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	defer decorator.FuncLog(ctx)()
 
-	log.ZDebug(ctx, "login users", "len", len(userIDs))
+	log.ZDebug(ctx, "login users", "len", len(userIDs), "userIDs", userIDs)
 
 	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
 
