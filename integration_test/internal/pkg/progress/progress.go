@@ -194,10 +194,15 @@ func (p *Progress) IsStopped() bool {
 	}
 }
 
-func (p *Progress) IncBar(b *Bar) {
+func (p *Progress) IncBar(bs ...*Bar) {
+	if len(bs) == 0 {
+		return
+	}
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	b.now++
+	for i := range bs {
+		bs[i].now++
+	}
 	p.notifyUpdate()
 }
 
