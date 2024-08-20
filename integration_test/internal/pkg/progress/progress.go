@@ -36,7 +36,6 @@ func NewProgress(mode proFlag, m int) *Progress {
 	}
 	return &Progress{
 		signal: make(chan signalType, 1),
-		stdout: vars.OsStdout,
 		buf:    bytes.Buffer{},
 		done:   make(chan struct{}),
 
@@ -46,7 +45,6 @@ func NewProgress(mode proFlag, m int) *Progress {
 }
 
 type Progress struct {
-	stdout     *os.File // os.Stdout, read only!
 	pipeWriter *os.File // Acts as a temporary writer for os.Stdout during the write prohibition period
 	// buf used to store the data that is printed when input is disabled, to be output after the prohibition is lifted
 	buf  bytes.Buffer
@@ -75,7 +73,6 @@ func (p *Progress) forbiddenPrint() {
 
 func (p *Progress) allowPrint() {
 	_ = p.pipeWriter.Close()
-	os.Stdout = p.stdout
 
 	<-p.done
 	// print buf
@@ -120,7 +117,6 @@ func (p *Progress) run() {
 func (p *Progress) render() {
 	printStr := ""
 
-	printStr += saveCursor()
 	printStr += cursorUpHead(p.printLine)
 	p.printLine = 0
 	donePrintLine := 0
@@ -141,7 +137,6 @@ func (p *Progress) render() {
 			p.printLine++
 		}
 	}
-	printStr += loadCursor()
 	p.print(printStr)
 
 	// auto close
@@ -168,7 +163,7 @@ func (p *Progress) stop() {
 }
 
 func (p *Progress) print(s string) {
-	_, _ = fmt.Fprint(p.stdout, s)
+	_, _ = fmt.Fprint(vars.OsStdout, s)
 }
 
 func nextLine() string {
