@@ -16,7 +16,6 @@ package conversation_msg
 
 import (
 	"context"
-	"errors"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -29,7 +28,6 @@ import (
 	"github.com/jinzhu/copier"
 	pbMsg "github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
-	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -171,7 +169,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 		return err
 	}
 
-	if err := c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"status": constant.MsgStatusHasDeleted}); err != nil && errors.Is(errs.Unwrap(err), errors.New("RowsAffected == 0")) {
+	if err := c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"status": constant.MsgStatusHasDeleted}); err != nil {
 		return err
 	}
 
