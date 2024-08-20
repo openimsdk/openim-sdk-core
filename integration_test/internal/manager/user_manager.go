@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/sdk_user_simulator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
@@ -14,7 +15,6 @@ import (
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/mcontext"
-	"sync/atomic"
 )
 
 type TestUserManager struct {
@@ -65,11 +65,11 @@ func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error 
 	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
 
 	var (
-		total    atomic.Int64
-		progress atomic.Int64
+		total int
+		now   int
 	)
-	total.Add(int64(len(userIDs)))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = len(userIDs)
+	progress.FuncBarPrint(cctx, gr, now, total)
 
 	for _, userID := range userIDs {
 		userID := userID
@@ -117,11 +117,11 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
 
 	var (
-		total    atomic.Int64
-		progress atomic.Int64
+		total int
+		now   int
 	)
-	total.Add(int64(len(userIDs)))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = len(userIDs)
+	progress.FuncBarPrint(cctx, gr, now, total)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {

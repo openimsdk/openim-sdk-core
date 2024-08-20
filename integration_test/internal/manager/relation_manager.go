@@ -4,14 +4,13 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/log"
-	"sync/atomic"
 )
 
 type TestRelationManager struct {
@@ -33,11 +32,11 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupMiddleSmallLimit)
 
 	var (
-		total    atomic.Int64
-		progress atomic.Int64
+		total int
+		now   int
 	)
-	total.Add(int64(vars.SuperUserNum))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = vars.SuperUserNum
+	progress.FuncBarPrint(cctx, gr, now, total)
 	for i, userID := range vars.SuperUserIDs {
 		i := i
 		userID := userID

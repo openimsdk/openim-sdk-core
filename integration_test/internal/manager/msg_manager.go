@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"sync/atomic"
 	"time"
 )
 
@@ -33,11 +32,11 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
 
 	var (
-		total    atomic.Int64
-		progress atomic.Int64
+		total int
+		now   int
 	)
-	total.Add(int64(vars.LoginUserNum * 2))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = vars.LoginUserNum * 2
+	progress.FuncBarPrint(cctx, gr, now, total)
 
 	m.sendSingleMessages(ctx, gr)
 	m.sendGroupMessages(ctx, gr)
@@ -102,6 +101,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 			}
 			sendGroups = datautil.ShuffleSlice(sendGroups)
 			for _, group := range sendGroups {
+				group := group
 				for i := 0; i < vars.GroupMessageNum; i++ {
 					msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
 						fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
