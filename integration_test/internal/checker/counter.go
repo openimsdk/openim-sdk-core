@@ -114,8 +114,7 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 		checkers = make(map[K]*Counter, len(sdk.TestSDKs))
 	)
 	total = len(c.LoopSlice)
-	//p := progress.FuncBarPrint(cctx, gr, now, total)
-	progress.FuncBarPrint(cctx, gr, now, total)
+	p := progress.FuncBarPrint(cctx, gr, now, total)
 
 	for _, t := range c.LoopSlice {
 		t := t
@@ -125,8 +124,8 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 			key := c.GetKey(t)
 			correctNum := c.CalCorrectCount(key)
 
-			//bar := progress.NewRemoveBar(fmt.Sprintf("%v", key), 0, correctNum)
-			//p.AddBar(bar)
+			bar := progress.NewRemoveBar(fmt.Sprintf("%v", key), 0, correctNum)
+			p.AddBar(bar)
 
 			for !isEqual {
 
@@ -135,7 +134,7 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 					return err
 				}
 
-				//p.SetBarNow(bar, totalNum)
+				p.SetBarNow(bar, totalNum)
 
 				isEqual = totalNum == correctNum
 				if !isEqual {
