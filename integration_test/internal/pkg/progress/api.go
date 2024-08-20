@@ -6,8 +6,12 @@ import (
 	"github.com/openimsdk/tools/utils/stringutil"
 )
 
-func FuncBarPrint(ctx context.Context, gr *reerrgroup.Group, now, total int) *Progress {
-	bar := NewBar(stringutil.GetFuncName(1), now, total, false)
+func FuncNameBarPrint(ctx context.Context, gr *reerrgroup.Group, now, total int) *Progress {
+	return FuncBarPrint(ctx, stringutil.GetFuncName(1), gr, now, total)
+}
+
+func FuncBarPrint(ctx context.Context, name string, gr *reerrgroup.Group, now, total int) *Progress {
+	bar := NewBar(name, now, total, false)
 	p := Start(bar)
 	gr.SetAfterTasks(func() error {
 		p.IncBar(bar)
@@ -36,8 +40,4 @@ func StartWithMode(mode proFlag, bar ...*Bar) *Progress {
 
 	p.AddBar(bar...)
 	return p
-}
-
-func BarPrint(ctx context.Context) {
-
 }

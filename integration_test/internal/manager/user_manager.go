@@ -69,7 +69,7 @@ func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error 
 		now   int
 	)
 	total = len(userIDs)
-	progress.FuncBarPrint(cctx, gr, now, total)
+	progress.FuncNameBarPrint(cctx, gr, now, total)
 
 	for _, userID := range userIDs {
 		userID := userID
@@ -121,7 +121,7 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 		now   int
 	)
 	total = len(userIDs)
-	progress.FuncBarPrint(cctx, gr, now, total)
+	progress.FuncNameBarPrint(cctx, gr, now, total)
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {

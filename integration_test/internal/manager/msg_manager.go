@@ -14,7 +14,6 @@ import (
 	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"github.com/openimsdk/tools/utils/stringutil"
 	"time"
 )
 
@@ -38,7 +37,7 @@ func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 		now   int
 	)
 	total = vars.LoginUserNum * 2
-	p := progress.FuncBarPrint(cctx, gr, now, total)
+	p := progress.FuncNameBarPrint(cctx, gr, now, total)
 
 	m.sendSingleMessages(ctx, gr, p)
 	m.sendGroupMessages(ctx, gr, p)
@@ -58,7 +57,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 				return err
 			}
 
-			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", stringutil.GetSelfFuncName(), utils.GetUserID(userNum)),
+			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", "sendSingleMessages", utils.GetUserID(userNum)),
 				0, len(friends)*vars.SingleMessageNum)
 			p.AddBar(bar)
 
@@ -112,7 +111,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 				}
 			}
 
-			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", stringutil.GetSelfFuncName(), utils.GetUserID(userNum)),
+			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", "sendGroupMessages", utils.GetUserID(userNum)),
 				0, len(sendGroups)*vars.GroupMessageNum)
 			p.AddBar(bar)
 

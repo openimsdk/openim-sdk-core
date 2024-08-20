@@ -33,7 +33,7 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 		now   int
 	)
 	total = vars.LargeGroupNum + vars.UserNum
-	p := progress.FuncBarPrint(cctx, gr, now, total)
+	p := progress.FuncNameBarPrint(cctx, gr, now, total)
 
 	m.createLargeGroups(ctx, gr, p)
 	m.createCommonGroups(ctx, gr, p)

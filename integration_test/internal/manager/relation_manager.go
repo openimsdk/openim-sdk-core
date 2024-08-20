@@ -36,7 +36,7 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 		now   int
 	)
 	total = vars.SuperUserNum
-	progress.FuncBarPrint(cctx, gr, now, total)
+	progress.FuncNameBarPrint(cctx, gr, now, total)
 	for i, userID := range vars.SuperUserIDs {
 		i := i
 		userID := userID

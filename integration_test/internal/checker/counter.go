@@ -64,7 +64,7 @@ func (c *CounterChecker[T, K]) Check(ctx context.Context) error {
 		mapLock  = sync.RWMutex{}
 	)
 	total = len(c.LoopSlice)
-	progress.FuncBarPrint(cctx, gr, now, total)
+	progress.FuncNameBarPrint(cctx, gr, now, total)
 
 	for _, t := range c.LoopSlice {
 		t := t
@@ -114,7 +114,7 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 		checkers = make(map[K]*Counter, len(sdk.TestSDKs))
 	)
 	total = len(c.LoopSlice)
-	p := progress.FuncBarPrint(cctx, gr, now, total)
+	p := progress.FuncBarPrint(cctx, stringutil.GetFuncName(1), gr, now, total)
 
 	for _, t := range c.LoopSlice {
 		t := t
