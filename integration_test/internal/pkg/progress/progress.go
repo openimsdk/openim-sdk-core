@@ -73,7 +73,7 @@ func (p *Progress) forbiddenPrint() {
 
 func (p *Progress) allowPrint() {
 	_ = p.pipeWriter.Close()
-
+	os.Stdout = vars.OsStdout
 	<-p.done
 	// print buf
 	fmt.Print(p.buf.String())
