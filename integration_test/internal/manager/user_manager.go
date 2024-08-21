@@ -127,7 +127,11 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 		userID := userID
 		gr.Go(func() error {
 			token, err := t.GetToken(userID, config.PlatformID)
+			if err != nil {
+				return err
+			}
 			userNum := utils.MustGetUserNum(userID)
+			log.ZDebug(vars.Contexts[userNum], "login", "token", token)
 			err = sdk.TestSDKs[userNum].SDK.Login(vars.Contexts[userNum], userID, token)
 			if err != nil {
 				return err

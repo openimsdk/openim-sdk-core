@@ -358,16 +358,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	return nil
 }
 
-func (u *LoginMgr) loginWithOutInit(ctx context.Context, userID, token string) error {
-	if u.getLoginStatus(ctx) == Logged {
-		return sdkerrs.ErrLoginRepeat
-	}
-	u.setLoginStatus(Logging)
-	u.run(ctx)
-	u.setLoginStatus(Logged)
-	return nil
-}
-
 func (u *LoginMgr) setListener(ctx context.Context) {
 	setListener(ctx, &u.userListener, u.UserListener, u.user.SetListener, newEmptyUserListener)
 	setListener(ctx, &u.friendListener, u.FriendListener, u.friend.SetListener, newEmptyFriendshipListener)
