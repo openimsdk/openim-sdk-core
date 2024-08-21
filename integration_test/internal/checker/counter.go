@@ -64,7 +64,7 @@ func (c *CounterChecker[T, K]) Check(ctx context.Context) error {
 		mapLock  = sync.RWMutex{}
 	)
 	total = len(c.LoopSlice)
-	progress.FuncNameBarPrint(cctx, gr, now, total)
+	progress.FuncBarPrint(cctx, stringutil.GetFuncName(1), gr, now, total)
 
 	for _, t := range c.LoopSlice {
 		t := t

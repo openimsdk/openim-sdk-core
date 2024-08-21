@@ -98,6 +98,7 @@ func CheckMessageNum(ctx context.Context) error {
 			if utils.IsNumLogin(userNum) {
 				comGroupNum -= vars.CommonGroupNum * (vars.GroupMessageNum + 1)
 			}
+			res += comGroupNum
 
 			// create more one large group
 			if userNum < corrects[2] {
