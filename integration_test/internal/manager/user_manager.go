@@ -82,7 +82,7 @@ func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error 
 				return err
 			}
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
-			ctx = mgr.Context()
+			ctx := mgr.Context()
 			ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 			ctx = mcontext.SetOpUserID(ctx, userID)
 			vars.Contexts[userNum] = ctx // init ctx
@@ -131,7 +131,6 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 				return err
 			}
 			userNum := utils.MustGetUserNum(userID)
-			log.ZDebug(vars.Contexts[userNum], "login", "token", token)
 			err = sdk.TestSDKs[userNum].SDK.Login(vars.Contexts[userNum], userID, token)
 			if err != nil {
 				return err
