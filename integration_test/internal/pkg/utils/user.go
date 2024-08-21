@@ -39,6 +39,17 @@ func IsSuperUser(id string) bool {
 	return datautil.BetweenLEq(num, 0, vars.SuperUserNum)
 }
 
+// IsLogin check if the user is login
+func IsLogin(id string) bool {
+	num := MustGetUserNum(id)
+	return IsNumLogin(num)
+}
+
+// IsNumLogin check if the user is login
+func IsNumLogin(num int) bool {
+	return datautil.BetweenLEq(num, 0, vars.LoginUserNum)
+}
+
 // NextOffsetNums get num with an offset behind.
 func NextOffsetNums(userNum, offset int) []int {
 	ids := make([]int, offset)
@@ -61,6 +72,26 @@ func NextNum(num int) int {
 
 // NextOffsetUserIDs get userIDs with an offset behind.
 func NextOffsetUserIDs(userNum, offset int) []string {
+	ids := make([]string, offset)
+	for i := 1; i <= offset; i++ {
+		ids[i-1] = GetUserID(NextOffsetNum(userNum, i))
+	}
+	return ids
+}
+
+// NextLoginOffsetNum get num with an offset behind.
+func NextLoginOffsetNum(num, offset int) int {
+	offset = offset % vars.LoginUserNum
+	return (num + offset + vars.UserNum) % vars.UserNum
+}
+
+// NextLoginNum get next num.
+func NextLoginNum(num int) int {
+	return NextLoginOffsetNum(num, 1)
+}
+
+// NextLoginOffsetUserIDs get userIDs with an offset behind.
+func NextLoginOffsetUserIDs(userNum, offset int) []string {
 	ids := make([]string, offset)
 	for i := 1; i <= offset; i++ {
 		ids[i-1] = GetUserID(NextOffsetNum(userNum, i))

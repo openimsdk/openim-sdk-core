@@ -322,10 +322,16 @@ func (u *LoginMgr) handlerSendingMsg(ctx context.Context, sendingMsg *model_stru
 	return nil
 }
 
-func (u *LoginMgr) initMgr(ctx context.Context, userID, token string) error {
+func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
+	if u.getLoginStatus(ctx) == Logged {
+		return sdkerrs.ErrLoginRepeat
+	}
+	u.setLoginStatus(Logging)
+	log.ZDebug(ctx, "login start... ", "userID", userID, "token", token)
+	t1 := time.Now()
+
 	u.info.UserID = userID
 	u.info.Token = token
-	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
 	var err error
@@ -349,20 +355,6 @@ func (u *LoginMgr) initMgr(ctx context.Context, userID, token string) error {
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.business, u.full, u.file)
 	u.setListener(ctx)
-	return nil
-}
-
-func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
-	if u.getLoginStatus(ctx) == Logged {
-		return sdkerrs.ErrLoginRepeat
-	}
-	u.setLoginStatus(Logging)
-	log.ZDebug(ctx, "login start... ", "userID", userID, "token", token)
-	t1 := time.Now()
-
-	if err := u.initMgr(ctx, userID, token); err != nil {
-		return err
-	}
 
 	u.run(ctx)
 	u.setLoginStatus(Logged)

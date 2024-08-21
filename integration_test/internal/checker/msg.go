@@ -28,14 +28,14 @@ func CheckMessageNum(ctx context.Context) error {
 				// self create group notification message. Complete the calculation based on user ID in CalCorrectCount.
 				createdLargeGroupNum
 
-		commonGroupNum := (vars.CommonGroupMemberNum - 1) * vars.CommonGroupNum
+		commonGroupNum := 0
 		// self create group notification message
 		// Formula:
 		// commonGroupNum =
 		// total send group message(cal by userID) +
-		// total create group notification message -
+		// total create group notification message(cal by userID) -
 		// self send group message(cal by userID) -
-		// self create group notification message
+		// self create group notification message(cal by userID)
 
 		groupMsgNum := largeGroupNum + commonGroupNum
 
@@ -89,16 +89,15 @@ func CheckMessageNum(ctx context.Context) error {
 				}
 			}
 
-			// total send common group message - self send group message
-			num := utils.NextOffsetNum(userNum, -(vars.CommonGroupMemberNum - 1))
-			sendNum := 0
-			for i := 0; i < vars.CommonGroupMemberNum-1; i++ {
-				if num < vars.LoginUserNum {
-					sendNum++
-				}
-				num = utils.NextNum(num)
+			// commonGroupNum =
+			// total send group message(cal by userID) +
+			// total create group notification message(cal by userID) -
+			// self send group message(cal by userID) -
+			// self create group notification message(cal by userID)
+			comGroupNum := calCommonGroup(userNum) * (vars.GroupMessageNum + 1)
+			if utils.IsNumLogin(userNum) {
+				comGroupNum -= vars.CommonGroupNum * (vars.GroupMessageNum + 1)
 			}
-			res += sendNum * vars.GroupMessageNum * vars.CommonGroupNum
 
 			// create more one large group
 			if userNum < corrects[2] {

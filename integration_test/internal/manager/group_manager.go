@@ -32,7 +32,7 @@ func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 		total int
 		now   int
 	)
-	total = vars.LargeGroupNum + vars.UserNum
+	total = vars.LargeGroupNum + vars.LoginUserNum
 	p := progress.FuncNameBarPrint(cctx, gr, now, total)
 
 	m.createLargeGroups(ctx, gr, p)
@@ -63,7 +63,7 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 
 			return nil
 		})
-		userNum = utils.NextNum(userNum)
+		userNum = utils.NextLoginNum(userNum)
 	}
 	return
 }
@@ -71,10 +71,10 @@ func (m *TestGroupManager) createLargeGroups(ctx context.Context, gr *reerrgroup
 // createLargeGroups see CreateGroups
 func (m *TestGroupManager) createCommonGroups(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
 
-	bar := progress.NewRemoveBar(stringutil.GetSelfFuncName(), 0, vars.CommonGroupNum*vars.UserNum)
+	bar := progress.NewRemoveBar(stringutil.GetSelfFuncName(), 0, vars.CommonGroupNum*vars.LoginUserNum)
 	p.AddBar(bar)
 
-	for userNum := 0; userNum < vars.UserNum; userNum++ {
+	for userNum := 0; userNum < vars.LoginUserNum; userNum++ {
 		userNum := userNum
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]

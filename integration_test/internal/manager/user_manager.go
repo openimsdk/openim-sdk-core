@@ -10,7 +10,9 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
@@ -75,16 +77,15 @@ func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error 
 		userID := userID
 		gr.Go(func() error {
 			userNum := utils.MustGetUserNum(userID)
-			token, err := t.GetToken(userID, config.PlatformID)
-			if err != nil {
-				return err
-			}
-			ctx, mgr, err := sdk_user_simulator.InitSDK(ctx, userID, token, t.IMConfig)
+			mgr, err := sdk_user_simulator.InitSDK(userID, t.IMConfig)
 			if err != nil {
 				return err
 			}
 			sdk.TestSDKs[userNum] = sdk.NewTestSDK(userID, userNum, mgr) // init sdk
-			vars.Contexts[userNum] = ctx                                 // init ctx
+			ctx = mgr.Context()
+			ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+			ctx = mcontext.SetOpUserID(ctx, userID)
+			vars.Contexts[userNum] = ctx // init ctx
 			log.ZDebug(ctx, "init sdk", "operationID", mcontext.GetOperationID(ctx), "op userID", userID)
 			return nil
 		})
@@ -127,7 +128,7 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 		gr.Go(func() error {
 			token, err := t.GetToken(userID, config.PlatformID)
 			userNum := utils.MustGetUserNum(userID)
-			err = sdk.TestSDKs[userNum].SDK.LoginWithOutInit(vars.Contexts[userNum], userID, token)
+			err = sdk.TestSDKs[userNum].SDK.Login(vars.Contexts[userNum], userID, token)
 			if err != nil {
 				return err
 			}
