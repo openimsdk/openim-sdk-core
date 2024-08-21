@@ -168,9 +168,11 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 	if err != nil {
 		return err
 	}
-	if err := c.db.DeleteConversationMsgs(ctx, conversationID, []string{clientMsgID}); err != nil {
+
+	if err := c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"status": constant.MsgStatusHasDeleted}); err != nil {
 		return err
 	}
+
 	if !s.IsRead && s.SendID != c.loginUserID {
 		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, 1); err != nil {
 			return err
