@@ -11,7 +11,7 @@ import (
 )
 
 func MsgConsuming(ctx context.Context) {
-	defer decorator.FuncLog(ctx)
+	defer decorator.FuncLog(ctx)()
 
 	close(vars.MsgConsuming)
 	var (
