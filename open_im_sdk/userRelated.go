@@ -162,10 +162,6 @@ func (u *LoginMgr) MsgKvListener() open_im_sdk_callback.OnMessageKvInfoListener 
 	return u.msgKvListener
 }
 
-func (u *LoginMgr) BaseCtx() context.Context {
-	return u.ctx
-}
-
 func (u *LoginMgr) Exit() {
 	u.cancel()
 }

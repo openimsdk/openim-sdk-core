@@ -50,7 +50,7 @@ func InitSDKAndLogin(userID, token string) error {
 	if err := log.InitFromConfig(userID+"_open-im-sdk-core", "", int(LogLevel), true, false, cf.DataDir, 0, 24, version.Version); err != nil {
 		return err
 	}
-	ctx := ccontext.WithOperationID(userForSDK.BaseCtx(), utils.OperationIDGenerator())
+	ctx := ccontext.WithOperationID(userForSDK.Context(), utils.OperationIDGenerator())
 	SetListener(userForSDK, userID)
 	err := userForSDK.Login(ctx, userID, token)
 	if err != nil {
