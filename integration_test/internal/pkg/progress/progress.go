@@ -6,6 +6,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/utils/datautil"
 	"github.com/openimsdk/tools/utils/formatutil"
+	"github.com/openimsdk/tools/utils/stringutil"
 	"io"
 	"os"
 	"sync"
@@ -132,6 +133,7 @@ func (p *Progress) render() {
 		}
 		if p.printLine < p.MaxPrintBar {
 			printStr += clearLine()
+			stringutil.FormatString()
 			printStr += formatutil.ProgressBar(bar.name, bar.now, bar.total)
 			printStr += nextLine()
 			p.printLine++
