@@ -150,11 +150,13 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 					nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 			}
 		case constant.MemberInvitedNotification: // 1509
-			var detail sdkws.MemberInvitedTips
+			fallthrough // Deprecated
+		case constant.MemberEnterNotification: // 1510
+			var detail sdkws.MemberEnterTips
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 				return err
 			}
-			userIDMap := datautil.SliceSetAny(detail.InvitedUserList, func(e *sdkws.GroupMemberFullInfo) string {
+			userIDMap := datautil.SliceSetAny(detail.EntrantUsers, func(e *sdkws.GroupMemberFullInfo) string {
 				return e.UserID
 			})
 			//Also invited as a member
@@ -165,21 +167,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				return g.IncrSyncGroupAndMember(ctx, detail.Group.GroupID)
 			} else {
 				return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
-					detail.InvitedUserList, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
-			}
-		case constant.MemberEnterNotification: // 1510
-			var detail sdkws.MemberEnterTips
-			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
-				return err
-			}
-			if detail.EntrantUser.UserID == g.loginUserID {
-				if err := g.IncrSyncJoinGroup(ctx); err != nil {
-					return err
-				}
-				return g.IncrSyncGroupAndMember(ctx, detail.Group.GroupID)
-			} else {
-				return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil, nil,
-					[]*sdkws.GroupMemberFullInfo{detail.EntrantUser}, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
+					detail.EntrantUsers, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 			}
 		case constant.GroupDismissedNotification: // 1511
 			var detail sdkws.GroupDismissedTips
