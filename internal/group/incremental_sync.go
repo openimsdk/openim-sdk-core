@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	constantpb "github.com/openimsdk/protocol/constant"
@@ -16,13 +14,13 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
-func (g *Group) getIncrementalGroupMemberBatch(ctx context.Context, groups []*group.GetIncrementalGroupMemberReq) (map[string]*group.GetIncrementalGroupMemberResp, error) {
-	resp, err := util.CallApi[group.BatchGetIncrementalGroupMemberResp](ctx, constant.GetIncrementalGroupMemberBatch, &group.BatchGetIncrementalGroupMemberReq{UserID: g.loginUserID, ReqList: groups})
-	if err != nil {
-		return nil, err
-	}
-	return resp.RespList, nil
-}
+//func (g *Group) GetIncrementalGroupMemberBatch(ctx context.Context, groups []*group.GetIncrementalGroupMemberReq) (map[string]*group.GetIncrementalGroupMemberResp, error) {
+//	resp, err := g.getIncrementalGroupMemberBatch(ctx, &group.BatchGetIncrementalGroupMemberReq{UserID: g.loginUserID, ReqList: groups})
+//	if err != nil {
+//		return nil, err
+//	}
+//	return resp.RespList, nil
+//}
 
 func (g *Group) groupAndMemberVersionTableName() string {
 	return "local_group_entities_version"
@@ -166,7 +164,7 @@ func (g *Group) syncGroupAndMember(ctx context.Context, groupID string, resp *gr
 			return g.groupMemberSyncer.FullSync(ctx, groupID)
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[group.GetFullGroupMemberUserIDsResp](ctx, constant.GetFullGroupMemberUserIDs, &group.GetFullGroupMemberUserIDsReq{
+			resp, err := g.getFullGroupMemberUserIDs(ctx, &group.GetFullGroupMemberUserIDsReq{
 				GroupID: groupID,
 			})
 			if err != nil {
@@ -218,14 +216,12 @@ func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, de
 				Version:   version.Version,
 			}
 
-			resp, err := util.CallApi[group.BatchGetIncrementalGroupMemberResp](ctx, constant.GetIncrementalGroupMemberBatch, &group.BatchGetIncrementalGroupMemberReq{
-				UserID: g.loginUserID, ReqList: []*group.GetIncrementalGroupMemberReq{singleGroupReq},
-			})
+			resp, err := g.getIncrementalGroupMemberBatch(ctx, []*group.GetIncrementalGroupMemberReq{singleGroupReq})
 			if err != nil {
 				return nil, err
 			}
-			if resp.RespList != nil {
-				if singleGroupResp, ok := resp.RespList[groupID]; ok {
+			if resp != nil {
+				if singleGroupResp, ok := resp[groupID]; ok {
 					return singleGroupResp, nil
 				}
 			}
@@ -281,7 +277,7 @@ func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, de
 			return g.groupMemberSyncer.FullSync(ctx, groupID)
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[group.GetFullGroupMemberUserIDsResp](ctx, constant.GetFullGroupMemberUserIDs, &group.GetFullGroupMemberUserIDsReq{
+			resp, err := g.getFullGroupMemberUserIDs(ctx, &group.GetFullGroupMemberUserIDsReq{
 				GroupID: groupID,
 			})
 			if err != nil {
@@ -312,7 +308,7 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 			return g.db.GetJoinedGroupListDB(ctx)
 		},
 		Server: func(version *model_struct.LocalVersionSync) (*group.GetIncrementalJoinGroupResp, error) {
-			return util.CallApi[group.GetIncrementalJoinGroupResp](ctx, constant.GetIncrementalJoinGroup, &group.GetIncrementalJoinGroupReq{
+			return g.getIncrementalJoinGroup(ctx, &group.GetIncrementalJoinGroupReq{
 				UserID:    g.loginUserID,
 				Version:   version.Version,
 				VersionID: version.VersionID,
@@ -340,7 +336,7 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 			return g.groupSyncer.FullSync(ctx, g.loginUserID)
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[group.GetFullJoinGroupIDsResp](ctx, constant.GetFullJoinedGroupIDs, &group.GetFullJoinGroupIDsReq{
+			resp, err := g.getFullJoinGroupIDs(ctx, &group.GetFullJoinGroupIDsReq{
 				UserID: g.loginUserID,
 			})
 			if err != nil {

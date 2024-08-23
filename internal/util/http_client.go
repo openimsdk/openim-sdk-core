@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -237,4 +238,49 @@ func FetchAndInsertPagedData[RESP, L any](ctx context.Context, api string, req p
 		return errs.WrapMsg(errList[0], "batch insert failed due to data exception")
 	}
 	return nil
+}
+
+type pagination interface {
+	GetPagination() *sdkws.RequestPagination
+}
+
+func PageNext[Req pagination, Resp any, Elem any](ctx context.Context, req Req, api func(ctx context.Context, req Req) (*Resp, error), fn func(*Resp) []Elem) ([]Elem, error) {
+	if req.GetPagination() == nil {
+		vof := reflect.ValueOf(req)
+		for {
+			if vof.Kind() == reflect.Ptr {
+				vof = vof.Elem()
+			} else {
+				break
+			}
+		}
+		if vof.Kind() != reflect.Struct {
+			return nil, fmt.Errorf("request is not a struct")
+		}
+		fof := vof.FieldByName("Pagination")
+		if !fof.IsValid() {
+			return nil, fmt.Errorf("request is not valid Pagination field")
+		}
+		fof.Set(reflect.ValueOf(&sdkws.RequestPagination{}))
+	}
+	if req.GetPagination().PageNumber < 0 {
+		req.GetPagination().PageNumber = 0
+	}
+	if req.GetPagination().ShowNumber <= 0 {
+		req.GetPagination().ShowNumber = 200
+	}
+	var result []Elem
+	for i := int32(0); ; i++ {
+		req.GetPagination().PageNumber = i + 1
+		resp, err := api(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		elems := fn(resp)
+		result = append(result, elems...)
+		if len(elems) < int(req.GetPagination().ShowNumber) {
+			break
+		}
+	}
+	return result, nil
 }

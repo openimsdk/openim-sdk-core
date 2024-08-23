@@ -2,12 +2,9 @@ package group
 
 import (
 	"context"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/protocol/group"
-	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
@@ -58,14 +55,6 @@ func (g *Group) GetGroupsInfoFromLocal2Svr(ctx context.Context, groupIDs ...stri
 		groupMap[g.GroupID] = g
 	}
 	return groupMap, nil
-}
-
-func (g *Group) getGroupsInfoFromSvr(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
-	resp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: groupIDs})
-	if err != nil {
-		return nil, err
-	}
-	return resp.GroupInfos, nil
 }
 
 func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]string, error) {

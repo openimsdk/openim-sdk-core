@@ -290,12 +290,6 @@ func Test_GetGroupMemberList(t *testing.T) {
 	t.Log("--------------------------")
 }
 
-func Test_SyncAllGroupMember(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SyncAllGroupMember(ctx, "3889561099")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
 func Test_SetGroupInfo(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
 		GroupID: "3889561099",

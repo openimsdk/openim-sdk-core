@@ -43,7 +43,7 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 		return nil, sdkerrs.ErrGroupType
 	}
 	req.GroupInfo.CreatorUserID = g.loginUserID
-	resp, err := util.CallApi[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
+	resp, err := g.createGroup(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,8 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 }
 
 func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSource int32, ex string) error {
-	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource, InviterUserID: g.loginUserID, Ex: ex}, nil); err != nil {
+	req := &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource, InviterUserID: g.loginUserID, Ex: ex}
+	if err := g.joinGroup(ctx, req); err != nil {
 		return err
 	}
 	if err := g.SyncSelfGroupApplications(ctx, groupID); err != nil {
@@ -71,10 +72,9 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 }
 
 func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
-	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
+	if err := g.quitGroup(ctx, groupID); err != nil {
 		return err
 	}
-
 	g.groupSyncMutex.Lock()
 	defer g.groupSyncMutex.Unlock()
 
@@ -85,10 +85,9 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
-	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
+	if err := g.dismissGroup(ctx, groupID); err != nil {
 		return err
 	}
-
 	g.groupSyncMutex.Lock()
 	defer g.groupSyncMutex.Unlock()
 
@@ -112,9 +111,9 @@ func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verifi
 
 func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
 	if isMute {
-		err = util.ApiPost(ctx, constant.MuteGroupRouter, &group.MuteGroupReq{GroupID: groupID}, nil)
+		err = g.muteGroup(ctx, groupID)
 	} else {
-		err = util.ApiPost(ctx, constant.CancelMuteGroupRouter, &group.CancelMuteGroupReq{GroupID: groupID}, nil)
+		err = g.cancelMuteGroup(ctx, groupID)
 	}
 	if err != nil {
 		return err
@@ -129,23 +128,19 @@ func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool
 	return nil
 }
 
-func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID string, mutedSeconds int) (err error) {
+func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID string, mutedSeconds int) error {
 	if mutedSeconds == 0 {
-		err = util.ApiPost(ctx, constant.CancelMuteGroupMemberRouter, &group.CancelMuteGroupMemberReq{GroupID: groupID, UserID: userID}, nil)
+		return g.cancelMuteGroupMember(ctx, &group.CancelMuteGroupMemberReq{GroupID: groupID, UserID: userID})
 	} else {
-		err = util.ApiPost(ctx, constant.MuteGroupMemberRouter, &group.MuteGroupMemberReq{GroupID: groupID, UserID: userID, MutedSeconds: uint32(mutedSeconds)}, nil)
+		return g.muteGroupMember(ctx, &group.MuteGroupMemberReq{GroupID: groupID, UserID: userID, MutedSeconds: uint32(mutedSeconds)})
 	}
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID string) error {
-	if err := util.ApiPost(ctx, constant.TransferGroupRouter, &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}, nil); err != nil {
+	req := &group.TransferGroupOwnerReq{GroupID: groupID, OldOwnerUserID: g.loginUserID, NewOwnerUserID: newOwnerUserID}
+	if err := g.transferGroup(ctx, req); err != nil {
 		return err
 	}
-
 	g.groupSyncMutex.Lock()
 	defer g.groupSyncMutex.Unlock()
 
@@ -156,7 +151,8 @@ func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID 
 }
 
 func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason string, userIDList []string) error {
-	if err := util.ApiPost(ctx, constant.KickGroupMemberRouter, &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}, nil); err != nil {
+	req := &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}
+	if err := g.kickGroupMember(ctx, req); err != nil {
 		return err
 	}
 
@@ -167,7 +163,7 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 }
 
 func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSet) error {
-	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
+	if err := g.setGroupInfo(ctx, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}); err != nil {
 		return err
 	}
 
@@ -178,7 +174,8 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 }
 
 func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.SetGroupMemberInfo) error {
-	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
+	req := &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}
+	if err := g.setGroupMemberInfo(ctx, req); err != nil {
 		return err
 	}
 

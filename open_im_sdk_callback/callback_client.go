@@ -70,12 +70,12 @@ type OnConversationListener interface {
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
-	OnRecvGroupReadReceipt(groupMsgReceiptList string)
+	//OnRecvGroupReadReceipt(groupMsgReceiptList string)
 
 	OnNewRecvMessageRevoked(messageRevoked string)
-	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
-	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
-	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
+	//OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
+	//OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
+	//OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
 	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
 	OnRecvOnlineOnlyMessage(message string)
