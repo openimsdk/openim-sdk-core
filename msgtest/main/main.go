@@ -21,7 +21,7 @@ func init() {
 	_ = runtime.GOMAXPROCS(7)
 	InitWithFlag()
 	if err := log.InitFromConfig("sdk.log", "sdk", 3,
-		true, false, "./", 2, 24, version.Version); err != nil {
+		true, false, "./", 2, 24, version.Version, false); err != nil {
 		panic(err)
 	}
 }
