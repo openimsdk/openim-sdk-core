@@ -12,7 +12,7 @@ import (
 )
 
 // Running used to record whether there is a progress currently running. Only one progress is allowed to run at the same time.
-var Running = make(chan struct{})
+var Running = make(chan struct{}, 1)
 
 type proFlag uint8
 
