@@ -11,6 +11,9 @@ import (
 	"sync"
 )
 
+// Running used to record whether there is a progress currently running. Only one progress is allowed to run at the same time.
+var Running = make(chan struct{})
+
 type proFlag uint8
 
 const (
@@ -97,6 +100,7 @@ func (p *Progress) notifyUpdate() {
 }
 
 func (p *Progress) run() {
+	Running <- struct{}{}
 	for {
 		signal := <-p.signal
 		switch signal {
@@ -160,6 +164,7 @@ func (p *Progress) stop() {
 		p.allowPrint()
 	}
 	//close(p.signal)
+	<-Running
 }
 
 func (p *Progress) print(s string) {
