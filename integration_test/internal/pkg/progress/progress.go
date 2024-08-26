@@ -159,7 +159,7 @@ func (p *Progress) stop() {
 	if p.mode&ForbiddenWrite == ForbiddenWrite {
 		p.allowPrint()
 	}
-	close(p.signal)
+	//close(p.signal)
 }
 
 func (p *Progress) print(s string) {
