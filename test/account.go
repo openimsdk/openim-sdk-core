@@ -17,15 +17,17 @@ package test
 import (
 	"context"
 	"errors"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"fmt"
 	"net"
 	"os"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	authPB "github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/sdkws"
@@ -85,8 +87,8 @@ var AdminToken = ""
 
 func init() {
 	AdminToken = getToken("openIM123456")
-	if err := log.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0, 24, "23432", true); err != nil {
-		//fmt.Println("123456", "log init failed ", err.Error())
+	if err := log.InitLoggerFromConfig("open-im-sdk-core", "", "", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0, 24, "23432", true); err != nil {
+		fmt.Println("123456", "log init failed ", err.Error())
 	}
 
 }

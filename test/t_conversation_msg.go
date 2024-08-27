@@ -172,11 +172,17 @@ func DoTestGetAdvancedHistoryMessageList() {
 	var testGetHistoryCallBack GetHistoryCallBack
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
-	params.ConversationID = "si_7788_7789"
+	params.ConversationID = "si_1695766238_5099153716"
 	//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
 	params.Count = 20
 	//params.LastMinSeq = seq
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+}
+
+func DoTestDeleteMessageFromLocalStorage() {
+	var testDeleteMessageCallBack DeleteMsgCallBack
+	testDeleteMessageCallBack.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.DeleteMessageFromLocalStorage(testDeleteMessageCallBack, testDeleteMessageCallBack.OperationID, "si_1695766238_5099153716", "72af414a06f93b4178a16941297d3558")
 }
 
 //func DoTestGetHistoryMessageReverse(userID string) {
@@ -691,6 +697,20 @@ func (testMarkC2CMessageAsRead) OnSuccess(data string) {
 
 func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 	fmt.Println("testMarkC2CMessageAsRead, OnError", code, msg)
+}
+
+type DeleteMsgCallBack struct {
+	OperationID string
+	// Data        string
+}
+
+func (g DeleteMsgCallBack) OnError(errCode int32, errMsg string) {
+	log.ZInfo(ctx, "DeleteMessageCallBack err", "operationID", g.OperationID, "errCode", errCode, "errMsg", errMsg)
+}
+
+func (g DeleteMsgCallBack) OnSuccess(data string) {
+	// g.Data = data
+	log.ZInfo(ctx, "get DeleteMessage success. ", "operationID", g.OperationID, "data", data)
 }
 
 //func DoTestMarkC2CMessageAsRead() {
