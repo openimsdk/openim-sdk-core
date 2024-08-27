@@ -20,7 +20,7 @@ var (
 	APIADDR       = fmt.Sprintf("http://%v:10002", TESTIP)
 	WSADDR        = fmt.Sprintf("ws://%v:10001", TESTIP)
 	SECRET        = "openIM123"
-	MANAGERUSERID = "openIMAdmin"
+	MANAGERUSERID = "imAdmin"
 
 	PLATFORMID = constant.AndroidPlatformID
 	LogLevel   = uint32(5)
