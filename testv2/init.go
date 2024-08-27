@@ -37,6 +37,7 @@ var (
 )
 
 func init() {
+	waitCh := make(chan struct{}, 0)
 	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test v2 init func <<<<<<<<<<<<<<<<<<<------------------------")
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
@@ -64,7 +65,8 @@ func init() {
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
-	time.Sleep(time.Second * 2)
+	// time.Sleep(time.Second * 2)
+	<-waitCh
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {

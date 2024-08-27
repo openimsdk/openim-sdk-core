@@ -189,19 +189,8 @@ func readLastNLines(filename string, n int) ([]string, error) {
 	return result, nil
 }
 
-func (c *Third) Log(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
-	switch logLevel {
-	case 6:
-		// sdklog.SDKDebug(ctx, path, line, msg, keysAndValues)
-		log.ZDebug(ctx, msg, keysAndValues...)
-	case 4:
-		// sdklog.SDKInfo(ctx, path, line, msg, keysAndValues)
-		log.ZInfo(ctx, msg, keysAndValues...)
-	case 3:
-		// sdklog.SDKWarn(ctx, path, line, msg, errs.New(err), keysAndValues)
-		log.ZWarn(ctx, msg, errs.New(err), keysAndValues...)
-	case 2:
-		// sdklog.SDKError(ctx, path, line, msg, errs.New(err), keysAndValues)
-		log.ZError(ctx, msg, errs.New(err), keysAndValues...)
-	}
+func (c *Third) SDKLogs(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
+	errString := errs.New(err)
+
+	log.SDKLog(ctx, logLevel, file, line, msg, errString, keysAndValues)
 }

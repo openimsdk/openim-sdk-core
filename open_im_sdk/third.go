@@ -31,5 +31,5 @@ func UploadLogs(callback open_im_sdk_callback.Base, operationID string, line int
 }
 
 func Logs(callback open_im_sdk_callback.Base, operationID string, logLevel int, file string, line int, msgs string, err string, keyAndValue string) {
-	call(callback, operationID, UserForSDK.Third().Log, logLevel, file, line, msgs, err, keyAndValue)
+	call(callback, operationID, UserForSDK.Third().SDKLogs, logLevel, file, line, msgs, err, keyAndValue)
 }
