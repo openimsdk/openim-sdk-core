@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -124,6 +125,7 @@ func (g *Group) initSyncer() {
 			}
 			return nil
 		}),
+
 		syncer.WithBatchInsert[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, values []*model_struct.LocalGroup) error {
 			return g.db.BatchInsertGroup(ctx, values)
 		}),
@@ -137,10 +139,9 @@ func (g *Group) initSyncer() {
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(resp *group.GetJoinedGroupListResp) []*model_struct.LocalGroup {
 			return datautil.Batch(ServerGroupToLocalGroup, resp.Groups)
 		}),
-		syncer.WithReqApiRouter[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](constant.GetJoinedGroupListRouter),
+		syncer.WithReqApiRouter[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](api.GetJoinedGroupList.Route()),
 		syncer.WithFullSyncLimit[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](groupSyncLimit),
 	)
-
 	g.groupMemberSyncer = syncer.New2[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](
 		syncer.WithInsert[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(ctx context.Context, value *model_struct.LocalGroupMember) error {
 			return g.db.InsertGroupMember(ctx, value)
@@ -196,7 +197,7 @@ func (g *Group) initSyncer() {
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(resp *group.GetGroupMemberListResp) []*model_struct.LocalGroupMember {
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, resp.Members)
 		}),
-		syncer.WithReqApiRouter[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](constant.GetGroupMemberListRouter),
+		syncer.WithReqApiRouter[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](api.GetGroupMemberList.Route()),
 		syncer.WithFullSyncLimit[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](groupMemberSyncLimit),
 	)
 

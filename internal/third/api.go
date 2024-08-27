@@ -2,29 +2,25 @@ package third
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/third"
 )
 
 func (c *Third) UpdateFcmToken(ctx context.Context, fcmToken string, expireTime int64) error {
-	req := third.FcmUpdateTokenReq{
+	_, err := api.FcmUpdateToken.Invoke(ctx, &third.FcmUpdateTokenReq{
 		PlatformID: c.platformID,
 		FcmToken:   fcmToken,
 		Account:    c.loginUserID,
-		ExpireTime: expireTime}
-	_, err := util.CallApi[third.FcmUpdateTokenResp](ctx, constant.FcmUpdateTokenRouter, &req)
+		ExpireTime: expireTime})
 	return err
-
 }
 
 func (c *Third) SetAppBadge(ctx context.Context, appUnreadCount int32) error {
-	req := third.SetAppBadgeReq{
+	_, err := api.SetAppBadge.Invoke(ctx, &third.SetAppBadgeReq{
 		UserID:         c.loginUserID,
 		AppUnreadCount: appUnreadCount,
-	}
-	_, err := util.CallApi[third.SetAppBadgeResp](ctx, constant.SetAppBadgeRouter, &req)
+	})
 	return err
 }
 

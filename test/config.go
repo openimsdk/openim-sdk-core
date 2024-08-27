@@ -15,7 +15,6 @@
 package test
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"sync"
 )
 
@@ -35,15 +34,13 @@ var (
 	//TESTIP  = "open-im-test.rentsoft.cn"
 	APIADDR = "http://" + TESTIP + ":10002"
 
-	WSADDR              = "ws://" + TESTIP + ":10001"
-	REGISTERADDR        = APIADDR + "/auth/user_register"
-	TOKENADDR           = APIADDR + "/auth/user_token"
-	SECRET              = "openIM123"
-	SENDINTERVAL        = 20
-	GETSELFUSERINFO     = APIADDR + "/user/get_self_user_info"
-	CREATEGROUP         = APIADDR + constant.CreateGroupRouter
-	ACCOUNTCHECK        = APIADDR + "/user/account_check"
-	GETGROUPSINFOROUTER = APIADDR + constant.GetGroupsInfoRouter
+	WSADDR          = "ws://" + TESTIP + ":10001"
+	REGISTERADDR    = APIADDR + "/auth/user_register"
+	TOKENADDR       = APIADDR + "/auth/user_token"
+	SECRET          = "openIM123"
+	SENDINTERVAL    = 20
+	GETSELFUSERINFO = APIADDR + "/user/get_self_user_info"
+	ACCOUNTCHECK    = APIADDR + "/user/account_check"
 )
 
 var coreMgrLock sync.RWMutex

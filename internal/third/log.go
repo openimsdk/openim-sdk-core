@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"io"
 	"math/rand"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
@@ -118,7 +118,7 @@ func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Pr
 		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
 		Ex:         ex,
 	}
-	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, reqLog)
+	_, err = api.UploadLogs.Invoke(ctx, reqLog)
 	return err
 }
 

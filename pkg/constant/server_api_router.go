@@ -69,37 +69,6 @@ const (
 	SendMsgRouter             = RouterMsg + "/send_msg"
 	GetServerTimeRouter       = RouterMsg + "/get_server_time"
 
-	// group
-	CreateGroupRouter                 = RouterGroup + "/create_group"
-	SetGroupInfoRouter                = RouterGroup + "/set_group_info"
-	JoinGroupRouter                   = RouterGroup + "/join_group"
-	QuitGroupRouter                   = RouterGroup + "/quit_group"
-	GetGroupsInfoRouter               = RouterGroup + "/get_groups_info"
-	GetGroupMemberListRouter          = RouterGroup + "/get_group_member_list"
-	GetGroupAllMemberListRouter       = RouterGroup + "/get_group_all_member_list"
-	GetGroupMembersInfoRouter         = RouterGroup + "/get_group_members_info"
-	InviteUserToGroupRouter           = RouterGroup + "/invite_user_to_group"
-	GetJoinedGroupListRouter          = RouterGroup + "/get_joined_group_list"
-	KickGroupMemberRouter             = RouterGroup + "/kick_group"
-	TransferGroupRouter               = RouterGroup + "/transfer_group"
-	GetRecvGroupApplicationListRouter = RouterGroup + "/get_recv_group_applicationList"
-	GetSendGroupApplicationListRouter = RouterGroup + "/get_user_req_group_applicationList"
-	AcceptGroupApplicationRouter      = RouterGroup + "/group_application_response"
-	RefuseGroupApplicationRouter      = RouterGroup + "/group_application_response"
-	DismissGroupRouter                = RouterGroup + "/dismiss_group"
-	MuteGroupMemberRouter             = RouterGroup + "/mute_group_member"
-	CancelMuteGroupMemberRouter       = RouterGroup + "/cancel_mute_group_member"
-	MuteGroupRouter                   = RouterGroup + "/mute_group"
-	CancelMuteGroupRouter             = RouterGroup + "/cancel_mute_group"
-	SetGroupMemberNicknameRouter      = RouterGroup + "/set_group_member_nickname"
-	SetGroupMemberInfoRouter          = RouterGroup + "/set_group_member_info"
-	GetGroupAbstractInfoRouter        = RouterGroup + "/get_group_abstract_info"
-	//SearchGroupMember                 = RouterGroup + "/search_group_member"
-	GetIncrementalJoinGroup        = RouterGroup + "/get_incremental_join_groups"
-	GetIncrementalGroupMemberBatch = RouterGroup + "/get_incremental_group_members_batch"
-	GetFullJoinedGroupIDs          = RouterGroup + "/get_full_join_group_ids"
-	GetFullGroupMemberUserIDs      = RouterGroup + "/get_full_group_member_user_ids"
-
 	GetConversationsRouter        = ConversationGroup + "/get_conversations"
 	GetAllConversationsRouter     = ConversationGroup + "/get_all_conversations"
 	GetConversationRouter         = ConversationGroup + "/get_conversation"
@@ -110,19 +79,7 @@ const (
 	GetFullConversationIDs        = ConversationGroup + "/get_full_conversation_ids"
 	GetOwnerConversationRouter    = ConversationGroup + "/get_owner_conversation"
 
-	// organization
-	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
-	GetDepartmentMemberRouter = RouterOrganization + "/get_department_member"
-	ParseTokenRouter          = RouterAuth + "/parse_token"
-
-	// super_group
-	GetJoinedSuperGroupListRouter = RouterSuperGroup + "/get_joined_group_list"
-	GetSuperGroupsInfoRouter      = RouterSuperGroup + "/get_groups_info"
-
-	// third
-	FcmUpdateTokenRouter = RouterThird + "/fcm_update_token"
-	SetAppBadgeRouter    = RouterThird + "/set_app_badge"
-	UploadLogsRouter     = RouterThird + "/logs/upload"
+	ParseTokenRouter = RouterAuth + "/parse_token"
 
 	// auth
 	GetUsersToken = RouterAuth + "/user_token"
@@ -135,13 +92,4 @@ const (
 	RouterSuperGroup   = "/super_group"
 	RouterMsg          = "/msg"
 	RouterThird        = "/third"
-)
-
-const (
-	ObjectPartLimit               = "/object/part_limit"
-	ObjectPartSize                = "/object/part_size"
-	ObjectInitiateMultipartUpload = "/object/initiate_multipart_upload"
-	ObjectAuthSign                = "/object/auth_sign"
-	ObjectCompleteMultipartUpload = "/object/complete_multipart_upload"
-	ObjectAccessURL               = "/object/access_url"
 )

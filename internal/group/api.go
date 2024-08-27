@@ -24,7 +24,6 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
@@ -493,7 +492,8 @@ func (g *Group) GetUsersInGroup(ctx context.Context, groupID string, userIDList 
 }
 
 func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, userIDList []string) error {
-	if err := util.ApiPost(ctx, constant.InviteUserToGroupRouter, &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}, nil); err != nil {
+	req := &group.InviteUserToGroupReq{GroupID: groupID, Reason: reason, InvitedUserIDs: userIDList}
+	if err := g.inviteUserToGroup(ctx, req); err != nil {
 		return err
 	}
 
@@ -515,7 +515,7 @@ func (g *Group) RefuseGroupApplication(ctx context.Context, groupID, fromUserID,
 }
 
 func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApplicationResponseReq) error {
-	if err := util.ApiPost(ctx, constant.AcceptGroupApplicationRouter, req, nil); err != nil {
+	if err := g.handlerGroupApplication(ctx, req); err != nil {
 		return err
 	}
 	// SyncAdminGroupApplication todo

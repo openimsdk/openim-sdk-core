@@ -21,8 +21,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/tools/errs"
@@ -242,18 +241,18 @@ func (f *File) cleanPartLimit() {
 }
 
 func (f *File) initiateMultipartUploadResp(ctx context.Context, req *third.InitiateMultipartUploadReq) (*third.InitiateMultipartUploadResp, error) {
-	return util.CallApi[third.InitiateMultipartUploadResp](ctx, constant.ObjectInitiateMultipartUpload, req)
+	return api.ObjectInitiateMultipartUpload.Invoke(ctx, req)
 }
 
 func (f *File) authSign(ctx context.Context, req *third.AuthSignReq) (*third.AuthSignResp, error) {
 	if len(req.PartNumbers) == 0 {
 		return nil, errs.ErrArgs.WrapMsg("partNumbers is empty")
 	}
-	return util.CallApi[third.AuthSignResp](ctx, constant.ObjectAuthSign, req)
+	return api.ObjectAuthSign.Invoke(ctx, req)
 }
 
 func (f *File) completeMultipartUpload(ctx context.Context, req *third.CompleteMultipartUploadReq) (*third.CompleteMultipartUploadResp, error) {
-	return util.CallApi[third.CompleteMultipartUploadResp](ctx, constant.ObjectCompleteMultipartUpload, req)
+	return api.ObjectCompleteMultipartUpload.Invoke(ctx, req)
 }
 
 func (f *File) getPartNum(fileSize int64, partSize int64) int {
@@ -268,7 +267,7 @@ func (f *File) partSize(ctx context.Context, size int64) (int64, error) {
 	f.confLock.Lock()
 	defer f.confLock.Unlock()
 	if f.partLimit == nil {
-		resp, err := util.CallApi[third.PartLimitResp](ctx, constant.ObjectPartLimit, &third.PartLimitReq{})
+		resp, err := api.ObjectPartLimit.Invoke(ctx, &third.PartLimitReq{})
 		if err != nil {
 			return 0, err
 		}
@@ -291,7 +290,7 @@ func (f *File) partSize(ctx context.Context, size int64) (int64, error) {
 }
 
 func (f *File) accessURL(ctx context.Context, req *third.AccessURLReq) (*third.AccessURLResp, error) {
-	return util.CallApi[third.AccessURLResp](ctx, constant.ObjectAccessURL, req)
+	return api.ObjectAccessURL.Invoke(ctx, req)
 }
 
 func (f *File) doHttpReq(req *http.Request) ([]byte, *http.Response, error) {

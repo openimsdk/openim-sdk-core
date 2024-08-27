@@ -3,6 +3,7 @@ package module
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"time"
 
@@ -37,7 +38,7 @@ func (t *TestGroupManager) CreateGroup(groupID string, groupName string, ownerUs
 		},
 	}
 	resp := &group.CreateGroupResp{}
-	if err := t.postWithCtx(constant.CreateGroupRouter, &req, &resp); err != nil {
+	if err := t.postWithCtx(api.CreateGroup.Route(), &req, &resp); err != nil {
 		return err
 	}
 	if len(userIDs) > batch {
@@ -71,5 +72,5 @@ func (t *TestGroupManager) InviteUserToGroup(ctx context.Context, groupID string
 		InvitedUserIDs: invitedUserIDs,
 	}
 	resp := &group.InviteUserToGroupResp{}
-	return t.postWithCtx(constant.InviteUserToGroupRouter, &req, &resp)
+	return t.postWithCtx(api.InviteUserToGroup.Route(), &req, &resp)
 }
