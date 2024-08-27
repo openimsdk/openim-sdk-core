@@ -17,8 +17,6 @@ package conversation_msg
 import (
 	"context"
 	"errors"
-	"fmt"
-	"runtime/debug"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -139,28 +137,20 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		log.ZError(ctx, "SearchAllMessageByContentType failed", err, "tips", &tips)
 		return errs.Wrap(err)
 	}
+
 	for _, v := range msgList {
-		_ = c.quoteMsgRevokeHandle(ctx, tips.ConversationID, v, m)
-		// log.ZWarn(ctx, "quote MsgRevokeHandle failed.", err, "chatLog ", v.ClientMsgID)
-		// return errs.Wrap(err)
+		err = c.quoteMsgRevokeHandle(ctx, tips.ConversationID, v, m)
+		if err != nil {
+			log.ZError(ctx, "quote Msg Revoke Handle failed.", err, "chat Log content", v)
+		}
 	}
-	return nil
+	return errs.Wrap(err)
 }
 
 func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID string, v *model_struct.LocalChatLog, revokedMsg sdk_struct.MessageRevoked) error {
-	defer func() {
-		if r := recover(); r != nil {
-			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-
-			log.ZWarn(ctx, "quoteMsgRevokeHandle panic", nil, "details panic info", err)
-		}
-	}()
-
 	s := sdk_struct.QuoteElem{}
 	if v.Content == "" {
 		err := errs.New("Chat Log Content not found")
-		log.ZWarn(ctx, "Chat Log content not found", err, "ChatLog ClientMsgID", v.ClientMsgID)
-
 		return errs.Wrap(err)
 	}
 
