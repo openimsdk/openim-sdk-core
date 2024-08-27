@@ -169,7 +169,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 		}
 	}
 
-	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
+	log.ZDebug(ctx, "open db success", "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {
 		return errs.WrapMsg(err, "get sql db failed")
