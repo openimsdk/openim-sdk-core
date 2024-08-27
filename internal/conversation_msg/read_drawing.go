@@ -95,6 +95,9 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 		if len(seqs) == 0 {
 			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
+			if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+				return err
+			}
 		} else {
 			log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
 				seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
@@ -178,6 +181,8 @@ func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context,
 }
 
 func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID string, latestMsgIsRead bool) {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
 	if latestMsgIsRead {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID,
 			Action: constant.UpdateLatestMessageChange, Args: []string{conversationID}}, Ctx: ctx})
