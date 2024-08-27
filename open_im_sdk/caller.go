@@ -100,12 +100,12 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	defer func(start time.Time) {
 		if r := recover(); r != nil {
-			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
 			err = fmt.Errorf("call panic: %+v", r)
 		} else {
 			elapsed := time.Since(start).Milliseconds()
 			if err == nil {
-				log.ZInfo(ctx, "fn call success", "function name", funcName, "resp", res, "cost time", fmt.Sprintf("%d ms", elapsed))
+				log.ZInfo(ctx, "fn call success", "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed), "resp", res)
 			} else {
 				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
 

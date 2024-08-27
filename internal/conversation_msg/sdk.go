@@ -66,22 +66,6 @@ func (c *Conversation) GetAtAllTag(_ context.Context) string {
 	return constant.AtAllString
 }
 
-// deprecated
-func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDs []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
-	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDs)
-	if err != nil {
-		return nil, err
-	}
-	for _, conversation := range conversations {
-		resp = append(resp, &server_api_params.GetConversationRecvMessageOptResp{
-			ConversationID: conversation.ConversationID,
-			Result:         &conversation.RecvMsgOpt,
-		})
-	}
-	return resp, nil
-}
-
-// Method to set global message receiving options
 func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
 	conversationID := c.getConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(ctx, conversationID)
@@ -268,11 +252,6 @@ func (c *Conversation) msgDataToLocalErrChatLog(src *model_struct.LocalChatLog) 
 
 }
 
-func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.LocalChatLog) {
-	copier.Copy(dst, &src)
-
-}
-
 func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct,
 	lc *model_struct.LocalConversation, isOnlineOnly bool) {
 	log.ZDebug(ctx, "this is test send message ", "sendTime", sendTime, "status", status, "clientMsgID", clientMsgID, "serverMsgID", serverMsgID)
@@ -293,7 +272,6 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
-	// log.Info("", "2 send message come here", *lc)
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 }
 

@@ -48,11 +48,6 @@ func HideConversation(callback open_im_sdk_callback.Base, operationID string, co
 	call(callback, operationID, UserForSDK.Conversation().HideConversation, conversationID)
 }
 
-// deprecated
-func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
-	call(callback, operationID, UserForSDK.Conversation().GetConversationRecvMessageOpt, conversationIDList)
-}
-
 func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string, conversationID string, draftText string) {
 	call(callback, operationID, UserForSDK.Conversation().SetConversationDraft, conversationID, draftText)
 }
