@@ -17,6 +17,8 @@ package conversation_msg
 import (
 	"context"
 	"errors"
+	"fmt"
+	"runtime/debug"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
@@ -49,6 +51,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		log.ZError(ctx, "GetMessageBySeq failed", err, "tips", &tips)
 		return errs.Wrap(err)
 	}
+
 	var revokerRole int32
 	var revokerNickname string
 	if tips.IsAdminRevoke || tips.SesstionType == constant.SingleChatType {
@@ -59,6 +62,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		} else {
 			log.ZDebug(ctx, "revoker user name", "userName", userName)
 		}
+
 		revokerNickname = userName
 	} else if tips.SesstionType == constant.SuperGroupChatType {
 		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
@@ -66,6 +70,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
 			return errs.Wrap(err)
 		}
+
 		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
@@ -135,25 +140,44 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		return errs.Wrap(err)
 	}
 	for _, v := range msgList {
-		err = c.quoteMsgRevokeHandle(ctx, tips.ConversationID, v, m)
-		return errs.Wrap(err)
+		_ = c.quoteMsgRevokeHandle(ctx, tips.ConversationID, v, m)
+		// log.ZWarn(ctx, "quote MsgRevokeHandle failed.", err, "chatLog ", v.ClientMsgID)
+		// return errs.Wrap(err)
 	}
 	return nil
 }
 
 func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID string, v *model_struct.LocalChatLog, revokedMsg sdk_struct.MessageRevoked) error {
-	s := sdk_struct.MsgStruct{}
-	_ = utils.JsonStringToStruct(v.Content, &s.QuoteElem)
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
 
-	if s.QuoteElem.QuoteMessage == nil {
+			log.ZWarn(ctx, "quoteMsgRevokeHandle panic", nil, "details panic info", err)
+		}
+	}()
+
+	s := sdk_struct.QuoteElem{}
+	if v.Content == "" {
+		err := errs.New("Chat Log Content not found")
+		log.ZWarn(ctx, "Chat Log content not found", err, "ChatLog ClientMsgID", v.ClientMsgID)
+
+		return errs.Wrap(err)
+	}
+
+	if err := utils.JsonStringToStruct(v.Content, &s); err != nil {
+		return errs.New("ChatLog content transfer failed.")
+	}
+
+	if s.QuoteMessage == nil {
 		return errs.New("QuoteMessage is nil").Wrap()
 	}
-	if s.QuoteElem.QuoteMessage.ClientMsgID != revokedMsg.ClientMsgID {
+	if s.QuoteMessage.ClientMsgID != revokedMsg.ClientMsgID {
 		return errs.New("quoteMessage ClientMsgID is not revokedMsg ClientMsgID").Wrap()
 	}
-	s.QuoteElem.QuoteMessage.Content = utils.StructToJsonString(revokedMsg)
-	s.QuoteElem.QuoteMessage.ContentType = constant.RevokeNotification
-	v.Content = utils.StructToJsonString(s.QuoteElem)
+
+	s.QuoteMessage.Content = utils.StructToJsonString(revokedMsg)
+	s.QuoteMessage.ContentType = constant.RevokeNotification
+	v.Content = utils.StructToJsonString(s)
 	if err := c.db.UpdateMessageBySeq(ctx, conversationID, v); err != nil {
 		log.ZError(ctx, "UpdateMessage failed", err, "v", v)
 		return errs.Wrap(err)
