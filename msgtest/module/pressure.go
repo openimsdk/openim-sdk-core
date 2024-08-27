@@ -109,12 +109,14 @@ func (p *PressureTester) FormatGroupInfo(ctx context.Context) {
 func (p *PressureTester) GetSingleSendNum() int64 {
 	return p.singleSendNum.Load()
 }
-func NewPressureTester() *PressureTester {
+func NewPressureTester() (*PressureTester, error) {
 	metaManager := NewMetaManager(APIADDR, SECRET, MANAGERUSERID)
-	metaManager.initToken()
+	if err := metaManager.initToken(); err != nil {
+		return nil, err
+	}
 	serverTime, err := metaManager.GetServerTime()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	log.ZWarn(context.Background(), "server time is", nil, "serverTime", serverTime, "current time",
 		utils.GetCurrentTimestampByMill(), "time offset", serverTime-utils.GetCurrentTimestampByMill())
@@ -124,7 +126,7 @@ func NewPressureTester() *PressureTester {
 		msgSender:         make(map[string]*SendMsgUser),
 		groupRandomSender: make(map[string][]string), groupOwnerUserID: make(map[string]string),
 		groupMemberNum: make(map[string]int),
-		timeOffset:     serverTime - utils.GetCurrentTimestampByMill()}
+		timeOffset:     serverTime - utils.GetCurrentTimestampByMill()}, nil
 }
 
 func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs []string) {

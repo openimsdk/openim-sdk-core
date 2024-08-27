@@ -121,7 +121,6 @@ func (m *MetaManager) getToken(userID string, platformID int32) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	log.ZDebug(context.Background(), "get token end!")
 	return resp.Token, nil
 }
 
