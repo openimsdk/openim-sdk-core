@@ -56,7 +56,7 @@ const (
 	FiftyGroupNum           = 100
 	TenGroupNum             = 1000
 
-	FastenedUserPrefix  = "f"
+	FastenedUserPrefix  = "test_v3_u"
 	OfflineUserPrefix   = "o"
 	RecvMsgPrefix       = "recv_msg_prefix"
 	singleMsgRecvPrefix = "single_msg_recv_prefix"
