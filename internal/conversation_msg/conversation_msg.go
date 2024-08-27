@@ -368,6 +368,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 		}
 	}
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+	//todo The lock granularity needs to be optimized to the conversation level.
 	list, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
 		log.ZError(ctx, "GetAllConversationListDB", err)
