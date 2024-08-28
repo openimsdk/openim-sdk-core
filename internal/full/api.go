@@ -1,21 +1,8 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package full
 
 import (
 	"context"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -23,6 +10,33 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
+
+func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, sessionType int32) (*model_struct.LocalGroup, error) {
+	switch sessionType {
+	case constant.GroupChatType:
+		return u.group.GetGroupInfoFromLocal2Svr(ctx, groupID)
+	case constant.SuperGroupChatType:
+		return u.GetGroupInfoByGroupID(ctx, groupID)
+	default:
+		return nil, fmt.Errorf("sessionType is not support %d", sessionType)
+	}
+}
+func (u *Full) GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error) {
+	g, err := u.group.GetJoinedDiffusionGroupIDListFromSvr(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return g, err
+}
+
+func (u *Full) GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
+	g2, err := u.group.GetGroupInfoFromLocal2Svr(ctx, groupID)
+	return g2, err
+}
+
+func (u *Full) GetGroupsInfo(ctx context.Context, groupIDs ...string) (map[string]*model_struct.LocalGroup, error) {
+	return u.group.GetGroupsInfoFromLocal2Svr(ctx, groupIDs...)
+}
 
 func (u *Full) GetUsersInfo(ctx context.Context, userIDs []string) ([]*api.FullUserInfo, error) {
 	friendList, err := u.db.GetFriendInfoList(ctx, userIDs)
