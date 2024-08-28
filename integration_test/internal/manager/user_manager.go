@@ -17,6 +17,7 @@ import (
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/mcontext"
+	"time"
 )
 
 type TestUserManager struct {
@@ -85,7 +86,9 @@ func (t *TestUserManager) initSDK(ctx context.Context, userIDs ...string) error 
 			ctx := mgr.Context()
 			ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 			ctx = mcontext.SetOpUserID(ctx, userID)
+			ctx, cancel := context.WithCancel(ctx)
 			vars.Contexts[userNum] = ctx // init ctx
+			vars.Cancels[userNum] = cancel
 			log.ZDebug(ctx, "init sdk", "operationID", mcontext.GetOperationID(ctx), "op userID", userID)
 			return nil
 		})
@@ -140,6 +143,32 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	}
 	if err := gr.Wait(); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (t *TestUserManager) ForceLogoutAllUsers(ctx context.Context) error {
+	return t.forceLogout(ctx, vars.UserIDs...)
+}
+
+func (t *TestUserManager) forceLogout(ctx context.Context, userIDs ...string) error {
+	defer decorator.FuncLog(ctx)()
+
+	log.ZDebug(ctx, "logout users", "len", len(userIDs), "userIDs", userIDs)
+
+	cancelBar := progress.NewBar("cancel ctx", 0, len(userIDs), false)
+	pro := progress.Start(cancelBar)
+	for _, userID := range userIDs {
+		pro.IncBar(cancelBar)
+		vars.Cancels[utils.MustGetUserNum(userID)]()
+	}
+
+	sleepTime := 30 * 2 // unit: second. pone wait * 2
+	sleepBar := progress.NewBar("sleep", 0, len(userIDs), false)
+	pro.AddBar(sleepBar)
+	for i := 0; i < sleepTime; i++ {
+		time.Sleep(time.Second)
+		pro.IncBar(sleepBar)
 	}
 	return nil
 }

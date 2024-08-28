@@ -13,6 +13,7 @@ import (
 func InitGlobalData() {
 	sdk.TestSDKs = make([]*sdk.TestSDK, vars.UserNum)
 	vars.Contexts = make([]context.Context, vars.UserNum)
+	vars.Cancels = make([]context.CancelFunc, vars.UserNum)
 	vars.LoginUserNum = int(math.Floor(vars.LoginRate * float64(vars.UserNum)))
 	vars.MsgConsuming = make(chan time.Duration, config.MaxCheckMsg)
 	rand.New(rand.NewSource(time.Now().UnixNano()))

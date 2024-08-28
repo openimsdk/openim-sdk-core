@@ -56,8 +56,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		return err
 	}
 	ctx = m.BuildCtx(ctx)
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	pro.SetContext(ctx)
 
@@ -87,16 +85,10 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	pro.AddTasks(process.NewTask(vars.ShouldCheckMessageNum, statistics.MsgConsuming))
 
 	// Uninstall and reinstall
-	offline := func() {
-		ctx = utils.CancelAndReBuildCtx(m.BuildCtx, cancel) // Offline
-		log.ZInfo(ctx, "cancel ctx. Offline", err, "stack", utils.FormatErrorStack(err))
-		Sleep()
-		pro.SetContext(ctx)
-	}
 	pro.AddTasks(
 		process.NewTask(true, process.AddConditions, pro, vars.ShouldCheckUninsAndReins),
-		process.NewTask(true, offline),
 		process.NewTask(true, fileMng.DeleteLocalDB),
+		process.NewTask(true, userMng.ForceLogoutAllUsers),
 		process.NewTask(true, userMng.InitAllSDK),
 		process.NewTask(true, userMng.LoginAllUsers),
 	)
