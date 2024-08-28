@@ -21,6 +21,7 @@ func GetRelativeServerTime() int64 {
 func InitSDK(userID string, cf sdk_struct.IMConfig) (*open_im_sdk.LoginMgr, error) {
 	userForSDK := open_im_sdk.NewLoginMgr()
 	var testConnListener testConnListener
+	testConnListener.UserID = userID
 	isInit := userForSDK.InitSDK(cf, &testConnListener)
 	if !isInit {
 		return nil, errs.New("sdk init failed").Wrap()

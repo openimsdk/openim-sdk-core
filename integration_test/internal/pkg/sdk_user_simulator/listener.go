@@ -1,11 +1,14 @@
 package sdk_user_simulator
 
 import (
+	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 	"math/rand"
 	"time"
 )
@@ -219,12 +222,15 @@ func (testGroupListener) OnGroupDismissed(callbackInfo string) {
 }
 
 type testConnListener struct {
+	UserID string
 }
 
-func (t *testConnListener) OnUserTokenInvalid(errMsg string) {}
+func (t *testConnListener) OnUserTokenInvalid(errMsg string) {
+	log.ZError(context.TODO(), "user token invalid", errs.New("user token invalid").Wrap(), "userID", t.UserID)
+}
 
 func (t *testConnListener) OnUserTokenExpired() {
-
+	log.ZError(context.TODO(), "user token expired", errs.New("user token expired").Wrap(), "userID", t.UserID)
 }
 func (t *testConnListener) OnConnecting() {
 
@@ -235,11 +241,11 @@ func (t *testConnListener) OnConnectSuccess() {
 }
 
 func (t *testConnListener) OnConnectFailed(ErrCode int32, ErrMsg string) {
-
+	log.ZError(context.TODO(), "connect failed", errs.NewCodeError(int(ErrCode), ErrMsg), "userID", t.UserID)
 }
 
 func (t *testConnListener) OnKickedOffline() {
-
+	log.ZError(context.TODO(), "kicked offline", errs.New("kicked offline").Wrap(), "userID", t.UserID)
 }
 
 func (t *testConnListener) OnSelfInfoUpdated(info string) {
