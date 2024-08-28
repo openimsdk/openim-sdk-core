@@ -16,10 +16,8 @@ package user
 
 import (
 	"context"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"errors"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
@@ -31,7 +29,7 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 		return err
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
+	if err != nil && errors.Is(errs.Unwrap(err), errs.ErrRecordNotFound) {
 		return err
 	}
 	var localUsers []*model_struct.LocalUser
@@ -47,7 +45,7 @@ func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
 		return err
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
+	if err != nil && errors.Is(errs.Unwrap(err), errs.ErrRecordNotFound) {
 		log.ZError(ctx, "SyncLoginUserInfo", err)
 	}
 	var localUsers []*model_struct.LocalUser
@@ -58,61 +56,16 @@ func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
 	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil, false, true)
 }
 
-//func (u *User) SyncUserStatus(ctx context.Context, fromUserID string, status int32, platformID int32) {
-//	userOnlineStatus := userPb.OnlineStatus{
-//		UserID:      fromUserID,
-//		Status:      status,
-//		PlatformIDs: []int32{platformID},
-//	}
-//	if v, ok := u.OnlineStatusCache.Load(fromUserID); ok {
-//		if status == constant.Online {
-//			v.PlatformIDs = utils.RemoveRepeatedElementsInList(append(v.PlatformIDs, platformID))
-//			u.OnlineStatusCache.Store(fromUserID, v)
-//		} else {
-//			v.PlatformIDs = utils.RemoveOneInList(v.PlatformIDs, platformID)
-//			if len(v.PlatformIDs) == 0 {
-//				v.Status = constant.Offline
-//				v.PlatformIDs = []int32{}
-//				u.OnlineStatusCache.Delete(fromUserID)
-//			}
-//		}
-//		u.listener().OnUserStatusChanged(utils.StructToJsonString(v))
-//	} else {
-//		if status == constant.Online {
-//			u.OnlineStatusCache.Store(fromUserID, &userOnlineStatus)
-//			u.listener().OnUserStatusChanged(utils.StructToJsonString(userOnlineStatus))
-//		} else {
-//			log.ZWarn(ctx, "exception", errors.New("user not exist"), "fromUserID", fromUserID,
-//				"status", status, "platformID", platformID)
-//		}
-//	}
-//}
-
-type CommandInfoResponse struct {
-	CommandResp []*userPb.AllCommandInfoResp `json:"CommandResp"`
-}
-
 func (u *User) SyncAllCommand(ctx context.Context) error {
-	var serverData CommandInfoResponse
-	err := util.ApiPost(ctx, constant.ProcessUserCommandGetAll, userPb.ProcessUserCommandGetAllReq{
-		UserID: u.loginUserID,
-	}, &serverData)
-	if err != nil {
-		return err
-	}
-	localData, err := u.DataBase.ProcessUserCommandGetAll(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
-	return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil)
+	return u.syncAllCommand(ctx, true)
 }
 
 func (u *User) SyncAllCommandWithoutNotice(ctx context.Context) error {
-	var serverData CommandInfoResponse
-	err := util.ApiPost(ctx, constant.ProcessUserCommandGetAll, userPb.ProcessUserCommandGetAllReq{
-		UserID: u.loginUserID,
-	}, &serverData)
+	return u.syncAllCommand(ctx, false)
+}
+
+func (u *User) syncAllCommand(ctx context.Context, withNotice bool) error {
+	resp, err := u.processUserCommandGetAll(ctx)
 	if err != nil {
 		return err
 	}
@@ -120,6 +73,10 @@ func (u *User) SyncAllCommandWithoutNotice(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log.ZDebug(ctx, "sync command", "data from server", serverData, "data from local", localData)
-	return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, serverData.CommandResp), localData, nil, false, true)
+	log.ZDebug(ctx, "sync command", "data from server", resp, "data from local", localData)
+	if withNotice {
+		return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, resp), localData, nil)
+	} else {
+		return u.commandSyncer.Sync(ctx, datautil.Batch(ServerCommandToLocalCommand, resp), localData, nil, false, true)
+	}
 }

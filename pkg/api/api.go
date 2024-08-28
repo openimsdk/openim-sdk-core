@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/protocol/group"
@@ -12,7 +13,7 @@ import (
 )
 
 var (
-	GetUsersInfo             = api[user.GetDesignateUsersReq, user.GetDesignateUsersResp]("/user/get_users_info")
+	GetUsersInfo             = api[user.GetDesignateUsersReq, user.GetDesignateUsersResp](constant.GetUsersInfoRouter)
 	UpdateSelfUserInfo       = api[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
 	UpdateSelfUserInfoEx     = api[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
 	SetGlobalRecvMessageOpt  = api[user.SetGlobalRecvMessageOptReq, user.SetGlobalRecvMessageOptResp]("/user/set_global_msg_recv_opt")
@@ -98,6 +99,7 @@ var (
 )
 
 var (
+	ParseToken    = api[auth.ParseTokenReq, auth.ParseTokenResp](constant.ParseTokenRouter)
 	GetUsersToken = api[auth.UserTokenReq, auth.UserTokenResp]("/auth/user_token")
 )
 
