@@ -164,7 +164,7 @@ func (t *TestUserManager) forceLogout(ctx context.Context, userIDs ...string) er
 	}
 
 	sleepTime := 30 * 2 // unit: second. pone wait * 2
-	sleepBar := progress.NewBar("sleep", 0, len(userIDs), false)
+	sleepBar := progress.NewBar("sleep", 0, sleepTime, false)
 	pro.AddBar(sleepBar)
 	for i := 0; i < sleepTime; i++ {
 		time.Sleep(time.Second)
