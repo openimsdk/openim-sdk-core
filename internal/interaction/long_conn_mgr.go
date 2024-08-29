@@ -249,6 +249,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			log.ZWarn(ctx, "writePump panic", nil, "panic info", err)
 		}
 	}()
+
 	log.ZDebug(ctx, "writePump start", "goroutine ID:", getGoroutineID())
 
 	defer func() {
