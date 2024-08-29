@@ -38,7 +38,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
-	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
@@ -152,7 +151,7 @@ func (c *Conversation) initSyncer() {
 					"update_unread_count_time": serverConversation.UpdateUnreadCountTime,
 					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex, "msg_destruct_time": serverConversation.MsgDestructTime,
 					"is_msg_destruct": serverConversation.IsMsgDestruct,
-					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
+					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq})
 		}),
 		syncer.WithUUID[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
@@ -666,7 +665,7 @@ func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map
 				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
 
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID,
-					Action: constant.AddConOrUpLatMsg, Args: *conversation}})
+					Action: constant.AddConOrUpLatMsg, Args: *conversation, Caller: "batchUpdateMessageList"}})
 
 			}
 		}
@@ -896,72 +895,6 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 		//}
 	}
 
-}
-
-func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_struct.MsgStruct) {
-	var messageReceiptResp []*sdk_struct.MessageReceipt
-	var msgIdList []string
-	chrsList := make(map[string][]string)
-	var conversationID string
-
-	for _, rd := range msgReadList {
-		err := json.Unmarshal([]byte(rd.Content), &msgIdList)
-		if err != nil {
-			// log.Error("internal", "unmarshal failed, err : ", err.Error())
-			return
-		}
-		var msgIdListStatusOK []string
-		for _, v := range msgIdList {
-			//m, err := c.db.GetMessage(ctx, v)
-			//if err != nil {
-			//	log.Error("internal", "GetMessage err:", err, "ClientMsgID", v)
-			//	continue
-			//}
-			//attachInfo := sdk_struct.AttachedInfoElem{}
-			//_ = utils.JsonStringToStruct(m.AttachedInfo, &attachInfo)
-			//attachInfo.HasReadTime = rd.SendTime
-			//m.AttachedInfo = utils.StructToJsonString(attachInfo)
-			//m.IsRead = true
-			//err = c.db.UpdateMessage(ctx, m)
-			//if err != nil {
-			//	log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
-			//	continue
-			//}
-
-			msgIdListStatusOK = append(msgIdListStatusOK, v)
-		}
-		if len(msgIdListStatusOK) > 0 {
-			msgRt := new(sdk_struct.MessageReceipt)
-			msgRt.ContentType = rd.ContentType
-			msgRt.MsgFrom = rd.MsgFrom
-			msgRt.ReadTime = rd.SendTime
-			msgRt.UserID = rd.SendID
-			msgRt.SessionType = constant.SingleChatType
-			msgRt.MsgIDList = msgIdListStatusOK
-			messageReceiptResp = append(messageReceiptResp, msgRt)
-		}
-		if rd.SendID == c.loginUserID {
-			conversationID = c.getConversationIDBySessionType(rd.RecvID, constant.SingleChatType)
-		} else {
-			conversationID = c.getConversationIDBySessionType(rd.SendID, constant.SingleChatType)
-		}
-		if v, ok := chrsList[conversationID]; ok {
-			chrsList[conversationID] = append(v, msgIdListStatusOK...)
-		} else {
-			chrsList[conversationID] = msgIdListStatusOK
-		}
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConversationLatestMsgHasRead, Args: chrsList}})
-	}
-	if len(messageReceiptResp) > 0 {
-
-		// log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
-		c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
-	}
-}
-
-type messageKvList struct {
-	ClientMsgID   string                      `json:"clientMsgID"`
-	ChangedKvList []*sdk.SingleTypeKeyInfoSum `json:"changedKvList"`
 }
 
 func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {

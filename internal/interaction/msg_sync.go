@@ -256,14 +256,14 @@ func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerNotification)
 }
 
-func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
-	if len(pullMsgs) == 0 {
+func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pushMessages map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
+	if len(pushMessages) == 0 {
 		return
 	}
 	needSyncSeqMap := make(map[string][2]int64)
 	var lastSeq int64
 	var storageMsgs []*sdkws.MsgData
-	for conversationID, msgs := range pullMsgs {
+	for conversationID, msgs := range pushMessages {
 		for _, msg := range msgs.Msgs {
 			if msg.Seq == 0 {
 				_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: []*sdkws.MsgData{msg}}})
