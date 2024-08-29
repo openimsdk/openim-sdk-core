@@ -116,18 +116,6 @@ func Test_SetSelfInfoEx(t *testing.T) {
 	time.Sleep(time.Second * 10)
 }
 
-func Test_UpdateMsgSenderInfo(t *testing.T) {
-	err := open_im_sdk.UserForSDK.User().UpdateMsgSenderInfo(ctx, "test", "http://test.com")
-	if err != nil {
-		t.Error(err)
-	}
-	userInfo, err := open_im_sdk.UserForSDK.User().GetSelfUserInfo(ctx)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(userInfo)
-}
-
 func Test_SetSetGlobalRecvMessageOpt(t *testing.T) {
 	err := open_im_sdk.UserForSDK.User().SetGlobalRecvMessageOpt(ctx, 1)
 	if err != nil {

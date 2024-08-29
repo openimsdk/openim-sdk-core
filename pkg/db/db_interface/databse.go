@@ -88,8 +88,6 @@ type MessageModel interface {
 	CheckConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 	GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 
-	UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
-	UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
 	// UpdateMsgSenderFaceURLAndSenderNicknameController(ctx context.Context, sendID, faceURL, nickname string, sessionType int) error
 	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error
 	GetAbnormalMsgSeq(ctx context.Context) (int64, error)

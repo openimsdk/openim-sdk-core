@@ -25,6 +25,7 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
 	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 }
+
 func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
 	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
 	if err != nil {

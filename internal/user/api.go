@@ -25,23 +25,6 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 	return nil, sdkerrs.ErrUserIDNotFound.WrapMsg(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
 }
 
-// getSelfUserInfo retrieves the user's information.
-func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
-	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
-	if errLocal != nil {
-		srvUserInfo, errServer := u.GetServerUserInfo(ctx, []string{u.loginUserID})
-		if errServer != nil {
-			return nil, errServer
-		}
-		if len(srvUserInfo) == 0 {
-			return nil, sdkerrs.ErrUserIDNotFound
-		}
-		userInfo = ServerUserToLocalUser(srvUserInfo[0])
-		_ = u.InsertLoginUser(ctx, userInfo)
-	}
-	return userInfo, nil
-}
-
 // ProcessUserCommandGetAll get user's choice
 func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandInfoResp, error) {
 	localCommands, err := u.DataBase.ProcessUserCommandGetAll(ctx)
@@ -77,10 +60,6 @@ func (u *User) UserOnlineStatusChange(users map[string][]int32) {
 	}
 }
 
-func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
-	return u.GetUsersInfoFromSvr(ctx, userIDs)
-}
-
 func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
 	return u.getSelfUserInfo(ctx)
 }
@@ -94,6 +73,7 @@ func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfo) error 
 	_ = u.SyncLoginUserInfo(ctx)
 	return nil
 }
+
 func (u *User) SetSelfInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
 	userInfo.UserID = u.loginUserID
 	if err := u.updateSelfUserInfoEx(ctx, userInfo); err != nil {
@@ -102,6 +82,7 @@ func (u *User) SetSelfInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx
 	_ = u.SyncLoginUserInfo(ctx)
 	return nil
 }
+
 func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
 	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter,
 		&userPb.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
@@ -110,20 +91,6 @@ func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
 	err := u.SyncLoginUserInfo(ctx)
 	if err != nil {
 		log.ZWarn(ctx, "SyncLoginUserInfo", err)
-	}
-	return nil
-}
-
-func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string) (err error) {
-	if nickname != "" {
-		if err = u.DataBase.UpdateMsgSenderNickname(ctx, u.loginUserID, nickname, constant.SingleChatType); err != nil {
-			return err
-		}
-	}
-	if faceURL != "" {
-		if err = u.DataBase.UpdateMsgSenderFaceURL(ctx, u.loginUserID, faceURL, constant.SingleChatType); err != nil {
-			return err
-		}
 	}
 	return nil
 }

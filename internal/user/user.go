@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
@@ -114,4 +115,21 @@ func (u *User) initSyncer() {
 // SetListener sets the user's listener.
 func (u *User) SetListener(listener func() open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
+}
+
+// getSelfUserInfo retrieves the user's information.
+func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
+	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
+	if errLocal != nil {
+		srvUserInfo, errServer := u.GetServerUserInfo(ctx, []string{u.loginUserID})
+		if errServer != nil {
+			return nil, errServer
+		}
+		if len(srvUserInfo) == 0 {
+			return nil, sdkerrs.ErrUserIDNotFound
+		}
+		userInfo = ServerUserToLocalUser(srvUserInfo[0])
+		_ = u.InsertLoginUser(ctx, userInfo)
+	}
+	return userInfo, nil
 }
