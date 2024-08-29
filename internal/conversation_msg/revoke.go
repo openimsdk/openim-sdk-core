@@ -150,8 +150,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID string, v *model_struct.LocalChatLog, revokedMsg sdk_struct.MessageRevoked) error {
 	s := sdk_struct.QuoteElem{}
 	if v.Content == "" {
-		err := errs.New("Chat Log Content not found")
-		return errs.Wrap(err)
+		return errs.New("Chat Log Content not found")
 	}
 
 	if err := utils.JsonStringToStruct(v.Content, &s); err != nil {
