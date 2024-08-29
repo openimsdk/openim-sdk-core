@@ -17,6 +17,6 @@ const (
 )
 
 const (
-	CheckMsgRate = 0.1 // Sampling and statistical message ratio. Max check message is MaxCheckMsg
+	CheckMsgRate = 1 // Sampling and statistical message ratio. Max check message is MaxCheckMsg
 	MaxCheckMsg  = 1e+5
 )
