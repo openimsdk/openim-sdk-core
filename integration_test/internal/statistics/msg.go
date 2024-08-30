@@ -8,11 +8,12 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 	"strings"
+	"time"
 )
 
 func MsgConsuming(ctx context.Context) {
 	defer decorator.FuncLog(ctx)()
-
+	time.Sleep(time.Second * 5)
 	close(vars.MsgConsuming)
 	var (
 		low       int
