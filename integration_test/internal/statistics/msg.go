@@ -20,20 +20,20 @@ func MsgConsuming(ctx context.Context) {
 		mid       int
 		high      int
 		outHigh   int
-		minT      = float64(-1)
-		maxT      = float64(-1)
-		totalCost float64
+		minT      = int64(-1)
+		maxT      = int64(-1)
+		totalCost int64
 		count     int
 	)
 	for msg := range vars.RecvMsgConsuming {
 
-		sec := msg.CostTime.Seconds()
+		sec := msg.CostTime.Milliseconds()
 		switch {
-		case sec < config.ReceiveMsgTimeThresholdLow:
+		case sec < config.ReceiveMsgTimeThresholdLow*int64(time.Millisecond):
 			low++
-		case sec < config.ReceiveMsgTimeThresholdMedium:
+		case sec < config.ReceiveMsgTimeThresholdMedium*int64(time.Millisecond):
 			mid++
-		case sec < config.ReceiveMsgTimeThresholdHigh:
+		case sec < config.ReceiveMsgTimeThresholdHigh*int64(time.Millisecond):
 			high++
 		default:
 			outHigh++
@@ -53,12 +53,12 @@ func MsgConsuming(ctx context.Context) {
 	statStr := `
 statistic msg count: %d
 statistic send msg count: %d
-receive msg in %d s count: %d
-receive msg in %d s count: %d
-receive msg in %d s count: %d
-receive messages within %d s or more: %d
-maximum time to receive messages: %.2f
-minimum time to receive messages: %.2f
+receive msg in %d ms count: %d
+receive msg in %d ms count: %d
+receive msg in %d ms count: %d
+receive messages within %d s or more: %d ms
+maximum time to receive messages: %d ms
+minimum time to receive messages: %d ms
 average time consuming: %.2f
 `
 	statStr = fmt.Sprintf(statStr,
@@ -70,7 +70,7 @@ average time consuming: %.2f
 		config.ReceiveMsgTimeThresholdHigh, outHigh,
 		maxT,
 		minT,
-		totalCost/float64(count))
+		float64(totalCost)/float64(count))
 
 	fmt.Println(statStr)
 	log.ZInfo(ctx, "stat msg consuming", "res", strings.Replace(statStr, "\n", "; ", -1))
