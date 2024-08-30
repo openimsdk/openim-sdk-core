@@ -14,7 +14,7 @@ import (
 func MsgConsuming(ctx context.Context) {
 	defer decorator.FuncLog(ctx)()
 	time.Sleep(time.Second * 5)
-	close(vars.MsgConsuming)
+	close(vars.RecvMsgConsuming)
 	var (
 		low       int
 		mid       int
@@ -25,9 +25,9 @@ func MsgConsuming(ctx context.Context) {
 		totalCost float64
 		count     int
 	)
-	for msg := range vars.MsgConsuming {
+	for msg := range vars.RecvMsgConsuming {
 
-		sec := msg.Seconds()
+		sec := msg.CostTime.Seconds()
 		switch {
 		case sec < config.ReceiveMsgTimeThresholdLow:
 			low++
@@ -52,6 +52,7 @@ func MsgConsuming(ctx context.Context) {
 
 	statStr := `
 statistic msg count: %d
+statistic send msg count: %d
 receive msg in %d s count: %d
 receive msg in %d s count: %d
 receive msg in %d s count: %d
@@ -62,6 +63,7 @@ average time consuming: %.2f
 `
 	statStr = fmt.Sprintf(statStr,
 		count,
+		vars.SendMsgCount.Load(),
 		config.ReceiveMsgTimeThresholdLow, low,
 		config.ReceiveMsgTimeThresholdMedium, mid,
 		config.ReceiveMsgTimeThresholdHigh, high,

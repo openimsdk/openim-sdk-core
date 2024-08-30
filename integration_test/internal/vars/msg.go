@@ -1,9 +1,17 @@
 package vars
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"sync/atomic"
 	"time"
 )
 
+type StatMsg struct {
+	CostTime time.Duration
+	Msg      *sdk_struct.MsgStruct
+}
+
 var (
-	MsgConsuming chan time.Duration
+	SendMsgCount     atomic.Int64
+	RecvMsgConsuming chan *StatMsg
 )

@@ -91,8 +91,12 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	_ = utils.JsonStringToStruct(message, &sm)
 
 	if rand.Float64() < config.CheckMsgRate {
+		stm := &vars.StatMsg{
+			CostTime: time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond))),
+			Msg:      &sm,
+		}
 		select {
-		case vars.MsgConsuming <- time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond))):
+		case vars.RecvMsgConsuming <- stm:
 		default:
 		}
 	}
