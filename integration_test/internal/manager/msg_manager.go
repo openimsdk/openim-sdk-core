@@ -84,6 +84,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 				} else {
 					fmt.Println("what`s this???")
 				}
+				time.Sleep(time.Millisecond * 250)
 			}
 			log.ZError(ctx, "send over", nil, "userID", userNum)
 			return nil
@@ -135,6 +136,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					log.ZWarn(ctx, "sendGroupMessages end", nil, "time cost:", time.Since(t))
 
 					p.IncBar(bar)
+					time.Sleep(time.Millisecond * 250)
 				}
 			}
 			return nil
