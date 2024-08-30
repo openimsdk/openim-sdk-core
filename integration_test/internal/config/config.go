@@ -11,7 +11,7 @@ const (
 	WsAddr              = "ws://" + TestIP + ":10001"
 	AdminUserID         = "imAdmin"
 	Secret              = "openIM123"
-	PlatformID          = constant.WindowsPlatformID
+	PlatformID          = constant.AndroidPlatformID
 	LogLevel            = 3
 	DataDir             = "./data/"
 	LogFilePath         = "./logs/"
