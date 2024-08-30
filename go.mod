@@ -17,9 +17,8 @@ require golang.org/x/net v0.22.0 // indirect
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/openimsdk/protocol v0.0.69
-	github.com/openimsdk/tools v0.0.50-alpha.7
+	github.com/openimsdk/tools v0.0.50-alpha.8
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	go.uber.org/zap v1.24.0
 	golang.org/x/image v0.15.0
 	golang.org/x/sync v0.6.0
 	gorm.io/gorm v1.25.10
@@ -32,6 +31,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
