@@ -2,8 +2,11 @@ package progress
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 	"github.com/openimsdk/tools/utils/formatutil"
 	"io"
@@ -125,6 +128,12 @@ func (p *Progress) render() {
 	p.printLine = 0
 	donePrintLine := 0
 	for i, bar := range p.Bars {
+		// debug
+		if bar.now > bar.total {
+			log.ZError(context.TODO(), "bar data error", errs.New("bar data error"),
+				"name", bar.name, "now", bar.now, "total", bar.total)
+		}
+
 		if bar.shouldRemove() && len(p.Bars) > p.MaxPrintBar {
 			p.lock.Lock()
 			datautil.DeleteAt(&p.Bars, i)
