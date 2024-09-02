@@ -13,15 +13,15 @@ type LockPool struct {
 
 // Usage
 
-// func NewLockPool(maxLocks int) *LockPool {
-// 	lp := &LockPool{
-// 		maxLocks: maxLocks,
-// 		locks:    make(map[string]struct{}),
-// 	}
+func NewLockPool(maxLocks int) *LockPool {
+	lp := &LockPool{
+		maxLocks: maxLocks,
+		locks:    make(map[string]struct{}),
+	}
 
-// 	lp.cond = sync.NewCond(&lp.globalMutex)
-// 	return lp
-// }
+	lp.cond = sync.NewCond(&lp.globalMutex)
+	return lp
+}
 
 func (lp *LockPool) Lock(key string) {
 	lp.globalMutex.Lock()
@@ -32,7 +32,7 @@ func (lp *LockPool) Lock(key string) {
 		if _, exists := lp.locks[key]; exists {
 			lp.cond.Wait()
 		} else if len(lp.locks) >= lp.maxLocks {
-			// 如果锁的数量达到最大值，也等待
+			// If the number of locks reaches the maximum value, then wait.
 			lp.cond.Wait()
 		} else {
 			lp.locks[key] = struct{}{}
