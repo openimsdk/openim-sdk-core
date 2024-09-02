@@ -20,8 +20,8 @@ func MsgConsuming(ctx context.Context) {
 		mid       int
 		high      int
 		outHigh   int
-		minT      = int64(-1)
-		maxT      = int64(-1)
+		minT      *vars.StatMsg
+		maxT      *vars.StatMsg
 		totalCost int64
 		count     int
 	)
@@ -39,17 +39,20 @@ func MsgConsuming(ctx context.Context) {
 			outHigh++
 		}
 
-		if minT == -1 || minT > sec {
-			minT = sec
+		if minT == nil || minT.CostTime.Milliseconds() > sec {
+			minT = msg
 		}
-		if maxT == -1 || maxT < sec {
-			maxT = sec
+		if maxT == nil || maxT.CostTime.Milliseconds() < sec {
+			maxT = msg
 		}
 
 		totalCost += sec
 		count++
 	}
 
+	if minT == nil || maxT == nil {
+		return
+	}
 	statStr := `
 statistic msg count: %d
 statistic send msg count: %d
@@ -57,8 +60,8 @@ receive msg in %d ms count: %d
 receive msg in %d ms count: %d
 receive msg in %d ms count: %d
 receive messages within %d s or more: %d ms
-maximum time to receive messages: %d ms
-minimum time to receive messages: %d ms
+maximum time to receive messages: %d ms, msg: %v
+minimum time to receive messages: %d ms, msg: %v
 average time consuming: %.2f
 `
 	statStr = fmt.Sprintf(statStr,
@@ -68,8 +71,8 @@ average time consuming: %.2f
 		config.ReceiveMsgTimeThresholdMedium, mid,
 		config.ReceiveMsgTimeThresholdHigh, high,
 		config.ReceiveMsgTimeThresholdHigh, outHigh,
-		maxT,
-		minT,
+		maxT.CostTime.Milliseconds(), maxT,
+		minT.CostTime.Milliseconds(), minT,
 		float64(totalCost)/float64(count))
 
 	fmt.Println(statStr)
