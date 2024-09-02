@@ -159,7 +159,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 			return errs.WrapMsg(err, "open db failed "+dbFileName)
 		}
 
-		db.Exec("PRAGMA journal_mode=WAL;") // open WAL mode
+		db.Exec("PRAGMA journal_mode=OFF;") // open WAL mode
 		db.Exec("PRAGMA busy_timeout = 500000;")
 	} else {
 		// common mode
