@@ -93,7 +93,7 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	if rand.Float64() < config.CheckMsgRate {
 		stm := &vars.StatMsg{
 			CostTime: time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond))),
-			Msg:      &sm,
+			Msg:      sm,
 		}
 		select {
 		case vars.RecvMsgConsuming <- stm:
