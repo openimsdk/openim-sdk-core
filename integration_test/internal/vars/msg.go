@@ -8,7 +8,7 @@ import (
 
 type StatMsg struct {
 	CostTime time.Duration
-	Msg      sdk_struct.MsgStruct
+	Msg      *sdk_struct.MsgStruct
 }
 
 var (

@@ -71,8 +71,8 @@ average time consuming: %.2f
 		config.ReceiveMsgTimeThresholdMedium, mid,
 		config.ReceiveMsgTimeThresholdHigh, high,
 		config.ReceiveMsgTimeThresholdHigh, outHigh,
-		maxT.CostTime.Milliseconds(), maxT,
-		minT.CostTime.Milliseconds(), minT,
+		maxT.CostTime.Milliseconds(), *maxT.Msg,
+		minT.CostTime.Milliseconds(), *minT.Msg,
 		float64(totalCost)/float64(count))
 
 	fmt.Println(statStr)
