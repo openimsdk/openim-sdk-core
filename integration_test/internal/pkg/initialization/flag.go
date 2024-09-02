@@ -40,7 +40,7 @@ func SetFlagLimit() {
 
 	vars.LoginRate = min(vars.LoginRate, 1)
 
-	if isSet(vars.FlagMap["LargeGroupMemberNum"]) {
+	if !isSet(vars.FlagMap["LargeGroupMemberNum"]) {
 		vars.LargeGroupMemberNum = vars.UserNum
 	}
 }
