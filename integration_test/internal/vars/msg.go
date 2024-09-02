@@ -3,12 +3,11 @@ package vars
 import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"sync/atomic"
-	"time"
 )
 
 type StatMsg struct {
-	CostTime    time.Duration
-	ReceiveTime time.Time
+	CostTime    int64
+	ReceiveTime int64
 	Msg         *sdk_struct.MsgStruct
 }
 

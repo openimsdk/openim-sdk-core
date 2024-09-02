@@ -10,7 +10,6 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"math/rand"
-	"time"
 )
 
 type conversationCallBack struct {
@@ -91,9 +90,10 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	_ = utils.JsonStringToStruct(message, &sm)
 
 	if rand.Float64() < config.CheckMsgRate {
+		rev := utils.GetCurrentTimestampByMill()
 		stm := &vars.StatMsg{
-			CostTime:    time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond))),
-			ReceiveTime: time.Now(),
+			CostTime:    rev - sm.SendTime,
+			ReceiveTime: rev,
 			Msg:         &sm,
 		}
 		select {
