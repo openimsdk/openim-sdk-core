@@ -12,7 +12,7 @@ import (
 
 func GenUserIDs(num int) []string {
 	ids := make([]string, num)
-	for i := 0; i < vars.UserNum; i++ {
+	for i := 0; i < num; i++ {
 		ids[i] = GetUserID(i)
 	}
 	return ids
