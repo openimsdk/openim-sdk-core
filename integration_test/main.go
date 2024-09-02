@@ -27,6 +27,7 @@ func Init(ctx context.Context) error {
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
 	}
+	initialization.PrintFlag()
 
 	return nil
 }

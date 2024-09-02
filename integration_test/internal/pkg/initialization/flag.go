@@ -1,10 +1,13 @@
 package initialization
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
+	"github.com/openimsdk/tools/log"
 )
 
 func InitFlag() {
@@ -43,6 +46,32 @@ func SetFlagLimit() {
 	if !isSet(vars.FlagMap["LargeGroupMemberNum"]) {
 		vars.LargeGroupMemberNum = vars.UserNum
 	}
+}
+
+func PrintFlag() {
+	result := fmt.Sprintf(
+		"TestMode-%s:%t, UserNum-%s:%d, SuperUserNum-%s:%d, LargeGroupNum-%s:%d, LargeGroupMemberNum-%s:%d, CommonGroupNum-%s:%d, CommonGroupMemberNum-%s:%d, SingleMessageNum-%s:%d, GroupMessageNum-%s:%d, ShouldRegister-%s:%t, ShouldImportFriends-%s:%t, ShouldCreateGroup-%s:%t, ShouldSendMsg-%s:%t, ShouldCheckGroupNum-%s:%t, ShouldCheckConversationNum-%s:%t, ShouldCheckMessageNum-%s:%t, ShouldCheckUninsAndReins-%s:%t, LoginRate-%s:%.2f",
+		vars.FlagMap["TestMode"], flagconst.TestMode,
+		vars.FlagMap["UserNum"], vars.UserNum,
+		vars.FlagMap["SuperUserNum"], vars.SuperUserNum,
+		vars.FlagMap["LargeGroupNum"], vars.LargeGroupNum,
+		vars.FlagMap["LargeGroupMemberNum"], vars.LargeGroupMemberNum,
+		vars.FlagMap["CommonGroupNum"], vars.CommonGroupNum,
+		vars.FlagMap["CommonGroupMemberNum"], vars.CommonGroupMemberNum,
+		vars.FlagMap["SingleMessageNum"], vars.SingleMessageNum,
+		vars.FlagMap["GroupMessageNum"], vars.GroupMessageNum,
+		vars.FlagMap["ShouldRegister"], vars.ShouldRegister,
+		vars.FlagMap["ShouldImportFriends"], vars.ShouldImportFriends,
+		vars.FlagMap["ShouldCreateGroup"], vars.ShouldCreateGroup,
+		vars.FlagMap["ShouldSendMsg"], vars.ShouldSendMsg,
+		vars.FlagMap["ShouldCheckGroupNum"], vars.ShouldCheckGroupNum,
+		vars.FlagMap["ShouldCheckConversationNum"], vars.ShouldCheckConversationNum,
+		vars.FlagMap["ShouldCheckMessageNum"], vars.ShouldCheckMessageNum,
+		vars.FlagMap["ShouldCheckUninsAndReins"], vars.ShouldCheckUninsAndReins,
+		vars.FlagMap["LoginRate"], vars.LoginRate,
+	)
+	fmt.Println(result)
+	log.ZWarn(context.TODO(), "flags", nil, "flag params", result)
 }
 
 func isSet(fg string) bool {
