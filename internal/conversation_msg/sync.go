@@ -66,8 +66,8 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 		}
 		if conversation, ok := conversationsOnLocalMap[conversationID]; ok {
-			if conversation.UnreadCount != unreadCount || conversation.HasReadSeq != v.HasReadSeq {
-				if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
+			if conversation.UnreadCount != unreadCount {
+				if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount}); err != nil {
 					log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 					continue
 				}
@@ -108,7 +108,6 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 				unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 			}
 			conversation.UnreadCount = unreadCount
-			conversation.HasReadSeq = v.HasReadSeq
 		}
 
 		stepStartTime = time.Now()

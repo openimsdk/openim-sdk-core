@@ -431,7 +431,6 @@ type LocalConversation struct {
 	Ex                    string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	MaxSeq                int64  `gorm:"column:max_seq" json:"maxSeq"`
 	MinSeq                int64  `gorm:"column:min_seq" json:"minSeq"`
-	HasReadSeq            int64  `gorm:"column:has_read_seq" json:"hasReadSeq"`
 	MsgDestructTime       int64  `gorm:"column:msg_destruct_time;default:604800" json:"msgDestructTime"`
 	IsMsgDestruct         bool   `gorm:"column:is_msg_destruct;default:false" json:"isMsgDestruct"`
 }
