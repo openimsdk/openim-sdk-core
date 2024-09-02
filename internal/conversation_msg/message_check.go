@@ -177,6 +177,8 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 			"newSeqList", newSeqList)
 		return
 	}
+	//todo The process of pulling messages needs to be changed to pull based on a list of sequences,
+	// as the current method may cause sequence filling issues. This update is required for versions 3.9 +.
 	var pullMsgResp sdkws.PullMessageBySeqsResp
 	var pullMsgReq sdkws.PullMessageBySeqsReq
 	pullMsgReq.UserID = c.loginUserID
