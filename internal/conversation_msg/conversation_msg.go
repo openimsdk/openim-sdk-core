@@ -356,7 +356,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 					log.ZWarn(ctx, "Deduplication operation ", nil, "msg", *c.msgStructToLocalErrChatLog(msg))
 					msg.Status = constant.MsgStatusFiltered
-					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(utils.GetCurrentTimestampByNano())
+					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(msg.Seq)
 					othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
 				}
 			}
