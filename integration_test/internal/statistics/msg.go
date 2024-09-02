@@ -27,7 +27,7 @@ func MsgConsuming(ctx context.Context) {
 	)
 	for msg := range vars.RecvMsgConsuming {
 
-		sec := msg.CostTime.Milliseconds()
+		sec := msg.CostTime
 		switch {
 		case sec < config.ReceiveMsgTimeThresholdLow*int64(time.Millisecond):
 			low++
@@ -39,10 +39,10 @@ func MsgConsuming(ctx context.Context) {
 			outHigh++
 		}
 
-		if minT == nil || minT.CostTime.Milliseconds() > sec {
+		if minT == nil || minT.CostTime > sec {
 			minT = msg
 		}
-		if maxT == nil || maxT.CostTime.Milliseconds() < sec {
+		if maxT == nil || maxT.CostTime < sec {
 			maxT = msg
 		}
 
@@ -71,8 +71,8 @@ average time consuming: %.2f ms
 		config.ReceiveMsgTimeThresholdMedium, mid,
 		config.ReceiveMsgTimeThresholdHigh, high,
 		config.ReceiveMsgTimeThresholdHigh, outHigh,
-		maxT.CostTime.Milliseconds(), maxT.Msg.SendTime, maxT.ReceiveTime.Unix(), *maxT.Msg,
-		minT.CostTime.Milliseconds(), minT.Msg.SendTime, minT.ReceiveTime.Unix(), *minT.Msg,
+		maxT.CostTime, maxT.Msg.SendTime, maxT.ReceiveTime, *maxT.Msg,
+		minT.CostTime, minT.Msg.SendTime, minT.ReceiveTime, *minT.Msg,
 		float64(totalCost)/float64(count))
 
 	fmt.Println(statStr)
