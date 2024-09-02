@@ -472,7 +472,7 @@ func (d *DataBase) GetLatestActiveMessage(ctx context.Context, conversationID st
 	}
 
 	// only get status < 4(NotHasDeleted) Msg
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("status < ?", 4).Order(timeOrder).Offset(0).Limit(1).Find(&result).Error, "GetMessageList failed")
+	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("status < ?", constant.MsgStatusHasDeleted).Order(timeOrder).Offset(0).Limit(1).Find(&result).Error, "GetMessageList failed")
 	if err != nil {
 		return nil, err
 	}

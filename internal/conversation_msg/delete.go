@@ -191,7 +191,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
 
 	if latestMsg.ClientMsgID == clientMsgID {
-		log.ZDebug(ctx, "latesetMsg deleted", "seq", latestMsg.Seq, "clientMsgID", latestMsg.ClientMsgID)
+		log.ZDebug(ctx, "latestMsg deleted", "seq", latestMsg.Seq, "clientMsgID", latestMsg.ClientMsgID)
 		msg, err := c.db.GetLatestActiveMessage(ctx, conversationID, false)
 		if err != nil {
 			return err
