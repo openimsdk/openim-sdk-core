@@ -23,7 +23,7 @@ func (s *TestSDK) CreateCommonGroup(ctx context.Context, memberNum int) (*sdkws.
 
 // CreateLargeGroup create a large group. Group members are all users.
 func (s *TestSDK) CreateLargeGroup(ctx context.Context) (*sdkws.GroupInfo, error) {
-	memberUserIDs := datautil.Delete(datautil.CopySlice(vars.UserIDs), utils.MustGetUserNum(s.UserID))
+	memberUserIDs := datautil.Delete(utils.GenUserIDs(vars.LargeGroupMemberNum), utils.MustGetUserNum(s.UserID))
 	resp, err := s.createGroup(ctx, memberUserIDs, vars.LargeGroup)
 	if err != nil {
 		return nil, err

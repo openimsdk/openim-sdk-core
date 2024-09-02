@@ -10,6 +10,14 @@ import (
 	"strings"
 )
 
+func GenUserIDs(num int) []string {
+	ids := make([]string, num)
+	for i := 0; i < vars.UserNum; i++ {
+		ids[i] = GetUserID(i)
+	}
+	return ids
+}
+
 func GetUserID(num int) string {
 	return vars.UserIDPrefix + strconv.Itoa(num)
 }

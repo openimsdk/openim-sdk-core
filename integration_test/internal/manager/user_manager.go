@@ -29,10 +29,7 @@ func NewUserManager(m *MetaManager) *TestUserManager {
 }
 
 func (t *TestUserManager) GenAllUserIDs() []string {
-	ids := make([]string, vars.UserNum)
-	for i := 0; i < vars.UserNum; i++ {
-		ids[i] = utils.GetUserID(i)
-	}
+	ids := utils.GenUserIDs(vars.UserNum)
 	vars.UserIDs = ids
 	vars.SuperUserIDs = ids[:vars.SuperUserNum]
 	return ids
