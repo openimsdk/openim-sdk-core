@@ -62,7 +62,7 @@ receive msg in %d ms count: %d
 receive messages within %d s or more: %d ms
 maximum time to receive messages: %d ms, msg: %v
 minimum time to receive messages: %d ms, msg: %v
-average time consuming: %.2f
+average time consuming: %.2f ms
 `
 	statStr = fmt.Sprintf(statStr,
 		count,
