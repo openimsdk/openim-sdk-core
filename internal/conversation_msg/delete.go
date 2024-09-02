@@ -192,7 +192,6 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 
 	if latestMsg.ClientMsgID == clientMsgID {
 		log.ZDebug(ctx, "latesetMsg deleted", "seq", latestMsg.Seq, "clientMsgID", latestMsg.ClientMsgID)
-		// msgs, err := c.db.GetMessageListNoTime(ctx, conversationID, 1, false)
 		msg, err := c.db.GetLatestActiveMessage(ctx, conversationID, false)
 		if err != nil {
 			return err
