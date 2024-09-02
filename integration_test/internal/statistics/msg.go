@@ -60,8 +60,8 @@ receive msg in %d ms count: %d
 receive msg in %d ms count: %d
 receive msg in %d ms count: %d
 receive messages within %d s or more: %d ms
-maximum time to receive messages: %d ms, msg: %v
-minimum time to receive messages: %d ms, msg: %v
+maximum time to receive messages: %d ms, send: %d, receive: %d, msg: %v
+minimum time to receive messages: %d ms, send: %d, receive: %d, msg: %v
 average time consuming: %.2f ms
 `
 	statStr = fmt.Sprintf(statStr,
@@ -71,8 +71,8 @@ average time consuming: %.2f ms
 		config.ReceiveMsgTimeThresholdMedium, mid,
 		config.ReceiveMsgTimeThresholdHigh, high,
 		config.ReceiveMsgTimeThresholdHigh, outHigh,
-		maxT.CostTime.Milliseconds(), *maxT.Msg,
-		minT.CostTime.Milliseconds(), *minT.Msg,
+		maxT.CostTime.Milliseconds(), maxT.Msg.SendTime, maxT.ReceiveTime.Unix(), *maxT.Msg,
+		minT.CostTime.Milliseconds(), minT.Msg.SendTime, minT.ReceiveTime.Unix(), *minT.Msg,
 		float64(totalCost)/float64(count))
 
 	fmt.Println(statStr)
