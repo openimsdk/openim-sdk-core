@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/sdkws"
@@ -59,6 +61,7 @@ func (s *TestSDK) createGroup(ctx context.Context, memberUserIds []string, group
 				end = len(memberUserIds)
 			}
 			t := time.Now()
+			ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 			log.ZWarn(ctx, "InviteUserToGroup begin", nil, "begin", i, "end", end, "groupID", g.GroupID)
 			err := s.SDK.Group().InviteUserToGroup(ctx, g.GroupID, "", memberUserIds[i:end])
 			if err != nil {
