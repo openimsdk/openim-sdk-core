@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/utils/datautil"
+	"time"
 )
 
 // CreateCommonGroup create a regular group. Group members are the users with IDs
@@ -32,8 +33,13 @@ func (s *TestSDK) CreateLargeGroup(ctx context.Context) (*sdkws.GroupInfo, error
 }
 
 func (s *TestSDK) createGroup(ctx context.Context, memberUserIds []string, groupType string) (*sdkws.GroupInfo, error) {
-	return s.SDK.Group().CreateGroup(ctx, &group.CreateGroupReq{
-		MemberUserIDs: memberUserIds,
+	initialMembers := memberUserIds
+	if len(memberUserIds) > 1000 {
+		initialMembers = memberUserIds[:1000]
+	}
+
+	g, err := s.SDK.Group().CreateGroup(ctx, &group.CreateGroupReq{
+		MemberUserIDs: initialMembers,
 		GroupInfo: &sdkws.GroupInfo{
 			GroupName: utils.BuildGroupName(s.UserID, groupType),
 			GroupType: constant.WorkingGroup,
@@ -41,6 +47,26 @@ func (s *TestSDK) createGroup(ctx context.Context, memberUserIds []string, group
 		AdminUserIDs: nil,
 		OwnerUserID:  s.UserID,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(memberUserIds) > 1000 {
+		for i := 1000; i < len(memberUserIds); i += 1000 {
+			end := i + 1000
+			if end > len(memberUserIds) {
+				end = len(memberUserIds)
+			}
+
+			err := s.SDK.Group().InviteUserToGroup(ctx, g.GroupID, "", memberUserIds[i:end])
+			if err != nil {
+				return nil, err
+			}
+			time.Sleep(time.Second)
+		}
+	}
+
+	return g, nil
 }
 
 func (s *TestSDK) GetAllJoinedGroups(ctx context.Context) ([]*sdkws.GroupInfo, int, error) {
