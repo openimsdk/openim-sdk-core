@@ -107,7 +107,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 			}
 			sendGroups := make([]string, 0)
 			for _, group := range groups {
-				if int(group.MemberCount) == vars.UserNum || group.OwnerUserID == testSDK.UserID {
+				if int(group.MemberCount) == vars.LargeGroupMemberNum || group.OwnerUserID == testSDK.UserID {
 					// is larger group or created by oneself
 					sendGroups = append(sendGroups, group.GroupID)
 				}
