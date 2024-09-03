@@ -93,7 +93,7 @@ func (f *Friend) AddFriend(ctx context.Context, userIDReqMsg *friend.ApplyToAddF
 	f.friendSyncMutex.Lock()
 	defer f.friendSyncMutex.Unlock()
 
-	return f.SyncAllFriendApplication(ctx)
+	return f.SyncAllSelfFriendApplication(ctx)
 }
 
 func (f *Friend) GetFriendApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
