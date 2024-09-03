@@ -46,6 +46,10 @@ func SetFlagLimit() {
 	if !isSet(vars.FlagMap["LargeGroupMemberNum"]) {
 		vars.LargeGroupMemberNum = vars.UserNum
 	}
+
+	if isSet(vars.FlagMap["LoginRate"]) {
+		vars.IsLogin = true
+	}
 }
 
 func PrintFlag() {

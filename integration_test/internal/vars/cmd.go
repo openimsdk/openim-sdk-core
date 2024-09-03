@@ -45,3 +45,7 @@ var (
 		"LoginRate":                  "lgr",
 	}
 )
+
+var (
+	IsLogin = false
+)

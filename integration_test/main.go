@@ -69,8 +69,8 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	pro.AddTasks(
 		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers),
 		process.NewTask(true, userMng.InitAllSDK),
-		process.NewTask(true, userMng.LoginByRate),
-		process.NewTask(true, checker.CheckLoginByRateNum),
+		process.NewTask(vars.IsLogin, userMng.LoginByRate),
+		process.NewTask(vars.IsLogin, checker.CheckLoginByRateNum),
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
 		process.NewTask(vars.ShouldImportFriends, checker.CheckLoginUsersFriends),
@@ -78,8 +78,8 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
 
-		process.NewTask(true, userMng.LoginLastUsers),
-		process.NewTask(true, checker.CheckAllLoginNum),
+		process.NewTask(vars.IsLogin, userMng.LoginLastUsers),
+		process.NewTask(vars.IsLogin, checker.CheckAllLoginNum),
 	)
 
 	pro.AddTasks(checkTasks...)
@@ -122,7 +122,6 @@ func main() {
 
 	log.ZInfo(ctx, "start success!")
 	fmt.Println("start success!")
-	select {}
 }
 
 func Sleep() {
