@@ -89,7 +89,7 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	var sm sdk_struct.MsgStruct
 	_ = utils.JsonStringToStruct(message, &sm)
 
-	if rand.Float64() < config.CheckMsgRate {
+	if rand.Float64() < config.CheckMsgRate && sm.ContentType == constant.Text {
 		rev := utils.GetCurrentTimestampByMill()
 		stm := &vars.StatMsg{
 			CostTime:    rev - sm.CreateTime,
