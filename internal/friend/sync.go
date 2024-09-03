@@ -45,20 +45,24 @@ func (f *Friend) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID
 	return nil
 }
 
-// send
+// send friend request
 func (f *Friend) SyncAllSelfFriendApplication(ctx context.Context) error {
 	req := &relation.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
+
 	fn := func(resp *relation.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
 		return resp.FriendRequests
 	}
+
 	requests, err := util.GetPageAll(ctx, constant.GetSelfFriendApplicationListRouter, req, fn)
 	if err != nil {
 		return err
 	}
+
 	localData, err := f.db.GetSendFriendApplication(ctx)
 	if err != nil {
 		return err
 	}
+
 	return f.requestSendSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 
@@ -78,7 +82,7 @@ func (f *Friend) SyncAllSelfFriendApplicationWithoutNotice(ctx context.Context) 
 	return f.requestSendSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil, false, true)
 }
 
-// recv
+// recv friend request
 func (f *Friend) SyncAllFriendApplication(ctx context.Context) error {
 	req := &relation.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *relation.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest {
@@ -94,6 +98,7 @@ func (f *Friend) SyncAllFriendApplication(ctx context.Context) error {
 	}
 	return f.requestRecvSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
+
 func (f *Friend) SyncAllFriendApplicationWithoutNotice(ctx context.Context) error {
 	req := &relation.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *relation.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest {
