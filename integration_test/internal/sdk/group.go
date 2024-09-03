@@ -7,6 +7,7 @@ import (
 	"github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 	"time"
 )
@@ -57,11 +58,13 @@ func (s *TestSDK) createGroup(ctx context.Context, memberUserIds []string, group
 			if end > len(memberUserIds) {
 				end = len(memberUserIds)
 			}
-
+			t := time.Now()
+			log.ZWarn(ctx, "InviteUserToGroup begin", nil, "begin", i, "end", end, "groupID", g.GroupID)
 			err := s.SDK.Group().InviteUserToGroup(ctx, g.GroupID, "", memberUserIds[i:end])
 			if err != nil {
 				return nil, err
 			}
+			log.ZWarn(ctx, "InviteUserToGroup end", nil, "begin", i, "end", end, "groupID", g.GroupID, "cost time", time.Since(t))
 			time.Sleep(time.Second)
 		}
 	}
