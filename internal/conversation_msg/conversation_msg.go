@@ -944,9 +944,7 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 				continue
 			}
 
-			if _, ok := onlineMsg[onlineMsgKey{ClientMsgID: w.ClientMsgID, ServerMsgID: w.ServerMsgID}]; ok {
-				needNotificationMsgList = append(needNotificationMsgList, w)
-			}
+			needNotificationMsgList = append(needNotificationMsgList, w)
 		}
 
 		if len(needNotificationMsgList) != 0 {
