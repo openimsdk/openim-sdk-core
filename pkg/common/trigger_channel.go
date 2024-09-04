@@ -168,7 +168,8 @@ type UpdateConNode struct {
 	ConID  string
 	Action int //1 Delete the conversation; 2 Update the latest news in the conversation or add a conversation; 3 Put a conversation on the top;
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
-	Args interface{}
+	Args   interface{}
+	Caller string
 }
 type UpdateMessageNode struct {
 	Action int
