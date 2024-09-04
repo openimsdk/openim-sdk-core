@@ -42,6 +42,9 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 		userID := userID
 		gr.Go(func() error {
 			friendIDs := vars.UserIDs[i+1:] // excluding oneself
+			if len(friendIDs) == 0 {
+				return nil
+			}
 			req := &relation.ImportFriendReq{
 				OwnerUserID:   userID,
 				FriendUserIDs: friendIDs,
