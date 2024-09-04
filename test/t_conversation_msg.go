@@ -586,10 +586,6 @@ func (m *BatchMsg) OnRecvOfflineNewMessages(messageList string) {
 	log.ZInfo(ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 }
 
-func (m *BatchMsg) OnRecvOnlineOnlyMessages(messageList string) {
-	log.ZInfo(ctx, "OnRecvOnlineOnlyMessages", "messageList", messageList)
-}
-
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
