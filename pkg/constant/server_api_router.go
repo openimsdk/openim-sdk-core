@@ -83,6 +83,7 @@ const (
 	// group
 	CreateGroupRouter                 = RouterGroup + "/create_group"
 	SetGroupInfoRouter                = RouterGroup + "/set_group_info"
+	SetGroupInfoEXRouter              = RouterGroup + "/set_group_info_ex"
 	JoinGroupRouter                   = RouterGroup + "/join_group"
 	QuitGroupRouter                   = RouterGroup + "/quit_group"
 	GetGroupsInfoRouter               = RouterGroup + "/get_groups_info"

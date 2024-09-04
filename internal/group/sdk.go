@@ -99,15 +99,15 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, groupID string, rule int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
 }
 
 func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
 }
 
 func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
 }
 
 func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
@@ -166,8 +166,8 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
-func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSet) error {
-	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
+func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSetEX) error {
+	if err := util.ApiPost(ctx, constant.SetGroupInfoEXRouter, &group.SetGroupInfoEXReq{GroupInfoForSetEX: groupInfo}, nil); err != nil {
 		return err
 	}
 
