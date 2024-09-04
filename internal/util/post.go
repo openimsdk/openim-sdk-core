@@ -34,7 +34,7 @@ import (
 
 // apiClient is a global HTTP client with a timeout of one minute.
 var apiClient = &http.Client{
-	Timeout: time.Second * 10,
+	Timeout: time.Second * 30,
 }
 
 // ApiResponse represents the standard structure of an API response.
