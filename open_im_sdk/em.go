@@ -251,10 +251,6 @@ func (e *emptyBatchMsgListener) OnRecvOfflineNewMessages(messageList string) {
 
 }
 
-func (e *emptyBatchMsgListener) OnRecvOnlineOnlyMessages(messageList string) {
-
-}
-
 type emptyUserListener struct {
 	ctx context.Context
 }

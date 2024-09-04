@@ -906,14 +906,13 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 }
 
 func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList, conversationChanged, newConversation map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
-	if len(newMessagesList) > 0 {
+	if len(newMessagesList) == 0 {
 		log.ZWarn(ctx, "newMessagesList is empty", errs.New("newMessagesList is empty"))
 		return
 	}
 
 	sort.Sort(newMessagesList)
 	var needNotificationMsgList sdk_struct.NewMsgList
-	var onlineOnlyNotificationMsgList sdk_struct.NewMsgList
 
 	// offline
 	if c.GetBackground() {
@@ -946,13 +945,8 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 			}
 
 			if _, ok := onlineMsg[onlineMsgKey{ClientMsgID: w.ClientMsgID, ServerMsgID: w.ServerMsgID}]; ok {
-				onlineOnlyNotificationMsgList = append(onlineOnlyNotificationMsgList, w)
-			} else {
 				needNotificationMsgList = append(needNotificationMsgList, w)
 			}
-		}
-		if len(onlineOnlyNotificationMsgList) != 0 {
-			c.batchMsgListener().OnRecvOnlineOnlyMessages(utils.StructToJsonString(onlineOnlyNotificationMsgList))
 		}
 
 		if len(needNotificationMsgList) != 0 {
