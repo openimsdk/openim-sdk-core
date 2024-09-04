@@ -685,22 +685,21 @@ func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string
 		queryUserIDs = append(queryUserIDs, unFind...)
 	}
 
-	members, err := g.GetDesignatedGroupMembers(ctx, groupID, queryUserIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, member := range members {
-		info := &sdk_struct.BasicInfo{
-			Nickname: member.Nickname,
-			FaceURL:  member.FaceURL,
+	if len(queryUserIDs) != 0 {
+		members, err := g.GetDesignatedGroupMembers(ctx, groupID, queryUserIDs)
+		if err != nil {
+			return nil, err
 		}
 
-		res[member.UserID] = info
-		groupMap.Store(member.UserID, info)
-	}
+		for _, member := range members {
+			info := &sdk_struct.BasicInfo{
+				Nickname: member.Nickname,
+				FaceURL:  member.FaceURL,
+			}
 
-	if len(members) != 0 {
+			res[member.UserID] = info
+			groupMap.Store(member.UserID, info)
+		}
 		g.groupMemberCache.Store(groupID, groupMap)
 	}
 
