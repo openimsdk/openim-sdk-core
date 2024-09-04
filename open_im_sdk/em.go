@@ -17,6 +17,7 @@ package open_im_sdk
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/tools/log"
 )
@@ -247,6 +248,10 @@ func (e *emptyBatchMsgListener) OnRecvNewMessages(messageList string) {
 }
 
 func (e *emptyBatchMsgListener) OnRecvOfflineNewMessages(messageList string) {
+
+}
+
+func (e *emptyBatchMsgListener) OnRecvOnlineOnlyMessages(messageList string) {
 
 }
 

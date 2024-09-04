@@ -314,6 +314,9 @@ func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
 func (b *BatchMessageCallback) OnRecvOfflineNewMessages(messageList string) {
 	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
 }
+func (b *BatchMessageCallback) OnRecvOnlineOnlyMessages(messageList string) {
+	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
+}
 
 type FriendCallback struct {
 	CallbackWriter
