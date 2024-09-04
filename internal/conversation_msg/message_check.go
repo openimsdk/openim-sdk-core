@@ -23,6 +23,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/tools/log"
@@ -177,34 +178,29 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 			"newSeqList", newSeqList)
 		return
 	}
-	//todo The process of pulling messages needs to be changed to pull based on a list of sequences,
-	// as the current method may cause sequence filling issues. This update is required for versions 3.9 +.
-	var pullMsgResp sdkws.PullMessageBySeqsResp
-	var pullMsgReq sdkws.PullMessageBySeqsReq
-	pullMsgReq.UserID = c.loginUserID
-	var seqRange sdkws.SeqRange
-	seqRange.ConversationID = conversationID
-	seqRange.Begin = newSeqList[0]
-	seqRange.End = newSeqList[len(newSeqList)-1]
-	seqRange.Num = int64(len(newSeqList))
-	pullMsgReq.SeqRanges = append(pullMsgReq.SeqRanges, &seqRange)
-	log.ZDebug(ctx, "conversation pull message,  ", "req", pullMsgReq)
+	var getSeqMessageResp msg.GetSeqMessageResp
+	var getSeqMessageReq msg.GetSeqMessageReq
+	getSeqMessageReq.UserID = c.loginUserID
+	var conversationSeqs msg.ConversationSeqs
+	conversationSeqs.ConversationID = conversationID
+	conversationSeqs.Seqs = newSeqList
+	log.ZDebug(ctx, "conversation pull message,  ", "req", getSeqMessageReq)
 	if notStartTime && !c.LongConnMgr.IsConnected() {
 		return
 	}
-	err = c.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgBySeqList, &pullMsgResp)
+	err = c.SendReqWaitResp(ctx, &getSeqMessageReq, constant.PullMsgBySeqList, &getSeqMessageResp)
 	if err != nil {
 		errHandle(newSeqList, list, err, messageListCallback)
 		log.ZDebug(ctx, "pull SendReqWaitResp failed", err, "req")
 	} else {
-		log.ZDebug(ctx, "syncMsgFromServerSplit pull msg", "resp", pullMsgResp)
-		if pullMsgResp.Msgs == nil {
+		log.ZDebug(ctx, "syncMsgFromServerSplit pull msg", "resp", getSeqMessageResp)
+		if getSeqMessageResp.Msgs == nil {
 			log.ZWarn(ctx, "syncMsgFromServerSplit pull msg is null", errors.New("pull message is null"),
-				"req", pullMsgReq)
+				"req", getSeqMessageResp)
 			return
 		}
-		if v, ok := pullMsgResp.Msgs[conversationID]; ok {
-			c.pullMessageIntoTable(ctx, pullMsgResp.Msgs)
+		if v, ok := getSeqMessageResp.Msgs[conversationID]; ok {
+			c.pullMessageIntoTable(ctx, getSeqMessageResp.Msgs)
 			messageListCallback.IsEnd = v.IsEnd
 
 			if notStartTime {

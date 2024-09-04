@@ -548,7 +548,7 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		return err
 	case constant.GetNewestSeq:
 		fallthrough
-	case constant.PullMsgBySeqList:
+	case constant.PullMsgByRange:
 		fallthrough
 	case constant.SendMsg:
 		fallthrough

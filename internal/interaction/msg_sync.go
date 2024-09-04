@@ -483,7 +483,7 @@ func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]
 		})
 	}
 	resp = &sdkws.PullMessageBySeqsResp{}
-	if err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.PullMsgBySeqList, resp); err != nil {
+	if err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.PullMsgByRange, resp); err != nil {
 		return nil, err
 	}
 	return resp, nil
@@ -497,7 +497,7 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 	seqsList := m.splitSeqs(split, seqsNeedSync)
 	for i := 0; i < len(seqsList); {
 		var pullMsgResp sdkws.PullMessageBySeqsResp
-		err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgBySeqList, &pullMsgResp)
+		err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgByRange, &pullMsgResp)
 		if err != nil {
 			log.ZError(ctx, "syncMsgFromSvrSplit err", err, "pullMsgReq", pullMsgReq)
 			continue
