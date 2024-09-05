@@ -45,18 +45,24 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 			if len(friendIDs) == 0 {
 				return nil
 			}
-			req := &relation.ImportFriendReq{
-				OwnerUserID:   userID,
-				FriendUserIDs: friendIDs,
-			}
-			ctx := m.BuildCtx(ctx)
-			log.ZWarn(ctx, "ImportFriends begin", nil, "len", len(friendIDs))
-			_, err := util.CallApi[relation.ImportFriendResp](ctx, constant.ImportFriendListRouter, req)
-			if err != nil {
-				return err
-			}
-			log.ZWarn(ctx, "ImportFriends end", nil, "len", len(friendIDs))
 
+			for i := 0; i < len(friendIDs); i += config.ApiParamLength {
+				end := i + config.ApiParamLength
+				if end > len(friendIDs) {
+					end = len(friendIDs)
+				}
+				req := &relation.ImportFriendReq{
+					OwnerUserID:   userID,
+					FriendUserIDs: friendIDs[i:end],
+				}
+				ctx := m.BuildCtx(ctx)
+				log.ZWarn(ctx, "ImportFriends begin", nil, "len", len(friendIDs))
+				_, err := util.CallApi[relation.ImportFriendResp](ctx, constant.ImportFriendListRouter, req)
+				if err != nil {
+					return err
+				}
+				log.ZWarn(ctx, "ImportFriends end", nil, "len", len(friendIDs))
+			}
 			return nil
 		})
 	}

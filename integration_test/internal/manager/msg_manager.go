@@ -87,7 +87,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 					fmt.Println("what`s this???")
 				}
 			}
-			log.ZError(ctx, "send over", nil, "userID", userNum)
+			log.ZWarn(ctx, "send over", nil, "userID", userNum)
 			return nil
 		})
 	}

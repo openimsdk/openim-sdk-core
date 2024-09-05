@@ -76,6 +76,7 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(vars.ShouldImportFriends, checker.CheckLoginUsersFriends),
 
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
+		process.NewTask(vars.ShouldCreateGroup, Sleep),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
 
 		process.NewTask(vars.IsLogin, userMng.LoginLastUsers),

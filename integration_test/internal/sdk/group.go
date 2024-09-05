@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -55,8 +56,8 @@ func (s *TestSDK) createGroup(ctx context.Context, memberUserIds []string, group
 	}
 
 	if len(memberUserIds) > 1000 {
-		for i := 1000; i < len(memberUserIds); i += 1000 {
-			end := i + 1000
+		for i := 1000; i < len(memberUserIds); i += config.ApiParamLength {
+			end := i + config.ApiParamLength
 			if end > len(memberUserIds) {
 				end = len(memberUserIds)
 			}

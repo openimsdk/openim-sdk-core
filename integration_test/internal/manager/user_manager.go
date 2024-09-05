@@ -46,12 +46,20 @@ func (t *TestUserManager) registerUsers(ctx context.Context, userIDs ...string) 
 	for _, userID := range userIDs {
 		users = append(users, &sdkws.UserInfo{UserID: userID, Nickname: userID})
 	}
-	if err := t.PostWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
-		Secret: t.GetSecret(),
-		Users:  users,
-	}, nil); err != nil {
-		return err
+
+	for i := 0; i < len(users); i += config.ApiParamLength {
+		end := i + config.ApiParamLength
+		if end > len(users) {
+			end = len(users)
+		}
+		if err := t.PostWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
+			Secret: t.GetSecret(),
+			Users:  users[i:end],
+		}, nil); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
