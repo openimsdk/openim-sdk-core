@@ -184,6 +184,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 	var conversationSeqs msg.ConversationSeqs
 	conversationSeqs.ConversationID = conversationID
 	conversationSeqs.Seqs = newSeqList
+	getSeqMessageReq.Conversations = append(getSeqMessageReq.Conversations, &conversationSeqs)
 	log.ZDebug(ctx, "conversation pull message,  ", "req", getSeqMessageReq)
 	if notStartTime && !c.LongConnMgr.IsConnected() {
 		return
