@@ -550,6 +550,8 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		fallthrough
 	case constant.PullMsgByRange:
 		fallthrough
+	case constant.PullMsgBySeqList:
+		fallthrough
 	case constant.SendMsg:
 		fallthrough
 	case constant.SendSignalMsg:
