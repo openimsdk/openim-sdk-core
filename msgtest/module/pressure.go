@@ -162,7 +162,7 @@ func (p *PressureTester) SelectSampleFromStarEnd(start, end int, percentage floa
 	offlineUserIDs = p.userManager.GenSEUserIDsWithPrefix(end, 2*end-start, OfflineUserPrefix)
 	step := int(1.0 / percentage)
 	for i := start; i < end; i += step {
-		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3_%d", FastenedUserPrefix, i))
+		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s%d", FastenedUserPrefix, i))
 	}
 	singleSampleUserList = sampleReceiver
 	return fastenedUserIDs, sampleReceiver, offlineUserIDs, nil
