@@ -80,7 +80,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						log.ZWarn(ctx, "sendSingleMessages end", nil, "time cost:", time.Since(t))
 						p.IncBar(bar)
 
-						time.Sleep(time.Millisecond * 500)
+						time.Sleep(time.Millisecond * 100)
 
 					}
 				} else {
@@ -137,7 +137,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					log.ZWarn(ctx, "sendGroupMessages end", nil, "time cost:", time.Since(t))
 
 					p.IncBar(bar)
-					time.Sleep(time.Millisecond * 500)
+					time.Sleep(time.Millisecond * 100)
 				}
 			}
 			return nil
