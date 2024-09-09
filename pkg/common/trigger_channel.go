@@ -70,20 +70,20 @@ func TriggerCmdSyncFlag(ctx context.Context, syncFlag int, conversationCh chan C
 	}
 }
 
-func TriggerCmdWakeUp(ch chan Cmd2Value) error {
+func TriggerCmdWakeUpDataSync(ch chan Cmd2Value) error {
 	if ch == nil {
 		return errs.Wrap(ErrChanNil)
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
+	c2v := Cmd2Value{Cmd: constant.CmdWakeUpDataSync, Value: nil}
 	return sendCmd(ch, c2v, timeOut)
 }
 
-func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) error {
-	if ch == nil {
-		return errs.Wrap(ErrChanNil)
-	}
+func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdSyncData, Value: nil, Ctx: ctx}
-	return sendCmd(ch, c2v, timeOut)
+	err := sendCmd(ch, c2v, timeOut)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdSyncData error", err)
+	}
 }
 
 func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
@@ -125,15 +125,6 @@ func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg, Ctx: ctx}
-	return sendCmd(ch, c2v, timeOut)
-}
-
-// seq trigger
-func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
-	if ch == nil {
-		return errs.Wrap(ErrChanNil)
-	}
-	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq, Ctx: ctx}
 	return sendCmd(ch, c2v, timeOut)
 }
 

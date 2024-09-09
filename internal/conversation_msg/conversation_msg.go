@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"sync"
 
@@ -470,7 +471,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 	}
 
-	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
+	log.ZDebug(ctx, "insert msg", "duration", fmt.Sprintf("%dms", time.Since(b)), "len", len(allMsg))
 }
 
 func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {

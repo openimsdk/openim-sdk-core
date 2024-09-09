@@ -118,7 +118,6 @@ type LoginMgr struct {
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
-	heartbeatCmdCh     chan common.Cmd2Value
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	loginMgrCh         chan common.Cmd2Value
 
@@ -439,10 +438,9 @@ func (u *LoginMgr) initResources() {
 		convChanLen = 1000
 	}
 	u.conversationCh = make(chan common.Cmd2Value, convChanLen)
-	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
-	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
 	u.setLoginStatus(LogoutStatus)
 }
@@ -499,8 +497,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 	} else {
 		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
-			_ = common.TriggerCmdWakeUp(u.heartbeatCmdCh)
-			_ = common.TriggerCmdSyncData(ctx, u.conversationCh)
+			_ = common.TriggerCmdWakeUpDataSync(u.pushMsgAndMaxSeqCh)
 		}
 
 		return nil
