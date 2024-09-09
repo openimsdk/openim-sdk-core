@@ -200,7 +200,6 @@ func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 			log.ZWarn(cmd.Ctx, "syncing, ignore wake up event", nil, "cmd", cmd.Cmd, "value", cmd.Value)
 
 		}
-		m.compareSeqsAndBatchSync(cmd.Ctx, cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr, defaultPullNums)
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))
 	}

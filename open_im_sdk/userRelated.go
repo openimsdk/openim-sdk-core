@@ -497,7 +497,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 	} else {
 		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
-			_ = common.TriggerCmdWakeUpDataSync(u.pushMsgAndMaxSeqCh)
+			_ = common.TriggerCmdWakeUpDataSync(ctx, u.pushMsgAndMaxSeqCh)
 		}
 
 		return nil
