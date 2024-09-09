@@ -70,11 +70,11 @@ func TriggerCmdSyncFlag(ctx context.Context, syncFlag int, conversationCh chan C
 	}
 }
 
-func TriggerCmdWakeUpDataSync(ch chan Cmd2Value) error {
+func TriggerCmdWakeUpDataSync(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
 		return errs.Wrap(ErrChanNil)
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdWakeUpDataSync, Value: nil}
+	c2v := Cmd2Value{Cmd: constant.CmdWakeUpDataSync, Value: nil, Ctx: ctx}
 	return sendCmd(ch, c2v, timeOut)
 }
 
