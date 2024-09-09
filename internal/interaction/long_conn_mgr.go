@@ -27,16 +27,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
@@ -88,7 +87,6 @@ type LongConnMgr struct {
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	conversationCh     chan common.Cmd2Value
 	loginMgrCh         chan common.Cmd2Value
-	heartbeatCh        chan common.Cmd2Value
 	closedErr          error
 	ctx                context.Context
 	IsCompression      bool
@@ -110,7 +108,7 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userOnline func(map[string][]int32), heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userOnline func(map[string][]int32), pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{
 		listener:           listener,
 		userOnline:         userOnline,
@@ -127,7 +125,6 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
 	l.ctx = ctx
-	l.heartbeatCh = heartbeatCmdCh
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
@@ -318,8 +315,6 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-ctx.Done():
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
 			return
-		case <-c.heartbeatCh:
-			c.retrieveMaxSeq(ctx)
 		case <-ticker.C:
 			log.ZInfo(ctx, "sendPingMessage", "goroutine ID:", getGoroutineID())
 			c.sendPingMessage(ctx)
@@ -354,51 +349,6 @@ func getGoroutineID() int64 {
 		return 0
 	}
 	return id
-}
-
-func (c *LongConnMgr) retrieveMaxSeq(ctx context.Context) {
-	if c.conn == nil {
-		return
-	}
-	var m sdkws.GetMaxSeqReq
-	m.UserID = ccontext.Info(ctx).UserID()
-	opID := utils.OperationIDGenerator()
-	sCtx := ccontext.WithOperationID(c.ctx, opID)
-	log.ZInfo(sCtx, "retrieveMaxSeq start", "goroutine ID:", getGoroutineID())
-	data, err := proto.Marshal(&m)
-	if err != nil {
-		log.ZError(sCtx, "proto.Marshal", err)
-		return
-	}
-	req := &GeneralWsReq{
-		ReqIdentifier: constant.GetNewestSeq,
-		SendID:        m.UserID,
-		OperationID:   opID,
-		Data:          data,
-	}
-	resp, err := c.sendAndWaitResp(req)
-	if err != nil {
-		log.ZError(sCtx, "sendAndWaitResp", err)
-		_ = c.close()
-		time.Sleep(time.Second * 1)
-		return
-	} else {
-		if resp.ErrCode != 0 {
-			log.ZError(sCtx, "retrieveMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
-		}
-		var wsSeqResp sdkws.GetMaxSeqResp
-		err = proto.Unmarshal(resp.Data, &wsSeqResp)
-		if err != nil {
-			log.ZError(sCtx, "proto.Unmarshal", err)
-		}
-		var cmd sdk_struct.CmdMaxSeqToMsgSync
-		cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
-
-		err := common.TriggerCmdMaxSeq(sCtx, &cmd, c.pushMsgAndMaxSeqCh)
-		if err != nil {
-			log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
-		}
-	}
 }
 
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {

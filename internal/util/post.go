@@ -66,9 +66,9 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	defer func(start time.Time) {
 		elapsed := time.Since(start).Milliseconds()
 		if err == nil {
-			log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", fmt.Sprintf("%dms", elapsed))
+			log.ZDebug(ctx, "CallApi", "duration", fmt.Sprintf("%dms", elapsed), "api", api, "state", "success")
 		} else {
-			log.ZError(ctx, "CallApi", err, "api", api, "state", "failed", "cost time", fmt.Sprintf("%dms", elapsed))
+			log.ZError(ctx, "CallApi", err, "duration", fmt.Sprintf("%dms", elapsed), "api", api, "state", "failed")
 		}
 	}(time.Now())
 
