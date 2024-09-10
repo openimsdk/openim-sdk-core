@@ -17,15 +17,12 @@ package user
 import (
 	"context"
 	"fmt"
-
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	authPb "github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/sdkws"
 	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
@@ -153,37 +150,6 @@ func (u *User) initSyncer() {
 	)
 }
 
-//func (u *User) equal(a, b *model_struct.LocalUser) bool {
-//	if a.CreateTime != b.CreateTime {
-//		log.ZDebug(context.Background(), "user equal", "a", a.CreateTime, "b", b.CreateTime)
-//	}
-//	if a.UserID != b.UserID {
-//		log.ZDebug(context.Background(), "user equal", "a", a.UserID, "b", b.UserID)
-//	}
-//	if a.Ex != b.Ex {
-//		log.ZDebug(context.Background(), "user equal", "a", a.Ex, "b", b.Ex)
-//	}
-//
-//	if a.Nickname != b.Nickname {
-//		log.ZDebug(context.Background(), "user equal", "a", a.Nickname, "b", b.Nickname)
-//	}
-//	if a.FaceURL != b.FaceURL {
-//		log.ZDebug(context.Background(), "user equal", "a", a.FaceURL, "b", b.FaceURL)
-//	}
-//	if a.AttachedInfo != b.AttachedInfo {
-//		log.ZDebug(context.Background(), "user equal", "a", a.AttachedInfo, "b", b.AttachedInfo)
-//	}
-//	if a.GlobalRecvMsgOpt != b.GlobalRecvMsgOpt {
-//		log.ZDebug(context.Background(), "user equal", "a", a.GlobalRecvMsgOpt, "b", b.GlobalRecvMsgOpt)
-//	}
-//	if a.AppMangerLevel != b.AppMangerLevel {
-//		log.ZDebug(context.Background(), "user equal", "a", a.AppMangerLevel, "b", b.AppMangerLevel)
-//	}
-//	return a.UserID == b.UserID && a.Nickname == b.Nickname && a.FaceURL == b.FaceURL &&
-//		a.CreateTime == b.CreateTime && a.AttachedInfo == b.AttachedInfo &&
-//		a.Ex == b.Ex && a.GlobalRecvMsgOpt == b.GlobalRecvMsgOpt && a.AppMangerLevel == b.AppMangerLevel
-//}
-
 // DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "user notification", "msg", *msg)
@@ -221,21 +187,6 @@ func (u *User) userInfoUpdatedNotification(ctx context.Context, msg *sdkws.MsgDa
 	}
 }
 
-// userStatusChangeNotification get subscriber status change callback
-//func (u *User) userStatusChangeNotification(ctx context.Context, msg *sdkws.MsgData) {
-//	log.ZDebug(ctx, "userStatusChangeNotification", "msg", *msg)
-//	tips := sdkws.UserStatusChangeTips{}
-//	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
-//		log.ZError(ctx, "comm.UnmarshalTips failed", err, "msg", msg.Content)
-//		return
-//	}
-//	if tips.FromUserID == u.loginUserID {
-//		log.ZDebug(ctx, "self terminal login", "tips", tips)
-//		return
-//	}
-//	u.SyncUserStatus(ctx, tips.FromUserID, tips.Status, tips.PlatformID)
-//}
-
 // userCommandAddNotification handle notification when user add favorite
 func (u *User) userCommandAddNotification(ctx context.Context, msg *sdkws.MsgData) {
 	log.ZDebug(ctx, "userCommandAddNotification", "msg", *msg)
@@ -271,11 +222,11 @@ func (u *User) userCommandUpdateNotification(ctx context.Context, msg *sdkws.Msg
 
 // GetUsersInfoFromSvr retrieves user information from the server.
 func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
-	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, userPb.GetDesignateUsersReq{UserIDs: userIDs})
+	users, err := u.getUsersInfo(ctx, userIDs)
 	if err != nil {
 		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromSvr failed")
 	}
-	return datautil.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
+	return datautil.Batch(ServerUserToLocalUser, users), nil
 }
 
 // GetSingleUserFromSvr retrieves user information from the server.
@@ -309,8 +260,7 @@ func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 
 // updateSelfUserInfo updates the user's information.
 func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-	userInfo.UserID = u.loginUserID
-	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoRouter, userPb.UpdateUserInfoReq{UserInfo: userInfo}, nil); err != nil {
+	if err := u.updateUserInfo(ctx, userInfo); err != nil {
 		return err
 	}
 	_ = u.SyncLoginUserInfo(ctx)
@@ -319,27 +269,26 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo)
 
 // updateSelfUserInfoEx updates the user's information with Ex field.
 func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
-	userInfo.UserID = u.loginUserID
-	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoExRouter, userPb.UpdateUserInfoExReq{UserInfo: userInfo}, nil); err != nil {
+	if err := u.updateUserInfoV2(ctx, userInfo); err != nil {
 		return err
 	}
 	_ = u.SyncLoginUserInfo(ctx)
 	return nil
 }
 
-// CRUD user command
+// ProcessUserCommandAdd CRUD user command
 func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *userPb.ProcessUserCommandAddReq) error {
-	if err := util.ApiPost(ctx, constant.ProcessUserCommandAdd, userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+	req := &userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}
+	if err := u.processUserCommandAdd(ctx, req); err != nil {
 		return err
 	}
 	return u.SyncAllCommand(ctx)
-
 }
 
 // ProcessUserCommandDelete delete user's choice
 func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *userPb.ProcessUserCommandDeleteReq) error {
-	if err := util.ApiPost(ctx, constant.ProcessUserCommandDelete, userPb.ProcessUserCommandDeleteReq{UserID: u.loginUserID,
-		Type: userCommand.Type, Uuid: userCommand.Uuid}, nil); err != nil {
+	req := &userPb.ProcessUserCommandDeleteReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid}
+	if err := u.processUserCommandDelete(ctx, req); err != nil {
 		return err
 	}
 	return u.SyncAllCommand(ctx)
@@ -347,20 +296,19 @@ func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *userPb
 
 // ProcessUserCommandUpdate update user's choice
 func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb.ProcessUserCommandUpdateReq) error {
-	if err := util.ApiPost(ctx, constant.ProcessUserCommandUpdate, userPb.ProcessUserCommandUpdateReq{UserID: u.loginUserID,
-		Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}, nil); err != nil {
+	req := &userPb.ProcessUserCommandUpdateReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}
+	if err := u.processUserCommandUpdate(ctx, req); err != nil {
 		return err
 	}
 	return u.SyncAllCommand(ctx)
 }
 
-// ProcessUserCommandGet get user's choice
+// ProcessUserCommandGetAll get user's choice
 func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandInfoResp, error) {
 	localCommands, err := u.DataBase.ProcessUserCommandGetAll(ctx)
 	if err != nil {
 		return nil, err // Handle the error appropriately
 	}
-
 	var result []*userPb.CommandInfoResp
 	for _, localCommand := range localCommands {
 		result = append(result, &userPb.CommandInfoResp{
@@ -370,70 +318,19 @@ func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandI
 			Value:      localCommand.Value,
 		})
 	}
-
 	return result, nil
 }
 
 // ParseTokenFromSvr parses a token from the server.
 func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
-	resp, err := util.CallApi[authPb.ParseTokenResp](ctx, constant.ParseTokenRouter, authPb.ParseTokenReq{})
+	resp, err := u.parseToken(ctx)
+	if err != nil {
+		return 0, err
+	}
 	return resp.ExpireTimeSeconds, err
 }
 
 // GetServerUserInfo retrieves user information from the server.
 func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
-	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, &userPb.GetDesignateUsersReq{UserIDs: userIDs})
-	if err != nil {
-		return nil, err
-	}
-	return resp.UsersInfo, nil
+	return u.getUsersInfo(ctx, userIDs)
 }
-
-// subscribeUsersStatus Presence status of subscribed users.
-//func (u *User) subscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-//	resp, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
-//		UserID:  u.loginUserID,
-//		UserIDs: userIDs,
-//		Genre:   PbConstant.SubscriberUser,
-//	})
-//	if err != nil {
-//		return nil, err
-//	}
-//	return resp.StatusList, nil
-//}
-//
-// unsubscribeUsersStatus Unsubscribe a user's presence.
-//func (u *User) unsubscribeUsersStatus(ctx context.Context, userIDs []string) error {
-//	_, err := util.CallApi[userPb.SubscribeOrCancelUsersStatusResp](ctx, constant.SubscribeUsersStatusRouter, &userPb.SubscribeOrCancelUsersStatusReq{
-//		UserID:  u.loginUserID,
-//		UserIDs: userIDs,
-//		Genre:   PbConstant.Unsubscribe,
-//	})
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-//
-// getSubscribeUsersStatus Get the online status of subscribers.
-//func (u *User) getSubscribeUsersStatus(ctx context.Context) ([]*userPb.OnlineStatus, error) {
-//	resp, err := util.CallApi[userPb.GetSubscribeUsersStatusResp](ctx, constant.GetSubscribeUsersStatusRouter, &userPb.GetSubscribeUsersStatusReq{
-//		UserID: u.loginUserID,
-//	})
-//	if err != nil {
-//		return nil, err
-//	}
-//	return resp.StatusList, nil
-//}
-//
-// getUserStatus Get the online status of users.
-//func (u *User) getUserStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-//	resp, err := util.CallApi[userPb.GetUserStatusResp](ctx, constant.GetUserStatusRouter, &userPb.GetUserStatusReq{
-//		UserID:  u.loginUserID,
-//		UserIDs: userIDs,
-//	})
-//	if err != nil {
-//		return nil, err
-//	}
-//	return resp.StatusList, nil
-//}

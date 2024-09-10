@@ -17,6 +17,7 @@ package conversation_msg
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/tools/errs"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -1074,7 +1075,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID string) (conversationID string, conversationType int32, err error) {
 	g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 	if err != nil {
-		return "", 0, utils.Wrap(err, "get group info error")
+		return "", 0, errs.WrapMsg(err, "get group info error")
 	}
 	switch g.GroupType {
 	case constant.NormalGroup:

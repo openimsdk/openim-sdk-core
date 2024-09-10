@@ -78,13 +78,3 @@ var Platform2class = map[string]string{
 	OSXPlatformStr:     TerminalPC,
 	LinuxPlatformStr:   TerminalPC,
 }
-
-func PlatformIDToName(num int) string {
-	return PlatformID2Name[num]
-}
-func PlatformNameToID(name string) int {
-	return PlatformName2ID[name]
-}
-func PlatformNameToClass(name string) string {
-	return Platform2class[name]
-}

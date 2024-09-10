@@ -640,7 +640,7 @@ func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map
 			v1.SendTime = v.SendTime
 			err := c.db.UpdateMessage(ctx, conversationID, v1)
 			if err != nil {
-				return utils.Wrap(err, "BatchUpdateMessageList failed")
+				return errs.WrapMsg(err, "BatchUpdateMessageList failed")
 			}
 			if latestMsg.ClientMsgID == v.ClientMsgID {
 				latestMsg.ServerMsgID = v.ServerMsgID

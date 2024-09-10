@@ -250,7 +250,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 
 	// Set the end time for the search; if SearchTimePosition is 0, use the current timestamp
 	if searchParam.SearchTimePosition == 0 {
-		endTime = utils.GetCurrentTimestampBySecond()
+		endTime = time.Now().Unix()
 	} else {
 		endTime = searchParam.SearchTimePosition
 	}

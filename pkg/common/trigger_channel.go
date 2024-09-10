@@ -84,18 +84,6 @@ func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) error {
 	return sendCmd(ch, c2v, timeOut)
 }
 
-func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return errs.Wrap(ErrChanNil)
-	}
-	c2v := Cmd2Value{
-		Cmd:   constant.CmSyncReactionExtensions,
-		Value: node,
-	}
-
-	return sendCmd(conversationCh, c2v, timeOut)
-}
-
 func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conversationCh chan<- Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,

@@ -109,9 +109,7 @@ func (r *Relation) doNotification(ctx context.Context, msg *sdkws.MsgData) error
 			return r.SyncAllBlackList(ctx)
 		}
 	case constant.FriendsInfoUpdateNotification:
-
 		var tips sdkws.FriendsInfoUpdateTips
-
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}

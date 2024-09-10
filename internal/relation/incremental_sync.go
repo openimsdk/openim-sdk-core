@@ -3,8 +3,6 @@ package relation
 import (
 	"context"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/protocol/relation"
@@ -24,7 +22,7 @@ func (r *Relation) IncrSyncFriends(ctx context.Context) error {
 			return r.db.GetAllFriendList(ctx)
 		},
 		Server: func(version *model_struct.LocalVersionSync) (*relation.GetIncrementalFriendsResp, error) {
-			return util.CallApi[relation.GetIncrementalFriendsResp](ctx, constant.GetIncrementalFriends, &relation.GetIncrementalFriendsReq{
+			return r.getIncrementalFriends(ctx, &relation.GetIncrementalFriendsReq{
 				UserID:    r.loginUserID,
 				Version:   version.Version,
 				VersionID: version.VersionID,
@@ -52,7 +50,7 @@ func (r *Relation) IncrSyncFriends(ctx context.Context) error {
 			return r.friendSyncer.FullSync(ctx, r.loginUserID)
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := util.CallApi[relation.GetFullFriendUserIDsResp](ctx, constant.GetFullFriendUserIDs, &relation.GetFullFriendUserIDsReq{
+			resp, err := r.getFullFriendUserIDs(ctx, &relation.GetFullFriendUserIDsReq{
 				UserID: r.loginUserID,
 			})
 			if err != nil {

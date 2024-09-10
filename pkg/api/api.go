@@ -12,9 +12,13 @@ import (
 )
 
 var (
+	ParseToken = api[auth.ParseTokenReq, auth.ParseTokenResp]("/auth/parse_token")
+)
+
+var (
 	GetUsersInfo             = api[user.GetDesignateUsersReq, user.GetDesignateUsersResp]("/user/get_users_info")
-	UpdateSelfUserInfo       = api[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
-	UpdateSelfUserInfoEx     = api[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
+	UpdateUserInfo           = api[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
+	UpdateUserInfoEx         = api[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
 	SetGlobalRecvMessageOpt  = api[user.SetGlobalRecvMessageOptReq, user.SetGlobalRecvMessageOptResp]("/user/set_global_msg_recv_opt")
 	ProcessUserCommandAdd    = api[user.ProcessUserCommandAddReq, user.ProcessUserCommandAddResp]("/user/process_user_command_add")
 	ProcessUserCommandDelete = api[user.ProcessUserCommandDeleteReq, user.ProcessUserCommandDeleteResp]("/user/process_user_command_delete")

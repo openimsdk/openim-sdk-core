@@ -276,7 +276,7 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	switch x := recover.(type) {
 	case string:
 		log.ZError(ctx, "STRINGERR", nil, "r", x)
-		temp = utils.Wrap(errors.New(x), "").Error()
+		temp = errs.WrapMsg(errors.New(x), "").Error()
 	case error:
 		//buf := make([]byte, 1<<20)
 		//runtime.Stack(buf, true)
@@ -284,7 +284,7 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 		temp = x.Error()
 	default:
 		log.ZError(ctx, "unknown panic", nil, "r", x)
-		temp = utils.Wrap(errors.New("unknown panic"), "").Error()
+		temp = errs.WrapMsg(errors.New("unknown panic"), "").Error()
 	}
 	if r.callback != nil {
 		r.callback.SetErrCode(100).SetErrMsg(temp).SendMessage()

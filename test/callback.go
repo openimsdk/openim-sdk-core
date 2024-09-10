@@ -12,27 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testv2
+package test
 
-import (
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
-	"path/filepath"
-	"testing"
-)
+import "fmt"
 
-func TestUploadFile(t *testing.T) {
+type TestSendMsg struct {
+}
 
-	fp := `C:\Users\openIM\Desktop\dist.zip`
+func (TestSendMsg) OnSuccess(data string) {
+	fmt.Println("testSendImg, OnSuccess, output: ", data)
+}
 
-	resp, err := open_im_sdk.UserForSDK.File().UploadFile(ctx, &file.UploadFileReq{
-		Filepath: fp,
-		Name:     filepath.Base(fp),
-		Cause:    "test",
-	}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(resp)
+func (TestSendMsg) OnError(code int32, msg string) {
+	fmt.Println("testSendImg, OnError, ", code, msg)
+}
 
+func (TestSendMsg) OnProgress(progress int) {
+	fmt.Println("progress: ", progress)
 }

@@ -54,7 +54,7 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 // application/json; charset=utf-8
 func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
 	c, err := postLogic(url, data, token)
-	return c, utils.Wrap(err, " post")
+	return c, errs.WrapMsg(err, " post")
 	return retry(url, data, token, 1, 10*time.Second, postLogic)
 }
 
@@ -65,12 +65,12 @@ func Post2ApiForRead(url string, data interface{}, token string) (content []byte
 func postLogic(url string, data interface{}, token string) (content []byte, err error) {
 	jsonStr, err := json.Marshal(data)
 	if err != nil {
-		return nil, utils.Wrap(err, "marshal failed, url")
+		return nil, errs.WrapMsg(err, "marshal failed, url")
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		return nil, utils.Wrap(err, "newRequest failed, url")
+		return nil, errs.WrapMsg(err, "newRequest failed, url")
 	}
 	req.Close = true
 	req.Header.Add("content-type", "application/json")
@@ -88,15 +88,15 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 	client := &http.Client{Timeout: 60 * time.Second, Transport: tp}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, utils.Wrap(err, "client.Do failed, url")
+		return nil, errs.WrapMsg(err, "client.Do failed, url")
 	}
 	if resp.StatusCode != 200 {
-		return nil, utils.Wrap(errors.New(resp.Status), "status code failed "+url)
+		return nil, errs.WrapMsg(errors.New(resp.Status), "status code failed "+url)
 	}
 	defer resp.Body.Close()
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, utils.Wrap(err, "ioutil.ReadAll failed, url")
+		return nil, errs.WrapMsg(err, "ioutil.ReadAll failed, url")
 	}
 	//	fmt.Println(url, "Marshal data: ", string(jsonStr), string(result))
 	return result, nil
