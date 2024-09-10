@@ -50,15 +50,15 @@ func Test_HideConversation(t *testing.T) {
 	}
 }
 
-func Test_GetConversationRecvMessageOpt(t *testing.T) {
-	opts, err := open_im_sdk.UserForSDK.Conversation().GetConversationRecvMessageOpt(ctx, []string{"asdasd"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, v := range opts {
-		t.Log(v.ConversationID, *v.Result)
-	}
-}
+//func Test_GetConversationRecvMessageOpt(t *testing.T) {
+//	opts, err := open_im_sdk.UserForSDK.Conversation().GetConversationRecvMessageOpt(ctx, []string{"asdasd"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	for _, v := range opts {
+//		t.Log(v.ConversationID, *v.Result)
+//	}
+//}
 
 func Test_GetGlobalRecvMessageOpt(t *testing.T) {
 	opt, err := open_im_sdk.UserForSDK.Conversation().GetOneConversation(ctx, 2, "1772958501")

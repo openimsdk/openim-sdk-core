@@ -23,7 +23,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
-	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
@@ -776,11 +775,6 @@ func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_st
 		// log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
 		c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
-}
-
-type messageKvList struct {
-	ClientMsgID   string                      `json:"clientMsgID"`
-	ChangedKvList []*sdk.SingleTypeKeyInfoSum `json:"changedKvList"`
 }
 
 func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {

@@ -81,7 +81,6 @@ var (
 	MuteGroup                      = api[group.MuteGroupReq, group.MuteGroupResp]("/group/mute_group")
 	CancelMuteGroup                = api[group.CancelMuteGroupReq, group.CancelMuteGroupResp]("/group/cancel_mute_group")
 	SetGroupMemberInfo             = api[group.SetGroupMemberInfoReq, group.SetGroupMemberInfoResp]("/group/set_group_member_info")
-	GetGroupAbstractInfo           = api[group.GetGroupAbstractInfoReq, group.GetGroupAbstractInfoResp]("/group/get_group_abstract_info")
 	GetIncrementalJoinGroup        = api[group.GetIncrementalJoinGroupReq, group.GetIncrementalJoinGroupResp]("/group/get_incremental_join_groups")
 	GetIncrementalGroupMemberBatch = api[group.BatchGetIncrementalGroupMemberReq, group.BatchGetIncrementalGroupMemberResp]("/group/get_incremental_group_members_batch")
 	GetFullJoinedGroupIDs          = api[group.GetFullJoinGroupIDsReq, group.GetFullJoinGroupIDsResp]("/group/get_full_join_group_ids")
