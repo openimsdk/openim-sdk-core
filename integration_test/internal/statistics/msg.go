@@ -29,11 +29,11 @@ func MsgConsuming(ctx context.Context) {
 
 		sec := msg.CostTime
 		switch {
-		case sec < config.ReceiveMsgTimeThresholdLow*int64(time.Millisecond):
+		case sec < config.ReceiveMsgTimeThresholdLow*1000:
 			low++
-		case sec < config.ReceiveMsgTimeThresholdMedium*int64(time.Millisecond):
+		case sec < config.ReceiveMsgTimeThresholdMedium*1000:
 			mid++
-		case sec < config.ReceiveMsgTimeThresholdHigh*int64(time.Millisecond):
+		case sec < config.ReceiveMsgTimeThresholdHigh*1000:
 			high++
 		default:
 			outHigh++
