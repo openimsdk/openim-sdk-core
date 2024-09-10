@@ -11,7 +11,7 @@ const (
 )
 
 const (
-	SleepSec          = 300
+	SleepSec          = 30
 	CheckWaitSec      = 5 // check wait sec
 	BarRemoveWaiteSec = 1 // progress bar remove wait second
 )
