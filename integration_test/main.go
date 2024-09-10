@@ -71,7 +71,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		process.NewTask(true, userMng.InitAllSDK),
 		process.NewTask(vars.IsLogin, userMng.LoginByRate),
 		process.NewTask(vars.IsLogin, checker.CheckLoginByRateNum),
-		process.NewTask(vars.IsLogin, Sleep), // wait server push synchronize online status
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
 		process.NewTask(vars.ShouldImportFriends, checker.CheckLoginUsersFriends),
