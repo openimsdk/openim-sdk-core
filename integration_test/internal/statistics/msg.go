@@ -56,10 +56,10 @@ func MsgConsuming(ctx context.Context) {
 	statStr := `
 statistic msg count: %d
 statistic send msg count: %d
-receive msg in %d ms count: %d
-receive msg in %d ms count: %d
-receive msg in %d ms count: %d
-receive messages within %d s or more: %d ms
+receive msg in %d s count: %d
+receive msg in %d s count: %d
+receive msg in %d s count: %d
+receive messages within %d s or more: %d
 maximum time to receive messages: %d ms, create: %d, receive: %d, msg: %v
 minimum time to receive messages: %d ms, create: %d, receive: %d, msg: %v
 average time consuming: %.2f ms
