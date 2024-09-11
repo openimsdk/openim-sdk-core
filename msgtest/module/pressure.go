@@ -17,10 +17,10 @@ import (
 
 var (
 	TESTIP        = "127.0.0.1"
-	APIADDR       = fmt.Sprintf("http://%v:20002", TESTIP)
-	WSADDR        = fmt.Sprintf("ws://%v:20001", TESTIP)
+	APIADDR       = fmt.Sprintf("http://%v:10002", TESTIP)
+	WSADDR        = fmt.Sprintf("ws://%v:10001", TESTIP)
 	SECRET        = "openIM123"
-	MANAGERUSERID = "openIMAdmin"
+	MANAGERUSERID = "imAdmin"
 
 	PLATFORMID = constant.AndroidPlatformID
 	LogLevel   = uint32(5)
@@ -56,7 +56,7 @@ const (
 	FiftyGroupNum           = 100
 	TenGroupNum             = 1000
 
-	FastenedUserPrefix  = "f"
+	FastenedUserPrefix  = "test_v3_u"
 	OfflineUserPrefix   = "o"
 	RecvMsgPrefix       = "recv_msg_prefix"
 	singleMsgRecvPrefix = "single_msg_recv_prefix"
@@ -109,12 +109,14 @@ func (p *PressureTester) FormatGroupInfo(ctx context.Context) {
 func (p *PressureTester) GetSingleSendNum() int64 {
 	return p.singleSendNum.Load()
 }
-func NewPressureTester() *PressureTester {
+func NewPressureTester() (*PressureTester, error) {
 	metaManager := NewMetaManager(APIADDR, SECRET, MANAGERUSERID)
-	metaManager.initToken()
+	if err := metaManager.initToken(); err != nil {
+		return nil, err
+	}
 	serverTime, err := metaManager.GetServerTime()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	log.ZWarn(context.Background(), "server time is", nil, "serverTime", serverTime, "current time",
 		utils.GetCurrentTimestampByMill(), "time offset", serverTime-utils.GetCurrentTimestampByMill())
@@ -124,7 +126,7 @@ func NewPressureTester() *PressureTester {
 		msgSender:         make(map[string]*SendMsgUser),
 		groupRandomSender: make(map[string][]string), groupOwnerUserID: make(map[string]string),
 		groupMemberNum: make(map[string]int),
-		timeOffset:     serverTime - utils.GetCurrentTimestampByMill()}
+		timeOffset:     serverTime - utils.GetCurrentTimestampByMill()}, nil
 }
 
 func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs []string) {
@@ -160,7 +162,7 @@ func (p *PressureTester) SelectSampleFromStarEnd(start, end int, percentage floa
 	offlineUserIDs = p.userManager.GenSEUserIDsWithPrefix(end, 2*end-start, OfflineUserPrefix)
 	step := int(1.0 / percentage)
 	for i := start; i < end; i += step {
-		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s_testv3_%d", FastenedUserPrefix, i))
+		sampleReceiver = append(sampleReceiver, fmt.Sprintf("%s%d", FastenedUserPrefix, i))
 	}
 	singleSampleUserList = sampleReceiver
 	return fastenedUserIDs, sampleReceiver, offlineUserIDs, nil

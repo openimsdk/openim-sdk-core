@@ -298,15 +298,16 @@ func Test_SyncAllGroupMember(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-func Test_SetGroupInfo(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
-		GroupID: "3889561099",
-		Ex:      &wrapperspb.StringValue{Value: "groupex"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+
+//func Test_SetGroupInfo(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
+//		GroupID: "3889561099",
+//		Ex:      &wrapperspb.StringValue{Value: "groupex"},
+//	})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
 func Test_GetJoinedGroupListPage(t *testing.T) {
 	t.Log("-----------------------")

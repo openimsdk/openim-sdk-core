@@ -16,6 +16,8 @@ package group
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
@@ -47,6 +49,7 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 		conversationCh: conversationCh,
 	}
 	g.initSyncer()
+	g.groupMemberCache = cache.NewCache[string, *cache.Cache[string, *sdk_struct.BasicInfo]]()
 	return g
 }
 
@@ -65,6 +68,8 @@ type Group struct {
 
 	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService
+
+	groupMemberCache *cache.Cache[string, *cache.Cache[string, *sdk_struct.BasicInfo]]
 }
 
 func (g *Group) initSyncer() {

@@ -1,13 +1,15 @@
 package sdk_user_simulator
 
 import (
+	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 	"math/rand"
-	"time"
 )
 
 type conversationCallBack struct {
@@ -87,9 +89,15 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	var sm sdk_struct.MsgStruct
 	_ = utils.JsonStringToStruct(message, &sm)
 
-	if rand.Float64() < config.CheckMsgRate {
+	if rand.Float64() < config.CheckMsgRate && sm.ContentType == constant.Text {
+		rev := utils.GetCurrentTimestampByMill()
+		stm := &vars.StatMsg{
+			CostTime:    rev - sm.CreateTime,
+			ReceiveTime: rev,
+			Msg:         &sm,
+		}
 		select {
-		case vars.MsgConsuming <- time.Since(time.Unix(0, sm.SendTime*int64(time.Millisecond))):
+		case vars.RecvMsgConsuming <- stm:
 		default:
 		}
 	}
@@ -219,12 +227,15 @@ func (testGroupListener) OnGroupDismissed(callbackInfo string) {
 }
 
 type testConnListener struct {
+	UserID string
 }
 
-func (t *testConnListener) OnUserTokenInvalid(errMsg string) {}
+func (t *testConnListener) OnUserTokenInvalid(errMsg string) {
+	log.ZError(context.TODO(), "user token invalid", errs.New("user token invalid").Wrap(), "userID", t.UserID)
+}
 
 func (t *testConnListener) OnUserTokenExpired() {
-
+	log.ZError(context.TODO(), "user token expired", errs.New("user token expired").Wrap(), "userID", t.UserID)
 }
 func (t *testConnListener) OnConnecting() {
 
@@ -235,11 +246,11 @@ func (t *testConnListener) OnConnectSuccess() {
 }
 
 func (t *testConnListener) OnConnectFailed(ErrCode int32, ErrMsg string) {
-
+	log.ZError(context.TODO(), "connect failed", errs.NewCodeError(int(ErrCode), ErrMsg), "userID", t.UserID)
 }
 
 func (t *testConnListener) OnKickedOffline() {
-
+	log.ZError(context.TODO(), "kicked offline", errs.New("kicked offline").Wrap(), "userID", t.UserID)
 }
 
 func (t *testConnListener) OnSelfInfoUpdated(info string) {

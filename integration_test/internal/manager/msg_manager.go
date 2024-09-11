@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"sync/atomic"
+	"time"
 )
 
 type TestMsgManager struct {
@@ -27,30 +30,37 @@ func NewMsgManager(m *MetaManager) *TestMsgManager {
 func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupMiddleSmallLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
 
 	var (
-		total    atomic.Int64
-		progress atomic.Int64
+		total int
+		now   int
 	)
-	total.Add(int64(vars.UserNum * 2))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = vars.LoginUserNum * 2
+	p := progress.FuncNameBarPrint(cctx, gr, now, total)
 
-	m.sendSingleMessages(ctx, gr)
-	m.sendGroupMessages(ctx, gr)
+	m.sendSingleMessages(ctx, gr, p)
+	m.sendGroupMessages(ctx, gr, p)
 	return gr.Wait()
 }
 
 // sendSingleMessages see SendMessages
-func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.Group) {
-	for userNum := 0; userNum < vars.LoginEndUserNum; userNum++ {
+func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
+	for userNum := 0; userNum < vars.LoginUserNum; userNum++ {
+		userNum := userNum
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
+
 			friends, err := testSDK.GetAllFriends(ctx)
 			if err != nil {
 				return err
 			}
+
+			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", "sendSingleMessages", utils.GetUserID(userNum)),
+				0, len(friends)*vars.SingleMessageNum)
+			p.AddBar(bar)
+
 			friends = datautil.ShuffleSlice(friends)
 			for _, friend := range friends {
 				if friend.FriendInfo != nil {
@@ -60,16 +70,24 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						if err != nil {
 							return err
 						}
+						ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+						t := time.Now()
+						log.ZWarn(ctx, "sendSingleMessages begin", nil)
 						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
 						if err != nil {
 							return err
 						}
+						log.ZWarn(ctx, "sendSingleMessages end", nil, "time cost:", time.Since(t))
+						p.IncBar(bar)
+
+						time.Sleep(time.Millisecond * 500)
+
 					}
 				} else {
 					fmt.Println("what`s this???")
 				}
 			}
-			log.ZError(ctx, "send over", nil, "userID", userNum)
+			log.ZWarn(ctx, "send over", nil, "userID", userNum)
 			return nil
 		})
 	}
@@ -77,8 +95,9 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 }
 
 // sendGroupMessages see SendMessages
-func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.Group) {
-	for userNum := 0; userNum < vars.UserNum; userNum++ {
+func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.Group, p *progress.Progress) {
+	for userNum := 0; userNum < vars.LoginUserNum; userNum++ {
+		userNum := userNum
 		ctx := vars.Contexts[userNum]
 		testSDK := sdk.TestSDKs[userNum]
 		gr.Go(func() error {
@@ -88,11 +107,16 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 			}
 			sendGroups := make([]string, 0)
 			for _, group := range groups {
-				if int(group.MemberCount) == vars.UserNum || group.OwnerUserID == testSDK.UserID {
+				if int(group.MemberCount) == vars.LargeGroupMemberNum || group.OwnerUserID == testSDK.UserID {
 					// is larger group or created by oneself
 					sendGroups = append(sendGroups, group.GroupID)
 				}
 			}
+
+			bar := progress.NewRemoveBar(fmt.Sprintf("%s:%s", "sendGroupMessages", utils.GetUserID(userNum)),
+				0, len(sendGroups)*vars.GroupMessageNum)
+			p.AddBar(bar)
+
 			sendGroups = datautil.ShuffleSlice(sendGroups)
 			for _, group := range sendGroups {
 				group := group
@@ -102,10 +126,18 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					if err != nil {
 						return err
 					}
+
+					ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
+					t := time.Now()
+					log.ZWarn(ctx, "sendGroupMessages begin", nil)
 					_, err = testSDK.SendGroupMsg(ctx, msg, group)
 					if err != nil {
 						return err
 					}
+					log.ZWarn(ctx, "sendGroupMessages end", nil, "time cost:", time.Since(t))
+
+					p.IncBar(bar)
+					time.Sleep(time.Millisecond * 500)
 				}
 			}
 			return nil

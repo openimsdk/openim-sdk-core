@@ -92,7 +92,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	}
 
 	// Set headers for the request.
-	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "body", string(reqBody))
+	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "token", ctxInfo.Token(), "body", string(reqBody))
 	request.ContentLength = int64(len(reqBody))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("operationID", operationID)

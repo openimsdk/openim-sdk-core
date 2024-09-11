@@ -1,13 +1,10 @@
 package sdk_user_simulator
 
 import (
-	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/errs"
-	"github.com/openimsdk/tools/mcontext"
 	"sync"
 )
 
@@ -21,24 +18,18 @@ func GetRelativeServerTime() int64 {
 	return utils.GetCurrentTimestampByMill() + timeOffset
 }
 
-func InitSDK(ctx context.Context, userID, token string, cf sdk_struct.IMConfig) (context.Context, *open_im_sdk.LoginMgr, error) {
+func InitSDK(userID string, cf sdk_struct.IMConfig) (*open_im_sdk.LoginMgr, error) {
 	userForSDK := open_im_sdk.NewLoginMgr()
 	var testConnListener testConnListener
+	testConnListener.UserID = userID
 	isInit := userForSDK.InitSDK(cf, &testConnListener)
 	if !isInit {
-		return nil, nil, errs.New("sdk init failed").Wrap()
+		return nil, errs.New("sdk init failed").Wrap()
 	}
 
 	SetListener(userForSDK, userID)
 
-	ctx = userForSDK.Context()
-	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
-	ctx = mcontext.SetOpUserID(ctx, userID)
-	if err := userForSDK.InitMgr(ctx, userID, token); err != nil {
-		return nil, nil, err
-	}
-
-	return ctx, userForSDK, nil
+	return userForSDK, nil
 }
 
 func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {

@@ -57,6 +57,8 @@ const (
 
 	//Maximum number of reconnection attempts
 	maxReconnectAttempts = 300
+
+	sendAndWaitTime = time.Second * 10
 )
 
 const (
@@ -360,7 +362,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 		select {
 		case resp := <-tempChan:
 			return resp, nil
-		case <-time.After(time.Second * 10):
+		case <-time.After(sendAndWaitTime):
 			return nil, sdkerrs.ErrNetworkTimeOut
 		}
 

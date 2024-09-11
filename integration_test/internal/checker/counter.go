@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/stringutil"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -58,15 +57,14 @@ func (c *CounterChecker[T, K]) Check(ctx context.Context) error {
 
 	var (
 		gr, cctx = reerrgroup.WithContext(ctx, c.GoroutineLimit)
-		total    atomic.Int64
-		progress atomic.Int64
+		total    int
+		now      int
 
 		checkers = make(map[K]*Counter, len(sdk.TestSDKs))
 		mapLock  = sync.RWMutex{}
 	)
-
-	total.Add(int64(len(c.LoopSlice)))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = len(c.LoopSlice)
+	progress.FuncBarPrint(cctx, stringutil.GetFuncName(1), gr, now, total)
 
 	for _, t := range c.LoopSlice {
 		t := t
@@ -110,14 +108,13 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 
 	var (
 		gr, cctx = reerrgroup.WithContext(ctx, c.GoroutineLimit)
-		total    atomic.Int64
-		progress atomic.Int64
+		total    int
+		now      int
 
 		checkers = make(map[K]*Counter, len(sdk.TestSDKs))
 	)
-
-	total.Add(int64(len(c.LoopSlice)))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = len(c.LoopSlice)
+	p := progress.FuncBarPrint(cctx, stringutil.GetFuncName(1), gr, now, total)
 
 	for _, t := range c.LoopSlice {
 		t := t
@@ -126,24 +123,30 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 		gr.Go(func() error {
 			key := c.GetKey(t)
 			correctNum := c.CalCorrectCount(key)
+
+			bar := progress.NewRemoveBar(fmt.Sprintf("%v", key), 0, correctNum)
+			p.AddBar(bar)
+
 			for !isEqual {
 
 				totalNum, err := c.GetTotalCount(ctx, t)
 				if err != nil {
 					return err
 				}
+
+				p.SetBarNow(bar, totalNum)
+
 				isEqual = totalNum == correctNum
 				if !isEqual {
 					checkCount++
 
-					logStr := fmt.Sprintf("check num:%d, %s un correct. %s: %s,%s: %d, %s: %d",
-						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName),
-						c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
-
-					fmt.Println(logStr)
 					log.ZWarn(ctx, fmt.Sprintf("check num:%d, %s un correct",
 						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
 						nil, c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
+				} else {
+					log.ZInfo(ctx, fmt.Sprintf("check num:%d, %s correct",
+						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
+						c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
 				}
 				time.Sleep(config.CheckWaitSec * time.Second)
 			}

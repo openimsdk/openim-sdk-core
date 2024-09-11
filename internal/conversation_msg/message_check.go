@@ -376,14 +376,11 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 	allSenders := datautil.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
 		return e.SendID
 	})
-	localGroupMemberInfo, err := c.group.GetSpecifiedGroupMembersInfo(ctx, lc.GroupID, datautil.Distinct(allSenders))
+	groupMap, err := c.group.GetGroupMemberNameAndFaceURL(ctx, lc.GroupID, datautil.Distinct(allSenders))
 	if err != nil {
 		log.ZError(ctx, "get group member info err", err)
 		return
 	}
-	groupMap := datautil.SliceToMap(localGroupMemberInfo, func(e *model_struct.LocalGroupMember) string {
-		return e.UserID
-	})
 	for _, chatLog := range allMessage {
 		if g, ok := groupMap[chatLog.SendID]; ok { // If group member info is successfully retrieved
 			if g.FaceURL != "" && g.Nickname != "" {

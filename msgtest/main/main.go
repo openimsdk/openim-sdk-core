@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	log2 "log"
 	"net/http"
 	_ "net/http/pprof"
@@ -99,9 +100,11 @@ func main() {
 			log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 		}()
 	}
-	p := module.NewPressureTester()
+	p, err := module.NewPressureTester()
+	if err != nil {
+		fmt.Println(err)
+	}
 	var f, r, o []string
-	var err error
 	if start != 0 {
 		f, r, o, err = p.SelectSampleFromStarEnd(start, end, singleSamplingRate)
 	} else {
