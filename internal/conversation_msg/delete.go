@@ -180,26 +180,33 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}})
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 	}
+
 	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
+
 	var latestMsg sdk_struct.MsgStruct
+	// Convert the latest message in the conversation table.
 	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
+
 	if latestMsg.ClientMsgID == clientMsgID {
-		log.ZDebug(ctx, "latesetMsg deleted", "seq", latestMsg.Seq, "clientMsgID", latestMsg.ClientMsgID)
-		msgs, err := c.db.GetMessageListNoTime(ctx, conversationID, 1, false)
+		log.ZDebug(ctx, "latestMsg deleted", "seq", latestMsg.Seq, "clientMsgID", latestMsg.ClientMsgID)
+		msg, err := c.db.GetLatestActiveMessage(ctx, conversationID, false)
 		if err != nil {
 			return err
 		}
+
 		latestMsgSendTime := latestMsg.SendTime
 		latestMsgStr := ""
-		if len(msgs) > 0 {
-			copier.Copy(&latestMsg, msgs[0])
+		if len(msg) > 0 {
+			copier.Copy(&latestMsg, msg[0])
+
 			err := c.msgConvert(&latestMsg)
 			if err != nil {
-				log.ZError(ctx, "parsing data error", err, latestMsg)
+				log.ZError(ctx, "parsing data error", err, "latest Msg is", latestMsg)
 			}
+
 			latestMsgStr = utils.StructToJsonString(latestMsg)
 			latestMsgSendTime = latestMsg.SendTime
 		}

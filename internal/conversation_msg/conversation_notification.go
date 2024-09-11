@@ -125,15 +125,8 @@ func (c *Conversation) doNotificationManager(c2v common.Cmd2Value) {
 
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "notification handling", "conversationID", conversationID, "msgs", msgs)
-		if len(msgs.Msgs) != 0 {
-			lastMsg := msgs.Msgs[len(msgs.Msgs)-1]
-			log.ZDebug(ctx, "SetNotificationSeq", "conversationID", conversationID, "seq", lastMsg.Seq)
-			if lastMsg.Seq != 0 {
-				if err := c.db.SetNotificationSeq(ctx, conversationID, lastMsg.Seq); err != nil {
-					log.ZError(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "lastMsg", lastMsg)
-				}
-			}
-		}
+
+		// First, process all the notifications
 		for _, msg := range msgs.Msgs {
 			if msg.ContentType > constant.FriendNotificationBegin && msg.ContentType < constant.FriendNotificationEnd {
 				c.friend.DoNotification(ctx, msg)
@@ -147,13 +140,26 @@ func (c *Conversation) doNotificationManager(c2v common.Cmd2Value) {
 				c.DoNotification(ctx, msg)
 			}
 		}
+
+		// After all notifications are processed, update the sequence number
+		if len(msgs.Msgs) != 0 {
+			lastMsg := msgs.Msgs[len(msgs.Msgs)-1]
+			log.ZDebug(ctx, "SetNotificationSeq", "conversationID", conversationID, "seq", lastMsg.Seq)
+			if lastMsg.Seq != 0 {
+				if err := c.db.SetNotificationSeq(ctx, conversationID, lastMsg.Seq); err != nil {
+					// Log an error if setting the sequence number fails
+					log.ZError(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "lastMsg", lastMsg)
+				}
+			}
+		}
 	}
+
 }
 
 func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 		if err := c.doNotification(ctx, msg); err != nil {
-			log.ZError(ctx, "DoGroupNotification failed", err)
+			log.ZWarn(ctx, "DoGroupNotification failed", err)
 		}
 	}()
 }
@@ -187,6 +193,7 @@ func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	node := c2v.Value.(common.UpdateConNode)
+	log.ZInfo(ctx, "doUpdateConversation", "node", node)
 	switch node.Action {
 	case constant.AddConOrUpLatMsg:
 		var list []*model_struct.LocalConversation
@@ -206,38 +213,20 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 		} else {
-			// log.Info("this is new conversation", lc)
+			log.ZDebug(ctx, "new conversation", "lc", lc)
 			err4 := c.db.InsertConversation(ctx, &lc)
 			if err4 != nil {
-				// log.Error("internal", "insert new conversation err:", err4.Error())
+				log.ZWarn(ctx, "insert new conversation err", err4)
 			} else {
 				list = append(list, &lc)
 				c.ConversationListener().OnNewConversation(utils.StructToJsonString(list))
 			}
 		}
 
-	case constant.UnreadCountSetZero:
-		if err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
-			log.ZError(ctx, "updateConversationUnreadCountModel err", err, "conversationID", node.ConID)
-		} else {
-			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
-			if err == nil {
-				c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
-			} else {
-				log.ZError(ctx, "getTotalUnreadMsgCountDB err", err)
-			}
-
-		}
-	case constant.IncrUnread:
-		err := c.db.IncrConversationUnreadCount(ctx, node.ConID)
-		if err != nil {
-			// log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
-			return
-		}
 	case constant.TotalUnreadMessageChanged:
 		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 		if err != nil {
-			// log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+			log.ZWarn(ctx, "GetTotalUnreadMsgCountDB err", err)
 		} else {
 			c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
@@ -312,10 +301,10 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		cidList := node.Args.([]string)
 		cLists, err := c.db.GetMultipleConversationDB(ctx, cidList)
 		if err != nil {
-			// log.Error("internal", "getMultipleConversationModel err :", err.Error())
+			log.ZWarn(ctx, "getMultipleConversationModel err", err)
 		} else {
 			if cLists != nil {
-				// log.Info("internal", "getMultipleConversationModel success :", cLists)
+				log.ZDebug(ctx, "getMultipleConversationModel success", "cLists", cLists)
 				c.ConversationListener().OnNewConversation(utils.StructToJsonString(cLists))
 			}
 		}
@@ -325,7 +314,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	case constant.NewConDirect:
 		cidList := node.Args.(string)
-		// log.Debug("internal", "NewConversation", cidList)
+		log.ZDebug(ctx, "NewConversation", "cidList", cidList)
 		c.ConversationListener().OnNewConversation(cidList)
 
 	case constant.ConversationLatestMsgHasRead:
@@ -336,12 +325,12 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		for conversationID, msgIDList := range hasReadMsgList {
 			LocalConversation, err := c.db.GetConversation(ctx, conversationID)
 			if err != nil {
-				// log.Error("internal", "get conversation err", err.Error(), conversationID)
+				log.ZWarn(ctx, "get conversation err", err, "conversationID", conversationID)
 				continue
 			}
 			err = utils.JsonStringToStruct(LocalConversation.LatestMsg, &latestMsg)
 			if err != nil {
-				// log.Error("internal", "JsonStringToStruct err", err.Error(), conversationID)
+				log.ZWarn(ctx, "JsonStringToStruct err", err, "conversationID", conversationID)
 				continue
 			}
 			if utils.IsContain(latestMsg.ClientMsgID, msgIDList) {
@@ -351,7 +340,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				LocalConversation.LatestMsg = utils.StructToJsonString(latestMsg)
 				err := c.db.UpdateConversation(ctx, &lc)
 				if err != nil {
-					// log.Error("internal", "UpdateConversation database err:", err.Error())
+					log.ZWarn(ctx, "UpdateConversation err", err)
 					continue
 				} else {
 					result = append(result, LocalConversation)
@@ -359,7 +348,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			}
 		}
 		if result != nil {
-			// log.Info("internal", "getMultipleConversationModel success :", result)
+			log.ZDebug(ctx, "getMultipleConversationModel success", "result", result)
 			c.ConversationListener().OnNewConversation(utils.StructToJsonString(result))
 		}
 	case constant.SyncConversation:

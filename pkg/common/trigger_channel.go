@@ -70,20 +70,20 @@ func TriggerCmdSyncFlag(ctx context.Context, syncFlag int, conversationCh chan C
 	}
 }
 
-func TriggerCmdWakeUp(ch chan Cmd2Value) error {
+func TriggerCmdWakeUpDataSync(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
 		return errs.Wrap(ErrChanNil)
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
+	c2v := Cmd2Value{Cmd: constant.CmdWakeUpDataSync, Value: nil, Ctx: ctx}
 	return sendCmd(ch, c2v, timeOut)
 }
 
-func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) error {
-	if ch == nil {
-		return errs.Wrap(ErrChanNil)
-	}
+func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdSyncData, Value: nil, Ctx: ctx}
-	return sendCmd(ch, c2v, timeOut)
+	err := sendCmd(ch, c2v, timeOut)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdSyncData error", err)
+	}
 }
 
 func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
@@ -128,15 +128,6 @@ func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd
 	return sendCmd(ch, c2v, timeOut)
 }
 
-// seq trigger
-func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
-	if ch == nil {
-		return errs.Wrap(ErrChanNil)
-	}
-	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq, Ctx: ctx}
-	return sendCmd(ch, c2v, timeOut)
-}
-
 func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
 		return errs.Wrap(ErrChanNil)
@@ -168,7 +159,8 @@ type UpdateConNode struct {
 	ConID  string
 	Action int //1 Delete the conversation; 2 Update the latest news in the conversation or add a conversation; 3 Put a conversation on the top;
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
-	Args interface{}
+	Args   interface{}
+	Caller string
 }
 type UpdateMessageNode struct {
 	Action int

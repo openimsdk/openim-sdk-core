@@ -55,6 +55,8 @@ type ApiResponse struct {
 // Returns an error if the request fails at any stage.
 func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	// Extract operationID from context and validate.
+
+	//If ctx is empty, it may be because the ctx from the cmd's context is not passed in.
 	operationID, _ := ctx.Value("operationID").(string)
 	if operationID == "" {
 		err := sdkerrs.ErrArgs.WrapMsg("call api operationID is empty")
@@ -66,9 +68,9 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	defer func(start time.Time) {
 		elapsed := time.Since(start).Milliseconds()
 		if err == nil {
-			log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", fmt.Sprintf("%dms", elapsed))
+			log.ZDebug(ctx, "CallApi", "duration", fmt.Sprintf("%dms", elapsed), "api", api, "state", "success")
 		} else {
-			log.ZError(ctx, "CallApi", err, "api", api, "state", "failed", "cost time", fmt.Sprintf("%dms", elapsed))
+			log.ZError(ctx, "CallApi", err, "duration", fmt.Sprintf("%dms", elapsed), "api", api, "state", "failed")
 		}
 	}(time.Now())
 
