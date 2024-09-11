@@ -21,6 +21,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/tools/log"
@@ -30,10 +31,14 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	startTime := time.Now()
 	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
 
-	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
+	resp := msg.GetConversationsHasReadAndMaxSeqResp{}
+	req := msg.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID}
+	err := c.SendReqWaitResp(ctx, &req, constant.GetConvMaxReadSeq, &resp)
 	if err != nil {
+		log.ZWarn(ctx, "SendReqWaitResp err", err)
 		return err
 	}
+	seqs := resp.Seqs
 	log.ZDebug(ctx, "getServerHasReadAndMaxSeqs completed", "duration", time.Since(startTime).Seconds())
 
 	if len(seqs) == 0 {
