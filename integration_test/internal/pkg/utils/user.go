@@ -90,7 +90,7 @@ func NextOffsetUserIDs(userNum, offset int) []string {
 // NextLoginOffsetNum get num with an offset behind.
 func NextLoginOffsetNum(num, offset int) int {
 	offset = offset % vars.LoginUserNum
-	return (num + offset + vars.UserNum) % vars.UserNum
+	return (num + offset + vars.LoginUserNum) % vars.LoginUserNum
 }
 
 // NextLoginNum get next num.
