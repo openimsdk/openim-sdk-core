@@ -16,6 +16,7 @@ package util
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,7 +35,7 @@ import (
 
 // apiClient is a global HTTP client with a timeout of one minute.
 var apiClient = &http.Client{
-	Timeout: time.Second * 300,
+	Timeout: time.Second * 10,
 }
 
 // ApiResponse represents the standard structure of an API response.
@@ -96,6 +97,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("operationID", operationID)
 	request.Header.Set("token", ctxInfo.Token())
+	request.Header.Set("Accept-Encoding", "gzip")
 
 	// Send the request and receive the response.
 	response, err := apiClient.Do(request)
@@ -106,9 +108,19 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 
 	// Ensure the response body is closed after processing.
 	defer response.Body.Close()
-
+	var body io.ReadCloser
+	switch contentEncoding := response.Header.Get("Content-Encoding"); contentEncoding {
+	case "":
+		body = response.Body
+	case "gzip":
+		body, err = gzip.NewReader(response.Body)
+		defer body.Close()
+	default:
+		log.ZWarn(ctx, "http response content encoding not supported", nil, "url", reqUrl, "contentEncoding", contentEncoding)
+		body = response.Body
+	}
 	// Read the response body.
-	respBody, err := io.ReadAll(response.Body)
+	respBody, err := io.ReadAll(body)
 	if err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "read body", "status", response.Status)
 		return sdkerrs.ErrSdkInternal.WrapMsg("io.ReadAll(ApiResponse) failed " + err.Error())
