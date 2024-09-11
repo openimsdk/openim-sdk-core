@@ -151,6 +151,11 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	var (
 		db *gorm.DB
 	)
+
+	db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+	if err != nil {
+		return errs.WrapMsg(err, "open db failed "+dbFileName)
+	}
 	db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 	if err != nil {
 		return errs.WrapMsg(err, "open db failed "+dbFileName)

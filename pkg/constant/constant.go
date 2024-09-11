@@ -302,7 +302,6 @@ const (
 	SendMsg               = 1003
 	SendSignalMsg         = 1004
 	PullMsgBySeqList      = 1005
-	GetConvMaxReadSeq     = 1006
 	PushMsg               = 2001
 	KickOnlineMsg         = 2002
 	LogoutMsg             = 2003
