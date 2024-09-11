@@ -42,14 +42,6 @@ func calCommonGroup(userNum int) int {
 
 	preNum := utils.NextOffsetNum(userNum, -(vars.CommonGroupMemberNum - 1))
 
-	if utils.IsNumLogin(userNum) && utils.IsNumLogin(preNum) {
-		// all login
-		return vars.CommonGroupNum * vars.CommonGroupMemberNum
-	} else if !utils.IsNumLogin(userNum) && !utils.IsNumLogin(preNum) {
-		// all not login
-		return 0
-	}
-
 	createNum := 0
 	for i := 0; i < vars.CommonGroupMemberNum; i++ {
 		if utils.IsNumLogin(preNum) {
