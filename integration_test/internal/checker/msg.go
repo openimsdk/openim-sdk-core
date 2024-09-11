@@ -15,9 +15,9 @@ func CheckMessageNum(ctx context.Context) error {
 		// corrects[1]: common user msg num
 		// corrects[2]: create more one large group largest user no + 1
 
-		createdLargeGroupNum := vars.LargeGroupNum / vars.UserNum
+		createdLargeGroupNum := vars.LargeGroupNum / vars.LoginUserNum
 		// if a user num smaller than remainder, it means this user created more one large group
-		remainder := vars.LargeGroupNum % vars.UserNum
+		remainder := vars.LargeGroupNum % vars.LoginUserNum
 
 		largeGroupNum :=
 			// total send message num +
