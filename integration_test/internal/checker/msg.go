@@ -10,12 +10,12 @@ import (
 
 // CheckMessageNum check message num.
 func CheckMessageNum(ctx context.Context) error {
+	createdLargeGroupNum := vars.LargeGroupNum / vars.LoginUserNum
 	corrects := func() [3]int {
 		// corrects[0]: super user msg num
 		// corrects[1]: common user msg num
 		// corrects[2]: create more one large group largest user no + 1
 
-		createdLargeGroupNum := vars.LargeGroupNum / vars.LoginUserNum
 		// if a user num smaller than remainder, it means this user created more one large group
 		remainder := vars.LargeGroupNum % vars.LoginUserNum
 
@@ -23,10 +23,9 @@ func CheckMessageNum(ctx context.Context) error {
 			// total send message num +
 			vars.GroupMessageNum*vars.LoginUserNum*vars.LargeGroupNum +
 				// total create group notification message -
-				vars.LargeGroupNum -
-				// self send group message(cal by userID) -
-				// self create group notification message. Complete the calculation based on user ID in CalCorrectCount.
-				createdLargeGroupNum
+				vars.LargeGroupNum
+		// self send group message(cal by userID) -
+		// self create group notification message. Complete the calculation based on user ID in CalCorrectCount.
 
 		commonGroupNum := 0
 		// self create group notification message
@@ -72,6 +71,7 @@ func CheckMessageNum(ctx context.Context) error {
 					res += vars.SingleMessageNum * (vars.LoginUserNum - 1)
 					// self send large group message
 					res -= vars.GroupMessageNum * vars.LargeGroupNum
+					res -= createdLargeGroupNum
 				} else {
 					// friend send message num
 					res += vars.SingleMessageNum * vars.LoginUserNum
@@ -83,6 +83,8 @@ func CheckMessageNum(ctx context.Context) error {
 				if userNum < vars.LoginUserNum {
 					// self send large group message
 					res -= vars.GroupMessageNum * vars.LargeGroupNum
+					// self created large group num
+					res -= createdLargeGroupNum
 				} else {
 					// self send large group message
 					res -= 0
