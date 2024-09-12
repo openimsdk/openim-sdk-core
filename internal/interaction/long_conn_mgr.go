@@ -504,6 +504,8 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		fallthrough
 	case constant.PullMsgBySeqList:
 		fallthrough
+	case constant.GetConvMaxReadSeq:
+		fallthrough
 	case constant.SendMsg:
 		fallthrough
 	case constant.SendSignalMsg:
@@ -518,7 +520,6 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 			log.ZError(ctx, "handlerUserOnlineChange failed", err, "wsResp", wsResp)
 		}
 	default:
-		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return sdkerrs.ErrMsgBinaryTypeNotSupport
 	}
 	return nil
