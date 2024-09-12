@@ -18,7 +18,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/openimsdk/tools/errs"

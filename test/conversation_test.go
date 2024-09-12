@@ -56,7 +56,7 @@ func Test_HideConversation(t *testing.T) {
 //		t.Fatal(err)
 //	}
 //	for _, v := range opts {
-//		t.Log(v.ConversationID, *v.Result)
+//		t.Log(v.ConversationID, *v.Execute)
 //	}
 //}
 

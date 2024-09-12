@@ -119,7 +119,7 @@ func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Pr
 		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
 		Ex:         ex,
 	}
-	return api.UploadLogs.Result(ctx, reqLog)
+	return api.UploadLogs.Execute(ctx, reqLog)
 }
 
 func checkLogPath(logPath string) bool {

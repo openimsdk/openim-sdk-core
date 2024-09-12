@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/sdkws"
@@ -21,7 +22,7 @@ func (g *Group) getFullJoinGroupIDs(ctx context.Context, req *group.GetFullJoinG
 
 func (g *Group) getIncrementalGroupMemberBatch(ctx context.Context, reqs []*group.GetIncrementalGroupMemberReq) (map[string]*group.GetIncrementalGroupMemberResp, error) {
 	req := &group.BatchGetIncrementalGroupMemberReq{UserID: g.loginUserID, ReqList: reqs}
-	return api.Field(ctx, api.GetIncrementalGroupMemberBatch.Invoke, req, (*group.BatchGetIncrementalGroupMemberResp).GetRespList)
+	return api.ExtractField(ctx, api.GetIncrementalGroupMemberBatch.Invoke, req, (*group.BatchGetIncrementalGroupMemberResp).GetRespList)
 }
 
 func (g *Group) createGroup(ctx context.Context, req *group.CreateGroupReq) (*group.CreateGroupResp, error) {
@@ -29,52 +30,52 @@ func (g *Group) createGroup(ctx context.Context, req *group.CreateGroupReq) (*gr
 }
 
 func (g *Group) joinGroup(ctx context.Context, req *group.JoinGroupReq) error {
-	return api.JoinGroup.Result(ctx, req)
+	return api.JoinGroup.Execute(ctx, req)
 }
 
 func (g *Group) quitGroup(ctx context.Context, groupID string) error {
-	return api.QuitGroup.Result(ctx, &group.QuitGroupReq{GroupID: groupID, UserID: g.loginUserID})
+	return api.QuitGroup.Execute(ctx, &group.QuitGroupReq{GroupID: groupID, UserID: g.loginUserID})
 }
 
 func (g *Group) dismissGroup(ctx context.Context, groupID string) error {
-	return api.DismissGroup.Result(ctx, &group.DismissGroupReq{GroupID: groupID})
+	return api.DismissGroup.Execute(ctx, &group.DismissGroupReq{GroupID: groupID})
 }
 
 func (g *Group) setGroupInfo(ctx context.Context, req *group.SetGroupInfoReq) error {
-	return api.SetGroupInfo.Result(ctx, req)
+	return api.SetGroupInfo.Execute(ctx, req)
 }
 
 func (g *Group) setGroupMemberInfo(ctx context.Context, req *group.SetGroupMemberInfoReq) error {
-	return api.SetGroupMemberInfo.Result(ctx, req)
+	return api.SetGroupMemberInfo.Execute(ctx, req)
 }
 
 func (g *Group) kickGroupMember(ctx context.Context, req *group.KickGroupMemberReq) error {
-	return api.KickGroupMember.Result(ctx, req)
+	return api.KickGroupMember.Execute(ctx, req)
 }
 
 func (g *Group) transferGroup(ctx context.Context, req *group.TransferGroupOwnerReq) error {
-	return api.TransferGroup.Result(ctx, req)
+	return api.TransferGroup.Execute(ctx, req)
 }
 
 func (g *Group) cancelMuteGroupMember(ctx context.Context, req *group.CancelMuteGroupMemberReq) error {
-	return api.CancelMuteGroupMember.Result(ctx, req)
+	return api.CancelMuteGroupMember.Execute(ctx, req)
 }
 
 func (g *Group) muteGroupMember(ctx context.Context, req *group.MuteGroupMemberReq) error {
-	return api.MuteGroupMember.Result(ctx, req)
+	return api.MuteGroupMember.Execute(ctx, req)
 }
 
 func (g *Group) muteGroup(ctx context.Context, groupID string) error {
-	return api.MuteGroup.Result(ctx, &group.MuteGroupReq{GroupID: groupID})
+	return api.MuteGroup.Execute(ctx, &group.MuteGroupReq{GroupID: groupID})
 }
 
 func (g *Group) cancelMuteGroup(ctx context.Context, groupID string) error {
-	return api.CancelMuteGroup.Result(ctx, &group.CancelMuteGroupReq{GroupID: groupID})
+	return api.CancelMuteGroup.Execute(ctx, &group.CancelMuteGroupReq{GroupID: groupID})
 }
 
 func (g *Group) getDesignatedGroupMembers(ctx context.Context, groupID string, userIDs []string) ([]*sdkws.GroupMemberFullInfo, error) {
 	req := &group.GetGroupMembersInfoReq{GroupID: groupID, UserIDs: userIDs}
-	return api.Field(ctx, api.GetGroupMembersInfo.Invoke, req, (*group.GetGroupMembersInfoResp).GetMembers)
+	return api.ExtractField(ctx, api.GetGroupMembersInfo.Invoke, req, (*group.GetGroupMembersInfoResp).GetMembers)
 }
 
 func (g *Group) getServerSelfGroupApplication(ctx context.Context) ([]*sdkws.GroupRequest, error) {
@@ -94,13 +95,13 @@ func (g *Group) getServerAdminGroupApplicationList(ctx context.Context) ([]*sdkw
 
 func (g *Group) getGroupsInfoFromSvr(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
 	req := &group.GetGroupsInfoReq{GroupIDs: groupIDs}
-	return api.Field(ctx, api.GetGroupsInfo.Invoke, req, (*group.GetGroupsInfoResp).GetGroupInfos)
+	return api.ExtractField(ctx, api.GetGroupsInfo.Invoke, req, (*group.GetGroupsInfoResp).GetGroupInfos)
 }
 
 func (g *Group) inviteUserToGroup(ctx context.Context, req *group.InviteUserToGroupReq) error {
-	return api.InviteUserToGroup.Result(ctx, req)
+	return api.InviteUserToGroup.Execute(ctx, req)
 }
 
 func (g *Group) handlerGroupApplication(ctx context.Context, req *group.GroupApplicationResponseReq) error {
-	return api.AcceptGroupApplication.Result(ctx, req)
+	return api.AcceptGroupApplication.Execute(ctx, req)
 }

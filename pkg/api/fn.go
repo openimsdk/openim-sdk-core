@@ -27,7 +27,7 @@ func (a Api[Req, Resp]) Invoke(ctx context.Context, req *Req) (*Resp, error) {
 	return &resp, nil
 }
 
-func (a Api[Req, Resp]) Result(ctx context.Context, req *Req) error {
+func (a Api[Req, Resp]) Execute(ctx context.Context, req *Req) error {
 	_, err := a.Invoke(ctx, req)
 	return err
 }
@@ -36,7 +36,7 @@ func (a Api[Req, Resp]) Route() string {
 	return a.api
 }
 
-func Field[A, B, C any](ctx context.Context, fn func(ctx context.Context, req *A) (*B, error), req *A, get func(*B) C) (C, error) {
+func ExtractField[A, B, C any](ctx context.Context, fn func(ctx context.Context, req *A) (*B, error), req *A, get func(*B) C) (C, error) {
 	resp, err := fn(ctx, req)
 	if err != nil {
 		var c C

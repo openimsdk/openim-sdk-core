@@ -18,12 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"github.com/openimsdk/protocol/auth"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/auth"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -82,5 +83,5 @@ func GetUserToken(ctx context.Context, userID string, platformID int32, secret s
 		PlatformID: platformID,
 		Secret:     secret,
 	}
-	return api.Field(ctx, api.GetUsersToken.Invoke, req, (*auth.UserTokenResp).GetToken)
+	return api.ExtractField(ctx, api.GetUsersToken.Invoke, req, (*auth.UserTokenResp).GetToken)
 }
