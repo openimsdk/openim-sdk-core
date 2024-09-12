@@ -36,9 +36,9 @@ func (a Api[Req, Resp]) Route() string {
 }
 
 func Field[A, B, C any](ctx context.Context, fn func(ctx context.Context, req *A) (*B, error), req *A, get func(*B) C) (C, error) {
-	var c C
 	resp, err := fn(ctx, req)
 	if err != nil {
+		var c C
 		return c, err
 	}
 	return get(resp), nil
