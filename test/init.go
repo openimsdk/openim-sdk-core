@@ -15,21 +15,18 @@
 package test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/auth"
 	"math/rand"
-	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/protocol/constant"
-
-	"github.com/openimsdk/tools/log"
 )
 
 var (
@@ -37,7 +34,7 @@ var (
 )
 
 func init() {
-	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test v2 init func <<<<<<<<<<<<<<<<<<<------------------------")
+	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test init func <<<<<<<<<<<<<<<<<<<------------------------")
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
@@ -52,7 +49,7 @@ func init() {
 	}
 	ctx = open_im_sdk.UserForSDK.Context()
 	ctx = ccontext.WithOperationID(ctx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
-	token, err := GetUserToken(ctx, UserID)
+	token, err := GetUserToken(ctx, UserID, PlatformID, Secret)
 	if err != nil {
 		panic(err)
 	}
@@ -64,278 +61,26 @@ func init() {
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendshipListener(&onFriendshipListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
-	time.Sleep(time.Second * 2)
 }
 
-func GetUserToken(ctx context.Context, userID string) (string, error) {
-	jsonReqData, err := json.Marshal(map[string]any{
-		"userID":     userID,
-		"platformID": constant.LinuxPlatformID,
-		"secret":     "openIM123",
-	})
-	if err != nil {
-		return "", err
+func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
+	var cf sdk_struct.IMConfig
+	cf.ApiAddr = APIADDR
+	cf.WsAddr = WSADDR
+	cf.DataDir = "./"
+	cf.LogLevel = 6
+	cf.IsExternalExtensions = true
+	cf.PlatformID = PlatformID
+	cf.LogFilePath = "./"
+	cf.IsLogStandardOutput = true
+	return cf
+}
+
+func GetUserToken(ctx context.Context, userID string, platformID int32, secret string) (string, error) {
+	req := &auth.UserTokenReq{
+		UserID:     userID,
+		PlatformID: platformID,
+		Secret:     secret,
 	}
-	path := APIADDR + "/auth/user_token"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewReader(jsonReqData))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("operationID", ctx.Value("operationID").(string))
-	client := http.Client{Timeout: time.Second * 3}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	type Result struct {
-		ErrCode int    `json:"errCode"`
-		ErrMsg  string `json:"errMsg"`
-		ErrDlt  string `json:"errDlt"`
-		Data    struct {
-			Token             string `json:"token"`
-			ExpireTimeSeconds int    `json:"expireTimeSeconds"`
-		} `json:"data"`
-	}
-	var result Result
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", err
-	}
-	if result.ErrCode != 0 {
-		return "", fmt.Errorf("errCode:%d, errMsg:%s, errDlt:%s", result.ErrCode, result.ErrMsg, result.ErrDlt)
-	}
-	return result.Data.Token, nil
-}
-
-type onListenerForService struct {
-	ctx context.Context
-}
-
-func (o *onListenerForService) OnGroupApplicationAdded(groupApplication string) {
-	log.ZInfo(o.ctx, "OnGroupApplicationAdded", "groupApplication", groupApplication)
-}
-
-func (o *onListenerForService) OnGroupApplicationAccepted(groupApplication string) {
-	log.ZInfo(o.ctx, "OnGroupApplicationAccepted", "groupApplication", groupApplication)
-}
-
-func (o *onListenerForService) OnFriendApplicationAdded(friendApplication string) {
-	log.ZInfo(o.ctx, "OnFriendApplicationAdded", "friendApplication", friendApplication)
-}
-
-func (o *onListenerForService) OnFriendApplicationAccepted(groupApplication string) {
-	log.ZInfo(o.ctx, "OnFriendApplicationAccepted", "groupApplication", groupApplication)
-}
-
-func (o *onListenerForService) OnRecvNewMessage(message string) {
-	log.ZInfo(o.ctx, "OnRecvNewMessage", "message", message)
-}
-
-type onConversationListener struct {
-	ctx context.Context
-}
-
-func (o *onConversationListener) OnSyncServerStart(reinstalled bool) {
-	log.ZInfo(o.ctx, "OnSyncServerStart")
-}
-
-func (o *onConversationListener) OnSyncServerFinish(reinstalled bool) {
-	log.ZInfo(o.ctx, "OnSyncServerFinish")
-}
-
-func (o *onConversationListener) OnSyncServerFailed(reinstalled bool) {
-	log.ZInfo(o.ctx, "OnSyncServerFailed")
-}
-
-func (o *onConversationListener) OnSyncServerProgress(progress int) {
-	log.ZInfo(o.ctx, "OnSyncServerProgress", "progress", progress)
-}
-
-func (o *onConversationListener) OnNewConversation(conversationList string) {
-	log.ZInfo(o.ctx, "OnNewConversation", "conversationList", conversationList)
-}
-
-func (o *onConversationListener) OnConversationChanged(conversationList string) {
-	log.ZInfo(o.ctx, "OnConversationChanged", "conversationList", conversationList)
-}
-
-func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-	log.ZInfo(o.ctx, "OnTotalUnreadMessageCountChanged", "totalUnreadCount", totalUnreadCount)
-}
-
-func (o *onConversationListener) OnConversationUserInputStatusChanged(change string) {
-	log.ZInfo(o.ctx, "OnConversationUserInputStatusChanged", "change", change)
-}
-
-type onGroupListener struct {
-	ctx context.Context
-}
-
-func (o *onGroupListener) OnGroupDismissed(groupInfo string) {
-	log.ZInfo(o.ctx, "OnGroupDismissed", "groupInfo", groupInfo)
-}
-
-func (o *onGroupListener) OnJoinedGroupAdded(groupInfo string) {
-	log.ZInfo(o.ctx, "OnJoinedGroupAdded", "groupInfo", groupInfo)
-}
-
-func (o *onGroupListener) OnJoinedGroupDeleted(groupInfo string) {
-	log.ZInfo(o.ctx, "OnJoinedGroupDeleted", "groupInfo", groupInfo)
-}
-
-func (o *onGroupListener) OnGroupMemberAdded(groupMemberInfo string) {
-	log.ZInfo(o.ctx, "OnGroupMemberAdded", "groupMemberInfo", groupMemberInfo)
-}
-
-func (o *onGroupListener) OnGroupMemberDeleted(groupMemberInfo string) {
-	log.ZInfo(o.ctx, "OnGroupMemberDeleted", "groupMemberInfo", groupMemberInfo)
-}
-
-func (o *onGroupListener) OnGroupApplicationAdded(groupApplication string) {
-	log.ZInfo(o.ctx, "OnGroupApplicationAdded", "groupApplication", groupApplication)
-}
-
-func (o *onGroupListener) OnGroupApplicationDeleted(groupApplication string) {
-	log.ZInfo(o.ctx, "OnGroupApplicationDeleted", "groupApplication", groupApplication)
-}
-
-func (o *onGroupListener) OnGroupInfoChanged(groupInfo string) {
-	log.ZInfo(o.ctx, "OnGroupInfoChanged", "groupInfo", groupInfo)
-}
-
-func (o *onGroupListener) OnGroupMemberInfoChanged(groupMemberInfo string) {
-	log.ZInfo(o.ctx, "OnGroupMemberInfoChanged", "groupMemberInfo", groupMemberInfo)
-}
-
-func (o *onGroupListener) OnGroupApplicationAccepted(groupApplication string) {
-	log.ZInfo(o.ctx, "OnGroupApplicationAccepted", "groupApplication", groupApplication)
-}
-
-func (o *onGroupListener) OnGroupApplicationRejected(groupApplication string) {
-	log.ZInfo(o.ctx, "OnGroupApplicationRejected", "groupApplication", groupApplication)
-}
-
-type onAdvancedMsgListener struct {
-	ctx context.Context
-}
-
-func (o *onAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
-	log.ZDebug(o.ctx, "OnRecvOnlineOnlyMessage", "message", message)
-}
-
-func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
-	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
-}
-
-//func (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
-//	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
-//}
-//
-//func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
-//	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
-//}
-
-func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
-	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
-}
-
-func (o *onAdvancedMsgListener) OnRecvNewMessage(message string) {
-	log.ZInfo(o.ctx, "OnRecvNewMessage", "message", message)
-}
-
-func (o *onAdvancedMsgListener) OnRecvC2CReadReceipt(msgReceiptList string) {
-	log.ZInfo(o.ctx, "OnRecvC2CReadReceipt", "msgReceiptList", msgReceiptList)
-}
-
-func (o *onAdvancedMsgListener) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
-	log.ZInfo(o.ctx, "OnRecvGroupReadReceipt", "groupMsgReceiptList", groupMsgReceiptList)
-}
-
-func (o *onAdvancedMsgListener) OnRecvMessageRevoked(msgID string) {
-	log.ZInfo(o.ctx, "OnRecvMessageRevoked", "msgID", msgID)
-}
-
-func (o *onAdvancedMsgListener) OnNewRecvMessageRevoked(messageRevoked string) {
-	log.ZInfo(o.ctx, "OnNewRecvMessageRevoked", "messageRevoked", messageRevoked)
-}
-
-func (o *onAdvancedMsgListener) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
-	log.ZInfo(o.ctx, "OnRecvMessageExtensionsChanged", "msgID", msgID, "reactionExtensionList", reactionExtensionList)
-}
-
-func (o *onAdvancedMsgListener) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
-	log.ZInfo(o.ctx, "OnRecvMessageExtensionsDeleted", "msgID", msgID, "reactionExtensionKeyList", reactionExtensionKeyList)
-}
-
-func (o *onAdvancedMsgListener) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
-	log.ZInfo(o.ctx, "OnRecvMessageExtensionsAdded", "msgID", msgID, "reactionExtensionList", reactionExtensionList)
-}
-
-type onFriendshipListener struct {
-	ctx context.Context
-}
-
-func (o *onFriendshipListener) OnFriendApplicationAdded(friendApplication string) {
-	log.ZDebug(context.Background(), "OnFriendApplicationAdded", "friendApplication", friendApplication)
-}
-
-func (o *onFriendshipListener) OnFriendApplicationDeleted(friendApplication string) {
-	log.ZDebug(context.Background(), "OnFriendApplicationDeleted", "friendApplication", friendApplication)
-}
-
-func (o *onFriendshipListener) OnFriendApplicationAccepted(friendApplication string) {
-	log.ZDebug(context.Background(), "OnFriendApplicationAccepted", "friendApplication", friendApplication)
-}
-
-func (o *onFriendshipListener) OnFriendApplicationRejected(friendApplication string) {
-	log.ZDebug(context.Background(), "OnFriendApplicationRejected", "friendApplication", friendApplication)
-}
-
-func (o *onFriendshipListener) OnFriendAdded(friendInfo string) {
-	log.ZDebug(context.Background(), "OnFriendAdded", "friendInfo", friendInfo)
-}
-
-func (o *onFriendshipListener) OnFriendDeleted(friendInfo string) {
-	log.ZDebug(context.Background(), "OnFriendDeleted", "friendInfo", friendInfo)
-}
-
-func (o *onFriendshipListener) OnFriendInfoChanged(friendInfo string) {
-	log.ZDebug(context.Background(), "OnFriendInfoChanged", "friendInfo", friendInfo)
-}
-
-func (o *onFriendshipListener) OnBlackAdded(blackInfo string) {
-	log.ZDebug(context.Background(), "OnBlackAdded", "blackInfo", blackInfo)
-}
-
-func (o *onFriendshipListener) OnBlackDeleted(blackInfo string) {
-	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
-}
-
-type onUserListener struct {
-	ctx context.Context
-}
-
-func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
-	log.ZDebug(context.Background(), "OnSelfInfoUpdated", "userInfo", userInfo)
-}
-func (o *onUserListener) OnUserCommandAdd(userInfo string) {
-	log.ZDebug(context.Background(), "OnUserCommandAdd", "blackInfo", userInfo)
-}
-func (o *onUserListener) OnUserCommandDelete(userInfo string) {
-	log.ZDebug(context.Background(), "OnUserCommandDelete", "blackInfo", userInfo)
-}
-func (o *onUserListener) OnUserCommandUpdate(userInfo string) {
-	log.ZDebug(context.Background(), "OnUserCommandUpdate", "blackInfo", userInfo)
-}
-func (o *onUserListener) OnUserStatusChanged(statusMap string) {
-	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)
+	return api.Field(ctx, api.GetUsersToken.Invoke, req, (*auth.UserTokenResp).GetToken)
 }

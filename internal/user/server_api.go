@@ -3,46 +3,42 @@ package user
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
-	authPb "github.com/openimsdk/protocol/auth"
+	"github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/protocol/user"
 )
 
 func (u *User) getUsersInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
-	resp, err := api.GetUsersInfo.Invoke(ctx, &user.GetDesignateUsersReq{UserIDs: userIDs})
-	if err != nil {
-		return nil, err
-	}
-	return resp.UsersInfo, nil
+	req := &user.GetDesignateUsersReq{UserIDs: userIDs}
+	return api.Field(ctx, api.GetUsersInfo.Invoke, req, (*user.GetDesignateUsersResp).GetUsersInfo)
 }
 
 func (u *User) updateUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
 	userInfo.UserID = u.loginUserID
-	_, err := api.UpdateUserInfo.Invoke(ctx, &user.UpdateUserInfoReq{UserInfo: userInfo})
-	return err
+	return api.UpdateUserInfo.Result(ctx, &user.UpdateUserInfoReq{UserInfo: userInfo})
 }
 
 func (u *User) updateUserInfoV2(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
 	userInfo.UserID = u.loginUserID
-	_, err := api.UpdateUserInfoEx.Invoke(ctx, &user.UpdateUserInfoExReq{UserInfo: userInfo})
-	return err
+	return api.UpdateUserInfoEx.Result(ctx, &user.UpdateUserInfoExReq{UserInfo: userInfo})
 }
 
 func (u *User) processUserCommandAdd(ctx context.Context, req *user.ProcessUserCommandAddReq) error {
-	_, err := api.ProcessUserCommandAdd.Invoke(ctx, req)
-	return err
+	return api.ProcessUserCommandAdd.Result(ctx, req)
 }
 
 func (u *User) processUserCommandDelete(ctx context.Context, req *user.ProcessUserCommandDeleteReq) error {
-	_, err := api.ProcessUserCommandDelete.Invoke(ctx, req)
-	return err
+	return api.ProcessUserCommandDelete.Result(ctx, req)
 }
 
 func (u *User) processUserCommandUpdate(ctx context.Context, req *user.ProcessUserCommandUpdateReq) error {
-	_, err := api.ProcessUserCommandUpdate.Invoke(ctx, req)
-	return err
+	return api.ProcessUserCommandUpdate.Result(ctx, req)
 }
 
-func (u *User) parseToken(ctx context.Context) (*authPb.ParseTokenResp, error) {
-	return api.ParseToken.Invoke(ctx, &authPb.ParseTokenReq{})
+func (u *User) parseToken(ctx context.Context) (*auth.ParseTokenResp, error) {
+	return api.ParseToken.Invoke(ctx, &auth.ParseTokenReq{})
+}
+
+func (u *User) setGlobalRecvMessageOpt(ctx context.Context, opt int32) error {
+	return api.SetGlobalRecvMessageOpt.Result(ctx, &user.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: opt})
 }

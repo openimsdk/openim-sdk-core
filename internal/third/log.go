@@ -14,8 +14,8 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
+	"github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/third"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -118,8 +118,7 @@ func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Pr
 		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
 		Ex:         ex,
 	}
-	_, err = api.UploadLogs.Invoke(ctx, reqLog)
-	return err
+	return api.UploadLogs.Result(ctx, reqLog)
 }
 
 func checkLogPath(logPath string) bool {

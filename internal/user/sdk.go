@@ -16,11 +16,9 @@ package user
 
 import (
 	"context"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/protocol/sdkws"
-	pbUser "github.com/openimsdk/protocol/user"
 )
 
 func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
@@ -39,8 +37,7 @@ func (u *User) SetSelfInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx
 	return u.updateSelfUserInfoEx(ctx, userInfo)
 }
 func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
-	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter,
-		&pbUser.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
+	if err := u.setGlobalRecvMessageOpt(ctx, int32(opt)); err != nil {
 		return err
 	}
 	u.SyncLoginUserInfo(ctx)
