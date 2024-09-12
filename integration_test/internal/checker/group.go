@@ -3,6 +3,7 @@ package checker
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 )
@@ -10,7 +11,7 @@ import (
 func CheckGroupNum(ctx context.Context) error {
 	correct := func() int {
 		largeNum := vars.LargeGroupNum
-		commonNum := vars.CommonGroupNum * vars.CommonGroupMemberNum
+		commonNum := 0 // cal by userNum
 		return largeNum + commonNum
 	}()
 
@@ -26,7 +27,7 @@ func CheckGroupNum(ctx context.Context) error {
 			return groupNum, nil
 		},
 		CalCorrectCount: func(userID string) int {
-			return correct
+			return correct + calCommonGroup(utils.MustGetUserNum(userID))
 		},
 		LoopSlice: sdk.TestSDKs,
 		GetKey: func(t *sdk.TestSDK) string {
@@ -34,5 +35,19 @@ func CheckGroupNum(ctx context.Context) error {
 		},
 	}
 
-	return c.Check(ctx)
+	return c.LoopCheck(ctx)
+}
+
+func calCommonGroup(userNum int) int {
+
+	preNum := utils.NextOffsetNum(userNum, -(vars.CommonGroupMemberNum - 1))
+
+	createNum := 0
+	for i := 0; i < vars.CommonGroupMemberNum; i++ {
+		if utils.IsNumLogin(preNum) {
+			createNum++
+		}
+		preNum = utils.NextNum(preNum)
+	}
+	return createNum * vars.CommonGroupNum
 }

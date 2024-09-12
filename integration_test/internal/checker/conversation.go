@@ -14,7 +14,7 @@ func CheckConvNumAfterImpFriAndCrGro(ctx context.Context) error {
 		// corrects[0] :super user conversion num
 		// corrects[1] :common user conversion num
 		largeNum := vars.LargeGroupNum
-		commonNum := vars.CommonGroupNum * vars.CommonGroupMemberNum
+		commonNum := 0 // cal by userNum
 		groupNum := largeNum + commonNum
 
 		superNum := vars.UserNum - 1 + groupNum
@@ -35,10 +35,11 @@ func CheckConvNumAfterImpFriAndCrGro(ctx context.Context) error {
 			return totalNum, nil
 		},
 		CalCorrectCount: func(userID string) int {
+			commonGroupNum := calCommonGroup(utils.MustGetUserNum(userID))
 			if utils.IsSuperUser(userID) {
-				return corrects[0]
+				return corrects[0] + commonGroupNum
 			} else {
-				return corrects[1]
+				return corrects[1] + commonGroupNum
 			}
 		},
 		LoopSlice: sdk.TestSDKs,

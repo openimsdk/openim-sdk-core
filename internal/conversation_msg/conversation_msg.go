@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"sync"
 
@@ -139,7 +140,7 @@ func (c *Conversation) initSyncer() {
 					"update_unread_count_time": serverConversation.UpdateUnreadCountTime,
 					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex, "msg_destruct_time": serverConversation.MsgDestructTime,
 					"is_msg_destruct": serverConversation.IsMsgDestruct,
-					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
+					"max_seq":         serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq})
 		}),
 		syncer.WithUUID[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
@@ -210,30 +211,42 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//var unreadMessages []*model_struct.LocalConversationUnreadMessage
 	var newMessages sdk_struct.NewMsgList
 	// var reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
+
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
+
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
 	conversationSet := make(map[string]*model_struct.LocalConversation)
 	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
+
 	log.ZDebug(ctx, "message come here conversation ch", "conversation length", len(allMsg))
 	b := time.Now()
+
 	onlineMap := make(map[onlineMsgKey]struct{})
+
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
 			conversationID, "message length", len(msgs.Msgs))
 		var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
 		var updateMessage []*model_struct.LocalChatLog
+
 		for _, v := range msgs.Msgs {
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
+
 			isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
+
 			isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
+
 			isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
+
 			isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
+
 			msg := &sdk_struct.MsgStruct{}
 			copier.Copy(msg, v)
 			msg.Content = string(v.Content)
+
 			var attachedInfo sdk_struct.AttachedInfoElem
 			_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
 			msg.AttachedInfoElem = &attachedInfo
@@ -243,7 +256,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
 				continue
 			}
+
 			msg.Status = constant.MsgStatusSendSuccess
+
 			//De-analyze data
 			err := c.msgHandleByContentType(msg)
 			if err != nil {
@@ -344,7 +359,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 					log.ZWarn(ctx, "Deduplication operation ", nil, "msg", *c.msgStructToLocalErrChatLog(msg))
 					msg.Status = constant.MsgStatusFiltered
-					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(utils.GetCurrentTimestampByNano())
+					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(msg.Seq)
 					othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
 				}
 			}
@@ -355,14 +370,21 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 		}
 	}
+
+	//todo The lock granularity needs to be optimized to the conversation level.
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+
 	list, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
 		log.ZError(ctx, "GetAllConversationListDB", err)
 	}
+
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
 	log.ZDebug(ctx, "listToMap: ", "local conversation", list, "generated c map",
 		string(stringutil.StructToJsonBytes(conversationSet)))
+
 	c.diff(ctx, m, conversationSet, conversationChangedSet, newConversationSet)
 	log.ZInfo(ctx, "trigger map is :", "newConversations", string(stringutil.StructToJsonBytes(newConversationSet)),
 		"changedConversations", string(stringutil.StructToJsonBytes(conversationChangedSet)))
@@ -414,7 +436,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
 	if c.batchMsgListener() != nil {
-		c.batchNewMessages(ctx, newMessages)
+		c.batchNewMessages(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
 	} else {
 		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
 	}
@@ -436,7 +458,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
-	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
+
+	log.ZDebug(ctx, "insert msg", "duration", fmt.Sprintf("%dms", time.Since(b)), "len", len(allMsg))
 }
 
 func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
@@ -650,7 +673,7 @@ func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map
 				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
 
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID,
-					Action: constant.AddConOrUpLatMsg, Args: *conversation}})
+					Action: constant.AddConOrUpLatMsg, Args: *conversation, Caller: "batchUpdateMessageList"}})
 
 			}
 		}
@@ -719,61 +742,51 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 	}
 }
 
-func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
-	sort.Sort(newMessagesList)
-	if len(newMessagesList) > 0 {
-		c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
-		//if c.IsBackground {
-		//	c.batchMsgListener.OnRecvOfflineNewMessages(utils.StructToJsonString(newMessagesList))
-		//}
+func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList, conversationChanged, newConversation map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
+	if len(newMessagesList) == 0 {
+		log.ZWarn(ctx, "newMessagesList is empty", errs.New("newMessagesList is empty"))
+		return
 	}
 
-}
+	sort.Sort(newMessagesList)
+	var needNotificationMsgList sdk_struct.NewMsgList
 
-func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_struct.MsgStruct) {
-	var messageReceiptResp []*sdk_struct.MessageReceipt
-	var msgIdList []string
-	chrsList := make(map[string][]string)
-	var conversationID string
-
-	for _, rd := range msgReadList {
-		err := json.Unmarshal([]byte(rd.Content), &msgIdList)
+	// offline
+	if c.GetBackground() {
+		u, err := c.user.GetSelfUserInfo(ctx)
 		if err != nil {
-			// log.Error("internal", "unmarshal failed, err : ", err.Error())
+			log.ZWarn(ctx, "GetSelfUserInfo err", err)
+		}
+
+		if u.GlobalRecvMsgOpt != constant.ReceiveMessage {
 			return
 		}
-		var msgIdListStatusOK []string
-		for _, v := range msgIdList {
-			msgIdListStatusOK = append(msgIdListStatusOK, v)
+
+		for _, w := range newMessagesList {
+			conversationID := utils.GetConversationIDByMsg(w)
+			if v, ok := conversationChanged[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				needNotificationMsgList = append(needNotificationMsgList, w)
+			}
+			if v, ok := newConversation[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				needNotificationMsgList = append(needNotificationMsgList, w)
+			}
 		}
 
-		if len(msgIdListStatusOK) > 0 {
-			msgRt := new(sdk_struct.MessageReceipt)
-			msgRt.ContentType = rd.ContentType
-			msgRt.MsgFrom = rd.MsgFrom
-			msgRt.ReadTime = rd.SendTime
-			msgRt.UserID = rd.SendID
-			msgRt.SessionType = constant.SingleChatType
-			msgRt.MsgIDList = msgIdListStatusOK
-			messageReceiptResp = append(messageReceiptResp, msgRt)
+		if len(needNotificationMsgList) != 0 {
+			c.batchMsgListener().OnRecvOfflineNewMessages(utils.StructToJsonString(needNotificationMsgList))
 		}
-		if rd.SendID == c.loginUserID {
-			conversationID = c.getConversationIDBySessionType(rd.RecvID, constant.SingleChatType)
-		} else {
-			conversationID = c.getConversationIDBySessionType(rd.SendID, constant.SingleChatType)
-		}
-		if v, ok := chrsList[conversationID]; ok {
-			chrsList[conversationID] = append(v, msgIdListStatusOK...)
-		} else {
-			chrsList[conversationID] = msgIdListStatusOK
+	} else { // online
+		for _, w := range newMessagesList {
+			if w.ContentType == constant.Typing {
+				continue
+			}
+
+			needNotificationMsgList = append(needNotificationMsgList, w)
 		}
 
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConversationLatestMsgHasRead, Args: chrsList}})
-	}
-	if len(messageReceiptResp) > 0 {
-
-		// log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
-		c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+		if len(needNotificationMsgList) != 0 {
+			c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(needNotificationMsgList))
+		}
 	}
 }
 

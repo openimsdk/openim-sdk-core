@@ -150,7 +150,8 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 	if r.callback == nil {
 		r.callback = NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
 	}
-	log.ZError(ctx, "test", nil, "asyncCallWithOutCallback", len(r.arguments))
+	log.ZWarn(ctx, "asyncCall", nil, "asyncCallWithOutCallback", len(r.arguments))
+
 	r.callback.SetOperationID(r.arguments[0].String())
 	//strings.SplitAfter()
 	for i := 0; i < len(r.arguments); i++ {

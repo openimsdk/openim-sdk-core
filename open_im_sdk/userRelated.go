@@ -18,11 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
 
+	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
+
+	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
 
@@ -115,7 +119,6 @@ type LoginMgr struct {
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
-	heartbeatCmdCh     chan common.Cmd2Value
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	loginMgrCh         chan common.Cmd2Value
 
@@ -159,10 +162,6 @@ func (u *LoginMgr) BusinessListener() open_im_sdk_callback.OnCustomBusinessListe
 
 func (u *LoginMgr) MsgKvListener() open_im_sdk_callback.OnMessageKvInfoListener {
 	return u.msgKvListener
-}
-
-func (u *LoginMgr) BaseCtx() context.Context {
-	return u.ctx
 }
 
 func (u *LoginMgr) Exit() {
@@ -247,6 +246,14 @@ func (u *LoginMgr) GetLoginUserID() string {
 	return u.loginUserID
 }
 func (u *LoginMgr) logoutListener(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+
+			log.ZWarn(ctx, "logoutListener panic", nil, "panic info", err)
+		}
+	}()
+
 	for {
 		select {
 		case <-u.loginMgrCh:
@@ -321,10 +328,16 @@ func (u *LoginMgr) handlerSendingMsg(ctx context.Context, sendingMsg *model_stru
 	return nil
 }
 
-func (u *LoginMgr) initMgr(ctx context.Context, userID, token string) error {
+func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
+	if u.getLoginStatus(ctx) == Logged {
+		return sdkerrs.ErrLoginRepeat
+	}
+	u.setLoginStatus(Logging)
+	log.ZDebug(ctx, "login start... ", "userID", userID, "token", token)
+	t1 := time.Now()
+
 	u.info.UserID = userID
 	u.info.Token = token
-	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
 	var err error
@@ -347,34 +360,10 @@ func (u *LoginMgr) initMgr(ctx context.Context, userID, token string) error {
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.relation, u.group, u.user, u.full, u.file)
 	u.setListener(ctx)
-	return nil
-}
-
-func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
-	if u.getLoginStatus(ctx) == Logged {
-		return sdkerrs.ErrLoginRepeat
-	}
-	u.setLoginStatus(Logging)
-	log.ZDebug(ctx, "login start... ", "userID", userID, "token", token)
-	t1 := time.Now()
-
-	if err := u.initMgr(ctx, userID, token); err != nil {
-		return err
-	}
 
 	u.run(ctx)
 	u.setLoginStatus(Logged)
 	log.ZDebug(ctx, "login success...", "login cost time: ", time.Since(t1))
-	return nil
-}
-
-func (u *LoginMgr) loginWithOutInit(ctx context.Context, userID, token string) error {
-	if u.getLoginStatus(ctx) == Logged {
-		return sdkerrs.ErrLoginRepeat
-	}
-	u.setLoginStatus(Logging)
-	u.run(ctx)
-	u.setLoginStatus(Logged)
 	return nil
 }
 
@@ -427,10 +416,9 @@ func (u *LoginMgr) initResources() {
 		convChanLen = 1000
 	}
 	u.conversationCh = make(chan common.Cmd2Value, convChanLen)
-	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
-	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
 	u.setLoginStatus(LogoutStatus)
 }
@@ -487,8 +475,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 	} else {
 		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
-			_ = common.TriggerCmdWakeUp(u.heartbeatCmdCh)
-			_ = common.TriggerCmdSyncData(ctx, u.conversationCh)
+			_ = common.TriggerCmdWakeUpDataSync(ctx, u.pushMsgAndMaxSeqCh)
 		}
 
 		return nil

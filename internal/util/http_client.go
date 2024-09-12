@@ -16,6 +16,7 @@ package util
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -35,7 +36,7 @@ import (
 
 // apiClient is a global HTTP client with a timeout of one minute.
 var apiClient = &http.Client{
-	Timeout: time.Second * 300,
+	Timeout: time.Second * 10,
 }
 
 // ApiResponse represents the standard structure of an API response.
@@ -56,6 +57,8 @@ type ApiResponse struct {
 // Returns an error if the request fails at any stage.
 func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	// Extract operationID from context and validate.
+
+	//If ctx is empty, it may be because the ctx from the cmd's context is not passed in.
 	operationID, _ := ctx.Value("operationID").(string)
 	if operationID == "" {
 		err := sdkerrs.ErrArgs.WrapMsg("call api operationID is empty")
@@ -67,9 +70,9 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	defer func(start time.Time) {
 		elapsed := time.Since(start).Milliseconds()
 		if err == nil {
-			log.ZDebug(ctx, "CallApi", "api", api, "state", "success", "cost time", fmt.Sprintf("%dms", elapsed))
+			log.ZDebug(ctx, "CallApi", "duration", fmt.Sprintf("%dms", elapsed), "api", api, "state", "success")
 		} else {
-			log.ZError(ctx, "CallApi", err, "api", api, "state", "failed", "cost time", fmt.Sprintf("%dms", elapsed))
+			log.ZError(ctx, "CallApi", err, "duration", fmt.Sprintf("%dms", elapsed), "api", api, "state", "failed")
 		}
 	}(time.Now())
 
@@ -90,11 +93,12 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	}
 
 	// Set headers for the request.
-	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "body", string(reqBody))
+	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "token", ctxInfo.Token(), "body", string(reqBody))
 	request.ContentLength = int64(len(reqBody))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("operationID", operationID)
 	request.Header.Set("token", ctxInfo.Token())
+	request.Header.Set("Accept-Encoding", "gzip")
 
 	// Send the request and receive the response.
 	response, err := apiClient.Do(request)
@@ -105,9 +109,19 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 
 	// Ensure the response body is closed after processing.
 	defer response.Body.Close()
-
+	var body io.ReadCloser
+	switch contentEncoding := response.Header.Get("Content-Encoding"); contentEncoding {
+	case "":
+		body = response.Body
+	case "gzip":
+		body, err = gzip.NewReader(response.Body)
+		defer body.Close()
+	default:
+		log.ZWarn(ctx, "http response content encoding not supported", nil, "url", reqUrl, "contentEncoding", contentEncoding)
+		body = response.Body
+	}
 	// Read the response body.
-	respBody, err := io.ReadAll(response.Body)
+	respBody, err := io.ReadAll(body)
 	if err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "read body", "status", response.Status)
 		return sdkerrs.ErrSdkInternal.WrapMsg("io.ReadAll(ApiResponse) failed " + err.Error())

@@ -18,6 +18,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/tools/utils/datautil"
@@ -97,15 +100,15 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, groupID string, rule int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
 }
 
 func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
 }
 
 func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
 }
 
 func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
@@ -171,6 +174,18 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 
 	return g.IncrSyncJoinGroup(ctx)
 }
+
+//todo
+//func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSetEX) error {
+//	if err := util.ApiPost(ctx, constant.SetGroupInfoEXRouter, &group.SetGroupInfoEXReq{GroupInfoForSetEX: groupInfo}, nil); err != nil {
+//		return err
+//	}
+//
+//	g.groupSyncMutex.Lock()
+//	defer g.groupSyncMutex.Unlock()
+//
+//	return g.IncrSyncJoinGroup(ctx)
+//}
 
 func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.SetGroupMemberInfo) error {
 	req := &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}
@@ -520,4 +535,96 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	}
 	// SyncAdminGroupApplication todo
 	return nil
+}
+
+func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string, userIDs []string) (map[string]*sdk_struct.BasicInfo, error) {
+	memberInfo, err := g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	res := datautil.SliceToMapAny(memberInfo, func(e *model_struct.LocalGroupMember) (string, *sdk_struct.BasicInfo) {
+		return e.UserID, &sdk_struct.BasicInfo{
+			Nickname: e.Nickname,
+			FaceURL:  e.FaceURL,
+		}
+	})
+	unFind := datautil.SliceSubAny(userIDs, memberInfo, func(t *model_struct.LocalGroupMember) string {
+		return t.UserID
+	})
+
+	queryUserIDs := make([]string, 0)
+
+	var (
+		groupMap *cache.Cache[string, *sdk_struct.BasicInfo]
+		ok       bool
+	)
+
+	if groupMap, ok = g.groupMemberCache.Load(groupID); ok {
+		for _, userID := range unFind {
+			if data, ok := groupMap.Load(userID); ok {
+				res[userID] = data
+			} else {
+				queryUserIDs = append(queryUserIDs, userID)
+			}
+		}
+	} else {
+		groupMap = cache.NewCache[string, *sdk_struct.BasicInfo]()
+		queryUserIDs = append(queryUserIDs, unFind...)
+	}
+
+	if len(queryUserIDs) != 0 {
+		members, err := g.GetDesignatedGroupMembers(ctx, groupID, queryUserIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, member := range members {
+			info := &sdk_struct.BasicInfo{
+				Nickname: member.Nickname,
+				FaceURL:  member.FaceURL,
+			}
+
+			res[member.UserID] = info
+			groupMap.Store(member.UserID, info)
+		}
+		g.groupMemberCache.Store(groupID, groupMap)
+	}
+
+	return res, nil
+}
+
+//func (g *Group) SearchGroupMembersV2(ctx context.Context, req *group.SearchGroupMemberReq) ([]*model_struct.LocalGroupMember, error) {
+//	if err := req.Check(); err != nil {
+//		return nil, err
+//	}
+//	info, err := g.db.GetGroupInfoByGroupID(ctx, req.GroupID)
+//	if err != nil {
+//		return nil, err
+//	}
+//	if info.MemberCount <= pconstant.MaxSyncPullNumber {
+//		return g.db.SearchGroupMembersDB(ctx, req.Keyword, req.GroupID, true, false,
+//			int((req.Pagination.PageNumber-1)*req.Pagination.ShowNumber), int(req.Pagination.ShowNumber))
+//	}
+//	resp, err := util.CallApi[group.SearchGroupMemberResp](ctx, constant.SearchGroupMember, req)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return datautil.Slice(resp.Members, g.pbGroupMemberToLocal), nil
+//}
+
+func (g *Group) pbGroupMemberToLocal(pb *sdkws.GroupMemberFullInfo) *model_struct.LocalGroupMember {
+	return &model_struct.LocalGroupMember{
+		GroupID:        pb.GroupID,
+		UserID:         pb.UserID,
+		Nickname:       pb.Nickname,
+		FaceURL:        pb.FaceURL,
+		RoleLevel:      pb.RoleLevel,
+		JoinTime:       pb.JoinTime,
+		JoinSource:     pb.JoinSource,
+		InviterUserID:  pb.InviterUserID,
+		MuteEndTime:    pb.MuteEndTime,
+		OperatorUserID: pb.OperatorUserID,
+		Ex:             pb.Ex,
+		// AttachedInfo:   pb.AttachedInfo,
+	}
 }

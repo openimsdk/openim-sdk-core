@@ -14,6 +14,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/formatutil"
+	"runtime/debug"
 	"time"
 )
 
@@ -26,6 +27,7 @@ func Init(ctx context.Context) error {
 	if err := initialization.InitLog(config.GetConf()); err != nil {
 		return err
 	}
+	initialization.PrintFlag()
 
 	return nil
 }
@@ -55,8 +57,6 @@ func DoFlagFunc(ctx context.Context) (err error) {
 		return err
 	}
 	ctx = m.BuildCtx(ctx)
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	pro.SetContext(ctx)
 
@@ -69,33 +69,28 @@ func DoFlagFunc(ctx context.Context) (err error) {
 	pro.AddTasks(
 		process.NewTask(vars.ShouldRegister, userMng.RegisterAllUsers),
 		process.NewTask(true, userMng.InitAllSDK),
-		process.NewTask(true, userMng.LoginByRate),
-		process.NewTask(true, checker.CheckLoginByRateNum),
+		process.NewTask(vars.IsLogin, userMng.LoginByRate),
+		process.NewTask(vars.IsLogin, checker.CheckLoginByRateNum),
 
 		process.NewTask(vars.ShouldImportFriends, relationMng.ImportFriends),
 		process.NewTask(vars.ShouldImportFriends, checker.CheckLoginUsersFriends),
 
 		process.NewTask(vars.ShouldCreateGroup, groupMng.CreateGroups),
 		process.NewTask(vars.ShouldSendMsg, msgMng.SendMessages),
+		//process.NewTask(vars.ShouldSendMsg, Sleep),
 
-		process.NewTask(true, userMng.LoginLastUsers),
-		process.NewTask(true, checker.CheckAllLoginNum),
+		process.NewTask(vars.IsLogin, userMng.LoginLastUsers),
+		process.NewTask(vars.IsLogin, checker.CheckAllLoginNum),
 	)
 
 	pro.AddTasks(checkTasks...)
 	pro.AddTasks(process.NewTask(vars.ShouldCheckMessageNum, statistics.MsgConsuming))
 
 	// Uninstall and reinstall
-	offline := func() {
-		ctx = utils.CancelAndReBuildCtx(m.BuildCtx, cancel) // Offline
-		log.ZInfo(ctx, "cancel ctx. Offline", err, "stack", utils.FormatErrorStack(err))
-		Sleep()
-		pro.SetContext(ctx)
-	}
 	pro.AddTasks(
 		process.NewTask(true, process.AddConditions, pro, vars.ShouldCheckUninsAndReins),
-		process.NewTask(true, offline),
 		process.NewTask(true, fileMng.DeleteLocalDB),
+		process.NewTask(true, userMng.ForceLogoutAllUsers),
 		process.NewTask(true, userMng.InitAllSDK),
 		process.NewTask(true, userMng.LoginAllUsers),
 	)
@@ -105,23 +100,29 @@ func DoFlagFunc(ctx context.Context) (err error) {
 }
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("panic: %v\n", r)
+			fmt.Println("Stack trace:")
+			fmt.Printf("%s", debug.Stack())
+		}
+	}()
 	ctx := context.Background()
 	if err := Init(ctx); err != nil {
 		log.ZError(ctx, "init err", err, "stack", utils.FormatErrorStack(err))
 		fmt.Println("init err")
 		fmt.Println(utils.FormatErrorStack(err))
-		panic(err)
+		return
 	}
 	if err := DoFlagFunc(ctx); err != nil {
 		log.ZError(ctx, "do flag err", err, "stack", utils.FormatErrorStack(err))
 		fmt.Println("do flag err")
 		fmt.Println(utils.FormatErrorStack(err))
-		panic(err)
+		return
 	}
 
 	log.ZInfo(ctx, "start success!")
 	fmt.Println("start success!")
-	select {}
 }
 
 func Sleep() {

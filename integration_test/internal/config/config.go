@@ -9,12 +9,12 @@ const (
 	TestIP              = "127.0.0.1"
 	APIAddr             = "http://" + TestIP + ":10002"
 	WsAddr              = "ws://" + TestIP + ":10001"
+	AdminUserID         = "imAdmin"
 	Secret              = "openIM123"
-	PlatformID          = constant.WindowsPlatformID
-	LogLevel            = 5
+	PlatformID          = constant.AndroidPlatformID
+	LogLevel            = 3
 	DataDir             = "./data/"
 	LogFilePath         = "./logs/"
-	AdminUserID         = "imAdmin"
 	IsLogStandardOutput = false
 )
 

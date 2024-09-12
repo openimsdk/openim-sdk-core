@@ -15,22 +15,35 @@
 package constant
 
 const (
-	CmdSyncData              = "001"
-	CmdSyncFlag              = "002"
-	CmdNotification          = "003"
-	CmdMsgSyncInReinstall    = "004"
-	CmdNewMsgCome            = "005"
-	CmdUpdateConversation    = "007"
-	CmSyncReactionExtensions = "008"
-	CmdUnInit                = "014"
+	CmdSyncData                   = "syncData"
+	CmdSyncFlag                   = "syncFlag"
+	CmdNotification               = "notification"
+	CmdMsgSyncInReinstall         = "msgSyncInReinstall"
+	CmdNewMsgCome                 = "newMsgCome"
+	CmdSuperGroupMsgCome          = "006"
+	CmdUpdateConversation         = "updateConversation"
+	CmSyncReactionExtensions      = "008"
+	CmdFroceSyncBlackList         = "009"
+	CmdForceSyncFriendApplication = "010"
+	CmdForceSyncMsg               = "011"
+	CmdForceSyncLoginUerInfo      = "012"
+	CmdReLogin                    = "013"
+	CmdUnInit                     = "014"
+	CmdAcceptFriend               = "015"
+	CmdRefuseFriend               = "016"
+	CmdAddFriend                  = "017"
 
-	CmdUpdateMessage = "019"
+	CmdJoinedSuperGroup = "018"
+	CmdUpdateMessage    = "updateMessage"
 
-	CmdMaxSeq       = "maxSeq"
-	CmdPushMsg      = "pushMsg"
-	CmdConnSuccesss = "connSuccess"
-	CmdWakeUp       = "wakeUp"
-	CmdLogOut       = "loginOut"
+	CmdReconnect = "020"
+	CmdInit      = "021"
+
+	CmdMaxSeq         = "maxSeq"
+	CmdPushMsg        = "pushMsg"
+	CmdConnSuccesss   = "connSuccess"
+	CmdWakeUpDataSync = "wakeUpDataSync"
+	CmdLogOut         = "loginOut"
 )
 
 const (
@@ -177,9 +190,11 @@ const (
 
 const (
 	GetNewestSeq          = 1001
-	PullMsgBySeqList      = 1002
+	PullMsgByRange        = 1002
 	SendMsg               = 1003
 	SendSignalMsg         = 1004
+	PullMsgBySeqList      = 1005
+	GetConvMaxReadSeq     = 1006
 	PushMsg               = 2001
 	KickOnlineMsg         = 2002
 	LogoutMsg             = 2003
@@ -225,13 +240,15 @@ const (
 )
 
 const (
-	KeywordMatchOr = 0 // Keyword match mode: match any keyword
+	KeywordMatchOr  = 0 // Keyword match mode: match any keyword
+	KeywordMatchAnd = 1 // Keyword match mode: match all keywords
 )
 
 const BigVersion = "v3"
 
 const (
 	MsgSyncBegin      = 1001 //
+	MsgSyncProcessing = 1002 //
 	MsgSyncEnd        = 1003 //
 	MsgSyncFailed     = 1004
 	AppDataSyncStart  = 1005

@@ -8,12 +8,12 @@ import (
 
 func CheckLoginByRateNum(ctx context.Context) error {
 	correct := func() int {
-		return vars.LoginEndUserNum
+		return vars.LoginUserNum
 	}()
 
 	c := &CounterChecker[int, string]{
 		CheckName:      "checkLoginByRateNum",
-		CheckerKeyName: "login",
+		CheckerKeyName: "loginNum",
 		GoroutineLimit: config.ErrGroupCommonLimit,
 		GetTotalCount: func(ctx context.Context, t int) (int, error) {
 			return int(vars.NowLoginNum.Load()), nil
@@ -38,7 +38,7 @@ func CheckAllLoginNum(ctx context.Context) error {
 
 	c := &CounterChecker[int, string]{
 		CheckName:      "checkLoginByRateNum",
-		CheckerKeyName: "login",
+		CheckerKeyName: "loginNum",
 		GoroutineLimit: config.ErrGroupCommonLimit,
 		GetTotalCount: func(ctx context.Context, t int) (int, error) {
 			return int(vars.NowLoginNum.Load()), nil

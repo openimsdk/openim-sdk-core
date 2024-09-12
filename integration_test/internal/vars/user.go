@@ -13,8 +13,9 @@ var (
 	UserIDs      []string // all user ids
 	SuperUserIDs []string // user ids of users with all friends
 
-	Contexts []context.Context // users contexts
+	Contexts []context.Context    // users contexts
+	Cancels  []context.CancelFunc // users contexts
 
-	LoginEndUserNum int // e.g. if LoginEndUserNum = 5, login user is [0,1,2,3,4]
-	NowLoginNum     atomic.Int64
+	LoginUserNum int
+	NowLoginNum  atomic.Int64
 )

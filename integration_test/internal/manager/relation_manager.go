@@ -4,13 +4,13 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
-	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/relation"
-	"sync/atomic"
+	"github.com/openimsdk/tools/log"
 )
 
 type TestRelationManager struct {
@@ -29,26 +29,39 @@ func NewRelationManager(m *MetaManager) *TestRelationManager {
 func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupMiddleSmallLimit)
 
 	var (
-		total    atomic.Int64
-		progress atomic.Int64
+		total int
+		now   int
 	)
-	total.Add(int64(vars.SuperUserNum))
-	utils.FuncProgressBarPrint(cctx, gr, &progress, &total)
+	total = vars.SuperUserNum
+	progress.FuncNameBarPrint(cctx, gr, now, total)
 	for i, userID := range vars.SuperUserIDs {
 		i := i
 		userID := userID
 		gr.Go(func() error {
 			friendIDs := vars.UserIDs[i+1:] // excluding oneself
-			req := &relation.ImportFriendReq{
-				OwnerUserID:   userID,
-				FriendUserIDs: friendIDs,
+			if len(friendIDs) == 0 {
+				return nil
 			}
-			_, err := util.CallApi[relation.ImportFriendResp](m.BuildCtx(ctx), constant.ImportFriendListRouter, req)
-			if err != nil {
-				return err
+
+			for i := 0; i < len(friendIDs); i += config.ApiParamLength {
+				end := i + config.ApiParamLength
+				if end > len(friendIDs) {
+					end = len(friendIDs)
+				}
+				req := &relation.ImportFriendReq{
+					OwnerUserID:   userID,
+					FriendUserIDs: friendIDs[i:end],
+				}
+				ctx := m.BuildCtx(ctx)
+				log.ZWarn(ctx, "ImportFriends begin", nil, "len", len(friendIDs))
+				_, err := util.CallApi[relation.ImportFriendResp](ctx, constant.ImportFriendListRouter, req)
+				if err != nil {
+					return err
+				}
+				log.ZWarn(ctx, "ImportFriends end", nil, "len", len(friendIDs))
 			}
 			return nil
 		})

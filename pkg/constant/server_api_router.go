@@ -54,6 +54,8 @@ const (
 
 	// auth
 	GetUsersToken = RouterAuth + "/user_token"
+
+	SetGroupInfoEXRouter = RouterGroup + "/set_group_info_ex"
 )
 const (
 	ConversationGroup = "/conversation"

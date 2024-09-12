@@ -10,50 +10,41 @@ import (
 
 // CheckMessageNum check message num.
 func CheckMessageNum(ctx context.Context) error {
+	createdLargeGroupNum := vars.LargeGroupNum / vars.LoginUserNum
 	corrects := func() [3]int {
 		// corrects[0]: super user msg num
 		// corrects[1]: common user msg num
 		// corrects[2]: create more one large group largest user no + 1
 
-		createdLargeGroupNum := vars.LargeGroupNum / vars.UserNum
 		// if a user num smaller than remainder, it means this user created more one large group
-		remainder := vars.LargeGroupNum % vars.UserNum
+		remainder := vars.LargeGroupNum % vars.LoginUserNum
 
-		largeGroupNum := ((vars.UserNum-1)*vars.GroupMessageNum+1)*vars.LargeGroupNum - createdLargeGroupNum
-		// Formula:
-		// largeGroupNum =
-		//	// total send message num
-		//	vars.GroupMessageNum*vars.UserNum*vars.LargeGroupNum +
-		//	// total create group notification message
-		//	vars.LargeGroupNum -
-		//	// self send group message
-		//	vars.GroupMessageNum*vars.LargeGroupNum -
-		//	// self create group notification message. Complete the calculation based on user ID in CalCorrectCount.
-		//	createdLargeGroupNum
+		largeGroupNum :=
+			// total send message num +
+			vars.GroupMessageNum*vars.LoginUserNum*vars.LargeGroupNum +
+				// total create group notification message -
+				vars.LargeGroupNum
+		// self send group message(cal by userID) -
+		// self create group notification message. Complete the calculation based on user ID in CalCorrectCount.
 
-		commonGroupNum := (vars.GroupMessageNum + 1) * (vars.CommonGroupNum * (vars.CommonGroupMemberNum - 1))
+		commonGroupNum := 0
+		// self create group notification message
 		// Formula:
 		// commonGroupNum =
-		// // total send group message
-		// vars.GroupMessageNum*(vars.CommonGroupMemberNum*vars.CommonGroupNum) +
-		// // total create group notification message
-		//	(vars.CommonGroupMemberNum * vars.CommonGroupNum) -
-		// // self send group message
-		//	vars.GroupMessageNum*vars.CommonGroupNum -
-		// // self create group notification message
-		//	vars.CommonGroupNum
+		// total send group message(cal by userID) +
+		// total create group notification message(cal by userID) -
+		// self send group message(cal by userID) -
+		// self create group notification message(cal by userID)
 
 		groupMsgNum := largeGroupNum + commonGroupNum
 
-		superUserMsgNum := (vars.UserNum - 1) * vars.SingleMessageNum // send message + become friend message(in CalCorrectCount)
+		superUserMsgNum := 0
 		// Formula:
 		// superUserMsgNum =
-		//	// friend send message num
-		//	(vars.UserNum-1)*vars.GroupMessageNum +
-		//	// become friend notification message num. it`s number of friends applied for
-		//	userNum
+		//	friend send message num(cal by userID) +
+		//	become friend notification message num(cal by userID)
 
-		commonUserMsgNum := vars.SuperUserNum * vars.SingleMessageNum
+		commonUserMsgNum := min(vars.LoginUserNum, vars.SuperUserNum) * vars.SingleMessageNum
 
 		return [3]int{superUserMsgNum + groupMsgNum, commonUserMsgNum + groupMsgNum, remainder}
 	}()
@@ -71,13 +62,48 @@ func CheckMessageNum(ctx context.Context) error {
 		},
 		CalCorrectCount: func(userID string) int {
 			var res int
-			useNum := utils.MustGetUserNum(userID)
+			userNum := utils.MustGetUserNum(userID)
 			if utils.IsSuperUser(userID) {
-				res = corrects[0] + vars.UserNum - 1 - useNum // become friend message
+				res += corrects[0]
+				res += vars.UserNum - 1 - userNum // become friend notification message num
+				if userNum < vars.LoginUserNum {
+					// friend send message num
+					res += vars.SingleMessageNum * (vars.LoginUserNum - 1)
+					// self send large group message
+					res -= vars.GroupMessageNum * vars.LargeGroupNum
+					res -= createdLargeGroupNum
+				} else {
+					// friend send message num
+					res += vars.SingleMessageNum * vars.LoginUserNum
+					// self send large group message
+					res -= 0
+				}
 			} else {
-				res = corrects[1]
+				res += corrects[1]
+				if userNum < vars.LoginUserNum {
+					// self send large group message
+					res -= vars.GroupMessageNum * vars.LargeGroupNum
+					// self created large group num
+					res -= createdLargeGroupNum
+				} else {
+					// self send large group message
+					res -= 0
+				}
 			}
-			if useNum < corrects[2] {
+
+			// commonGroupNum =
+			// total send group message(cal by userID) +
+			// total create group notification message(cal by userID) -
+			// self send group message(cal by userID) -
+			// self create group notification message(cal by userID)
+			comGroupNum := calCommonGroup(userNum) * (vars.GroupMessageNum + 1)
+			if utils.IsNumLogin(userNum) {
+				comGroupNum -= vars.CommonGroupNum * (vars.GroupMessageNum + 1)
+			}
+			res += comGroupNum
+
+			// create more one large group
+			if userNum < corrects[2] {
 				res--
 			}
 			return res

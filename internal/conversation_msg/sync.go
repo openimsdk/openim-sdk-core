@@ -21,6 +21,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/tools/log"
@@ -30,13 +31,17 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	startTime := time.Now()
 	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
 
-	resp, err := c.getHasReadAndMaxSeqsFromSvr(ctx)
+	resp := msg.GetConversationsHasReadAndMaxSeqResp{}
+	req := msg.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID}
+	err := c.SendReqWaitResp(ctx, &req, constant.GetConvMaxReadSeq, &resp)
 	if err != nil {
+		log.ZWarn(ctx, "SendReqWaitResp err", err)
 		return err
 	}
+	seqs := resp.Seqs
 	log.ZDebug(ctx, "getServerHasReadAndMaxSeqs completed", "duration", time.Since(startTime).Seconds())
 
-	if len(resp.Seqs) == 0 {
+	if len(seqs) == 0 {
 		return nil
 	}
 	var conversationChangedIDs []string
@@ -55,7 +60,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	})
 
 	stepStartTime = time.Now()
-	for conversationID, v := range resp.Seqs {
+	for conversationID, v := range seqs {
 		var unreadCount int32
 		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
 		if v.MaxSeq-v.HasReadSeq < 0 {
@@ -66,8 +71,8 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 		}
 		if conversation, ok := conversationsOnLocalMap[conversationID]; ok {
-			if conversation.UnreadCount != unreadCount || conversation.HasReadSeq != v.HasReadSeq {
-				if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount, "has_read_seq": v.HasReadSeq}); err != nil {
+			if conversation.UnreadCount != unreadCount {
+				if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount}); err != nil {
 					log.ZWarn(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 					continue
 				}
@@ -97,7 +102,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 
 		for _, conversation := range conversationsOnServer {
 			var unreadCount int32
-			v, ok := resp.Seqs[conversation.ConversationID]
+			v, ok := seqs[conversation.ConversationID]
 			if !ok {
 				continue
 			}
@@ -108,7 +113,6 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 				unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 			}
 			conversation.UnreadCount = unreadCount
-			conversation.HasReadSeq = v.HasReadSeq
 		}
 
 		stepStartTime = time.Now()
