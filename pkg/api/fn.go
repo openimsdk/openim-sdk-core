@@ -3,9 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/protocol/sdkws"
-	"reflect"
 )
 
 func api[Req, Resp any](api string) Api[Req, Resp] {
