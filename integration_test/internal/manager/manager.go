@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	authPB "github.com/openimsdk/protocol/auth"
@@ -58,7 +58,7 @@ func (m *MetaManager) GetSecret() string {
 func (m *MetaManager) GetToken(userID string, platformID int32) (string, error) {
 	req := authPB.UserTokenReq{PlatformID: platformID, UserID: userID, Secret: m.secret}
 	resp := authPB.UserTokenResp{}
-	err := m.PostWithCtx(constant.GetUsersToken, &req, &resp)
+	err := m.PostWithCtx(api.GetUsersToken.Route(), &req, &resp)
 	if err != nil {
 		return "", err
 	}

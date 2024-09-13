@@ -173,6 +173,24 @@ func (i *LocalChatLogs) GetMessageListNoTime(ctx context.Context, conversationID
 	}
 }
 
+func (i *LocalChatLogs) GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	msg, err := exec.Exec(conversationID, isReverse)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msg.(string); ok {
+			err := utils.JsonStringToStruct(v, result)
+			if err != nil {
+				return nil, err
+			}
+
+			return result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
 // UpdateSingleMessageHasRead updates the hasRead field of a single message in the local chat log.
 func (i *LocalChatLogs) UpdateSingleMessageHasRead(ctx context.Context, sendID string, msgIDList []string) error {
 	_, err := exec.Exec(sendID, utils.StructToJsonString(msgIDList))

@@ -21,10 +21,14 @@ import (
 	"fmt"
 	"io"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -32,10 +36,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
@@ -57,6 +57,8 @@ const (
 
 	//Maximum number of reconnection attempts
 	maxReconnectAttempts = 300
+
+	sendAndWaitTime = time.Second * 10
 )
 
 const (
@@ -87,7 +89,6 @@ type LongConnMgr struct {
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	conversationCh     chan common.Cmd2Value
 	loginMgrCh         chan common.Cmd2Value
-	heartbeatCh        chan common.Cmd2Value
 	closedErr          error
 	ctx                context.Context
 	IsCompression      bool
@@ -109,7 +110,7 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userOnline func(map[string][]int32), heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userOnline func(map[string][]int32), pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{
 		listener:           listener,
 		userOnline:         userOnline,
@@ -126,7 +127,6 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
 	l.ctx = ctx
-	l.heartbeatCh = heartbeatCmdCh
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
@@ -175,6 +175,14 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // reads from this goroutine.
 
 func (c *LongConnMgr) readPump(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+
+			log.ZWarn(ctx, "readPump panic", nil, "panic info", err)
+		}
+	}()
+
 	log.ZDebug(ctx, "readPump start", "goroutine ID:", getGoroutineID())
 	defer func() {
 		_ = c.close()
@@ -233,6 +241,14 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *LongConnMgr) writePump(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+
+			log.ZWarn(ctx, "writePump panic", nil, "panic info", err)
+		}
+	}()
+
 	log.ZDebug(ctx, "writePump start", "goroutine ID:", getGoroutineID())
 
 	defer func() {
@@ -282,6 +298,14 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 }
 
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+
+			log.ZWarn(ctx, "heartbeat panic", nil, "panic info", err)
+		}
+	}()
+
 	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -293,8 +317,6 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-ctx.Done():
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
 			return
-		case <-c.heartbeatCh:
-			c.retrieveMaxSeq(ctx)
 		case <-ticker.C:
 			log.ZInfo(ctx, "sendPingMessage", "goroutine ID:", getGoroutineID())
 			c.sendPingMessage(ctx)
@@ -331,51 +353,6 @@ func getGoroutineID() int64 {
 	return id
 }
 
-func (c *LongConnMgr) retrieveMaxSeq(ctx context.Context) {
-	if c.conn == nil {
-		return
-	}
-	var m sdkws.GetMaxSeqReq
-	m.UserID = ccontext.Info(ctx).UserID()
-	opID := utils.OperationIDGenerator()
-	sCtx := ccontext.WithOperationID(c.ctx, opID)
-	log.ZInfo(sCtx, "retrieveMaxSeq start", "goroutine ID:", getGoroutineID())
-	data, err := proto.Marshal(&m)
-	if err != nil {
-		log.ZError(sCtx, "proto.Marshal", err)
-		return
-	}
-	req := &GeneralWsReq{
-		ReqIdentifier: constant.GetNewestSeq,
-		SendID:        m.UserID,
-		OperationID:   opID,
-		Data:          data,
-	}
-	resp, err := c.sendAndWaitResp(req)
-	if err != nil {
-		log.ZError(sCtx, "sendAndWaitResp", err)
-		_ = c.close()
-		time.Sleep(time.Second * 1)
-		return
-	} else {
-		if resp.ErrCode != 0 {
-			log.ZError(sCtx, "retrieveMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
-		}
-		var wsSeqResp sdkws.GetMaxSeqResp
-		err = proto.Unmarshal(resp.Data, &wsSeqResp)
-		if err != nil {
-			log.ZError(sCtx, "proto.Unmarshal", err)
-		}
-		var cmd sdk_struct.CmdMaxSeqToMsgSync
-		cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
-
-		err := common.TriggerCmdMaxSeq(sCtx, &cmd, c.pushMsgAndMaxSeqCh)
-		if err != nil {
-			log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
-		}
-	}
-}
-
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
 	tempChan, err := c.writeBinaryMsgAndRetry(msg)
 	defer c.Syncer.DelCh(msg.MsgIncr)
@@ -385,7 +362,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 		select {
 		case resp := <-tempChan:
 			return resp, nil
-		case <-time.After(time.Second * 10):
+		case <-time.After(sendAndWaitTime):
 			return nil, sdkerrs.ErrNetworkTimeOut
 		}
 
@@ -523,7 +500,11 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		return err
 	case constant.GetNewestSeq:
 		fallthrough
+	case constant.PullMsgByRange:
+		fallthrough
 	case constant.PullMsgBySeqList:
+		fallthrough
+	case constant.GetConvMaxReadSeq:
 		fallthrough
 	case constant.SendMsg:
 		fallthrough
@@ -539,7 +520,6 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 			log.ZError(ctx, "handlerUserOnlineChange failed", err, "wsResp", wsResp)
 		}
 	default:
-		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return sdkerrs.ErrMsgBinaryTypeNotSupport
 	}
 	return nil

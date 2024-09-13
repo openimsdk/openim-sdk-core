@@ -6,6 +6,7 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
@@ -106,7 +107,7 @@ func (r *Relation) initSyncer() {
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(resp *relation.GetPaginationFriendsResp) []*model_struct.LocalFriend {
 			return datautil.Batch(ServerFriendToLocalFriend, resp.FriendsInfo)
 		}),
-		syncer.WithReqApiRouter[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](constant.GetFriendListRouter),
+		syncer.WithReqApiRouter[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](api.GetFriendList.Route()),
 		syncer.WithFullSyncLimit[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](friendSyncLimit),
 	)
 

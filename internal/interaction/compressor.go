@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 	"io"
 	"sync"
 )
@@ -47,10 +47,10 @@ func (g *GzipCompressor) Compress(rawData []byte) ([]byte, error) {
 	gzipBuffer := bytes.Buffer{}
 	gz := gzip.NewWriter(&gzipBuffer)
 	if _, err := gz.Write(rawData); err != nil {
-		return nil, utils.Wrap(err, "")
+		return nil, errs.WrapMsg(err, "")
 	}
 	if err := gz.Close(); err != nil {
-		return nil, utils.Wrap(err, "")
+		return nil, errs.WrapMsg(err, "")
 	}
 	return gzipBuffer.Bytes(), nil
 }
@@ -63,10 +63,10 @@ func (g *GzipCompressor) CompressWithPool(rawData []byte) ([]byte, error) {
 	gz.Reset(&gzipBuffer)
 
 	if _, err := gz.Write(rawData); err != nil {
-		return nil, utils.Wrap(err, "")
+		return nil, errs.WrapMsg(err, "")
 	}
 	if err := gz.Close(); err != nil {
-		return nil, utils.Wrap(err, "")
+		return nil, errs.WrapMsg(err, "")
 	}
 	return gzipBuffer.Bytes(), nil
 }
@@ -75,11 +75,11 @@ func (g *GzipCompressor) DeCompress(compressedData []byte) ([]byte, error) {
 	buff := bytes.NewBuffer(compressedData)
 	reader, err := gzip.NewReader(buff)
 	if err != nil {
-		return nil, utils.Wrap(err, "NewReader failed")
+		return nil, errs.WrapMsg(err, "NewReader failed")
 	}
 	compressedData, err = io.ReadAll(reader)
 	if err != nil {
-		return nil, utils.Wrap(err, "ReadAll failed")
+		return nil, errs.WrapMsg(err, "ReadAll failed")
 	}
 	_ = reader.Close()
 	return compressedData, nil
@@ -94,12 +94,12 @@ func (g *GzipCompressor) DecompressWithPool(compressedData []byte) ([]byte, erro
 
 	err := reader.Reset(bytes.NewReader(compressedData))
 	if err != nil {
-		return nil, utils.Wrap(err, "NewReader failed")
+		return nil, errs.WrapMsg(err, "NewReader failed")
 	}
 
 	compressedData, err = io.ReadAll(reader)
 	if err != nil {
-		return nil, utils.Wrap(err, "ReadAll failed")
+		return nil, errs.WrapMsg(err, "ReadAll failed")
 	}
 	_ = reader.Close()
 	return compressedData, nil

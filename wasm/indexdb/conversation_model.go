@@ -231,7 +231,7 @@ func (i *LocalConversations) BatchUpdateConversationList(ctx context.Context, co
 	for _, v := range conversationList {
 		err := i.UpdateConversation(ctx, v)
 		if err != nil {
-			return utils.Wrap(err, "BatchUpdateConversationList failed")
+			return errs.WrapMsg(err, "BatchUpdateConversationList failed")
 		}
 
 	}
@@ -381,14 +381,14 @@ func (i *LocalConversations) SearchConversations(ctx context.Context, searchPara
 	// Perform the search operation. Replace the below line with the actual search logic.
 	searchResult, err := exec.Exec(searchParam)
 	if err != nil {
-		return nil, utils.Wrap(err, "SearchConversations failed")
+		return nil, errs.WrapMsg(err, "SearchConversations failed")
 	}
 
 	// Convert searchResult to []*model_struct.LocalConversation
 	// Assuming searchResult is in a format that can be converted to the required type
 	err = utils.JsonStringToStruct(searchResult.(string), &result)
 	if err != nil {
-		return nil, utils.Wrap(err, "Failed to parse search results")
+		return nil, errs.WrapMsg(err, "Failed to parse search results")
 	}
 
 	return result, nil

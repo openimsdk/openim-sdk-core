@@ -153,25 +153,29 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 }
 func (d *DataBase) GetMessageListNoTime(ctx context.Context, conversationID string,
 	count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	err = d.initChatLog(ctx, conversationID)
-	if err != nil {
+	if err = d.initChatLog(ctx, conversationID); err != nil {
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
 	}
+
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
+
 	var timeOrder string
 	if isReverse {
 		timeOrder = "send_time ASC"
 	} else {
 		timeOrder = "send_time DESC"
 	}
+
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
 	if err != nil {
 		return nil, err
 	}
+
 	return result, err
 }
+
 func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
@@ -434,4 +438,44 @@ func (d *DataBase) GetConversationPeerNormalMsgSeq(ctx context.Context, conversa
 	var seq int64
 	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Where("send_id != ?", d.loginUserID).Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationPeerNormalMsgSeq")
+}
+func (d *DataBase) UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
+		"send_id = ? and session_type = ? and sender_nick_name != ? ", sendID, sType, nickname).Updates(
+		map[string]interface{}{"sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
+}
+
+func (d *DataBase) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
+		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
+		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+}
+
+func (d *DataBase) GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	if err = d.initChatLog(ctx, conversationID); err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return nil, err
+	}
+
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	var timeOrder string
+	if isReverse {
+		timeOrder = "send_time ASC"
+	} else {
+		timeOrder = "send_time DESC"
+	}
+
+	// only get status < 4(NotHasDeleted) Msg
+	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("status < ?", constant.MsgStatusHasDeleted).Order(timeOrder).Offset(0).Limit(1).Find(&result).Error, "GetMessageList failed")
+	if err != nil {
+		return nil, err
+	}
+
+	return result, err
 }

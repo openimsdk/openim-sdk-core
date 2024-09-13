@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	pconstant "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -34,9 +35,9 @@ func newTyping(c *Conversation) *typing {
 		send:  cache.New(inputStatesSendTime, inputStatesTimeout),
 		state: cache.New(inputStatesTimeout, inputStatesTimeout),
 	}
-	e.platformIDs = make([]int32, 0, len(constant.PlatformID2Name))
+	e.platformIDs = make([]int32, 0, len(pconstant.PlatformID2Name))
 	e.platformIDSet = make(map[int32]struct{})
-	for id := range constant.PlatformID2Name {
+	for id := range pconstant.PlatformID2Name {
 		e.platformIDSet[int32(id)] = struct{}{}
 		e.platformIDs = append(e.platformIDs, int32(id))
 	}

@@ -47,10 +47,10 @@ func InitSDKAndLogin(userID, token string) error {
 	cf.LogFilePath = ""
 	var testConnListener testConnListener
 	userForSDK.InitSDK(cf, &testConnListener)
-	if err := log.InitFromConfig(userID+"_open-im-sdk-core", "", int(LogLevel), true, false, cf.DataDir, 0, 24, version.Version, true); err != nil {
+	if err := log.InitLoggerFromConfig(userID+"_open-im-sdk-core", "", cf.SystemType, constant.PlatformID2Name[int(cf.PlatformID)], int(LogLevel), true, false, cf.DataDir, 0, 24, version.Version, false); err != nil {
 		return err
 	}
-	ctx := ccontext.WithOperationID(userForSDK.BaseCtx(), utils.OperationIDGenerator())
+	ctx := ccontext.WithOperationID(userForSDK.Context(), utils.OperationIDGenerator())
 	SetListener(userForSDK, userID)
 	err := userForSDK.Login(ctx, userID, token)
 	if err != nil {
@@ -71,8 +71,8 @@ func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {
 	UserMessageMap[userID] = msgCallBack
 	userForSDK.SetAdvancedMsgListener(msgCallBack)
 
-	var friendshipListener testFriendshipListener
-	userForSDK.SetFriendshipListener(friendshipListener)
+	var friendListener testFriendListener
+	userForSDK.SetFriendListener(friendListener)
 
 	var groupListener testGroupListener
 	userForSDK.SetGroupListener(groupListener)

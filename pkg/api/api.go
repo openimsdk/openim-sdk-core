@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/protocol/group"
@@ -13,9 +12,13 @@ import (
 )
 
 var (
-	GetUsersInfo             = api[user.GetDesignateUsersReq, user.GetDesignateUsersResp](constant.GetUsersInfoRouter)
-	UpdateSelfUserInfo       = api[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
-	UpdateSelfUserInfoEx     = api[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
+	ParseToken = api[auth.ParseTokenReq, auth.ParseTokenResp]("/auth/parse_token")
+)
+
+var (
+	GetUsersInfo             = api[user.GetDesignateUsersReq, user.GetDesignateUsersResp]("/user/get_users_info")
+	UpdateUserInfo           = api[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
+	UpdateUserInfoEx         = api[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
 	SetGlobalRecvMessageOpt  = api[user.SetGlobalRecvMessageOptReq, user.SetGlobalRecvMessageOptResp]("/user/set_global_msg_recv_opt")
 	ProcessUserCommandAdd    = api[user.ProcessUserCommandAddReq, user.ProcessUserCommandAddResp]("/user/process_user_command_add")
 	ProcessUserCommandDelete = api[user.ProcessUserCommandDeleteReq, user.ProcessUserCommandDeleteResp]("/user/process_user_command_delete")
@@ -82,7 +85,6 @@ var (
 	MuteGroup                      = api[group.MuteGroupReq, group.MuteGroupResp]("/group/mute_group")
 	CancelMuteGroup                = api[group.CancelMuteGroupReq, group.CancelMuteGroupResp]("/group/cancel_mute_group")
 	SetGroupMemberInfo             = api[group.SetGroupMemberInfoReq, group.SetGroupMemberInfoResp]("/group/set_group_member_info")
-	GetGroupAbstractInfo           = api[group.GetGroupAbstractInfoReq, group.GetGroupAbstractInfoResp]("/group/get_group_abstract_info")
 	GetIncrementalJoinGroup        = api[group.GetIncrementalJoinGroupReq, group.GetIncrementalJoinGroupResp]("/group/get_incremental_join_groups")
 	GetIncrementalGroupMemberBatch = api[group.BatchGetIncrementalGroupMemberReq, group.BatchGetIncrementalGroupMemberResp]("/group/get_incremental_group_members_batch")
 	GetFullJoinedGroupIDs          = api[group.GetFullJoinGroupIDsReq, group.GetFullJoinGroupIDsResp]("/group/get_full_join_group_ids")
@@ -99,7 +101,6 @@ var (
 )
 
 var (
-	ParseToken    = api[auth.ParseTokenReq, auth.ParseTokenResp](constant.ParseTokenRouter)
 	GetUsersToken = api[auth.UserTokenReq, auth.UserTokenResp]("/auth/user_token")
 )
 

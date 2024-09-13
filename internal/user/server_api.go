@@ -2,92 +2,44 @@ package user
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	authPb "github.com/openimsdk/protocol/auth"
+	"github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/sdkws"
-	userPb "github.com/openimsdk/protocol/user"
-	"github.com/openimsdk/tools/utils/datautil"
+	"github.com/openimsdk/protocol/user"
 )
 
-// ParseTokenFromSvr parses a token from the server.
-func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
-	resp, err := api.ParseToken.Invoke(ctx, &authPb.ParseTokenReq{})
-	if err != nil {
-		return 0, err
-	}
-	return resp.ExpireTimeSeconds, nil
+func (u *User) getUsersInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
+	req := &user.GetDesignateUsersReq{UserIDs: userIDs}
+	return api.ExtractField(ctx, api.GetUsersInfo.Invoke, req, (*user.GetDesignateUsersResp).GetUsersInfo)
 }
 
-// GetServerUserInfo retrieves user information from the server.
-func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
-	resp, err := api.GetUsersInfo.Invoke(ctx, &userPb.GetDesignateUsersReq{UserIDs: userIDs})
-	if err != nil {
-		return nil, err
-	}
-	return resp.UsersInfo, nil
+func (u *User) updateUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
+	userInfo.UserID = u.loginUserID
+	return api.UpdateUserInfo.Execute(ctx, &user.UpdateUserInfoReq{UserInfo: userInfo})
 }
 
-// updateSelfUserInfo updates the user's information.
-func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-	_, err := api.UpdateSelfUserInfo.Invoke(ctx, &userPb.UpdateUserInfoReq{UserInfo: userInfo})
-	return err
+func (u *User) updateUserInfoV2(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
+	userInfo.UserID = u.loginUserID
+	return api.UpdateUserInfoEx.Execute(ctx, &user.UpdateUserInfoExReq{UserInfo: userInfo})
 }
 
-// updateSelfUserInfoEx updates the user's information with Ex field.
-func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
-	_, err := api.UpdateSelfUserInfoEx.Invoke(ctx, &userPb.UpdateUserInfoExReq{UserInfo: userInfo})
-	return err
+func (u *User) processUserCommandAdd(ctx context.Context, req *user.ProcessUserCommandAddReq) error {
+	return api.ProcessUserCommandAdd.Execute(ctx, req)
 }
 
-func (u *User) processUserCommandAdd(ctx context.Context, userCommand *userPb.ProcessUserCommandAddReq) error {
-	_, err := api.ProcessUserCommandAdd.Invoke(ctx, &userPb.ProcessUserCommandAddReq{
-		UserID: u.loginUserID,
-		Type:   userCommand.Type,
-		Uuid:   userCommand.Uuid,
-		Value:  userCommand.Value,
-	})
-	return err
+func (u *User) processUserCommandDelete(ctx context.Context, req *user.ProcessUserCommandDeleteReq) error {
+	return api.ProcessUserCommandDelete.Execute(ctx, req)
 }
 
-// processUserCommandDelete is a private method to handle the actual delete command API call.
-func (u *User) processUserCommandDelete(ctx context.Context, userCommand *userPb.ProcessUserCommandDeleteReq) error {
-	_, err := api.ProcessUserCommandDelete.Invoke(ctx, &userPb.ProcessUserCommandDeleteReq{
-		UserID: u.loginUserID,
-		Type:   userCommand.Type,
-		Uuid:   userCommand.Uuid,
-	})
-	return err
+func (u *User) processUserCommandUpdate(ctx context.Context, req *user.ProcessUserCommandUpdateReq) error {
+	return api.ProcessUserCommandUpdate.Execute(ctx, req)
 }
 
-// processUserCommandUpdate is a private method to handle the actual update command API call.
-func (u *User) processUserCommandUpdate(ctx context.Context, userCommand *userPb.ProcessUserCommandUpdateReq) error {
-	_, err := api.ProcessUserCommandUpdate.Invoke(ctx, &userPb.ProcessUserCommandUpdateReq{
-		UserID: u.loginUserID,
-		Type:   userCommand.Type,
-		Uuid:   userCommand.Uuid,
-		Value:  userCommand.Value,
-	})
-	return err
+func (u *User) parseToken(ctx context.Context) (*auth.ParseTokenResp, error) {
+	return api.ParseToken.Invoke(ctx, &auth.ParseTokenReq{})
 }
 
-// GetUsersInfoFromSvr retrieves user information from the server.
-func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
-	resp, err := api.GetUsersInfo.Invoke(ctx, &userPb.GetDesignateUsersReq{UserIDs: userIDs})
-	if err != nil {
-		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromSvr failed")
-	}
-	return datautil.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
-}
-
-// processUserCommandGetAll is a private method that requests all user commands from the server.
-func (u *User) processUserCommandGetAll(ctx context.Context) ([]*userPb.AllCommandInfoResp, error) {
-	resp, err := api.ProcessUserCommandGetAll.Invoke(ctx, &userPb.ProcessUserCommandGetAllReq{
-		UserID: u.loginUserID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.CommandResp, nil
+func (u *User) setGlobalRecvMessageOpt(ctx context.Context, opt int32) error {
+	return api.SetGlobalRecvMessageOpt.Execute(ctx, &user.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: opt})
 }

@@ -255,6 +255,10 @@ func (f *File) completeMultipartUpload(ctx context.Context, req *third.CompleteM
 	return api.ObjectCompleteMultipartUpload.Invoke(ctx, req)
 }
 
+func (f *File) getObjectPartLimit(ctx context.Context) (*third.PartLimitResp, error) {
+	return api.ObjectPartLimit.Invoke(ctx, &third.PartLimitReq{})
+}
+
 func (f *File) getPartNum(fileSize int64, partSize int64) int {
 	partNum := fileSize / partSize
 	if fileSize%partSize != 0 {
@@ -267,11 +271,11 @@ func (f *File) partSize(ctx context.Context, size int64) (int64, error) {
 	f.confLock.Lock()
 	defer f.confLock.Unlock()
 	if f.partLimit == nil {
-		resp, err := api.ObjectPartLimit.Invoke(ctx, &third.PartLimitReq{})
+		var err error
+		f.partLimit, err = f.getObjectPartLimit(ctx)
 		if err != nil {
 			return 0, err
 		}
-		f.partLimit = resp
 	}
 	if size <= 0 {
 		return 0, errors.New("size must be greater than 0")

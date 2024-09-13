@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/utils/datautil"
 )
@@ -55,7 +56,6 @@ func (g *Group) SyncAllSelfGroupApplicationWithoutNotice(ctx context.Context) er
 	if err := g.groupRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil, false, true); err != nil {
 		return err
 	}
-	// todo
 	return nil
 }
 
