@@ -3,7 +3,7 @@ package relation
 import (
 	"context"
 
-	friend "github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -65,7 +65,7 @@ func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList
 	return res, nil
 }
 
-func (r *Relation) AddFriend(ctx context.Context, req *friend.ApplyToAddFriendReq) error {
+func (r *Relation) AddFriend(ctx context.Context, req *relation.ApplyToAddFriendReq) error {
 	if err := r.addFriend(ctx, req); err != nil {
 		return err
 	}
@@ -84,14 +84,14 @@ func (r *Relation) GetFriendApplicationListAsApplicant(ctx context.Context) ([]*
 }
 
 func (r *Relation) AcceptFriendApplication(ctx context.Context, userIDHandleMsg *sdk.ProcessFriendApplicationParams) error {
-	return r.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseAgree, HandleMsg: userIDHandleMsg.HandleMsg})
+	return r.RespondFriendApply(ctx, &relation.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseAgree, HandleMsg: userIDHandleMsg.HandleMsg})
 }
 
 func (r *Relation) RefuseFriendApplication(ctx context.Context, userIDHandleMsg *sdk.ProcessFriendApplicationParams) error {
-	return r.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseRefuse, HandleMsg: userIDHandleMsg.HandleMsg})
+	return r.RespondFriendApply(ctx, &relation.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseRefuse, HandleMsg: userIDHandleMsg.HandleMsg})
 }
 
-func (r *Relation) RespondFriendApply(ctx context.Context, req *friend.RespondFriendApplyReq) error {
+func (r *Relation) RespondFriendApply(ctx context.Context, req *relation.RespondFriendApplyReq) error {
 	if err := r.addFriendResponse(ctx, req); err != nil {
 		return err
 	}
@@ -154,78 +154,51 @@ func (r *Relation) DeleteFriend(ctx context.Context, friendUserID string) error 
 	return r.IncrSyncFriends(ctx)
 }
 
-// Full GetFriendList
-func (r *Relation) GetFriendList(ctx context.Context) ([]*server_api_params.FullUserInfo, error) {
+func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*model_struct.LocalFriend, error) {
 	localFriendList, err := r.db.GetAllFriendList(ctx)
 	if err != nil {
 		return nil, err
 	}
+	if localFriendList == nil {
+		localFriendList = []*model_struct.LocalFriend{}
+	}
+	if len(localFriendList) == 0 || !filterBlack {
+		return localFriendList, nil
+	}
 	localBlackList, err := r.db.GetBlackListDB(ctx)
 	if err != nil {
 		return nil, err
 	}
-	m := make(map[string]*model_struct.LocalBlack)
-	for i, black := range localBlackList {
-		m[black.BlockUserID] = localBlackList[i]
+	if len(localBlackList) == 0 {
+		return localFriendList, nil
 	}
-	res := make([]*server_api_params.FullUserInfo, 0, len(localFriendList))
-	for _, localFriend := range localFriendList {
-		res = append(res, &server_api_params.FullUserInfo{
-			PublicInfo: nil,
-			FriendInfo: localFriend,
-			BlackInfo:  m[localFriend.FriendUserID],
-		})
+	blackSet := make(map[string]struct{})
+	for _, black := range localBlackList {
+		blackSet[black.BlockUserID] = struct{}{}
+	}
+	res := localFriendList[:0]
+	for i, friend := range localFriendList {
+		if _, ok := blackSet[friend.FriendUserID]; !ok {
+			res = append(res, localFriendList[i])
+		}
 	}
 	return res, nil
 }
 
-func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int32) ([]*server_api_params.FullUserInfo, error) {
-	dataFetcher := datafetcher.NewDataFetcher(
-		r.db,
-		r.friendListTableName(),
-		r.loginUserID,
-		func(localFriend *model_struct.LocalFriend) string {
-			return localFriend.FriendUserID
-		},
-		func(ctx context.Context, values []*model_struct.LocalFriend) error {
-			return r.db.BatchInsertFriend(ctx, values)
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
-			localFriendList, err := r.db.GetFriendInfoList(ctx, userIDs)
-			return localFriendList, true, err
-		},
-		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			serverFriend, err := r.GetDesignatedFriends(ctx, userIDs)
-			if err != nil {
-				return nil, err
-			}
-			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
-		},
-	)
-
-	localFriendList, err := dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
+func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int, filterBlack bool) ([]*model_struct.LocalFriend, error) {
+	friends, err := r.GetFriendList(ctx, filterBlack)
 	if err != nil {
 		return nil, err
 	}
-
-	// don't need extra handle. only full pull.
-	localBlackList, err := r.db.GetBlackListDB(ctx)
-	if err != nil {
-		return nil, err
+	if offset >= len(friends) {
+		return friends[:0], nil
 	}
-	m := make(map[string]*model_struct.LocalBlack)
-	for i, black := range localBlackList {
-		m[black.BlockUserID] = localBlackList[i]
+	friends = friends[offset:]
+	if len(friends) > count {
+		return friends[:count], nil
+	} else {
+		return friends, nil
 	}
-	res := make([]*server_api_params.FullUserInfo, 0, len(localFriendList))
-	for _, localFriend := range localFriendList {
-		res = append(res, &server_api_params.FullUserInfo{
-			PublicInfo: nil,
-			FriendInfo: localFriend,
-			BlackInfo:  m[localFriend.FriendUserID],
-		})
-	}
-	return res, nil
 }
 
 func (r *Relation) SearchFriends(ctx context.Context, param *sdk.SearchFriendsParam) ([]*sdk.SearchFriendItem, error) {
@@ -261,7 +234,7 @@ func (r *Relation) SearchFriends(ctx context.Context, param *sdk.SearchFriendsPa
 }
 
 func (r *Relation) AddBlack(ctx context.Context, blackUserID string, ex string) error {
-	if err := r.addBlack(ctx, &friend.AddBlackReq{BlackUserID: blackUserID, Ex: ex}); err != nil {
+	if err := r.addBlack(ctx, &relation.AddBlackReq{BlackUserID: blackUserID, Ex: ex}); err != nil {
 		return err
 	}
 	return r.SyncAllBlackList(ctx)
@@ -282,7 +255,7 @@ func (r *Relation) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack
 	return r.db.GetBlackListDB(ctx)
 }
 
-func (r *Relation) UpdateFriends(ctx context.Context, req *friend.UpdateFriendsReq) error {
+func (r *Relation) UpdateFriends(ctx context.Context, req *relation.UpdateFriendsReq) error {
 	if err := r.updateFriends(ctx, req); err != nil {
 		return err
 	}

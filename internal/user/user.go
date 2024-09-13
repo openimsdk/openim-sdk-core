@@ -149,28 +149,25 @@ func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*mo
 // getSelfUserInfo retrieves the user's information.
 func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
 	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
-	if errLocal != nil {
-		srvUserInfo, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
-		if errServer != nil {
-			return nil, errServer
-		}
-		if len(srvUserInfo) == 0 {
-			return nil, sdkerrs.ErrUserIDNotFound
-		}
-		//userInfo = ServerUserToLocalUser(srvUserInfo[0])
-		_ = u.InsertLoginUser(ctx, srvUserInfo[0])
+	if errLocal == nil {
+		return userInfo, nil
 	}
-	return userInfo, nil
-}
 
-//// updateSelfUserInfo updates the user's information.
-//func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-//	if err := u.updateUserInfo(ctx, userInfo); err != nil {
-//		return err
-//	}
-//	_ = u.SyncLoginUserInfo(ctx)
-//	return nil
-//}
+	userInfoFromServer, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
+	if errServer != nil {
+		return nil, errServer
+	}
+
+	if len(userInfoFromServer) == 0 {
+		return nil, sdkerrs.ErrUserIDNotFound
+	}
+
+	if err := u.InsertLoginUser(ctx, userInfoFromServer[0]); err != nil {
+		return nil, err
+	}
+
+	return userInfoFromServer[0], nil
+}
 
 // updateSelfUserInfo updates the user's information with Ex field.
 func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
@@ -195,6 +192,10 @@ func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string, fetchF
 	return fetchedData, nil
 }
 
-func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) (map[string]*model_struct.LocalUser, error) {
-	return u.UserCache.MultiFetchGet(ctx, cacheKeys)
+func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([]*model_struct.LocalUser, error) {
+	m, err := u.UserCache.MultiFetchGet(ctx, cacheKeys)
+	if err != nil {
+		return nil, err
+	}
+	return datautil.MapToSlice(m), nil
 }

@@ -17,7 +17,8 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 

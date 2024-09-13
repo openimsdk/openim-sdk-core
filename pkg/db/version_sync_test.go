@@ -1,17 +1,16 @@
-package test
+package db
 
 import (
 	"context"
 	"testing"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 )
 
 func Test_GetVersionSync(t *testing.T) {
 
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
@@ -29,7 +28,7 @@ func Test_GetVersionSync(t *testing.T) {
 func Test_SetVersionSync(t *testing.T) {
 
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
@@ -56,7 +55,7 @@ func Test_SetVersionSync(t *testing.T) {
 func Test_DeleteVersionSync(t *testing.T) {
 
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}

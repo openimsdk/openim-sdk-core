@@ -19,11 +19,7 @@ import (
 )
 
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.Full().GetUsersInfo, userIDs)
-}
-
-func GetUsersInfoWithCache(callback open_im_sdk_callback.Base, operationID string, userIDs, groupID string) {
-	call(callback, operationID, UserForSDK.Full().GetUsersInfoWithCache, userIDs, groupID)
+	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDs)
 }
 
 // SetSelfInfo sets the user's own information.
@@ -58,4 +54,9 @@ func DeleteUserCommand(callback open_im_sdk_callback.Base, operationID string, T
 // GetAllUserCommands get user's favorite
 func GetAllUserCommands(callback open_im_sdk_callback.Base, operationID string, Type int32) {
 	call(callback, operationID, UserForSDK.User().ProcessUserCommandGetAll, Type)
+}
+
+// GetUsersInfoWithCache gets the user's information with cache.
+func GetUsersInfoWithCache(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
+	call(callback, operationID, UserForSDK.User().GetUsersInfoWithCache, userIDs)
 }

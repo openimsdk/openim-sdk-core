@@ -1,17 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package conversation_msg
 
 import (
@@ -27,7 +13,7 @@ import (
 
 	"github.com/openimsdk/tools/errs"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -43,7 +29,6 @@ import (
 
 	pbConversation "github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/protocol/sdkws"
-	"github.com/openimsdk/protocol/wrapperspb"
 
 	"github.com/jinzhu/copier"
 )
@@ -141,7 +126,7 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 	return nil
 }
 
-func (c *Conversation) setConversationAndSync(ctx context.Context, conversationID string, req *pbConversation.ConversationReq) error {
+func (c *Conversation) SetConversations(ctx context.Context, conversationID string, req *pbConversation.ConversationReq) error {
 	c.conversationSyncMutex.Lock()
 	defer c.conversationSyncMutex.Unlock()
 
@@ -157,38 +142,6 @@ func (c *Conversation) setConversationAndSync(ctx context.Context, conversationI
 	return c.IncrSyncConversations(ctx)
 }
 
-func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{GroupAtType: &wrapperspb.Int32Value{Value: 0}})
-}
-
-func (c *Conversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsPinned: &wrapperspb.BoolValue{Value: isPinned}})
-}
-
-func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsPrivateChat: &wrapperspb.BoolValue{Value: isPrivate}})
-}
-
-func (c *Conversation) SetConversationMsgDestructTime(ctx context.Context, conversationID string, msgDestructTime int64) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{MsgDestructTime: &wrapperspb.Int64Value{Value: msgDestructTime}})
-}
-
-func (c *Conversation) SetConversationIsMsgDestruct(ctx context.Context, conversationID string, isMsgDestruct bool) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsMsgDestruct: &wrapperspb.BoolValue{Value: isMsgDestruct}})
-}
-
-func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{BurnDuration: &wrapperspb.Int32Value{Value: burnDuration}})
-}
-
-func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{RecvMsgOpt: &wrapperspb.Int32Value{Value: int32(opt)}})
-}
-func (c *Conversation) SetOneConversationEx(ctx context.Context, conversationID string, ex string) error {
-	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{Ex: &wrapperspb.StringValue{
-		Value: ex,
-	}})
-}
 func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadCount int32, err error) {
 	return c.db.GetTotalUnreadMsgCountDB(ctx)
 }
@@ -368,14 +321,11 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 	}
 	return ""
 }
+
 func (c *Conversation) GetConversationIDBySessionType(_ context.Context, sourceID string, sessionType int) string {
 	return c.getConversationIDBySessionType(sourceID, sessionType)
 }
 
-//this is a test file
-/**
-his is a test file
-*/
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
 	filepathExt := func(name ...string) string {
 		for _, path := range name {
@@ -622,8 +572,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	}
 
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options, isOnlineOnly)
-
 }
+
 func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
 	p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
 	options := make(map[string]bool, 2)

@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/protocol/sdkws"
 	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
@@ -111,4 +113,43 @@ func (u *User) GetUserInfoFromServer(ctx context.Context, userIDs []string) ([]*
 		return nil, err
 	}
 	return datautil.Batch(ServerUserToLocalUser, serverUsersInfo), nil
+}
+
+func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struct.PublicUser, error) {
+	usersInfo, err := u.GetUsersInfoWithCache(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	res := datautil.Batch(LocalUserToPublicUser, usersInfo)
+
+	friendList, err := u.GetFriendInfoList(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	friendMap := datautil.SliceToMap(friendList, func(friend *model_struct.LocalFriend) string {
+		return friend.FriendUserID
+	})
+
+	for _, userInfo := range res {
+
+		// update single conversation
+
+		conversation, err := u.GetConversationByUserID(ctx, userInfo.UserID)
+		if err != nil {
+			log.ZWarn(ctx, "GetConversationByUserID failed", err, "userInfo", usersInfo)
+		} else {
+			if _, ok := friendMap[userInfo.UserID]; ok {
+				continue
+			}
+			log.ZDebug(ctx, "GetConversationByUserID", "conversation", conversation)
+			if conversation.ShowName != userInfo.Nickname || conversation.FaceURL != userInfo.FaceURL {
+				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
+					Args: common.SourceIDAndSessionType{SourceID: userInfo.UserID, SessionType: conversation.ConversationType, FaceURL: userInfo.FaceURL, Nickname: userInfo.Nickname}}, u.conversationCh)
+				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
+					Args: common.UpdateMessageInfo{SessionType: conversation.ConversationType, UserID: userInfo.UserID, FaceURL: userInfo.FaceURL, Nickname: userInfo.Nickname}}, u.conversationCh)
+			}
+		}
+	}
+	return res, nil
 }

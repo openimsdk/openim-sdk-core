@@ -21,6 +21,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/conversation"
 )
 
 func Test_GetAllConversationList(t *testing.T) {
@@ -85,36 +86,8 @@ func Test_SetConversationDraft(t *testing.T) {
 	}
 }
 
-func Test_ResetConversationGroupAtType(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().ResetConversationGroupAtType(ctx, "group_17729585012")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_PinConversation(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().PinConversation(ctx, "group_17729585012", true)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SetOneConversationPrivateChat(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SetOneConversationPrivateChat(ctx, "single_3411008330", true)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SetOneConversationBurnDuration(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SetOneConversationBurnDuration(ctx, "single_3411008330", 10)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_SetOneConversationRecvMessageOpt(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SetOneConversationRecvMessageOpt(ctx, "single_3411008330", 1)
+func Test_SetConversations(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().SetConversations(ctx, "group_17729585012", &conversation.ConversationReq{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,12 +246,7 @@ func Test_SendImgMsg(t *testing.T) {
 	}
 	t.Logf("send smg => %+v\n", res)
 }
-func Test_SetConversationEx(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SetOneConversationEx(ctx, "si_1_2", "abc")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+
 func Test_SearchConversation(t *testing.T) {
 	result, err := open_im_sdk.UserForSDK.Conversation().SearchConversation(ctx, "a")
 	if err != nil {
