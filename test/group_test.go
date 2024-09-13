@@ -98,22 +98,6 @@ func Test_CancelChangeGroupMemberMute(t *testing.T) {
 	t.Log("CancelChangeGroupMemberMute success", ctx.Value("operationID"))
 }
 
-func Test_SetGroupMemberRoleLevel(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SetGroupMemberRoleLevel(ctx, "3459296007", "45644221123", 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("SetGroupMemberRoleLevel success", ctx.Value("operationID"))
-}
-
-func Test_SetGroupMemberNickname(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SetGroupMemberNickname(ctx, "3459296007", "45644221123", "test1234")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("SetGroupMemberNickname success", ctx.Value("operationID"))
-}
-
 func Test_SetGroupMemberInfo(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Group().SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{
 		GroupID:  "3889561099",
@@ -291,16 +275,10 @@ func Test_GetGroupMemberList(t *testing.T) {
 }
 
 func Test_SetGroupInfo(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
+	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{
 		GroupID: "3889561099",
 		Ex:      &wrapperspb.StringValue{Value: "groupex"},
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-func Test_SyncAllGroupMember(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SyncAllGroupMember(ctx, "3889561099")
 	if err != nil {
 		t.Fatal(err)
 	}
