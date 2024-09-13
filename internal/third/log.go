@@ -188,7 +188,7 @@ func readLastNLines(filename string, n int) ([]string, error) {
 	return result, nil
 }
 
-func (c *Third) SDKLogs(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
+func (c *Third) printLog(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
 	errString := errs.New(err)
 
 	log.SDKLog(ctx, logLevel, file, line, msg, errString, keysAndValues)
