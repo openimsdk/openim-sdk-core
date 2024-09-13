@@ -70,7 +70,7 @@ func Test_GetUsersInfoWithCache(t *testing.T) {
 func Test_SetSelfInfoEx(t *testing.T) {
 	newNickName := "test"
 	//newFaceURL := "http://test.com"
-	err := open_im_sdk.UserForSDK.User().SetSelfInfoEx(ctx, &sdkws.UserInfoWithEx{
+	err := open_im_sdk.UserForSDK.User().SetSelfInfo(ctx, &sdkws.UserInfoWithEx{
 		Nickname: &wrapperspb.StringValue{
 			Value: newNickName,
 		},

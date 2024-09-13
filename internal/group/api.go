@@ -163,9 +163,8 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
-// todo
 func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSetEX) error {
-	if err := g.setGroupInfoEX(ctx, &group.SetGroupInfoEXReq{GroupInfoForSetEX: groupInfo}); err != nil {
+	if err := g.setGroupInfo(ctx, &group.SetGroupInfoEXReq{GroupInfoForSetEX: groupInfo}); err != nil {
 		return err
 	}
 

@@ -21,18 +21,18 @@ import (
 	"time"
 )
 
+func Test_Empty(t *testing.T) {
+	for {
+		time.Sleep(time.Second * 1)
+	}
+}
+
 func Test_ChangeInputState(t *testing.T) {
 	for {
 		err := open_im_sdk.UserForSDK.Conversation().ChangeInputStates(ctx, "sg_2309860938", true)
 		if err != nil {
 			log.ZError(ctx, "ChangeInputStates", err)
 		}
-		time.Sleep(time.Second * 1)
-	}
-}
-
-func Test_Empty(t *testing.T) {
-	for {
 		time.Sleep(time.Second * 1)
 	}
 }

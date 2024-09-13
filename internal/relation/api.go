@@ -3,7 +3,7 @@ package relation
 import (
 	"context"
 
-	friend "github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -65,7 +65,7 @@ func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList
 	return res, nil
 }
 
-func (r *Relation) AddFriend(ctx context.Context, req *friend.ApplyToAddFriendReq) error {
+func (r *Relation) AddFriend(ctx context.Context, req *relation.ApplyToAddFriendReq) error {
 	if err := r.addFriend(ctx, req); err != nil {
 		return err
 	}
@@ -84,14 +84,14 @@ func (r *Relation) GetFriendApplicationListAsApplicant(ctx context.Context) ([]*
 }
 
 func (r *Relation) AcceptFriendApplication(ctx context.Context, userIDHandleMsg *sdk.ProcessFriendApplicationParams) error {
-	return r.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseAgree, HandleMsg: userIDHandleMsg.HandleMsg})
+	return r.RespondFriendApply(ctx, &relation.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseAgree, HandleMsg: userIDHandleMsg.HandleMsg})
 }
 
 func (r *Relation) RefuseFriendApplication(ctx context.Context, userIDHandleMsg *sdk.ProcessFriendApplicationParams) error {
-	return r.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseRefuse, HandleMsg: userIDHandleMsg.HandleMsg})
+	return r.RespondFriendApply(ctx, &relation.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: r.loginUserID, HandleResult: constant.FriendResponseRefuse, HandleMsg: userIDHandleMsg.HandleMsg})
 }
 
-func (r *Relation) RespondFriendApply(ctx context.Context, req *friend.RespondFriendApplyReq) error {
+func (r *Relation) RespondFriendApply(ctx context.Context, req *relation.RespondFriendApplyReq) error {
 	if err := r.addFriendResponse(ctx, req); err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func (r *Relation) SearchFriends(ctx context.Context, param *sdk.SearchFriendsPa
 }
 
 func (r *Relation) AddBlack(ctx context.Context, blackUserID string, ex string) error {
-	if err := r.addBlack(ctx, &friend.AddBlackReq{BlackUserID: blackUserID, Ex: ex}); err != nil {
+	if err := r.addBlack(ctx, &relation.AddBlackReq{BlackUserID: blackUserID, Ex: ex}); err != nil {
 		return err
 	}
 	return r.SyncAllBlackList(ctx)
@@ -282,7 +282,7 @@ func (r *Relation) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack
 	return r.db.GetBlackListDB(ctx)
 }
 
-func (r *Relation) UpdateFriends(ctx context.Context, req *friend.UpdateFriendsReq) error {
+func (r *Relation) UpdateFriends(ctx context.Context, req *relation.UpdateFriendsReq) error {
 	if err := r.updateFriends(ctx, req); err != nil {
 		return err
 	}

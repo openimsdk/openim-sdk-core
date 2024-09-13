@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/openimsdk/tools/errs"
 	"reflect"
 	"strconv"
 	"strings"
