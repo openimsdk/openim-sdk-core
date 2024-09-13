@@ -88,7 +88,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 				log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
 			}
 		}
-	case constant.SuperGroupChatType, constant.NotificationChatType:
+	case constant.ReadGroupChatType, constant.NotificationChatType:
 		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
 		if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, nil); err != nil {
 			return err

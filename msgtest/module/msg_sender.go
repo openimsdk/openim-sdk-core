@@ -189,12 +189,12 @@ func (b *SendMsgUser) BatchSendSingleMsg(ctx context.Context, userID string, ind
 }
 
 func (b *SendMsgUser) SendGroupMsg(ctx context.Context, groupID string, index int) error {
-	return b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
+	return b.sendMsg(ctx, "", groupID, index, constant.ReadGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
 }
 
 func (b *SendMsgUser) BatchSendGroupMsg(ctx context.Context, groupID string, index int) error {
 	content := fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index)
-	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
+	err := b.sendMsg(ctx, "", groupID, index, constant.ReadGroupChatType, content)
 	if err != nil {
 		log.ZError(ctx, "send msg failed", err, "groupID", groupID, "index", index, "content", content)
 		//b.singleFailedMessageMap[content] = err
@@ -226,7 +226,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 			b.singleFailedMessageMap[clientMsgID] = &errorValue{err: err,
 				SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
 			log.ZError(ctx, "send single msg failed", err, "userID", userID, "index", index, "content", content)
-		case constant.SuperGroupChatType:
+		case constant.ReadGroupChatType:
 			b.groupFailedMessageMap[groupID] = append(b.groupFailedMessageMap[groupID], &errorValue{err: err,
 				SendID: b.userID, RecvID: groupID, MsgID: clientMsgID, GroupID: groupID, OperationID: mcontext.GetOperationID(ctx)})
 			log.ZError(ctx, "send group msg failed", err, "groupID", groupID, "index", index, "content", content)
@@ -245,7 +245,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 				sendTime:    msg.SendTime,
 			}
 		}
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		b.groupSendSampleNum[groupID]++
 	}
 
@@ -291,7 +291,7 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 				Latency:     b.GetRelativeServerTime() - msg.SendTime,
 			}
 		}
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		if b.userID == b.p.groupOwnerUserID[msg.GroupID] {
 			b.groupMessage++
 			log.ZWarn(context.Background(), "recv message", nil, "userID", b.userID,

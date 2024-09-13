@@ -239,7 +239,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			lc.UserID = st.SourceID
 			lc.ConversationID = c.getConversationIDBySessionType(st.SourceID, constant.SingleChatType)
 			lc.ConversationType = constant.SingleChatType
-		case constant.SuperGroupChatType:
+		case constant.ReadGroupChatType:
 			conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, st.SourceID)
 			if err != nil {
 				return
@@ -457,8 +457,8 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 				}
 
 			}
-		case constant.SuperGroupChatType:
-			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.SuperGroupChatType)
+		case constant.ReadGroupChatType:
+			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.ReadGroupChatType)
 			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
 			if err != nil {
 				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)

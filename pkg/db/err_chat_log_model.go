@@ -67,7 +67,7 @@ func (d *DataBase) BatchInsertExceptionMsgController(ctx context.Context, messag
 		return nil
 	}
 	switch messageList[len(messageList)-1].SessionType {
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		return d.SuperBatchInsertExceptionMsg(ctx, messageList, messageList[len(messageList)-1].RecvID)
 	default:
 		return d.BatchInsertExceptionMsg(ctx, messageList)

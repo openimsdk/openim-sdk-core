@@ -61,7 +61,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		}
 
 		revokerNickname = userName
-	} else if tips.SesstionType == constant.SuperGroupChatType {
+	} else if tips.SesstionType == constant.ReadGroupChatType {
 		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
 		if err != nil {
 			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
@@ -190,7 +190,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, cli
 		if message.SendID != c.loginUserID {
 			return errors.New("only send by yourself message can be revoked")
 		}
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		if message.SendID != c.loginUserID {
 			groupAdmins, err := c.db.GetGroupMemberOwnerAndAdminDB(ctx, conversation.GroupID)
 			if err != nil {

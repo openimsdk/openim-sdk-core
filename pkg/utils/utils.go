@@ -158,9 +158,9 @@ func GetConversationIDByMsg(msg *sdk_struct.MsgStruct) string {
 		l := []string{msg.SendID, msg.RecvID}
 		sort.Strings(l)
 		return "si_" + strings.Join(l, "_") // single chat
-	case constant.GroupChatType:
+	case constant.WriteGroupChatType:
 		return "g_" + msg.GroupID // group chat
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		return "sg_" + msg.GroupID // super group chat
 	case constant.NotificationChatType:
 		return "sn_" + msg.SendID + "_" + msg.RecvID // server notification chat
