@@ -49,7 +49,7 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 		conversationCh: conversationCh,
 	}
 	g.initSyncer()
-	g.groupMemberCache = cache.NewCache[string, *cache.Cache[string, *model_struct.LocalGroupMember]]()
+	g.groupMemberCache = cache.NewCache[string, *model_struct.LocalGroupMember]()
 	return g
 }
 
