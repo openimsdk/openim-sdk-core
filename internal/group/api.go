@@ -164,8 +164,9 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
-func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSet) error {
-	if err := g.setGroupInfo(ctx, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}); err != nil {
+// todo
+func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSetEX) error {
+	if err := g.setGroupInfoEX(ctx, &group.SetGroupInfoEXReq{GroupInfoForSetEX: groupInfo}); err != nil {
 		return err
 	}
 
@@ -174,18 +175,6 @@ func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForS
 
 	return g.IncrSyncJoinGroup(ctx)
 }
-
-//todo
-//func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSetEX) error {
-//	if err := util.ApiPost(ctx, constant.SetGroupInfoEXRouter, &group.SetGroupInfoEXReq{GroupInfoForSetEX: groupInfo}, nil); err != nil {
-//		return err
-//	}
-//
-//	g.groupSyncMutex.Lock()
-//	defer g.groupSyncMutex.Unlock()
-//
-//	return g.IncrSyncJoinGroup(ctx)
-//}
 
 func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.SetGroupMemberInfo) error {
 	req := &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}
