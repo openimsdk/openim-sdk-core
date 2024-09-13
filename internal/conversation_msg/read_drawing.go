@@ -74,13 +74,13 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 		if len(seqs) == 0 {
 			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
-			if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+			if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, seqs); err != nil {
 				return err
 			}
 		} else {
 			log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
 				seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-			if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+			if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, seqs); err != nil {
 				return err
 			}
 			_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
@@ -90,7 +90,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		}
 	case constant.ReadGroupChatType, constant.NotificationChatType:
 		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-		if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, nil); err != nil {
+		if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, nil); err != nil {
 			return err
 		}
 	}
@@ -127,7 +127,7 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
 		return nil
 	}
-	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
+	if err := c.markMsgAsRead2Server(ctx, conversationID, seqs); err != nil {
 		return err
 	}
 	decrCount, err := c.db.MarkConversationMessageAsReadDB(ctx, conversationID, markAsReadMsgIDs)

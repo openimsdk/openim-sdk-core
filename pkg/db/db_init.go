@@ -142,7 +142,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	}
 	log.ZInfo(ctx, "sqlite", "path", dbFileName)
 	// slowThreshold := 500
-	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
+	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.ServerConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
 	if logLevel > 5 {
 		zLogLevel = logger.Info
 	} else {

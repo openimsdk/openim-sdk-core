@@ -203,7 +203,7 @@ func HideAllConversations(callback open_im_sdk_callback.Base, operationID string
 }
 
 func DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteAllMsgFromLocalAndSvr)
+	call(callback, operationID, UserForSDK.Conversation().DeleteAllMsgFromLocalAndServer)
 }
 
 func DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {

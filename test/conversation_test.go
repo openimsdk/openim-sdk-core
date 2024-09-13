@@ -209,7 +209,7 @@ func Test_SetMessageLocalEx(t *testing.T) {
 }
 
 func Test_DeleteAllMsgFromLocalAndSvr(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMsgFromLocalAndSvr(ctx)
+	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMsgFromLocalAndServer(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
