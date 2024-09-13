@@ -981,13 +981,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}
 		m[localFriend.FriendUserID] = userInfo
 	}
-	usersInfo, err := c.user.GetUsersInfoWithCache(ctx, notInFriend, func(ctx context.Context, missingKeys []string) ([]*model_struct.LocalUser, error) {
-		users, err := c.user.GetUserInfoFromServer(ctx, missingKeys)
-		if err != nil {
-			return nil, err
-		}
-		return users, nil
-	})
+	usersInfo, err := c.user.GetUsersInfoWithCache(ctx, notInFriend)
 	if err != nil {
 		return nil, err
 	}

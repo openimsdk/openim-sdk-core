@@ -18,9 +18,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/tools/utils/datautil"
@@ -524,60 +521,8 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	return nil
 }
 
-func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string, userIDs []string) (map[string]*sdk_struct.BasicInfo, error) {
-	memberInfo, err := g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDs)
-	if err != nil {
-		return nil, err
-	}
-	res := datautil.SliceToMapAny(memberInfo, func(e *model_struct.LocalGroupMember) (string, *sdk_struct.BasicInfo) {
-		return e.UserID, &sdk_struct.BasicInfo{
-			Nickname: e.Nickname,
-			FaceURL:  e.FaceURL,
-		}
-	})
-	unFind := datautil.SliceSubAny(userIDs, memberInfo, func(t *model_struct.LocalGroupMember) string {
-		return t.UserID
-	})
-
-	queryUserIDs := make([]string, 0)
-
-	var (
-		groupMap *cache.Cache[string, *sdk_struct.BasicInfo]
-		ok       bool
-	)
-
-	if groupMap, ok = g.groupMemberCache.Load(groupID); ok {
-		for _, userID := range unFind {
-			if data, ok := groupMap.Load(userID); ok {
-				res[userID] = data
-			} else {
-				queryUserIDs = append(queryUserIDs, userID)
-			}
-		}
-	} else {
-		groupMap = cache.NewCache[string, *sdk_struct.BasicInfo]()
-		queryUserIDs = append(queryUserIDs, unFind...)
-	}
-
-	if len(queryUserIDs) != 0 {
-		members, err := g.GetDesignatedGroupMembers(ctx, groupID, queryUserIDs)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, member := range members {
-			info := &sdk_struct.BasicInfo{
-				Nickname: member.Nickname,
-				FaceURL:  member.FaceURL,
-			}
-
-			res[member.UserID] = info
-			groupMap.Store(member.UserID, info)
-		}
-		g.groupMemberCache.Store(groupID, groupMap)
-	}
-
-	return res, nil
+func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string, userIDs []string) (map[string]*model_struct.LocalGroupMember, error) {
+	return g.GetGroupMembersInfo(ctx, groupID, userIDs)
 }
 
 //func (g *Group) SearchGroupMembersV2(ctx context.Context, req *group.SearchGroupMemberReq) ([]*model_struct.LocalGroupMember, error) {

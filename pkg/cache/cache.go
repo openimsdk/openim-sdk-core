@@ -2,13 +2,13 @@ package cache
 
 import "sync"
 
+func NewCache[K comparable, V any]() *Cache[K, V] {
+	return &Cache[K, V]{}
+}
+
 // Cache is a Generic sync.Map structure.
 type Cache[K comparable, V any] struct {
 	m sync.Map
-}
-
-func NewCache[K comparable, V any]() *Cache[K, V] {
-	return &Cache[K, V]{}
 }
 
 // Load returns the value stored in the map for a key, or nil if no value is present.
