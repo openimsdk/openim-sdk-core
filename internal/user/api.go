@@ -107,15 +107,6 @@ func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb
 	return u.SyncAllCommand(ctx)
 }
 
-// ParseTokenFromSvr parses a token from the server.
-func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
-	resp, err := u.parseToken(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return resp.ExpireTimeSeconds, err
-}
-
 // GetServerUserInfo retrieves user information from the server.
 func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
 	return u.getUsersInfo(ctx, userIDs)
