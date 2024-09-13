@@ -37,3 +37,35 @@ func (r *Relation) getIncrementalFriends(ctx context.Context, req *relation.GetI
 func (r *Relation) getFullFriendUserIDs(ctx context.Context, req *relation.GetFullFriendUserIDsReq) (*relation.GetFullFriendUserIDsResp, error) {
 	return api.GetFullFriendUserIDs.Invoke(ctx, req)
 }
+
+func (r *Relation) addFriend(ctx context.Context, req *relation.ApplyToAddFriendReq) error {
+	req.FromUserID = r.loginUserID
+	return api.AddFriend.Execute(ctx, req)
+}
+
+func (r *Relation) deleteFriend(ctx context.Context, friendUserID string) error {
+	req := &relation.DeleteFriendReq{OwnerUserID: r.loginUserID, FriendUserID: friendUserID}
+	return api.DeleteFriend.Execute(ctx, req)
+}
+
+func (r *Relation) addFriendResponse(ctx context.Context, req *relation.RespondFriendApplyReq) error {
+	req.ToUserID = r.loginUserID
+	return api.AddFriendResponse.Execute(ctx, req)
+}
+
+func (r *Relation) updateFriends(ctx context.Context, req *relation.UpdateFriendsReq) error {
+	req.OwnerUserID = r.loginUserID
+	return api.UpdateFriends.Execute(ctx, req)
+}
+
+func (r *Relation) addBlack(ctx context.Context, req *relation.AddBlackReq) error {
+	req.OwnerUserID = r.loginUserID
+	return api.AddBlack.Execute(ctx, req)
+}
+
+func (r *Relation) removeBlack(ctx context.Context, userID string) error {
+	return api.RemoveBlack.Execute(ctx, &relation.RemoveBlackReq{
+		OwnerUserID: r.loginUserID,
+		BlackUserID: userID,
+	})
+}

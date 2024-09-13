@@ -99,17 +99,17 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	return nil
 }
 
-func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, groupID string, rule int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
-}
-
-func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
-}
-
-func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
-	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
-}
+//func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, groupID string, rule int32) error {
+//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
+//}
+//
+//func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule int32) error {
+//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
+//}
+//
+//func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
+//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSetEX{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
+//}
 
 func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
 	if isMute {
@@ -611,20 +611,3 @@ func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string
 //	}
 //	return datautil.Slice(resp.Members, g.pbGroupMemberToLocal), nil
 //}
-
-func (g *Group) pbGroupMemberToLocal(pb *sdkws.GroupMemberFullInfo) *model_struct.LocalGroupMember {
-	return &model_struct.LocalGroupMember{
-		GroupID:        pb.GroupID,
-		UserID:         pb.UserID,
-		Nickname:       pb.Nickname,
-		FaceURL:        pb.FaceURL,
-		RoleLevel:      pb.RoleLevel,
-		JoinTime:       pb.JoinTime,
-		JoinSource:     pb.JoinSource,
-		InviterUserID:  pb.InviterUserID,
-		MuteEndTime:    pb.MuteEndTime,
-		OperatorUserID: pb.OperatorUserID,
-		Ex:             pb.Ex,
-		// AttachedInfo:   pb.AttachedInfo,
-	}
-}

@@ -10,8 +10,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
@@ -52,7 +52,7 @@ func (t *TestUserManager) registerUsers(ctx context.Context, userIDs ...string) 
 		if end > len(users) {
 			end = len(users)
 		}
-		if err := t.PostWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
+		if err := t.PostWithCtx(api.UserRegister.Route(), &userPB.UserRegisterReq{
 			Secret: t.GetSecret(),
 			Users:  users[i:end],
 		}, nil); err != nil {

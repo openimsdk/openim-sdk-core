@@ -95,20 +95,3 @@ func ServerGroupRequestToLocalAdminGroupRequest(info *sdkws.GroupRequest) *model
 		LocalGroupRequest: *ServerGroupRequestToLocalGroupRequest(info),
 	}
 }
-
-func (g *Group) pbGroupMemberToLocal(pb *sdkws.GroupMemberFullInfo) *model_struct.LocalGroupMember {
-	return &model_struct.LocalGroupMember{
-		GroupID:        pb.GroupID,
-		UserID:         pb.UserID,
-		Nickname:       pb.Nickname,
-		FaceURL:        pb.FaceURL,
-		RoleLevel:      pb.RoleLevel,
-		JoinTime:       pb.JoinTime,
-		JoinSource:     pb.JoinSource,
-		InviterUserID:  pb.InviterUserID,
-		MuteEndTime:    pb.MuteEndTime,
-		OperatorUserID: pb.OperatorUserID,
-		Ex:             pb.Ex,
-		// AttachedInfo:   pb.AttachedInfo,
-	}
-}

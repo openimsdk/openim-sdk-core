@@ -7,8 +7,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/log"
 )
@@ -57,8 +56,7 @@ func (m *TestRelationManager) ImportFriends(ctx context.Context) error {
 				}
 				ctx := m.BuildCtx(ctx)
 				log.ZWarn(ctx, "ImportFriends begin", nil, "len", len(friendIDs))
-				_, err := util.CallApi[relation.ImportFriendResp](ctx, constant.ImportFriendListRouter, req)
-				if err != nil {
+				if err := api.ImportFriendList.Execute(ctx, req); err != nil {
 					return err
 				}
 				log.ZWarn(ctx, "ImportFriends end", nil, "len", len(friendIDs))
