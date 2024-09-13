@@ -168,9 +168,9 @@ func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 //	return nil
 //}
 
-// updateSelfUserInfoEx updates the user's information with Ex field.
-func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
-	if err := u.updateUserInfoV2(ctx, userInfo); err != nil {
+// updateSelfUserInfo updates the user's information with Ex field.
+func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
+	if err := u.updateUserInfo(ctx, userInfo); err != nil {
 		return err
 	}
 	_ = u.SyncLoginUserInfo(ctx)

@@ -28,12 +28,12 @@ func GetUsersInfoWithCache(callback open_im_sdk_callback.Base, operationID strin
 
 // SetSelfInfo sets the user's own information.
 func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
-	call(callback, operationID, UserForSDK.User().SetSelfInfoEx, userInfo)
+	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
 }
 
-//// SetSelfInfoEx sets the user's own information with Ex field.
-//func SetSelfInfoEx(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
-//	call(callback, operationID, UserForSDK.User().SetSelfInfoEx, userInfo)
+//// SetSelfInfo sets the user's own information with Ex field.
+//func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
+//	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
 //}
 
 func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, opt int) {

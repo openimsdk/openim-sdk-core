@@ -13,12 +13,7 @@ func (u *User) getUsersInfo(ctx context.Context, userIDs []string) ([]*sdkws.Use
 	return api.ExtractField(ctx, api.GetUsersInfo.Invoke, req, (*user.GetDesignateUsersResp).GetUsersInfo)
 }
 
-func (u *User) updateUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-	userInfo.UserID = u.loginUserID
-	return api.UpdateUserInfo.Execute(ctx, &user.UpdateUserInfoReq{UserInfo: userInfo})
-}
-
-func (u *User) updateUserInfoV2(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
+func (u *User) updateUserInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
 	userInfo.UserID = u.loginUserID
 	return api.UpdateUserInfoEx.Execute(ctx, &user.UpdateUserInfoExReq{UserInfo: userInfo})
 }
