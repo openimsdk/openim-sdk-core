@@ -15,22 +15,7 @@
 package constant
 
 const (
-	SetGlobalRecvMessageOptRouter = "/user/set_global_msg_recv_opt"
-	ProcessUserCommandGetAll      = "/user/process_user_command_get_all"
-
-	UserRegister = "/user/user_register"
-
-	AddFriendRouter        = "/friend/add_friend"
-	DeleteFriendRouter     = "/friend/delete_friend"
-	ImportFriendListRouter = "/friend/import_friend"
-
-	GetFriendListRouter = "/friend/get_friend_list"
-	AddFriendResponse   = "/friend/add_friend_response"
-	SetFriendRemark     = "/friend/set_friend_remark"
-	UpdateFriends       = "/friend/update_friends"
-
-	AddBlackRouter    = "/friend/add_black"
-	RemoveBlackRouter = "/friend/remove_black"
+	ProcessUserCommandGetAll = "/user/process_user_command_get_all"
 
 	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
 
@@ -51,14 +36,8 @@ const (
 	GetIncrementalConversation = ConversationGroup + "/get_incremental_conversations"
 	GetFullConversationIDs     = ConversationGroup + "/get_full_conversation_ids"
 	GetOwnerConversationRouter = ConversationGroup + "/get_owner_conversation"
-
-	// auth
-	GetUsersToken = RouterAuth + "/user_token"
-
-	SetGroupInfoEXRouter = RouterGroup + "/set_group_info_ex"
 )
 const (
 	ConversationGroup = "/conversation"
-	RouterAuth        = "/auth"
 	RouterMsg         = "/msg"
 )

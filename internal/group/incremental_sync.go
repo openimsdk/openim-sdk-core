@@ -95,8 +95,6 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 			delete(groupIDSet, tempGroupID)
 		}
 		wg.Wait()
-		num := len(groupIDSet)
-		_ = num
 	}
 }
 

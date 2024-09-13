@@ -3,13 +3,13 @@ package module
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/protocol/constant"
 	"math/rand"
 	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/log"
@@ -24,9 +24,6 @@ var (
 
 	PLATFORMID = constant.AndroidPlatformID
 	LogLevel   = uint32(5)
-
-	REGISTERADDR = APIADDR + constant.UserRegister
-	TOKENADDR    = APIADDR + constant.GetUsersToken
 )
 
 var (
