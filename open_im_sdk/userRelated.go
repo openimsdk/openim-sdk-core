@@ -25,11 +25,11 @@ import (
 	"unsafe"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
 
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third"
