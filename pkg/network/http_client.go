@@ -18,12 +18,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"net"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 func get(url string) (response []byte, err error) {
@@ -33,12 +35,13 @@ func get(url string) (response []byte, err error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	return body, nil
 }
+
 func retry(url string, data interface{}, token string, attempts int, sleep time.Duration, fn func(string, interface{}, string) ([]byte, error)) ([]byte, error) {
 	b, err := fn(url, data, token)
 	if err != nil {
@@ -53,8 +56,6 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 
 // application/json; charset=utf-8
 func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
-	c, err := postLogic(url, data, token)
-	return c, errs.WrapMsg(err, " post")
 	return retry(url, data, token, 1, 10*time.Second, postLogic)
 }
 
@@ -94,9 +95,9 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 		return nil, errs.WrapMsg(errors.New(resp.Status), "status code failed "+url)
 	}
 	defer resp.Body.Close()
-	result, err := ioutil.ReadAll(resp.Body)
+	result, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errs.WrapMsg(err, "ioutil.ReadAll failed, url")
+		return nil, errs.WrapMsg(err, "io.ReadAll failed, url")
 	}
 	//	fmt.Println(url, "Marshal data: ", string(jsonStr), string(result))
 	return result, nil

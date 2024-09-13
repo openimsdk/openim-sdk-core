@@ -23,6 +23,8 @@ import (
 	"net/url"
 	"time"
 	"unsafe"
+
+	"github.com/openimsdk/tools/errs"
 )
 
 type HttpCli struct {
