@@ -1,17 +1,16 @@
-package test
+package db
 
 import (
 	"context"
 	"testing"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/tools/log"
 )
 
 func Test_GetFriendListCount(t *testing.T) {
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
@@ -25,7 +24,7 @@ func Test_GetFriendListCount(t *testing.T) {
 
 func Test_BatchInsertFriend(t *testing.T) {
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
@@ -79,7 +78,7 @@ func Test_BatchInsertFriend(t *testing.T) {
 
 func Test_DeleteAllFriend(t *testing.T) {
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
