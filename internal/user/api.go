@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
@@ -31,7 +30,6 @@ func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandI
 	if err != nil {
 		return nil, err // Handle the error appropriately
 	}
-
 	var result []*userPb.CommandInfoResp
 	for _, localCommand := range localCommands {
 		result = append(result, &userPb.CommandInfoResp{
@@ -41,7 +39,6 @@ func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandI
 			Value:      localCommand.Value,
 		})
 	}
-
 	return result, nil
 }
 
@@ -66,26 +63,13 @@ func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 
 // Deprecated: user SetSelfInfoEx instead
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-	userInfo.UserID = u.loginUserID
-	if err := u.updateSelfUserInfo(ctx, userInfo); err != nil {
-		return err
-	}
-	_ = u.SyncLoginUserInfo(ctx)
-	return nil
+	return u.updateSelfUserInfo(ctx, userInfo)
 }
-
 func (u *User) SetSelfInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
-	userInfo.UserID = u.loginUserID
-	if err := u.updateSelfUserInfoEx(ctx, userInfo); err != nil {
-		return err
-	}
-	_ = u.SyncLoginUserInfo(ctx)
-	return nil
+	return u.updateSelfUserInfoEx(ctx, userInfo)
 }
-
 func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
-	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter,
-		&userPb.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
+	if err := u.setGlobalRecvMessageOpt(ctx, int32(opt)); err != nil {
 		return err
 	}
 	err := u.SyncLoginUserInfo(ctx)
@@ -97,8 +81,8 @@ func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
 
 // ProcessUserCommandAdd CRUD user command
 func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *userPb.ProcessUserCommandAddReq) error {
-	err := u.processUserCommandAdd(ctx, userCommand)
-	if err != nil {
+	req := &userPb.ProcessUserCommandAddReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}
+	if err := u.processUserCommandAdd(ctx, req); err != nil {
 		return err
 	}
 	return u.SyncAllCommand(ctx)
@@ -106,8 +90,8 @@ func (u *User) ProcessUserCommandAdd(ctx context.Context, userCommand *userPb.Pr
 
 // ProcessUserCommandDelete delete user's choice
 func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *userPb.ProcessUserCommandDeleteReq) error {
-	err := u.processUserCommandDelete(ctx, userCommand)
-	if err != nil {
+	req := &userPb.ProcessUserCommandDeleteReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid}
+	if err := u.processUserCommandDelete(ctx, req); err != nil {
 		return err
 	}
 	return u.SyncAllCommand(ctx)
@@ -115,9 +99,23 @@ func (u *User) ProcessUserCommandDelete(ctx context.Context, userCommand *userPb
 
 // ProcessUserCommandUpdate update user's choice
 func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb.ProcessUserCommandUpdateReq) error {
-	err := u.processUserCommandUpdate(ctx, userCommand)
-	if err != nil {
+	req := &userPb.ProcessUserCommandUpdateReq{UserID: u.loginUserID, Type: userCommand.Type, Uuid: userCommand.Uuid, Value: userCommand.Value}
+	if err := u.processUserCommandUpdate(ctx, req); err != nil {
 		return err
 	}
 	return u.SyncAllCommand(ctx)
+}
+
+// ParseTokenFromSvr parses a token from the server.
+func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
+	resp, err := u.parseToken(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return resp.ExpireTimeSeconds, err
+}
+
+// GetServerUserInfo retrieves user information from the server.
+func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
+	return u.getUsersInfo(ctx, userIDs)
 }
