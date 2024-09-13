@@ -159,14 +159,14 @@ func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 	return userInfo, nil
 }
 
-// updateSelfUserInfo updates the user's information.
-func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-	if err := u.updateUserInfo(ctx, userInfo); err != nil {
-		return err
-	}
-	_ = u.SyncLoginUserInfo(ctx)
-	return nil
-}
+//// updateSelfUserInfo updates the user's information.
+//func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
+//	if err := u.updateUserInfo(ctx, userInfo); err != nil {
+//		return err
+//	}
+//	_ = u.SyncLoginUserInfo(ctx)
+//	return nil
+//}
 
 // updateSelfUserInfoEx updates the user's information with Ex field.
 func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
