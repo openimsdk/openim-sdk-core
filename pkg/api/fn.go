@@ -9,7 +9,7 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 )
 
-func api[Req, Resp any](api string) Api[Req, Resp] {
+func newApi[Req, Resp any](api string) Api[Req, Resp] {
 	return Api[Req, Resp]{
 		api: api,
 	}
@@ -36,6 +36,7 @@ func (a Api[Req, Resp]) Route() string {
 	return a.api
 }
 
+// ExtractField is a generic function that extracts a field from the response of a given function.
 func ExtractField[A, B, C any](ctx context.Context, fn func(ctx context.Context, req *A) (*B, error), req *A, get func(*B) C) (C, error) {
 	resp, err := fn(ctx, req)
 	if err != nil {
