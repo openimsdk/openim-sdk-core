@@ -12,7 +12,6 @@ import (
 	"github.com/openimsdk/tools/utils/stringutil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
@@ -66,7 +65,6 @@ type Conversation struct {
 	file                  *file.File
 	messageController     *MessageController
 	cache                 *cache.Cache[string, *model_struct.LocalConversation]
-	full                  *full.Full
 	maxSeqRecorder        MaxSeqRecorder
 	IsExternalExtensions  bool
 	msgOffset             int
