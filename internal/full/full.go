@@ -8,6 +8,11 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 )
 
+func NewFull(user *user.User, relation *relation.Relation, group *group.Group, ch chan common.Cmd2Value,
+	db db_interface.DataBase) *Full {
+	return &Full{user: user, relation: relation, group: group, ch: ch, db: db}
+}
+
 type Full struct {
 	user     *user.User
 	relation *relation.Relation
@@ -18,9 +23,4 @@ type Full struct {
 
 func (u *Full) Group() *group.Group {
 	return u.group
-}
-
-func NewFull(user *user.User, relation *relation.Relation, group *group.Group, ch chan common.Cmd2Value,
-	db db_interface.DataBase) *Full {
-	return &Full{user: user, relation: relation, group: group, ch: ch, db: db}
 }

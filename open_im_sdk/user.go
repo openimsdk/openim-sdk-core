@@ -26,21 +26,16 @@ func GetUsersInfoWithCache(callback open_im_sdk_callback.Base, operationID strin
 	call(callback, operationID, UserForSDK.Full().GetUsersInfoWithCache, userIDs, groupID)
 }
 
-// GetUsersInfoFromSrv obtains the information about multiple users.
-func GetUsersInfoFromSrv(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDs)
-}
-
 // SetSelfInfo sets the user's own information.
-// Deprecated: user SetSelfInfoEx instead
 func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
-	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
-}
-
-// SetSelfInfoEx sets the user's own information with Ex field.
-func SetSelfInfoEx(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
 	call(callback, operationID, UserForSDK.User().SetSelfInfoEx, userInfo)
 }
+
+//// SetSelfInfoEx sets the user's own information with Ex field.
+//func SetSelfInfoEx(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
+//	call(callback, operationID, UserForSDK.User().SetSelfInfoEx, userInfo)
+//}
+
 func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, opt int) {
 	call(callback, operationID, UserForSDK.User().SetGlobalRecvMessageOpt, opt)
 }
@@ -48,11 +43,6 @@ func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID str
 // GetSelfUserInfo obtains the user's own information.
 func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, UserForSDK.User().GetSelfUserInfo)
-}
-
-// UpdateMsgSenderInfo updates the message sender's nickname and face URL.
-func UpdateMsgSenderInfo(callback open_im_sdk_callback.Base, operationID string, nickname, faceURL string) {
-	call(callback, operationID, UserForSDK.User().UpdateMsgSenderInfo, nickname, faceURL)
 }
 
 // AddUserCommand add to user's favorite

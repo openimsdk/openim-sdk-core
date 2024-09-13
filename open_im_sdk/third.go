@@ -36,5 +36,5 @@ func Logs(callback open_im_sdk_callback.Base, operationID string, logLevel int, 
 		callback.OnError(sdkerrs.SdkInternalError, "sdk not init")
 		return
 	}
-	call(callback, operationID, UserForSDK.Third().SDKLogs, logLevel, file, line, msgs, err, keyAndValue)
+	call(callback, operationID, UserForSDK.Third().Log, logLevel, file, line, msgs, err, keyAndValue)
 }

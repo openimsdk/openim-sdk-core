@@ -15,8 +15,6 @@
 package constant
 
 const (
-	ProcessUserCommandGetAll = "/user/process_user_command_get_all"
-
 	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
 
 	// msg

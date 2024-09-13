@@ -43,3 +43,7 @@ func (u *User) parseToken(ctx context.Context) (*auth.ParseTokenResp, error) {
 func (u *User) setGlobalRecvMessageOpt(ctx context.Context, opt int32) error {
 	return api.SetGlobalRecvMessageOpt.Execute(ctx, &user.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: opt})
 }
+
+func (u *User) processUserCommandGetAll(ctx context.Context, req *user.ProcessUserCommandGetAllReq) (*user.ProcessUserCommandGetAllResp, error) {
+	return api.ProcessUserCommandGetAll.Invoke(ctx, req)
+}
