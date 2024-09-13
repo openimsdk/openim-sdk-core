@@ -15,9 +15,8 @@
 package third
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"sync"
-
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
 )
 
 type Third struct {
