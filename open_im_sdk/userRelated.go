@@ -30,7 +30,6 @@ import (
 
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third"
@@ -91,7 +90,6 @@ type LoginMgr struct {
 	user         *user.User
 	file         *file.File
 
-	full         *full.Full
 	db           db_interface.DataBase
 	longConnMgr  *interaction.LongConnMgr
 	msgSyncer    *interaction.MsgSyncer
@@ -195,10 +193,6 @@ func (u *LoginMgr) User() *user.User {
 
 func (u *LoginMgr) File() *file.File {
 	return u.file
-}
-
-func (u *LoginMgr) Full() *full.Full {
-	return u.full
 }
 
 func (u *LoginMgr) Group() *group.Group {
@@ -350,7 +344,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.relation = relation.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
 
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
-	u.full = full.NewFull(u.user, u.relation, u.group, u.conversationCh, u.db)
 	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, u.info.SystemType, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 

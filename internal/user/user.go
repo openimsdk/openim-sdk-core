@@ -145,28 +145,25 @@ func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*mo
 // getSelfUserInfo retrieves the user's information.
 func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
 	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
-	if errLocal != nil {
-		srvUserInfo, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
-		if errServer != nil {
-			return nil, errServer
-		}
-		if len(srvUserInfo) == 0 {
-			return nil, sdkerrs.ErrUserIDNotFound
-		}
-		//userInfo = ServerUserToLocalUser(srvUserInfo[0])
-		_ = u.InsertLoginUser(ctx, srvUserInfo[0])
+	if errLocal == nil {
+		return userInfo, nil
 	}
-	return userInfo, nil
-}
 
-//// updateSelfUserInfo updates the user's information.
-//func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
-//	if err := u.updateUserInfo(ctx, userInfo); err != nil {
-//		return err
-//	}
-//	_ = u.SyncLoginUserInfo(ctx)
-//	return nil
-//}
+	userInfoFromServer, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
+	if errServer != nil {
+		return nil, errServer
+	}
+
+	if len(userInfoFromServer) == 0 {
+		return nil, sdkerrs.ErrUserIDNotFound
+	}
+
+	if err := u.InsertLoginUser(ctx, userInfoFromServer[0]); err != nil {
+		return nil, err
+	}
+
+	return userInfoFromServer[0], nil
+}
 
 // updateSelfUserInfo updates the user's information with Ex field.
 func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
@@ -177,13 +174,13 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoW
 	return nil
 }
 
-func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string, fetchFunc func(ctx context.Context, missingKeys []string) ([]*model_struct.LocalUser, error)) (map[string]*model_struct.LocalUser, error) {
-	result := make(map[string]*model_struct.LocalUser)
+func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string, fetchFunc func(ctx context.Context,
+	missingKeys []string) ([]*model_struct.LocalUser, error)) (usersInfo []*model_struct.LocalUser, err error) {
 	var missingKeys []string
 
 	for _, key := range cacheKeys {
 		if userInfo, ok := u.UserCache.Load(key); ok {
-			result[key] = userInfo
+			usersInfo = append(usersInfo, userInfo)
 		} else {
 			missingKeys = append(missingKeys, key)
 		}
@@ -196,12 +193,15 @@ func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string, fe
 		}
 
 		for i, key := range missingKeys {
-			result[key] = fetchedData[i]
 			u.UserCache.Store(key, fetchedData[i])
+		}
+		for _, userInfo := range fetchedData {
+			usersInfo = append(usersInfo, userInfo)
+			u.UserCache.Store(userInfo.UserID, userInfo)
 		}
 	}
 
-	return result, nil
+	return usersInfo, nil
 }
 
 func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
