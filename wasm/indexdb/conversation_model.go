@@ -24,6 +24,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/indexdb/temp_struct"
+	"github.com/openimsdk/tools/errs"
 )
 
 type LocalConversations struct {

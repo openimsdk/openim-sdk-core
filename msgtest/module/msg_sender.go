@@ -22,10 +22,10 @@ import (
 )
 
 var (
-	qpsCounter    int64      // 全局变量用于统计请求数
-	qpsMutex      sync.Mutex // 互斥锁用于保护全局变量的并发访问
-	qpsUpdateTime time.Time  // 全局变量用于记录上次更新时间
-	QPSChan       chan int64 // 用于定时更新qpsCounter的channel
+	qpsCounter    int64      // Global variable used for request counting
+	qpsMutex      sync.Mutex // Mutex used to protect concurrent access to global variable
+	qpsUpdateTime time.Time  // Global variable used to record the last update time
+	QPSChan       chan int64 // Channel used to periodically update qpsCounter
 )
 
 //func init() {
@@ -37,7 +37,7 @@ func IncrementQPS() {
 	defer qpsMutex.Unlock()
 
 	now := time.Now()
-	// 如果距离上次更新时间超过1秒，则重置计数器
+	// If the time since the last update exceeds 1 second, reset the counter
 	if now.Sub(qpsUpdateTime) >= time.Second {
 		QPSChan <- qpsCounter
 		qpsCounter = 0

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
-	"github.com/openimsdk/protocol/auth"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/protocol/user"
 )
@@ -34,10 +33,6 @@ func (u *User) processUserCommandDelete(ctx context.Context, req *user.ProcessUs
 
 func (u *User) processUserCommandUpdate(ctx context.Context, req *user.ProcessUserCommandUpdateReq) error {
 	return api.ProcessUserCommandUpdate.Execute(ctx, req)
-}
-
-func (u *User) parseToken(ctx context.Context) (*auth.ParseTokenResp, error) {
-	return api.ParseToken.Invoke(ctx, &auth.ParseTokenReq{})
 }
 
 func (u *User) setGlobalRecvMessageOpt(ctx context.Context, opt int32) error {

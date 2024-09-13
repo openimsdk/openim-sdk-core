@@ -36,7 +36,6 @@ type IndexDB struct {
 	LocalUsers
 	LocalConversations
 	*LocalChatLogs
-	LocalSuperGroup
 	LocalConversationUnreadMessages
 	LocalGroups
 	LocalGroupMember

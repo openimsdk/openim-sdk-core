@@ -11,7 +11,6 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
-	"github.com/openimsdk/tools/utils/datautil"
 )
 
 // GetSingleUserFromSvr retrieves user information from the server.
@@ -107,15 +106,6 @@ func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb
 		return err
 	}
 	return u.SyncAllCommand(ctx)
-}
-
-// ParseTokenFromSvr parses a token from the server.
-func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
-	resp, err := u.parseToken(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return resp.ExpireTimeSeconds, err
 }
 
 // GetUserInfoFromServer retrieves user information from the server.

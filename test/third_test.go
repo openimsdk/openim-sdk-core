@@ -24,5 +24,5 @@ func Test_UploadLog(t *testing.T) {
 
 }
 func Test_SDKLogs(t *testing.T) {
-	open_im_sdk.UserForSDK.Third().SDKLogs(ctx, 4, "cmd/abc.go", 666, "This is a test message", "", []any{"key", "value"})
+	open_im_sdk.UserForSDK.Third().Log(ctx, 4, "cmd/abc.go", 666, "This is a test message", "", []any{"key", "value"})
 }
