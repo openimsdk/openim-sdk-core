@@ -1035,20 +1035,15 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	var (
-		userInfo *sdk_struct.BasicInfo
-		ok       bool
-	)
-	if userInfo, ok = c.user.UserBasicCache.Load(c.loginUserID); !ok {
-		info, err := c.db.GetLoginUser(ctx, c.loginUserID)
+	userInfo, err := c.user.GetUserInfoWithCache(ctx, c.loginUserID, func(ctx context.Context, key string) (*model_struct.LocalUser, error) {
+		info, err := c.db.GetLoginUser(ctx, key)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		userInfo = &sdk_struct.BasicInfo{
-			Nickname: info.Nickname,
-			FaceURL:  info.FaceURL,
-		}
-		c.user.UserBasicCache.Store(c.loginUserID, userInfo)
+		return info, nil
+	})
+	if err != nil {
+		return err
 	}
 	message.SenderFaceURL = userInfo.FaceURL
 	message.SenderNickname = userInfo.Nickname

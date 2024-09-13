@@ -151,8 +151,6 @@ type UserModel interface {
 	UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	UpdateLoginUserByMap(ctx context.Context, user *model_struct.LocalUser, args map[string]interface{}) error
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
-	GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error)
-	SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error
 	ProcessUserCommandAdd(ctx context.Context, command *model_struct.LocalUserCommand) error
 	ProcessUserCommandUpdate(ctx context.Context, command *model_struct.LocalUserCommand) error
 	ProcessUserCommandDelete(ctx context.Context, command *model_struct.LocalUserCommand) error

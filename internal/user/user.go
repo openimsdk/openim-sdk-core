@@ -17,12 +17,12 @@ package user
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -36,7 +36,7 @@ import (
 func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
 	user.initSyncer()
-	user.UserBasicCache = cache.NewCache[string, *sdk_struct.BasicInfo]()
+	user.UserCache = cache.NewCache[string, *model_struct.LocalUser]()
 	//user.OnlineStatusCache = cache.NewCache[string, *userPb.OnlineStatus]()
 	return user
 }
@@ -49,7 +49,7 @@ type User struct {
 	userSyncer     *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
 	commandSyncer  *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
 	conversationCh chan common.Cmd2Value
-	UserBasicCache *cache.Cache[string, *sdk_struct.BasicInfo]
+	UserCache      *cache.Cache[string, *model_struct.LocalUser]
 
 	//OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
@@ -146,7 +146,7 @@ func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*mo
 func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
 	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
 	if errLocal != nil {
-		srvUserInfo, errServer := u.GetServerUserInfo(ctx, []string{u.loginUserID})
+		srvUserInfo, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
 		if errServer != nil {
 			return nil, errServer
 		}
@@ -175,4 +175,45 @@ func (u *User) updateSelfUserInfoEx(ctx context.Context, userInfo *sdkws.UserInf
 	}
 	_ = u.SyncLoginUserInfo(ctx)
 	return nil
+}
+
+func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string, fetchFunc func(ctx context.Context, missingKeys []string) ([]*model_struct.LocalUser, error)) (map[string]*model_struct.LocalUser, error) {
+	result := make(map[string]*model_struct.LocalUser)
+	var missingKeys []string
+
+	for _, key := range cacheKeys {
+		if userInfo, ok := u.UserCache.Load(key); ok {
+			result[key] = userInfo
+		} else {
+			missingKeys = append(missingKeys, key)
+		}
+	}
+
+	if len(missingKeys) > 0 {
+		fetchedData, err := fetchFunc(ctx, missingKeys)
+		if err != nil {
+			return nil, err
+		}
+
+		for i, key := range missingKeys {
+			result[key] = fetchedData[i]
+			u.UserCache.Store(key, fetchedData[i])
+		}
+	}
+
+	return result, nil
+}
+
+func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
+	if userInfo, ok := u.UserCache.Load(cacheKey); ok {
+		return userInfo, nil
+	}
+
+	fetchedData, err := fetchFunc(ctx, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+
+	u.UserCache.Store(cacheKey, fetchedData)
+	return fetchedData, nil
 }

@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
@@ -10,6 +11,7 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 )
 
 // GetSingleUserFromSvr retrieves user information from the server.
@@ -116,7 +118,11 @@ func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
 	return resp.ExpireTimeSeconds, err
 }
 
-// GetServerUserInfo retrieves user information from the server.
-func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
-	return u.getUsersInfo(ctx, userIDs)
+// GetUserInfoFromServer retrieves user information from the server.
+func (u *User) GetUserInfoFromServer(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
+	serverUsersInfo, err := u.getUsersInfo(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	return datautil.Batch(ServerUserToLocalUser, serverUsersInfo), nil
 }

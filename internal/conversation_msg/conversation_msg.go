@@ -954,10 +954,9 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 	return nil
 }
 
-func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*sdk_struct.BasicInfo,
+func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*model_struct.LocalUser,
 	error) {
-	m := make(map[string]*sdk_struct.BasicInfo)
-	var notCachedUserIDs []string
+	m := make(map[string]*model_struct.LocalUser)
 	var notInFriend []string
 
 	if len(userIDs) == 0 {
@@ -974,7 +973,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}))
 	}
 	for _, localFriend := range friendList {
-		userInfo := &sdk_struct.BasicInfo{FaceURL: localFriend.FaceURL}
+		userInfo := &model_struct.LocalUser{UserID: localFriend.FriendUserID, FaceURL: localFriend.FaceURL}
 		if localFriend.Remark != "" {
 			userInfo.Nickname = localFriend.Remark
 		} else {
@@ -982,36 +981,23 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}
 		m[localFriend.FriendUserID] = userInfo
 	}
-
-	for _, userID := range notInFriend {
-		if value, ok := c.user.UserBasicCache.Load(userID); ok {
-			m[userID] = value
-		} else {
-			notCachedUserIDs = append(notCachedUserIDs, userID)
-		}
-	}
-
-	if len(notCachedUserIDs) > 0 {
-		users, err := c.user.GetServerUserInfo(ctx, notCachedUserIDs)
+	usersInfo, err := c.user.GetUsersInfoWithCache(ctx, notInFriend, func(ctx context.Context, missingKeys []string) ([]*model_struct.LocalUser, error) {
+		users, err := c.user.GetUserInfoFromServer(ctx, missingKeys)
 		if err != nil {
 			return nil, err
 		}
-		for _, u := range users {
-			userInfo := &sdk_struct.BasicInfo{FaceURL: u.FaceURL, Nickname: u.Nickname}
-			m[u.UserID] = userInfo
-			c.user.UserBasicCache.Store(u.UserID, userInfo)
-		}
+		return users, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, userInfo := range usersInfo {
+		m[userInfo.UserID] = userInfo
 	}
 	return m, nil
 }
 
 func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
-	//find in cache
-	if value, ok := c.user.UserBasicCache.Load(userID); ok {
-		return value.FaceURL, value.Nickname, nil
-	}
-	//get from local db
-
 	friendInfo, err := c.relation.Db().GetFriendInfoByFriendUserID(ctx, userID)
 	if err == nil {
 		faceURL = friendInfo.FaceURL
@@ -1022,16 +1008,20 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 		}
 		return faceURL, name, nil
 	}
-	//get from server db
-	users, err := c.user.GetServerUserInfo(ctx, []string{userID})
+	userInfo, err := c.user.GetUserInfoWithCache(ctx, userID, func(ctx context.Context, key string) (*model_struct.LocalUser, error) {
+		users, err := c.user.GetUserInfoFromServer(ctx, []string{userID})
+		if err != nil {
+			return nil, err
+		}
+		if len(users) > 0 {
+			return users[0], nil
+		}
+		return nil, sdkerrs.ErrUserIDNotFound.Wrap()
+	})
 	if err != nil {
-		return "", "", err
+		return "", "", nil
 	}
-	if len(users) == 0 {
-		return "", "", sdkerrs.ErrUserIDNotFound.WrapMsg(userID)
-	}
-	c.user.UserBasicCache.Store(userID, &sdk_struct.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
-	return users[0].FaceURL, users[0].Nickname, nil
+	return userInfo.FaceURL, userInfo.Nickname, nil
 }
 
 func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {

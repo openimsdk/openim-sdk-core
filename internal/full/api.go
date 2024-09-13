@@ -2,6 +2,7 @@ package full
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -19,7 +20,7 @@ func (u *Full) GetUsersInfo(ctx context.Context, userIDs []string) ([]*api.FullU
 	if err != nil {
 		return nil, err
 	}
-	users, err := u.user.GetServerUserInfo(ctx, userIDs)
+	users, err := u.user.GetUserInfoFromServer(ctx, userIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (u *Full) GetUsersInfoWithCache(ctx context.Context, userIDs []string, grou
 	if err != nil {
 		return nil, err
 	}
-	users, err := u.user.GetServerUserInfo(ctx, userIDs)
+	users, err := u.user.GetUserInfoFromServer(ctx, userIDs)
 	if err == nil {
 		var strangers []*model_struct.LocalStranger
 		for _, val := range users {
