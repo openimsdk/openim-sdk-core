@@ -1,16 +1,15 @@
-package test
+package db
 
 import (
 	"context"
 	"testing"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 )
 
 func Test_BatchInsertNotificationSeq(t *testing.T) {
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
