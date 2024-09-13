@@ -28,6 +28,7 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 )
 
