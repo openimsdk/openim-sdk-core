@@ -153,8 +153,8 @@ func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 		if len(srvUserInfo) == 0 {
 			return nil, sdkerrs.ErrUserIDNotFound
 		}
-		userInfo = ServerUserToLocalUser(srvUserInfo[0])
-		_ = u.InsertLoginUser(ctx, userInfo)
+		//userInfo = ServerUserToLocalUser(srvUserInfo[0])
+		_ = u.InsertLoginUser(ctx, srvUserInfo[0])
 	}
 	return userInfo, nil
 }
