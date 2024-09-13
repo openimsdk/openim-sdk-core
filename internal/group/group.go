@@ -285,7 +285,7 @@ func (g *Group) FetchGroupOrError(ctx context.Context, groupID string) (*model_s
 			return localGroups, true, err
 		},
 		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
-			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
+			serverGroupInfo, err := g.getGroupsInfoFromServer(ctx, groupIDs)
 			if err != nil {
 				return nil, err
 			}

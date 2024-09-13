@@ -216,7 +216,7 @@ func (g *Group) GetJoinedGroupListPage(ctx context.Context, offset, count int32)
 			return localGroups, true, err
 		},
 		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
-			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
+			serverGroupInfo, err := g.getGroupsInfoFromServer(ctx, groupIDs)
 			if err != nil {
 				return nil, err
 			}
@@ -242,7 +242,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 			return localGroups, true, err
 		},
 		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
-			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
+			serverGroupInfo, err := g.getGroupsInfoFromServer(ctx, groupIDs)
 			if err != nil {
 				return nil, err
 			}

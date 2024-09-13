@@ -33,13 +33,13 @@ import (
 // Delete the local and server
 // Delete the local, do not change the server data
 // To delete the server, you need to change the local message status to delete
-func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, conversationID string, f func(ctx context.Context, conversationID string) error) error {
+func (c *Conversation) clearConversationFromLocalAndServer(ctx context.Context, conversationID string, f func(ctx context.Context, conversationID string) error) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
 	// Use conversationID to remove conversations and messages from the server first
-	err = c.clearConversationMsgFromSvr(ctx, conversationID)
+	err = c.clearConversationMsgFromServer(ctx, conversationID)
 	if err != nil {
 		return err
 	}
@@ -73,9 +73,9 @@ func (c *Conversation) clearConversationAndDeleteAllMsg(ctx context.Context, con
 }
 
 // Delete all messages
-func (c *Conversation) deleteAllMsgFromLocalAndSvr(ctx context.Context) error {
+func (c *Conversation) deleteAllMsgFromLocalAndServer(ctx context.Context) error {
 	// Delete the server first (high error rate), then delete it.
-	err := c.deleteAllMessageFromSvr(ctx)
+	err := c.deleteAllMessageFromServer(ctx)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (c *Conversation) deleteMessage(ctx context.Context, conversationID string,
 		log.ZInfo(ctx, "delete msg seq is 0, try again", "msg", localMessage)
 		return sdkerrs.ErrMsgHasNoSeq
 	}
-	err = c.deleteMessagesFromSvr(ctx, conversationID, []int64{localMessage.Seq})
+	err = c.deleteMessagesFromServer(ctx, conversationID, []int64{localMessage.Seq})
 	if err != nil {
 		return err
 	}

@@ -78,5 +78,5 @@ func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeU
 	call(callback, operationID, UserForSDK.Relation().RemoveBlack, removeUserID)
 }
 func SetFriendsEx(callback open_im_sdk_callback.Base, operationID string, friendIDs string, ex string) {
-	call(callback, operationID, UserForSDK.Relation().SetFriendsEx, friendIDs, ex)
+	call(callback, operationID, UserForSDK.Relation().UpdateFriends, friendIDs, ex)
 }

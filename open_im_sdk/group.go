@@ -33,15 +33,15 @@ func DismissGroup(callback open_im_sdk_callback.Base, operationID string, groupI
 }
 
 func SetGroupVerification(callback open_im_sdk_callback.Base, operationID string, groupID string, verification int32) {
-	call(callback, operationID, UserForSDK.Group().SetGroupVerification, groupID, verification)
+	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupID, verification)
 }
 
 func SetGroupApplyMemberFriend(callback open_im_sdk_callback.Base, operationID string, groupID string, rule int32) {
-	call(callback, operationID, UserForSDK.Group().SetGroupApplyMemberFriend, groupID, rule)
+	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupID, rule)
 }
 
 func SetGroupLookMemberInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, rule int32) {
-	call(callback, operationID, UserForSDK.Group().SetGroupLookMemberInfo, groupID, rule)
+	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupID, rule)
 }
 
 func ChangeGroupMute(callback open_im_sdk_callback.Base, operationID string, groupID string, isMute bool) {

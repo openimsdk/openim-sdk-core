@@ -209,7 +209,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, cli
 		}
 	}
 
-	err = c.revokeMessageFromSvr(ctx, conversationID, message.Seq)
+	err = c.revokeMessageFromServer(ctx, conversationID, message.Seq)
 	if err != nil {
 		return err
 	}

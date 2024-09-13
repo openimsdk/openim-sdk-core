@@ -86,7 +86,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 
 	if len(conversationIDsNeedSync) > 0 {
 		stepStartTime = time.Now()
-		r, err := c.getConversationsByIDsFromSvr(ctx, conversationIDsNeedSync)
+		r, err := c.getConversationsByIDsFromServer(ctx, conversationIDsNeedSync)
 		if err != nil {
 			log.ZWarn(ctx, "getServerConversationsByIDs err", err, "conversationIDs", conversationIDsNeedSync)
 			return err

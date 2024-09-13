@@ -36,7 +36,7 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 			return c.db.GetAllConversations(ctx)
 		},
 		Server: func(version *model_struct.LocalVersionSync) (*pbConversation.GetIncrementalConversationResp, error) {
-			return c.getIncrementalConversationFromSvr(ctx, version.Version, version.VersionID)
+			return c.getIncrementalConversationFromServer(ctx, version.Version, version.VersionID)
 		},
 		Full: func(resp *pbConversation.GetIncrementalConversationResp) bool {
 			return resp.Full
@@ -68,7 +68,7 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
-				resp, err := c.getAllConversationListFromSvr(ctx)
+				resp, err := c.getAllConversationListFromServer(ctx)
 				if err != nil {
 					return err
 				}
@@ -77,7 +77,7 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 			}
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
-			resp, err := c.getAllConversationIDsFromSvr(ctx)
+			resp, err := c.getAllConversationIDsFromServer(ctx)
 			if err != nil {
 				return nil, err
 			}

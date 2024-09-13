@@ -93,7 +93,7 @@ func (g *Group) getServerAdminGroupApplicationList(ctx context.Context) ([]*sdkw
 	return api.Page(ctx, req, api.GetRecvGroupApplicationList.Invoke, (*group.GetGroupApplicationListResp).GetGroupRequests)
 }
 
-func (g *Group) getGroupsInfoFromSvr(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
+func (g *Group) getGroupsInfoFromServer(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
 	req := &group.GetGroupsInfoReq{GroupIDs: groupIDs}
 	return api.ExtractField(ctx, api.GetGroupsInfo.Invoke, req, (*group.GetGroupsInfoResp).GetGroupInfos)
 }
