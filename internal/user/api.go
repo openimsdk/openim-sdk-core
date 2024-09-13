@@ -11,6 +11,7 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 )
 
 // GetSingleUserFromSvr retrieves user information from the server.
