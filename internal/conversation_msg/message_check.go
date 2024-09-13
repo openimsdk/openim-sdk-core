@@ -337,7 +337,7 @@ func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, other
 	switch lc.ConversationType {
 	case constant.SingleChatType:
 		c.singleHandle(ctx, self, others, lc)
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		c.groupHandle(ctx, self, others, lc)
 	}
 	return append(self, others...)

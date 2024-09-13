@@ -20,6 +20,8 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -101,7 +103,7 @@ func (g *Group) initSyncer() {
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
 					Action: constant.UpdateConFaceUrlAndNickName,
 					Args: common.SourceIDAndSessionType{
-						SourceID: server.GroupID, SessionType: constant.SuperGroupChatType,
+						SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
 						FaceURL: server.FaceURL, Nickname: server.GroupName,
 					},
 				}, g.conversationCh)
@@ -122,7 +124,7 @@ func (g *Group) initSyncer() {
 						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
 							Action: constant.UpdateConFaceUrlAndNickName,
 							Args: common.SourceIDAndSessionType{
-								SourceID: server.GroupID, SessionType: constant.SuperGroupChatType,
+								SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
 								FaceURL: server.FaceURL, Nickname: server.GroupName,
 							},
 						}, g.conversationCh)
@@ -170,7 +172,7 @@ func (g *Group) initSyncer() {
 					common.UpdateMessageNode{
 						Action: constant.UpdateMsgFaceUrlAndNickName,
 						Args: common.UpdateMessageInfo{
-							SessionType: constant.SuperGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
+							SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 							Nickname: server.Nickname, GroupID: server.GroupID,
 						},
 					}, g.conversationCh)
@@ -183,7 +185,7 @@ func (g *Group) initSyncer() {
 						common.UpdateMessageNode{
 							Action: constant.UpdateMsgFaceUrlAndNickName,
 							Args: common.UpdateMessageInfo{
-								SessionType: constant.SuperGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
+								SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 								Nickname: server.Nickname, GroupID: server.GroupID,
 							},
 						}, g.conversationCh)
@@ -265,4 +267,37 @@ func (g *Group) SetGroupListener(listener func() open_im_sdk_callback.OnGroupLis
 
 func (g *Group) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
 	g.listenerForService = listener
+}
+
+func (g *Group) FetchGroupOrError(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupTableName(),
+		g.loginUserID,
+		func(localGroup *model_struct.LocalGroup) string {
+			return localGroup.GroupID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroup) error {
+			return g.db.BatchInsertGroup(ctx, values)
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, bool, error) {
+			localGroups, err := g.db.GetGroups(ctx, groupIDs)
+			return localGroups, true, err
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+			serverGroupInfo, err := g.getGroupsInfoFromSvr(ctx, groupIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo), nil
+		},
+	)
+	groups, err := dataFetcher.FetchMissingAndCombineLocal(ctx, []string{groupID})
+	if err != nil {
+		return nil, err
+	}
+	if len(groups) == 0 {
+		return nil, sdkerrs.ErrGroupIDNotFound.WrapMsg("sdk and server not this group")
+	}
+	return groups[0], nil
 }

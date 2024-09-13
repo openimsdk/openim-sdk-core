@@ -150,9 +150,9 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			continue
 		}
 		switch sessionType {
-		case constant.GroupChatType:
+		case constant.WriteGroupChatType:
 			fallthrough
-		case constant.SuperGroupChatType:
+		case constant.ReadGroupChatType:
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
 		}
@@ -361,14 +361,14 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			} else {
 				conversationID = c.getConversationIDBySessionType(temp.SendID, constant.SingleChatType)
 			}
-		case constant.GroupChatType:
+		case constant.WriteGroupChatType:
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
-			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.GroupChatType)
-		case constant.SuperGroupChatType:
+			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.WriteGroupChatType)
+		case constant.ReadGroupChatType:
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
-			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.SuperGroupChatType)
+			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.ReadGroupChatType)
 		}
 		// Populate the conversationMap with search results
 		if oldItem, ok := conversationMap[conversationID]; !ok {

@@ -95,7 +95,7 @@ func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_c
 }
 
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	ch chan common.Cmd2Value, relation *relation.Relation, group *group.Group, user *user.User, full *full.Full,
+	ch chan common.Cmd2Value, relation *relation.Relation, group *group.Group, user *user.User,
 	file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
@@ -107,7 +107,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		relation:             relation,
 		group:                group,
 		user:                 user,
-		full:                 full,
 		file:                 file,
 		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
@@ -307,7 +306,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					switch v.SessionType {
 					case constant.SingleChatType:
 						lc.UserID = v.RecvID
-					case constant.GroupChatType, constant.SuperGroupChatType:
+					case constant.WriteGroupChatType, constant.ReadGroupChatType:
 						lc.GroupID = v.GroupID
 					}
 					if isConversationUpdate {
@@ -334,7 +333,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						lc.UserID = v.SendID
 						lc.ShowName = msg.SenderNickname
 						lc.FaceURL = msg.SenderFaceURL
-					case constant.GroupChatType, constant.SuperGroupChatType:
+					case constant.WriteGroupChatType, constant.ReadGroupChatType:
 						lc.GroupID = v.GroupID
 					case constant.NotificationChatType:
 						lc.UserID = v.SendID
@@ -616,7 +615,7 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
 	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, m)
-	if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
+	if m.SessionType == constant.WriteGroupChatType || m.SessionType == constant.ReadGroupChatType {
 		lc.RecvID = m.GroupID
 	}
 	return &lc
@@ -795,7 +794,7 @@ func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 	if err != nil {
 		return err
 	} else {
-		if msg.SessionType == constant.GroupChatType {
+		if msg.SessionType == constant.WriteGroupChatType {
 			msg.GroupID = msg.RecvID
 			msg.RecvID = c.loginUserID
 		}
@@ -903,27 +902,6 @@ func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*
 	return cs
 }
 
-func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
-	switch lc.ConversationType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, lc.UserID)
-		if err != nil {
-			return err
-		}
-		lc.FaceURL = faceUrl
-		lc.ShowName = name
-
-	case constant.GroupChatType, constant.SuperGroupChatType:
-		g, err := c.full.GetGroupInfoFromLocal2Svr(ctx, lc.GroupID, lc.ConversationType)
-		if err != nil {
-			return err
-		}
-		lc.ShowName = g.GroupName
-		lc.FaceURL = g.FaceURL
-	}
-	return nil
-}
-
 func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations ...*model_struct.LocalConversation) error {
 	if len(conversations) == 0 {
 		return nil
@@ -933,7 +911,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		if conversation.ConversationType == constant.SingleChatType ||
 			conversation.ConversationType == constant.NotificationChatType {
 			userIDs = append(userIDs, conversation.UserID)
-		} else if conversation.ConversationType == constant.SuperGroupChatType {
+		} else if conversation.ConversationType == constant.ReadGroupChatType {
 			groupIDs = append(groupIDs, conversation.GroupID)
 		}
 	}
@@ -944,10 +922,14 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		return err
 	}
 
-	groups, err := c.full.GetGroupsInfo(ctx, groupIDs...)
+	groupInfoList, err := c.group.GetSpecifiedGroupsInfo(ctx, groupIDs)
 	if err != nil {
 		return err
 	}
+	groups := datautil.SliceToMap(groupInfoList, func(groupInfo *model_struct.LocalGroup) string {
+		return groupInfo.GroupID
+	})
+
 	for _, conversation := range conversations {
 		if conversation.ConversationType == constant.SingleChatType ||
 			conversation.ConversationType == constant.NotificationChatType {
@@ -958,7 +940,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 				log.ZWarn(ctx, "user info not found", errors.New("user not found"),
 					"userID", conversation.UserID)
 			}
-		} else if conversation.ConversationType == constant.SuperGroupChatType {
+		} else if conversation.ConversationType == constant.ReadGroupChatType {
 			if v, ok := groups[conversation.GroupID]; ok {
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.GroupName

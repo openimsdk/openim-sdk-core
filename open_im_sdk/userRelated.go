@@ -26,8 +26,6 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
 
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
@@ -358,7 +356,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.relation, u.group, u.user, u.full, u.file)
+		u.relation, u.group, u.user, u.file)
 	u.setListener(ctx)
 
 	u.run(ctx)

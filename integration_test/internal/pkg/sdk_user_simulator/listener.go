@@ -1,10 +1,9 @@
 package sdk_user_simulator
 
 import (
-	"math/rand"
-	"time"
-
 	"context"
+	"math/rand"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -107,7 +106,7 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	case constant.SingleChatType:
 		m.SingleDelay[sm.SendID] =
 			append(m.SingleDelay[sm.SendID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		m.GroupDelay[sm.GroupID] =
 			append(m.GroupDelay[sm.GroupID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
 	default:
