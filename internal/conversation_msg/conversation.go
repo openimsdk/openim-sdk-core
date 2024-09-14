@@ -18,9 +18,11 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/jinzhu/copier"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -300,7 +302,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
-		list, err = c.messageController.SearchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+		list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 	}
 
 	// Handle any errors encountered during the search
@@ -403,6 +405,40 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	})
 
 	return &r, nil // Return the final search results
+}
+
+func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string,
+	keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	var list []*model_struct.LocalChatLog
+	conversationIDList, err := c.db.GetAllConversationIDList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var mu sync.Mutex
+	g, _ := errgroup.WithContext(ctx)
+	g.SetLimit(searchMessageGoroutineLimit)
+	for _, v := range conversationIDList {
+		conversationID := v
+		g.Go(func() error {
+			sList, err := c.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, conversationID, keywordList, keywordListMatchType, startTime, endTime)
+			if err != nil {
+				// TODO: log.Error(operationID, "search message in group err", err.Error(), conversationID)
+				return err
+			}
+
+			mu.Lock()
+			list = append(list, sList...)
+			mu.Unlock()
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 // true is filter, false is not filter

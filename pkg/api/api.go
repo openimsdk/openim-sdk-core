@@ -6,7 +6,6 @@ import (
 	"github.com/openimsdk/protocol/group"
 	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/relation"
-	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/protocol/third"
 	"github.com/openimsdk/protocol/user"
 )
@@ -44,10 +43,6 @@ var (
 	AddBlack                     = newApi[relation.AddBlackReq, relation.AddBlackResp]("/friend/add_black")
 	RemoveBlack                  = newApi[relation.RemoveBlackReq, relation.RemoveBlackResp]("/friend/remove_black")
 	GetBlackList                 = newApi[relation.GetPaginationBlacksReq, relation.GetPaginationBlacksResp]("/friend/get_black_list")
-)
-
-var (
-	PullUserMsgBySeq = newApi[sdkws.PullMessageBySeqsReq, sdkws.PullMessageBySeqsResp]("/chat/pull_msg_by_seq")
 )
 
 var (
