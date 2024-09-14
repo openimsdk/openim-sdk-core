@@ -64,13 +64,6 @@ func Test_SetSelfInfoEx(t *testing.T) {
 	time.Sleep(time.Second * 10)
 }
 
-func Test_SetSetGlobalRecvMessageOpt(t *testing.T) {
-	err := open_im_sdk.UserForSDK.User().SetGlobalRecvMessageOpt(ctx, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func Test_UserCommandAdd(t *testing.T) {
 	// Creating a request with a pointer
 	req := &user.ProcessUserCommandAddReq{

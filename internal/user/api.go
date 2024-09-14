@@ -66,10 +66,8 @@ func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 }
 
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
-	return u.updateSelfUserInfo(ctx, userInfo)
-}
-func (u *User) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
-	if err := u.setGlobalRecvMessageOpt(ctx, int32(opt)); err != nil {
+	// updateSelfUserInfo updates the user's information with Ex field.
+	if err := u.updateUserInfo(ctx, userInfo); err != nil {
 		return err
 	}
 	err := u.SyncLoginUserInfo(ctx)

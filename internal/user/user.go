@@ -23,7 +23,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/utils/datautil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -167,15 +166,6 @@ func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 	}
 
 	return userInfoFromServer[0], nil
-}
-
-// updateSelfUserInfo updates the user's information with Ex field.
-func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
-	if err := u.updateUserInfo(ctx, userInfo); err != nil {
-		return err
-	}
-	_ = u.SyncLoginUserInfo(ctx)
-	return nil
 }
 
 func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*model_struct.LocalUser, error) {
