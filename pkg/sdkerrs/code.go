@@ -14,39 +14,38 @@
 
 package sdkerrs
 
-// 通用错误码
+// Common error codes
 const (
 	NetworkError             = 10000
 	NetworkTimeoutError      = 10001
-	ArgsError                = 10002 //输入参数错误
-	CtxDeadlineExceededError = 10003 //上下文超时
+	ArgsError                = 10002 // Invalid input parameters
+	CtxDeadlineExceededError = 10003 // Context deadline exceeded
 
-	ResourceLoadNotCompleteError = 10004 //资源初始化未完成
-	UnknownCode                  = 10005 //没有解析到code
-	SdkInternalError             = 10006 //SDK内部错误
+	ResourceLoadNotCompleteError = 10004 // Resource initialization incomplete
+	UnknownCode                  = 10005 // Unrecognized code
+	SdkInternalError             = 10006 // SDK internal error
 
-	NoUpdateError = 10007 //没有更新
+	NoUpdateError = 10007 // No updates available
 
-	UserIDNotFoundError = 10100 //UserID不存在 或未注册
-	LoginOutError       = 10101 //用户已经退出登录
-	LoginRepeatError    = 10102 //用户重复登录
+	UserIDNotFoundError = 10100 // UserID not found or not registered
+	LoginOutError       = 10101 // User has logged out
+	LoginRepeatError    = 10102 // User logged in repeatedly
 
-	//消息相关
-	FileNotFoundError             = 10200 //记录不存在
-	MsgDeCompressionError         = 10201 //消息解压失败
-	MsgDecodeBinaryWsError        = 10202 //消息解码失败
-	MsgBinaryTypeNotSupportError  = 10203 //消息类型不支持
-	MsgRepeatError                = 10204 //消息重复发送
-	MsgContentTypeNotSupportError = 10205 //消息类型不支持
-	MsgHasNoSeqError              = 10206 //消息没有seq
+	// Message-related errors
+	FileNotFoundError             = 10200 // Record not found
+	MsgDeCompressionError         = 10201 // Message decompression failed
+	MsgDecodeBinaryWsError        = 10202 // Message decoding failed
+	MsgBinaryTypeNotSupportError  = 10203 // Message type not supported
+	MsgRepeatError                = 10204 // Message repeated
+	MsgContentTypeNotSupportError = 10205 // Message content type not supported
+	MsgHasNoSeqError              = 10206 // Message does not have a sequence number
 
-	//会话相关
-	NotSupportOptError  = 10301 //不支持的操作
-	NotSupportTypeError = 10302 //not support type
-	UnreadCountError    = 10303 //unread count has zero
+	// Conversation-related errors
+	NotSupportOptError  = 10301 // Operation not supported
+	NotSupportTypeError = 10302 // Type not supported
+	UnreadCountError    = 10303 // Unread count is zero
 
-	//群组相关
-	GroupIDNotFoundError = 10400 //GroupID不存在
-	GroupTypeErr         = 10401 //群组类型错误
-
+	// Group-related errors
+	GroupIDNotFoundError = 10400 // GroupID not found
+	GroupTypeErr         = 10401 // Invalid group type
 )

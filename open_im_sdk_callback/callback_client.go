@@ -70,12 +70,7 @@ type OnConversationListener interface {
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
-	//OnRecvGroupReadReceipt(groupMsgReceiptList string)
-
 	OnNewRecvMessageRevoked(messageRevoked string)
-	//OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
-	//OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
-	//OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
 	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
 	OnRecvOnlineOnlyMessage(message string)
@@ -102,15 +97,15 @@ type OnMessageKvInfoListener interface {
 }
 
 type OnListenerForService interface {
-	// OnGroupApplicationAdded someone has requested to join the group.
+	// OnGroupApplicationAdded Someone applied to join a group
 	OnGroupApplicationAdded(groupApplication string)
-	// OnGroupApplicationAccepted the group join request has been approved.
+	// OnGroupApplicationAccepted Group join application has been accepted
 	OnGroupApplicationAccepted(groupApplication string)
-	// OnFriendApplicationAdded someone has requested to add you as a friend.
+	// OnFriendApplicationAdded Someone applied to add you as a friend
 	OnFriendApplicationAdded(friendApplication string)
-	// OnFriendApplicationAccepted the friend request has been accepted.
-	OnFriendApplicationAccepted(groupApplication string)
-	// OnRecvNewMessage new message received
+	// OnFriendApplicationAccepted Friend request has been accepted
+	OnFriendApplicationAccepted(friendApplication string)
+	// OnRecvNewMessage Received a new message
 	OnRecvNewMessage(message string)
 }
 
@@ -124,11 +119,11 @@ type OnSignalingListener interface {
 	OnInviteeRejected(inviteeRejectedCallback string)
 
 	OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string)
-	//
+
 	OnInvitationCancelled(invitationCancelledCallback string)
-	//
+
 	OnInvitationTimeout(invitationTimeoutCallback string)
-	//
+
 	OnHangUp(hangUpCallback string)
 
 	OnRoomParticipantConnected(onRoomParticipantConnectedCallback string)
@@ -137,14 +132,22 @@ type OnSignalingListener interface {
 }
 
 type UploadFileCallback interface {
-	Open(size int64)                                                    // Open a file with the specified size
-	PartSize(partSize int64, num int)                                   // Set the size and number of parts for chunking
-	HashPartProgress(index int, size int64, partHash string)            // Track the hash value of each part
-	HashPartComplete(partsHash string, fileHash string)                 // Mark chunking complete with the final hash values
-	UploadID(uploadID string)                                           // Assign an upload ID
-	UploadPartComplete(index int, partSize int64, partHash string)      // Track the progress of each uploaded part
-	UploadComplete(fileSize int64, streamSize int64, storageSize int64) // Track the overall upload progress
-	Complete(size int64, url string, typ int)                           // Mark the upload as complete with final details
+	// Open a file with a given size
+	Open(size int64)
+	// PartSize Set the size of each part and the total number of parts
+	PartSize(partSize int64, num int)
+	// HashPartProgress Progress of hashing each part, including the part index, size, and hash value
+	HashPartProgress(index int, size int64, partHash string)
+	// HashPartComplete All parts have been hashed, providing the combined hash of all parts and the final file hash
+	HashPartComplete(partsHash string, fileHash string)
+	// UploadID Upload ID is generated and provided
+	UploadID(uploadID string)
+	// UploadPartComplete A specific part has completed uploading, providing the part index, size, and hash value
+	UploadPartComplete(index int, partSize int64, partHash string)
+	// UploadComplete The entire file upload progress, including the file size, stream size, and storage size
+	UploadComplete(fileSize int64, streamSize int64, storageSize int64)
+	// Complete The file upload is complete, providing the final size, URL, and type of the file
+	Complete(size int64, url string, typ int)
 }
 
 type UploadLogProgress interface {
