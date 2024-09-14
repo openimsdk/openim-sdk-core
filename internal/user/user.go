@@ -18,16 +18,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
-	"github.com/openimsdk/tools/utils/datautil"
-
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 )
 
@@ -134,62 +131,4 @@ func (u *User) initSyncer() {
 			return nil
 		},
 	)
-}
-
-// GetUsersInfoFromSvr retrieves user information from the server.
-func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
-	users, err := u.getUsersInfo(ctx, userIDs)
-	if err != nil {
-		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromSvr failed")
-	}
-	return datautil.Batch(ServerUserToLocalUser, users), nil
-}
-
-// getSelfUserInfo retrieves the user's information.
-func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
-	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
-	if errLocal == nil {
-		return userInfo, nil
-	}
-
-	userInfoFromServer, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
-	if errServer != nil {
-		return nil, errServer
-	}
-
-	if len(userInfoFromServer) == 0 {
-		return nil, sdkerrs.ErrUserIDNotFound
-	}
-
-	if err := u.InsertLoginUser(ctx, userInfoFromServer[0]); err != nil {
-		return nil, err
-	}
-
-	return userInfoFromServer[0], nil
-}
-
-func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*model_struct.LocalUser, error) {
-	return u.UserCache.FetchGet(ctx, cacheKey)
-}
-
-func (u *User) GetUserInfoWithCacheFunc(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
-	if userInfo, ok := u.UserCache.Load(cacheKey); ok {
-		return userInfo, nil
-	}
-
-	fetchedData, err := fetchFunc(ctx, cacheKey)
-	if err != nil {
-		return nil, err
-	}
-
-	u.UserCache.Store(cacheKey, fetchedData)
-	return fetchedData, nil
-}
-
-func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([]*model_struct.LocalUser, error) {
-	m, err := u.UserCache.MultiFetchGet(ctx, cacheKeys)
-	if err != nil {
-		return nil, err
-	}
-	return datautil.MapToSlice(m), nil
 }
