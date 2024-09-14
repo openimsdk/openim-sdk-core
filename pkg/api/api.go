@@ -19,7 +19,6 @@ var (
 	GetUsersInfo             = newApi[user.GetDesignateUsersReq, user.GetDesignateUsersResp]("/user/get_users_info")
 	UpdateUserInfo           = newApi[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
 	UpdateUserInfoEx         = newApi[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
-	SetGlobalRecvMessageOpt  = newApi[user.SetGlobalRecvMessageOptReq, user.SetGlobalRecvMessageOptResp]("/user/set_global_msg_recv_opt")
 	ProcessUserCommandAdd    = newApi[user.ProcessUserCommandAddReq, user.ProcessUserCommandAddResp]("/user/process_user_command_add")
 	ProcessUserCommandDelete = newApi[user.ProcessUserCommandDeleteReq, user.ProcessUserCommandDeleteResp]("/user/process_user_command_delete")
 	ProcessUserCommandUpdate = newApi[user.ProcessUserCommandUpdateReq, user.ProcessUserCommandUpdateResp]("/user/process_user_command_update")

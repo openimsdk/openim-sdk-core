@@ -30,10 +30,6 @@ func (u *User) processUserCommandUpdate(ctx context.Context, req *user.ProcessUs
 	return api.ProcessUserCommandUpdate.Execute(ctx, req)
 }
 
-func (u *User) setGlobalRecvMessageOpt(ctx context.Context, opt int32) error {
-	return api.SetGlobalRecvMessageOpt.Execute(ctx, &user.SetGlobalRecvMessageOptReq{UserID: u.loginUserID, GlobalRecvMsgOpt: opt})
-}
-
 func (u *User) processUserCommandGetAll(ctx context.Context, req *user.ProcessUserCommandGetAllReq) (*user.ProcessUserCommandGetAllResp, error) {
 	return api.ProcessUserCommandGetAll.Invoke(ctx, req)
 }
