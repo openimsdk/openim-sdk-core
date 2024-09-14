@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -29,25 +28,9 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
 
-	pbMsg "github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
-
-func (c *Conversation) markMsgAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
-	req := &pbMsg.MarkMsgsAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, Seqs: seqs}
-	return util.ApiPost(ctx, constant.MarkMsgsAsReadRouter, req, nil)
-}
-
-func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversationID string, hasReadSeq int64, seqs []int64) error {
-	req := &pbMsg.MarkConversationAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq, Seqs: seqs}
-	return util.ApiPost(ctx, constant.MarkConversationAsRead, req, nil)
-}
-
-func (c *Conversation) setConversationHasReadSeq(ctx context.Context, conversationID string, hasReadSeq int64) error {
-	req := &pbMsg.SetConversationHasReadSeqReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
-	return util.ApiPost(ctx, constant.SetConversationHasReadSeq, req, nil)
-}
 
 func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, conversationID string) error {
 	maxSeq, err := c.db.GetConversationNormalMsgSeq(ctx, conversationID)
@@ -91,13 +74,13 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 		if len(seqs) == 0 {
 			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
-			if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+			if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, seqs); err != nil {
 				return err
 			}
 		} else {
 			log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
 				seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-			if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+			if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, seqs); err != nil {
 				return err
 			}
 			_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
@@ -105,9 +88,9 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 				log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
 			}
 		}
-	case constant.SuperGroupChatType, constant.NotificationChatType:
+	case constant.ReadGroupChatType, constant.NotificationChatType:
 		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-		if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, nil); err != nil {
+		if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, nil); err != nil {
 			return err
 		}
 	}
@@ -144,7 +127,7 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
 		return nil
 	}
-	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
+	if err := c.markMsgAsRead2Server(ctx, conversationID, seqs); err != nil {
 		return err
 	}
 	decrCount, err := c.db.MarkConversationMessageAsReadDB(ctx, conversationID, markAsReadMsgIDs)

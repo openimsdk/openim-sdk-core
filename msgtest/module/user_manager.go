@@ -2,7 +2,7 @@ package module
 
 import (
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
 )
@@ -36,7 +36,7 @@ func (t *TestUserManager) RegisterUsers(userIDs ...string) error {
 	for _, userID := range userIDs {
 		users = append(users, &sdkws.UserInfo{UserID: userID, Nickname: userID})
 	}
-	return t.postWithCtx(constant.UserRegister, &userPB.UserRegisterReq{
+	return t.postWithCtx(api.UserRegister.Route(), &userPB.UserRegisterReq{
 		Secret: t.secret,
 		Users:  users,
 	}, nil)

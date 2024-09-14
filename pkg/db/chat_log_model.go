@@ -439,13 +439,6 @@ func (d *DataBase) GetConversationPeerNormalMsgSeq(ctx context.Context, conversa
 	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Where("send_id != ?", d.loginUserID).Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationPeerNormalMsgSeq")
 }
-func (d *DataBase) UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
-		"send_id = ? and session_type = ? and sender_nick_name != ? ", sendID, sType, nickname).Updates(
-		map[string]interface{}{"sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
-}
 
 func (d *DataBase) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error {
 	d.mRWMutex.Lock()

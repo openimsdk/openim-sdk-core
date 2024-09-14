@@ -25,12 +25,11 @@ import (
 	"unsafe"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
+
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third"
@@ -85,14 +84,12 @@ func CheckResourceLoad(uSDK *LoginMgr, funcName string) error {
 }
 
 type LoginMgr struct {
-	friend       *friend.Friend
+	relation     *relation.Relation
 	group        *group.Group
 	conversation *conv.Conversation
 	user         *user.User
 	file         *file.File
-	business     *business.Business
 
-	full         *full.Full
 	db           db_interface.DataBase
 	longConnMgr  *interaction.LongConnMgr
 	msgSyncer    *interaction.MsgSyncer
@@ -107,7 +104,7 @@ type LoginMgr struct {
 	loginStatus int
 
 	groupListener        open_im_sdk_callback.OnGroupListener
-	friendListener       open_im_sdk_callback.OnFriendshipListener
+	friendshipListener   open_im_sdk_callback.OnFriendshipListener
 	conversationListener open_im_sdk_callback.OnConversationListener
 	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
 	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
@@ -131,8 +128,8 @@ func (u *LoginMgr) GroupListener() open_im_sdk_callback.OnGroupListener {
 	return u.groupListener
 }
 
-func (u *LoginMgr) FriendListener() open_im_sdk_callback.OnFriendshipListener {
-	return u.friendListener
+func (u *LoginMgr) FriendshipListener() open_im_sdk_callback.OnFriendshipListener {
+	return u.friendshipListener
 }
 
 func (u *LoginMgr) ConversationListener() open_im_sdk_callback.OnConversationListener {
@@ -198,16 +195,12 @@ func (u *LoginMgr) File() *file.File {
 	return u.file
 }
 
-func (u *LoginMgr) Full() *full.Full {
-	return u.full
-}
-
 func (u *LoginMgr) Group() *group.Group {
 	return u.group
 }
 
-func (u *LoginMgr) Friend() *friend.Friend {
-	return u.friend
+func (u *LoginMgr) Relation() *relation.Relation {
+	return u.relation
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
@@ -226,8 +219,8 @@ func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnB
 	u.batchMsgListener = batchMsgListener
 }
 
-func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
-	u.friendListener = friendListener
+func (u *LoginMgr) SetFriendshipListener(friendshipListener open_im_sdk_callback.OnFriendshipListener) {
+	u.friendshipListener = friendshipListener
 }
 
 func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupListener) {
@@ -271,7 +264,7 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 
 func NewLoginMgr() *LoginMgr {
 	return &LoginMgr{
-		info: &ccontext.GlobalConfig{}, // 分配内存空间
+		info: &ccontext.GlobalConfig{},
 	}
 }
 func (u *LoginMgr) getLoginStatus(_ context.Context) int {
@@ -348,17 +341,15 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.file = file.NewFile(u.db, u.loginUserID)
-	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
+	u.relation = relation.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
 
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.db)
-	u.business = business.NewBusiness(u.db)
 	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, u.info.SystemType, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.business, u.full, u.file)
+		u.relation, u.group, u.user, u.file)
 	u.setListener(ctx)
 
 	u.run(ctx)
@@ -369,12 +360,12 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 
 func (u *LoginMgr) setListener(ctx context.Context) {
 	setListener(ctx, &u.userListener, u.UserListener, u.user.SetListener, newEmptyUserListener)
-	setListener(ctx, &u.friendListener, u.FriendListener, u.friend.SetListener, newEmptyFriendshipListener)
+	setListener(ctx, &u.friendshipListener, u.FriendshipListener, u.relation.SetListener, newEmptyFriendshipListener)
 	setListener(ctx, &u.groupListener, u.GroupListener, u.group.SetGroupListener, newEmptyGroupListener)
 	setListener(ctx, &u.conversationListener, u.ConversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
 	setListener(ctx, &u.advancedMsgListener, u.AdvancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
 	setListener(ctx, &u.batchMsgListener, u.BatchMsgListener, u.conversation.SetBatchMsgListener, nil)
-	setListener(ctx, &u.businessListener, u.BusinessListener, u.business.SetListener, newEmptyCustomBusinessListener)
+	setListener(ctx, &u.businessListener, u.BusinessListener, u.conversation.SetBusinessListener, newEmptyCustomBusinessListener)
 }
 
 func setListener[T any](ctx context.Context, listener *T, getter func() T, setFunc func(listener func() T), newFunc func(context.Context) T) {

@@ -86,7 +86,7 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	case constant.SingleChatType:
 		m.SingleDelay[sm.SendID] =
 			append(m.SingleDelay[sm.SendID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		m.GroupDelay[sm.GroupID] =
 			append(m.GroupDelay[sm.GroupID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
 	default:

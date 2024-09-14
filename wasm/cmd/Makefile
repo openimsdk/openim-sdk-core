@@ -3,7 +3,7 @@
 WASM_BIN_NAME=openIM.wasm
 
 
-#新加target的时候，下面的命令行记得用tab顶格
+# When adding a new target, remember to align the following command line with a tab at the beginning for proper indentation.
 wasm:
 	GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w" -o ${WASM_BIN_NAME} main.go
 

@@ -194,24 +194,6 @@ func (w *WrapperConMsg) GetMultipleConversation(_ js.Value, args []js.Value) int
 	return event_listener.NewCaller(open_im_sdk.GetMultipleConversation, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperConMsg) SetConversationPrivateChat(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetConversationPrivateChat, callback, &args).AsyncCallWithCallback()
-}
-
-func (w *WrapperConMsg) SetConversationRecvMessageOpt(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetConversationRecvMessageOpt, callback, &args).AsyncCallWithCallback()
-}
-func (w *WrapperConMsg) SearchConversation(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SearchConversation, callback, &args).AsyncCallWithCallback()
-}
-func (w *WrapperConMsg) SetGlobalRecvMessageOpt(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetGlobalRecvMessageOpt, callback, &args).AsyncCallWithCallback()
-}
-
 func (w *WrapperConMsg) FindMessageList(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.FindMessageList, callback, &args).AsyncCallWithCallback()
@@ -285,34 +267,18 @@ func (w *WrapperConMsg) HideConversation(_ js.Value, args []js.Value) interface{
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.HideConversation, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperConMsg) SetConversationEx(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperConMsg) SetConversations(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetConversationEx, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.SetConversations, callback, &args).AsyncCallWithCallback()
 }
 func (w *WrapperConMsg) SetConversationDraft(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversationDraft, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperConMsg) ResetConversationGroupAtType(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.ResetConversationGroupAtType, callback, &args).AsyncCallWithCallback()
-}
-
-func (w *WrapperConMsg) PinConversation(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-
-	return event_listener.NewCaller(open_im_sdk.PinConversation, callback, &args).AsyncCallWithCallback()
-}
-
 func (w *WrapperConMsg) GetTotalUnreadMsgCount(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetTotalUnreadMsgCount, callback, &args).AsyncCallWithCallback()
-}
-
-func (w *WrapperConMsg) SetConversationBurnDuration(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetConversationBurnDuration, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperConMsg) ChangeInputStates(_ js.Value, args []js.Value) interface{} {

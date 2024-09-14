@@ -17,7 +17,6 @@ package conversation_msg
 import (
 	"context"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
@@ -26,7 +25,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/jinzhu/copier"
-	pbMsg "github.com/openimsdk/protocol/msg"
+
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
@@ -34,13 +33,13 @@ import (
 // Delete the local and server
 // Delete the local, do not change the server data
 // To delete the server, you need to change the local message status to delete
-func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, conversationID string, f func(ctx context.Context, conversationID string) error) error {
+func (c *Conversation) clearConversationFromLocalAndServer(ctx context.Context, conversationID string, f func(ctx context.Context, conversationID string) error) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
 	// Use conversationID to remove conversations and messages from the server first
-	err = c.clearConversationMsgFromSvr(ctx, conversationID)
+	err = c.clearConversationMsgFromServer(ctx, conversationID)
 	if err != nil {
 		return err
 	}
@@ -73,19 +72,10 @@ func (c *Conversation) clearConversationAndDeleteAllMsg(ctx context.Context, con
 	return nil
 }
 
-// To delete session information, delete the server first, and then invoke the interface.
-// The client receives a callback to delete all local information.
-func (c *Conversation) clearConversationMsgFromSvr(ctx context.Context, conversationID string) error {
-	var apiReq pbMsg.ClearConversationsMsgReq
-	apiReq.UserID = c.loginUserID
-	apiReq.ConversationIDs = []string{conversationID}
-	return util.ApiPost(ctx, constant.ClearConversationMsgRouter, &apiReq, nil)
-}
-
 // Delete all messages
-func (c *Conversation) deleteAllMsgFromLocalAndSvr(ctx context.Context) error {
+func (c *Conversation) deleteAllMsgFromLocalAndServer(ctx context.Context) error {
 	// Delete the server first (high error rate), then delete it.
-	err := c.deleteAllMessageFromSvr(ctx)
+	err := c.deleteAllMessageFromServer(ctx)
 	if err != nil {
 		return err
 	}
@@ -94,17 +84,6 @@ func (c *Conversation) deleteAllMsgFromLocalAndSvr(ctx context.Context) error {
 		return err
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
-	return nil
-}
-
-// Delete all server messages
-func (c *Conversation) deleteAllMessageFromSvr(ctx context.Context) error {
-	var apiReq pbMsg.UserClearAllMsgReq
-	apiReq.UserID = c.loginUserID
-	err := util.ApiPost(ctx, constant.ClearAllMsgRouter, &apiReq, nil)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -131,14 +110,6 @@ func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context, markDelete boo
 
 // Delete a message from the local
 func (c *Conversation) deleteMessage(ctx context.Context, conversationID string, clientMsgID string) error {
-	if err := c.deleteMessageFromSvr(ctx, conversationID, clientMsgID); err != nil {
-		return err
-	}
-	return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
-}
-
-// The user deletes part of the message from the server
-func (c *Conversation) deleteMessageFromSvr(ctx context.Context, conversationID string, clientMsgID string) error {
 	_, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
 	if err != nil {
 		return err
@@ -155,11 +126,12 @@ func (c *Conversation) deleteMessageFromSvr(ctx context.Context, conversationID 
 		log.ZInfo(ctx, "delete msg seq is 0, try again", "msg", localMessage)
 		return sdkerrs.ErrMsgHasNoSeq
 	}
-	var apiReq pbMsg.DeleteMsgsReq
-	apiReq.UserID = c.loginUserID
-	apiReq.Seqs = []int64{localMessage.Seq}
-	apiReq.ConversationID = conversationID
-	return util.ApiPost(ctx, constant.DeleteMsgsRouter, &apiReq, nil)
+	err = c.deleteMessagesFromServer(ctx, conversationID, []int64{localMessage.Seq})
+	if err != nil {
+		return err
+	}
+
+	return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
 }
 
 // Delete messages from local

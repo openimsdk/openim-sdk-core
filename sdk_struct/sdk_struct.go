@@ -333,3 +333,11 @@ type BasicInfo struct {
 	Nickname string
 	FaceURL  string
 }
+
+type PublicUser struct {
+	UserID     string `json:"userID"`
+	Nickname   string `json:"nickname"`
+	FaceURL    string `json:"faceURL"`
+	Ex         string `json:"ex"`
+	CreateTime int64  `json:"createTime"`
+}

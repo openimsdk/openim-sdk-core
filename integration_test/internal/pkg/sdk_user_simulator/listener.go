@@ -2,6 +2,8 @@ package sdk_user_simulator
 
 import (
 	"context"
+	"math/rand"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -9,7 +11,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
-	"math/rand"
 )
 
 type conversationCallBack struct {
@@ -105,7 +106,7 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	case constant.SingleChatType:
 		m.SingleDelay[sm.SendID] =
 			append(m.SingleDelay[sm.SendID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		m.GroupDelay[sm.GroupID] =
 			append(m.GroupDelay[sm.GroupID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
 	default:
@@ -140,47 +141,47 @@ func (m *MsgListenerCallBak) OnRecvOnlineOnlyMessage(message string) {
 
 }
 
-type testFriendListener struct {
+type testFriendshipListener struct {
 }
 
-func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAdded(callbackInfo string) {
 
 }
-func (testFriendListener) OnFriendApplicationDeleted(callbackInfo string) {
-
-}
-
-func (testFriendListener) OnFriendApplicationAccepted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnFriendApplicationRejected(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAccepted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnFriendAdded(callbackInfo string) {
-}
-
-func (testFriendListener) OnFriendDeleted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationRejected(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnBlackAdded(callbackInfo string) {
-
-}
-func (testFriendListener) OnBlackDeleted(callbackInfo string) {
-
+func (testFriendshipListener) OnFriendAdded(callbackInfo string) {
 }
 
-func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
+func (testFriendshipListener) OnFriendDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnSuccess() {
+func (testFriendshipListener) OnBlackAdded(callbackInfo string) {
+
+}
+func (testFriendshipListener) OnBlackDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnError(code int32, msg string) {
+func (testFriendshipListener) OnFriendInfoChanged(callbackInfo string) {
+
+}
+
+func (testFriendshipListener) OnSuccess() {
+
+}
+
+func (testFriendshipListener) OnError(code int32, msg string) {
 
 }
 

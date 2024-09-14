@@ -1,11 +1,12 @@
 package sdk_user_simulator
 
 import (
+	"sync"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/errs"
-	"sync"
 )
 
 var (
@@ -44,8 +45,8 @@ func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {
 	MapLock.Unlock()
 	userForSDK.SetAdvancedMsgListener(msgCallBack)
 
-	var friendListener testFriendListener
-	userForSDK.SetFriendListener(friendListener)
+	var friendshipListener testFriendshipListener
+	userForSDK.SetFriendshipListener(friendshipListener)
 
 	var groupListener testGroupListener
 	userForSDK.SetGroupListener(groupListener)

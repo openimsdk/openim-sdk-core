@@ -19,13 +19,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"reflect"
 	"runtime"
 	"runtime/debug"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 
 	"github.com/openimsdk/tools/log"
 
@@ -99,12 +100,12 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	ctx := ccontext.WithOperationID(UserForSDK.Context(), operationID)
 	defer func(start time.Time) {
 		if r := recover(); r != nil {
-			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
+			fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
 			err = fmt.Errorf("call panic: %+v", r)
 		} else {
 			elapsed := time.Since(start).Milliseconds()
 			if err == nil {
-				log.ZInfo(ctx, "fn call success", "function name", funcName, "resp", res, "cost time", fmt.Sprintf("%d ms", elapsed))
+				log.ZInfo(ctx, "fn call success", "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed), "resp", res)
 			} else {
 				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
 
@@ -314,12 +315,11 @@ func syncCall(operationID string, fn any, args ...any) (res string) {
 			return ""
 		}
 		if len(outs) == 1 {
-			//callback.OnSuccess("") // 只有一个返回值为error，且error == nil
 			return ""
 		}
 		outVals = outVals[:len(outVals)-1]
 	}
-	// 将map和slice的nil转换为非nil
+	// Convert nil maps and slices to non-nil
 	for i := 0; i < len(outVals); i++ {
 		switch outs[i].Kind() {
 		case reflect.Map:
@@ -440,7 +440,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 
 		outVals = outVals[:len(outVals)-1]
 	}
-	// 将map和slice的nil转换为非nil
+	// Convert nil maps and slices to non-nil
 	for i := 0; i < len(outVals); i++ {
 		switch outs[i].Kind() {
 		case reflect.Map:

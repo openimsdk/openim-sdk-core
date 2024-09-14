@@ -3,15 +3,16 @@ package module
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/tools/utils/datautil"
 	"math/rand"
 	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -24,20 +25,17 @@ var (
 
 	PLATFORMID = constant.AndroidPlatformID
 	LogLevel   = uint32(5)
-
-	REGISTERADDR = APIADDR + constant.UserRegister
-	TOKENADDR    = APIADDR + constant.GetUsersToken
 )
 
 var (
-	totalOnlineUserNum    = 200000 // 总在线用户数
-	friendMsgSenderNum    = 200    // 好友消息发送者数
-	NotFriendMsgSenderNum = 200    // 非好友消息发送者数
-	groupMsgSenderNum     = 200    // 群消息发送者数
-	msgSenderNumEvreyUser = 100    // 每个用户的消息数
-	fastenedUserNum       = 600    // 固定用户数
+	totalOnlineUserNum    = 200000 // total online users num
+	friendMsgSenderNum    = 200    // friend msg sender num
+	NotFriendMsgSenderNum = 200    // not friend msg sender num
+	groupMsgSenderNum     = 200    // group msg sender num
+	msgSenderNumEvreyUser = 100    // the number of messages per user.
+	fastenedUserNum       = 600    // fixed number of users
 
-	recvMsgUserNum       = 20 // 消息接收者数, 抽样账号
+	recvMsgUserNum       = 20 // the number of message recipients, sampled accounts
 	singleSampleUserList []string
 )
 
@@ -130,9 +128,9 @@ func NewPressureTester() (*PressureTester, error) {
 }
 
 func (p *PressureTester) genUserIDs() (userIDs, fastenedUserIDs, recvMsgUserIDs []string) {
-	userIDs = p.userManager.GenUserIDs(totalOnlineUserNum - fastenedUserNum)                  // 在线用户
-	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(fastenedUserNum, FastenedUserPrefix) // 指定发消息的固定用户
-	recvMsgUserIDs = p.userManager.GenUserIDsWithPrefix(recvMsgUserNum, RecvMsgPrefix)        // 抽样用户完整SDK
+	userIDs = p.userManager.GenUserIDs(totalOnlineUserNum - fastenedUserNum)                  // online users
+	fastenedUserIDs = p.userManager.GenUserIDsWithPrefix(fastenedUserNum, FastenedUserPrefix) // specify the fixed users for sending messages
+	recvMsgUserIDs = p.userManager.GenUserIDsWithPrefix(recvMsgUserNum, RecvMsgPrefix)        // complete SDK for sampling users
 	return
 }
 
@@ -223,7 +221,7 @@ func (p *PressureTester) getGroup(fastenedUserIDs []string, groupMemberNum int, 
 	offlineUserID := p.Shuffle(p.offlineUserIDs, groupMemberNum-olineUserIDNum)
 	ownerUserID = p.Shuffle(userIDs, 1)[0]
 	randomSender = p.Shuffle(userIDs, int(float64(groupMemberNum)*groupSenderRate))
-	return ownerUserID, append(utils.RemoveOneInList(userIDs, ownerUserID), offlineUserID...), randomSender
+	return ownerUserID, append(datautil.DeleteElems(userIDs, ownerUserID), offlineUserID...), randomSender
 }
 
 func (p *PressureTester) CreateTestGroups(fastenedUserIDs []string, total int, groupSenderRate, groupOnlineRate float64, hundredThousandGroupNum, tenThousandGroupNum, thousandGroupNum,

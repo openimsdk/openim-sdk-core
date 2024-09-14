@@ -399,7 +399,7 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 		if msgNum >= SplitPullMsgNum {
 			resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 			if err != nil {
-				log.ZError(ctx, "syncMsgFromSvr error", err, "tempSeqMap", tempSeqMap)
+				log.ZError(ctx, "syncMsgFromServer error", err, "tempSeqMap", tempSeqMap)
 				return err
 			}
 			_ = m.triggerConversation(ctx, resp.Msgs)
@@ -417,7 +417,7 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 	if len(tempSeqMap) > 0 {
 		resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 		if err != nil {
-			log.ZError(ctx, "syncMsgFromSvr error", err, "tempSeqMap", tempSeqMap)
+			log.ZError(ctx, "syncMsgFromServer error", err, "tempSeqMap", tempSeqMap)
 			return err
 		}
 		_ = m.triggerConversation(ctx, resp.Msgs)
@@ -457,7 +457,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				gr.Go(func() error {
 					resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
 					if err != nil {
-						log.ZError(ctx, "syncMsgFromSvr err", err, "tempSeqMap", tpSeqMap)
+						log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tpSeqMap)
 						return err
 					}
 					_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
@@ -476,7 +476,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 		gr.Go(func() error {
 			resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 			if err != nil {
-				log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
+				log.ZError(ctx, "syncMsgFromServer err", err, "seqMap", seqMap)
 				return err
 			}
 			_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
@@ -541,7 +541,7 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 		var pullMsgResp sdkws.PullMessageBySeqsResp
 		err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgByRange, &pullMsgResp)
 		if err != nil {
-			log.ZError(ctx, "syncMsgFromSvrSplit err", err, "pullMsgReq", pullMsgReq)
+			log.ZError(ctx, "syncMsgFromServerSplit err", err, "pullMsgReq", pullMsgReq)
 			continue
 		}
 		i++

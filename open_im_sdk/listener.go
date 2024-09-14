@@ -40,7 +40,7 @@ func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 }
 
 func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
-	listenerCall(UserForSDK.SetFriendListener, listener)
+	listenerCall(UserForSDK.SetFriendshipListener, listener)
 }
 
 func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {

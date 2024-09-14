@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -28,7 +27,7 @@ import (
 	"github.com/openimsdk/tools/utils/timeutil"
 
 	"github.com/jinzhu/copier"
-	pbMsg "github.com/openimsdk/protocol/msg"
+
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
@@ -62,7 +61,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		}
 
 		revokerNickname = userName
-	} else if tips.SesstionType == constant.SuperGroupChatType {
+	} else if tips.SesstionType == constant.ReadGroupChatType {
 		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
 		if err != nil {
 			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
@@ -191,7 +190,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, cli
 		if message.SendID != c.loginUserID {
 			return errors.New("only send by yourself message can be revoked")
 		}
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		if message.SendID != c.loginUserID {
 			groupAdmins, err := c.db.GetGroupMemberOwnerAndAdminDB(ctx, conversation.GroupID)
 			if err != nil {
@@ -209,9 +208,12 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, cli
 			}
 		}
 	}
-	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq, UserID: c.loginUserID}, nil); err != nil {
+
+	err = c.revokeMessageFromServer(ctx, conversationID, message.Seq)
+	if err != nil {
 		return err
 	}
+
 	c.revokeMessage(ctx, &sdkws.RevokeMsgTips{
 		ConversationID: conversationID,
 		Seq:            message.Seq,

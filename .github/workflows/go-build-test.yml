@@ -34,7 +34,6 @@ jobs:
         run: |
           go mod tidy
           go generate ./...
-          go build -o ./cmd ./cmd/main.go
           cd wasm/cmd && make wasm
 
 

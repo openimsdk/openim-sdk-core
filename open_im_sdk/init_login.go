@@ -22,6 +22,8 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	pbConstant "github.com/openimsdk/protocol/constant"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
@@ -52,7 +54,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	if configArgs.PlatformID == 0 {
 		return false
 	}
-	if err := log.InitLoggerFromConfig("open-im-sdk-core", "", configArgs.SystemType, constant.PlatformID2Name[int(configArgs.PlatformID)], int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version, true); err != nil {
+	if err := log.InitLoggerFromConfig("open-im-sdk-core", "", configArgs.SystemType, pbConstant.PlatformID2Name[int(configArgs.PlatformID)], int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version, true); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 	}
 	fmt.Println("init log success")

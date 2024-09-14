@@ -1,17 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package conversation_msg
 
 import (
@@ -22,15 +8,14 @@ import (
 	"math"
 	"sync"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/utils/stringutil"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/business"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/cache"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/friend"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/full"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -39,7 +24,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/protocol/sdkws"
@@ -57,7 +41,8 @@ import (
 )
 
 const (
-	conversationSyncLimit int64 = math.MaxInt64
+	conversationSyncLimit       int64 = math.MaxInt64
+	searchMessageGoroutineLimit       = 10
 )
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
@@ -70,18 +55,16 @@ type Conversation struct {
 	msgListener           func() open_im_sdk_callback.OnAdvancedMsgListener
 	msgKvListener         func() open_im_sdk_callback.OnMessageKvInfoListener
 	batchMsgListener      func() open_im_sdk_callback.OnBatchMsgListener
+	businessListener      func() open_im_sdk_callback.OnCustomBusinessListener
 	recvCH                chan common.Cmd2Value
 	loginUserID           string
 	platformID            int32
 	DataDir               string
-	friend                *friend.Friend
+	relation              *relation.Relation
 	group                 *group.Group
 	user                  *user.User
 	file                  *file.File
-	business              *business.Business
-	messageController     *MessageController
 	cache                 *cache.Cache[string, *model_struct.LocalConversation]
-	full                  *full.Full
 	maxSeqRecorder        MaxSeqRecorder
 	IsExternalExtensions  bool
 	msgOffset             int
@@ -105,9 +88,13 @@ func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_c
 	c.batchMsgListener = batchMsgListener
 }
 
+func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_callback.OnCustomBusinessListener) {
+	c.businessListener = businessListener
+}
+
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	ch chan common.Cmd2Value, friend *friend.Friend, group *group.Group, user *user.User, business *business.Business,
-	full *full.Full, file *file.File) *Conversation {
+	ch chan common.Cmd2Value, relation *relation.Relation, group *group.Group, user *user.User,
+	file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -115,13 +102,10 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		loginUserID:          info.UserID(),
 		platformID:           info.PlatformID(),
 		DataDir:              info.DataDir(),
-		friend:               friend,
+		relation:             relation,
 		group:                group,
 		user:                 user,
-		full:                 full,
-		business:             business,
 		file:                 file,
-		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 		msgOffset:            0,
@@ -198,7 +182,7 @@ func (c *Conversation) initSyncer() {
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(resp *pbConversation.GetOwnerConversationResp) []*model_struct.LocalConversation {
 			return datautil.Batch(ServerConversationToLocal, resp.Conversations)
 		}),
-		syncer.WithReqApiRouter[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](constant.GetOwnerConversationRouter),
+		syncer.WithReqApiRouter[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](api.GetOwnerConversation.Route()),
 		syncer.WithFullSyncLimit[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](conversationSyncLimit),
 	)
 
@@ -319,7 +303,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					switch v.SessionType {
 					case constant.SingleChatType:
 						lc.UserID = v.RecvID
-					case constant.GroupChatType, constant.SuperGroupChatType:
+					case constant.WriteGroupChatType, constant.ReadGroupChatType:
 						lc.GroupID = v.GroupID
 					}
 					if isConversationUpdate {
@@ -346,7 +330,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						lc.UserID = v.SendID
 						lc.ShowName = msg.SenderNickname
 						lc.FaceURL = msg.SenderFaceURL
-					case constant.GroupChatType, constant.SuperGroupChatType:
+					case constant.WriteGroupChatType, constant.ReadGroupChatType:
 						lc.GroupID = v.GroupID
 					case constant.NotificationChatType:
 						lc.UserID = v.SendID
@@ -628,7 +612,7 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
 	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, m)
-	if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
+	if m.SessionType == constant.WriteGroupChatType || m.SessionType == constant.ReadGroupChatType {
 		lc.RecvID = m.GroupID
 	}
 	return &lc
@@ -675,7 +659,7 @@ func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map
 			v1.SendTime = v.SendTime
 			err := c.db.UpdateMessage(ctx, conversationID, v1)
 			if err != nil {
-				return utils.Wrap(err, "BatchUpdateMessageList failed")
+				return errs.WrapMsg(err, "BatchUpdateMessageList failed")
 			}
 			if latestMsg.ClientMsgID == v.ClientMsgID {
 				latestMsg.ServerMsgID = v.ServerMsgID
@@ -718,158 +702,6 @@ func (c *Conversation) batchInsertMessageList(ctx context.Context, insertMsg map
 }
 
 func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
-
-	//for _, v := range msgReactionList {
-	//	var msg sdk_struct.MessageReaction
-	//	err := json.Unmarshal([]byte(v.Content), &msg)
-	//	if err != nil {
-	//		log.Error("internal", "unmarshal failed, err : ", err.Error(), *v)
-	//		continue
-	//	}
-	//	s := sdk_struct.MsgStruct{GroupID: msg.GroupID, ClientMsgID: msg.ClientMsgID, SessionType: msg.SessionType}
-	//	message, err := c.db.GetMessageController(&s)
-	//	if err != nil {
-	//		log.Error("internal", "GetMessageController, err : ", err.Error(), s)
-	//		continue
-	//	}
-	//	t := new(model_struct.LocalChatLog)
-	//  attachInfo := sdk_struct.AttachedInfoElem{}
-	//	_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-	//
-	//	contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
-	//	if contain {
-	//		userContain, userReaction := isContainUserReactionElem(msg.UserID, v.UserReactionList)
-	//		if userContain {
-	//			if !v.CanRepeat && userReaction.Counter > 0 {
-	//				// to do nothing
-	//				continue
-	//			} else {
-	//				userReaction.Counter += msg.Counter
-	//				v.Counter += msg.Counter
-	//				if v.Counter < 0 {
-	//					log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
-	//					v.Counter = 0
-	//				}
-	//				if userReaction.Counter <= 0 {
-	//					log.Debug("internal", "after operate userReaction counter < 0", v.Type, userReaction.Counter, msg.Counter)
-	//					v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
-	//				}
-	//			}
-	//		} else {
-	//			log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
-	//			u := new(sdk_struct.UserReactionElem)
-	//			u.UserID = msg.UserID
-	//			u.Counter = msg.Counter
-	//			v.Counter += msg.Counter
-	//			if v.Counter < 0 {
-	//				log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
-	//				v.Counter = 0
-	//			}
-	//			if u.Counter <= 0 {
-	//				log.Debug("internal", "after operate userReaction counter < 0", v.Type, u.Counter, msg.Counter)
-	//				v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, msg.UserID)
-	//			}
-	//			v.UserReactionList = append(v.UserReactionList, u)
-	//
-	//		}
-	//
-	//	} else {
-	//		log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
-	//		t := new(sdk_struct.ReactionElem)
-	//		t.Counter = msg.Counter
-	//		t.Type = msg.ReactionType
-	//		u := new(sdk_struct.UserReactionElem)
-	//		u.UserID = msg.UserID
-	//		u.Counter = msg.Counter
-	//		t.UserReactionList = append(t.UserReactionList, u)
-	//		attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
-	//
-	//	}
-	//
-	//	t.AttachedInfo = utils.StructToJsonString(attachInfo)
-	//	t.ClientMsgID = message.ClientMsgID
-	//
-	//	t.SessionType = message.SessionType
-	//	t.RecvID = message.RecvID
-	//	err1 := c.db.UpdateMessageController(t)
-	//	if err1 != nil {
-	//		log.Error("internal", "UpdateMessageController err:", err1, "ClientMsgID", *t, message)
-	//	}
-	//	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &s}})
-	//
-	//}
-}
-
-// func (c *Conversation) doReactionMsgModifier(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
-// 	for _, msgStruct := range msgReactionList {
-// 		var n server_api_params.ReactionMessageModifierNotification
-// 		err := json.Unmarshal([]byte(msgStruct.Content), &n)
-// 		if err != nil {
-// 			// log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
-// 			continue
-// 		}
-// 		switch n.Operation {
-// 		case constant.AddMessageExtensions:
-// 			var reactionExtensionList []*sdkws.KeyValue
-// 			for _, value := range n.SuccessReactionExtensionList {
-// 				reactionExtensionList = append(reactionExtensionList, value)
-// 			}
-// 			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
-// 				c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
-// 			}
-// 		case constant.SetMessageExtensions:
-// 			err = c.db.GetAndUpdateMessageReactionExtension(ctx, n.ClientMsgID, n.SuccessReactionExtensionList)
-// 			if err != nil {
-// 				// log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
-// 				continue
-// 			}
-// 			var reactionExtensionList []*sdkws.KeyValue
-// 			for _, value := range n.SuccessReactionExtensionList {
-// 				reactionExtensionList = append(reactionExtensionList, value)
-// 			}
-// 			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
-// 				c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
-// 			}
-
-// 		}
-// 		t := model_struct.LocalChatLog{}
-// 		t.ClientMsgID = n.ClientMsgID
-// 		t.SessionType = n.SessionType
-// 		t.IsExternalExtensions = n.IsExternalExtensions
-// 		t.IsReact = n.IsReact
-// 		t.MsgFirstModifyTime = n.MsgFirstModifyTime
-// 		if n.SessionType == constant.GroupChatType || n.SessionType == constant.SuperGroupChatType {
-// 			t.RecvID = n.SourceID
-// 		}
-// 		//todo
-// 		err2 := c.db.UpdateMessage(ctx, "", &t)
-// 		if err2 != nil {
-// 			// log.Error("internal", "unmarshal failed err:", err2.Error(), t)
-// 			continue
-// 		}
-// 	}
-// }
-
-func (c *Conversation) doReactionMsgDeleter(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
-	// for _, msgStruct := range msgReactionList {
-	// 	var n server_api_params.ReactionMessageDeleteNotification
-	// 	err := json.Unmarshal([]byte(msgStruct.Content), &n)
-	// 	if err != nil {
-	// 		// log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
-	// 		continue
-	// 	}
-	// 	err = c.db.DeleteAndUpdateMessageReactionExtension(ctx, n.ClientMsgID, n.SuccessReactionExtensionList)
-	// 	if err != nil {
-	// 		// log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
-	// 		continue
-	// 	}
-	// 	var deleteKeyList []string
-	// 	for _, value := range n.SuccessReactionExtensionList {
-	// 		deleteKeyList = append(deleteKeyList, value.TypeKey)
-	// 	}
-	// 	c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
-
-	// }
 }
 
 func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struct.NewMsgList, cc, nc map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
@@ -959,7 +791,7 @@ func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 	if err != nil {
 		return err
 	} else {
-		if msg.SessionType == constant.GroupChatType {
+		if msg.SessionType == constant.WriteGroupChatType {
 			msg.GroupID = msg.RecvID
 			msg.RecvID = c.loginUserID
 		}
@@ -1058,47 +890,6 @@ func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs
 			cs[lc.ConversationID] = oldC
 		}
 	}
-	//if oldC, ok := cc[lc.ConversationID]; !ok {
-	//	oc, err := c.db.GetConversation(lc.ConversationID)
-	//	if err == nil && oc.ConversationID != "" {//如果会话已经存在
-	//		if lc.LatestMsgSendTime > oc.LatestMsgSendTime {
-	//			oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
-	//			oc.LatestMsg = lc.LatestMsg
-	//			oc.LatestMsgSendTime = lc.LatestMsgSendTime
-	//			cc[lc.ConversationID] = *oc
-	//		} else {
-	//			oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
-	//			cc[lc.ConversationID] = *oc
-	//		}
-	//	} else {
-	//		if oldC, ok := nc[lc.ConversationID]; !ok {
-	//			c.addFaceURLAndName(lc)
-	//			nc[lc.ConversationID] = *lc
-	//		} else {
-	//			if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
-	//				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-	//				oldC.LatestMsg = lc.LatestMsg
-	//				oldC.LatestMsgSendTime = lc.LatestMsgSendTime
-	//				nc[lc.ConversationID] = oldC
-	//			} else {
-	//				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-	//				nc[lc.ConversationID] = oldC
-	//			}
-	//		}
-	//	}
-	//} else {
-	//	if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
-	//		oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-	//		oldC.LatestMsg = lc.LatestMsg
-	//		oldC.LatestMsgSendTime = lc.LatestMsgSendTime
-	//		cc[lc.ConversationID] = oldC
-	//	} else {
-	//		oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-	//		cc[lc.ConversationID] = oldC
-	//	}
-	//
-	//}
-
 }
 
 func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*model_struct.LocalConversation) {
@@ -1106,27 +897,6 @@ func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*
 		cs = append(cs, v)
 	}
 	return cs
-}
-
-func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
-	switch lc.ConversationType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, lc.UserID)
-		if err != nil {
-			return err
-		}
-		lc.FaceURL = faceUrl
-		lc.ShowName = name
-
-	case constant.GroupChatType, constant.SuperGroupChatType:
-		g, err := c.full.GetGroupInfoFromLocal2Svr(ctx, lc.GroupID, lc.ConversationType)
-		if err != nil {
-			return err
-		}
-		lc.ShowName = g.GroupName
-		lc.FaceURL = g.FaceURL
-	}
-	return nil
 }
 
 func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations ...*model_struct.LocalConversation) error {
@@ -1138,7 +908,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		if conversation.ConversationType == constant.SingleChatType ||
 			conversation.ConversationType == constant.NotificationChatType {
 			userIDs = append(userIDs, conversation.UserID)
-		} else if conversation.ConversationType == constant.SuperGroupChatType {
+		} else if conversation.ConversationType == constant.ReadGroupChatType {
 			groupIDs = append(groupIDs, conversation.GroupID)
 		}
 	}
@@ -1149,10 +919,14 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		return err
 	}
 
-	groups, err := c.full.GetGroupsInfo(ctx, groupIDs...)
+	groupInfoList, err := c.group.GetSpecifiedGroupsInfo(ctx, groupIDs)
 	if err != nil {
 		return err
 	}
+	groups := datautil.SliceToMap(groupInfoList, func(groupInfo *model_struct.LocalGroup) string {
+		return groupInfo.GroupID
+	})
+
 	for _, conversation := range conversations {
 		if conversation.ConversationType == constant.SingleChatType ||
 			conversation.ConversationType == constant.NotificationChatType {
@@ -1163,7 +937,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 				log.ZWarn(ctx, "user info not found", errors.New("user not found"),
 					"userID", conversation.UserID)
 			}
-		} else if conversation.ConversationType == constant.SuperGroupChatType {
+		} else if conversation.ConversationType == constant.ReadGroupChatType {
 			if v, ok := groups[conversation.GroupID]; ok {
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.GroupName
@@ -1177,17 +951,16 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 	return nil
 }
 
-func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*sdk_struct.BasicInfo,
+func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs ...string) (map[string]*model_struct.LocalUser,
 	error) {
-	m := make(map[string]*sdk_struct.BasicInfo)
-	var notCachedUserIDs []string
+	m := make(map[string]*model_struct.LocalUser)
 	var notInFriend []string
 
 	if len(userIDs) == 0 {
 		return m, nil
 	}
 
-	friendList, err := c.friend.Db().GetFriendInfoList(ctx, userIDs)
+	friendList, err := c.relation.Db().GetFriendInfoList(ctx, userIDs)
 	if err != nil {
 		log.ZWarn(ctx, "BatchGetUserNameAndFaceURL", err, "userIDs", userIDs)
 		notInFriend = userIDs
@@ -1197,7 +970,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}))
 	}
 	for _, localFriend := range friendList {
-		userInfo := &sdk_struct.BasicInfo{FaceURL: localFriend.FaceURL}
+		userInfo := &model_struct.LocalUser{UserID: localFriend.FriendUserID, FaceURL: localFriend.FaceURL}
 		if localFriend.Remark != "" {
 			userInfo.Nickname = localFriend.Remark
 		} else {
@@ -1205,36 +978,18 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}
 		m[localFriend.FriendUserID] = userInfo
 	}
-
-	for _, userID := range notInFriend {
-		if value, ok := c.user.UserBasicCache.Load(userID); ok {
-			m[userID] = value
-		} else {
-			notCachedUserIDs = append(notCachedUserIDs, userID)
-		}
+	usersInfo, err := c.user.GetUsersInfoWithCache(ctx, notInFriend)
+	if err != nil {
+		return nil, err
 	}
-
-	if len(notCachedUserIDs) > 0 {
-		users, err := c.user.GetServerUserInfo(ctx, notCachedUserIDs)
-		if err != nil {
-			return nil, err
-		}
-		for _, u := range users {
-			userInfo := &sdk_struct.BasicInfo{FaceURL: u.FaceURL, Nickname: u.Nickname}
-			m[u.UserID] = userInfo
-			c.user.UserBasicCache.Store(u.UserID, userInfo)
-		}
+	for _, userInfo := range usersInfo {
+		m[userInfo.UserID] = userInfo
 	}
 	return m, nil
 }
 
 func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
-	//find in cache
-	if value, ok := c.user.UserBasicCache.Load(userID); ok {
-		return value.FaceURL, value.Nickname, nil
-	}
-	//get from local db
-	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, userID)
+	friendInfo, err := c.relation.Db().GetFriendInfoByFriendUserID(ctx, userID)
 	if err == nil {
 		faceURL = friendInfo.FaceURL
 		if friendInfo.Remark != "" {
@@ -1244,16 +999,11 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 		}
 		return faceURL, name, nil
 	}
-	//get from server db
-	users, err := c.user.GetServerUserInfo(ctx, []string{userID})
+	userInfo, err := c.user.GetUserInfoWithCache(ctx, userID)
 	if err != nil {
-		return "", "", err
+		return "", "", nil
 	}
-	if len(users) == 0 {
-		return "", "", sdkerrs.ErrUserIDNotFound.WrapMsg(userID)
-	}
-	c.user.UserBasicCache.Store(userID, &sdk_struct.BasicInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
-	return users[0].FaceURL, users[0].Nickname, nil
+	return userInfo.FaceURL, userInfo.Nickname, nil
 }
 
 func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {

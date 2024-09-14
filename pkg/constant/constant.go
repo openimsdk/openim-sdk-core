@@ -64,11 +64,7 @@ const (
 	AdvancedText                    = 117
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
-	ReactionMessageModifier         = 121
-	ReactionMessageDeleter          = 122
 
-	//////////////////////////////////////////
-	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
 
 	FriendApplicationApprovedNotification = 1201 //add_friend_response
@@ -92,7 +88,6 @@ const (
 	UserCommandUpdateNotification = 1307
 
 	UserNotificationEnd = 1399
-	OANotification      = 1400
 
 	GroupNotificationBegin = 1500
 
@@ -118,38 +113,16 @@ const (
 	GroupInfoSetNameNotification             = 1520
 	GroupNotificationEnd                     = 1599
 
-	SignalingNotificationBegin = 1600
-	SignalingNotification      = 1601
-	SignalingNotificationEnd   = 1649
-
-	SuperGroupNotificationBegin         = 1650
-	SuperGroupUpdateNotification        = 1651
-	MsgDeleteNotification               = 1652
-	ReactionMessageModifierNotification = 1653
-	ReactionMessageDeleteNotification   = 1654
-	SuperGroupNotificationEnd           = 1699
-
 	ConversationPrivateChatNotification = 1701
-	ConversationUnreadNotification      = 1702
 	ClearConversationNotification       = 1703
 
-	WorkMomentNotificationBegin = 1900
-	WorkMomentNotification      = 1901
-
-	BusinessNotificationBegin = 2000
-	BusinessNotification      = 2001
-	BusinessNotificationEnd   = 2099
+	BusinessNotification = 2001
 
 	RevokeNotification = 2101
-
-	HasReadReceiptNotification      = 2150
-	GroupHasReadReceiptNotification = 2155
 
 	DeleteMsgsNotification = 2102
 
 	HasReadReceipt = 2200
-
-	NotificationEnd = 5000
 
 	////////////////////////////////////////
 
@@ -159,13 +132,11 @@ const (
 
 	/////////////////////////////////////
 	//SessionType
-	SingleChatType       = 1
-	GroupChatType        = 2
-	SuperGroupChatType   = 3
+	SingleChatType = 1
+	// WriteGroupChatType Not enabled temporarily
+	WriteGroupChatType   = 2
+	ReadGroupChatType    = 3
 	NotificationChatType = 4
-
-	//MsgStatus
-	MsgStatusDefault = 0
 
 	MsgStatusSending     = 1
 	MsgStatusSendSuccess = 2
@@ -188,112 +159,36 @@ const (
 	GroupBanChat         = 1
 	GroupStatusDismissed = 2
 	GroupStatusMuted     = 3
-
-	// workMoment permission
-	WorkMomentPublic            = 0
-	WorkMomentPrivate           = 1
-	WorkMomentPermissionCanSee  = 2
-	WorkMomentPermissionCantSee = 3
-
-	// workMoment sdk notification type
-	WorkMomentCommentNotification = 0
-	WorkMomentLikeNotification    = 1
-	WorkMomentAtUserNotification  = 2
 )
 
-const (
-	ckWsInitConnection  string = "ws-init-connection"
-	ckWsLoginConnection string = "ws-login-connection"
-	ckWsClose           string = "ws-close"
-	ckWsKickOffLine     string = "ws-kick-off-line"
-	ckTokenExpired      string = "token-expired"
-	ckSelfInfoUpdate    string = "self-info-update"
-)
 const (
 	BlackRelationship  = 0
 	FriendRelationship = 1
 )
 
-// const (
-//
-//	ErrCodeInitLogin    = 1001
-//	ErrCodeFriend       = 2001
-//	ErrCodeConversation = 3001
-//	ErrCodeUserInfo     = 4001
-//	ErrCodeGroup        = 5001
-//
-// )
 const (
 	NormalGroup                       = 0
 	SuperGroup                        = 1
 	WorkingGroup                      = 2
-	SuperGroupTableName               = "local_super_groups"
 	SuperGroupErrChatLogsTableNamePre = "local_sg_err_chat_logs_"
 	ChatLogsTableNamePre              = "chat_logs_"
 )
 
 const (
-	SdkInit = 0
-
-	LoginSuccess = 101
-	Logining     = 102
-	LoginFailed  = 103
-
-	Logout = 201
-
-	TokenFailedExpired       = 701
-	TokenFailedInvalid       = 702
-	TokenFailedKickedOffline = 703
-)
-
-const (
-	DeFaultSuccessMsg = "ok"
-)
-
-const (
-	AddConOrUpLatMsg                  = 2
-	UnreadCountSetZero                = 3
-	IncrUnread                        = 5
-	TotalUnreadMessageChanged         = 6
-	UpdateConFaceUrlAndNickName       = 7
-	UpdateLatestMessageChange         = 8
-	ConChange                         = 9
-	NewCon                            = 10
-	ConChangeDirect                   = 11
-	NewConDirect                      = 12
-	ConversationLatestMsgHasRead      = 13
-	UpdateMsgFaceUrlAndNickName       = 14
-	SyncConversation                  = 15
-	SyncMessageListReactionExtensions = 16
-	SyncMessageListTypeKeyInfo        = 17
-	UpdateUserCommand                 = 18
+	AddConOrUpLatMsg             = 1
+	TotalUnreadMessageChanged    = 2
+	UpdateConFaceUrlAndNickName  = 3
+	UpdateLatestMessageChange    = 4
+	ConChange                    = 5
+	NewCon                       = 6
+	ConChangeDirect              = 7
+	NewConDirect                 = 8
+	ConversationLatestMsgHasRead = 9
+	UpdateMsgFaceUrlAndNickName  = 10
+	SyncConversation             = 11
 
 	HasRead = 1
 	NotRead = 0
-
-	IsFilter  = 1
-	NotFilter = 0
-)
-
-const (
-	GroupActionCreateGroup            = 1
-	GroupActionApplyJoinGroup         = 2
-	GroupActionQuitGroup              = 3
-	GroupActionSetGroupInfo           = 4
-	GroupActionKickGroupMember        = 5
-	GroupActionTransferGroupOwner     = 6
-	GroupActionInviteUserToGroup      = 7
-	GroupActionAcceptGroupApplication = 8
-	GroupActionRefuseGroupApplication = 9
-)
-const ZoomScale = "200"
-const MaxTotalMsgLen = 51200
-
-// const MaxTotalMsgLen = 20480
-const (
-	FriendAcceptTip  = "You have successfully become friends, so start chatting"
-	TransferGroupTip = "The owner of the group is transferred!"
-	AcceptGroupTip   = "%s join the group"
 )
 
 const (
@@ -308,35 +203,21 @@ const (
 	LogoutMsg             = 2003
 	SetBackgroundStatus   = 2004
 	WsSubUserOnlineStatus = 2005
-
-	WSDataError = 3001
 )
 
 // conversation
 const (
 	//MsgReceiveOpt
-	ReceiveMessage          = 0
+	ReceiveMessage = 0
+	// NotReceiveMessage This option is currently disabled
 	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
 
 	Online  = 1
 	Offline = 0
-
-	//pinned
-	Pinned    = 1
-	NotPinned = 0
-
-	//privateChat
-	IsPrivateChat  = true
-	NotPrivateChat = false
 )
 
-const SuccessCallbackDefault = "" // Default value for success callback
-
 const (
-	AppOrdinaryUsers = 1 // Application user type: ordinary user
-	AppAdmin         = 2 // Application user type: administrator
-
 	GroupOwner         = 100 // Group member type: owner
 	GroupAdmin         = 60  // Group member type: administrator
 	GroupOrdinaryUsers = 20  // Group member type: ordinary user
@@ -354,9 +235,6 @@ const (
 	FriendResponseAgree   = 1  // Response to friend request: agree
 	FriendResponseRefuse  = -1 // Response to friend request: refuse
 	FriendResponseDefault = 0
-
-	Male   = 1 // Gender: male
-	Female = 2 // Gender: female
 )
 const (
 	AtAllString = "AtAllTag" // String for 'all people' mention tag
@@ -366,21 +244,7 @@ const (
 	AtAllAtMe   = 3          // Mention mode: mention all people and sender
 
 )
-const (
-	FieldRecvMsgOpt    = 1 // Field type: message receiving options
-	FieldIsPinned      = 2 // Field type: whether a message is pinned
-	FieldAttachedInfo  = 3 // Field type: attached information
-	FieldIsPrivateChat = 4 // Field type: whether a message is from a private chat
-	FieldGroupAtType   = 5 // Field type: group mention mode
-	FieldIsNotInGroup  = 6 // Field type: whether a message is not in a group
-	FieldEx            = 7 // Field type: extension field
-	FieldUnread        = 8 // Field type: whether a message is unread
-	FieldBurnDuration  = 9 // Field type: message burn duration
-)
-const (
-	SetMessageExtensions = 1 // Message extension operation type: set extension
-	AddMessageExtensions = 2 // Message extension operation type: add extension
-)
+
 const (
 	KeywordMatchOr  = 0 // Keyword match mode: match any keyword
 	KeywordMatchAnd = 1 // Keyword match mode: match all keywords
@@ -389,10 +253,6 @@ const (
 const BigVersion = "v3"
 
 const (
-	MsgSyncModelDefault  = 0   //SyncFlag
-	MsgSyncModelLogin    = 1   //SyncFlag
-	SyncOrderStartLatest = 101 //PullMsgOrder
-
 	MsgSyncBegin      = 1001 //
 	MsgSyncProcessing = 1002 //
 	MsgSyncEnd        = 1003 //
@@ -402,23 +262,16 @@ const (
 )
 
 const (
-	JoinByInvitation = 2
-	JoinBySearch     = 3
-	JoinByQRCode     = 4
-)
-const (
-	SplitPullMsgNum              = 100
-	PullMsgNumWhenLogin          = 10000
-	PullMsgNumForReadDiffusion   = 50
-	NormalMsgMinNumReadDiffusion = 100
+	SplitPullMsgNum            = 100
+	PullMsgNumForReadDiffusion = 50
 )
 
-const SplitGetGroupMemberNum = 1000
-const UseHashGroupMemberNum = 1000
-
 const (
-	Uninitialized    = -1001
-	NoNetwork        = 1 // Online -> Offline
-	NetworkAvailable = 2 // Offline -> Online
-	NetworkVariation = 3 // Online, but status changed
+	Uninitialized = -1001
+)
+
+// GroupApplicationReceiver
+const (
+	ApplicantReceiver = iota
+	AdminReceiver
 )

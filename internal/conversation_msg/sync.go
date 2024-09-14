@@ -86,13 +86,13 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 
 	if len(conversationIDsNeedSync) > 0 {
 		stepStartTime = time.Now()
-		conversationsOnServer, err := c.getServerConversationsByIDs(ctx, conversationIDsNeedSync)
+		r, err := c.getConversationsByIDsFromServer(ctx, conversationIDsNeedSync)
 		if err != nil {
 			log.ZWarn(ctx, "getServerConversationsByIDs err", err, "conversationIDs", conversationIDsNeedSync)
 			return err
 		}
 		log.ZDebug(ctx, "getServerConversationsByIDs completed", "duration", time.Since(stepStartTime).Seconds())
-
+		conversationsOnServer := datautil.Batch(ServerConversationToLocal, r.Conversations)
 		stepStartTime = time.Now()
 		if err := c.batchAddFaceURLAndName(ctx, conversationsOnServer...); err != nil {
 			log.ZWarn(ctx, "batchAddFaceURLAndName err", err, "conversationsOnServer", conversationsOnServer)

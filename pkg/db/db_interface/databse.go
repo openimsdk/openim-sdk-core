@@ -30,11 +30,6 @@ type GroupModel interface {
 	GetGroups(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error)
 	GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
 	GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error)
-	AddMemberCount(ctx context.Context, groupID string) error
-	SubtractMemberCount(ctx context.Context, groupID string) error
-	GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error)
-	GetJoinedWorkingGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error)
-	GetUserJoinedGroupIDs(ctx context.Context, userID string) ([]string, error)
 
 	InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error
 	DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error
@@ -44,59 +39,36 @@ type GroupModel interface {
 	DeleteGroupRequest(ctx context.Context, groupID, userID string) error
 	UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
 	GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error)
-	InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
-	DeleteAllSuperGroup(ctx context.Context) error
-	GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
-	UpdateSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
-	DeleteSuperGroup(ctx context.Context, groupID string) error
 	GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error)
-	GetAllGroupMemberList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
-	GetAllGroupMemberUserIDList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
 	GetGroupMemberCount(ctx context.Context, groupID string) (int32, error)
 	GetGroupSomeMemberInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupAdminID(ctx context.Context, groupID string) ([]string, error)
 	GetGroupMemberListByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
 	GetGroupMemberListSplit(ctx context.Context, groupID string, filter int32, offset, count int) ([]*model_struct.LocalGroupMember, error)
 	GetGroupMemberListByUserIDs(ctx context.Context, groupID string, filter int32, userIDs []string) ([]*model_struct.LocalGroupMember, error)
 	GetGroupMemberOwnerAndAdminDB(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupMemberOwner(ctx context.Context, groupID string) (*model_struct.LocalGroupMember, error)
 	GetGroupMemberListSplitByJoinTimeFilter(ctx context.Context, groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupOwnerAndAdminByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
-	GetGroupMemberUIDListByGroupID(ctx context.Context, groupID string) (result []string, err error)
-	GetGroupMemberAllGroupIDs(ctx context.Context) ([]string, error)
 	InsertGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error
 	BatchInsertGroupMember(ctx context.Context, groupMemberList []*model_struct.LocalGroupMember) error
 	DeleteGroupMember(ctx context.Context, groupID, userID string) error
 	DeleteGroupAllMembers(ctx context.Context, groupID string) error
 	UpdateGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error
-	UpdateGroupMemberField(ctx context.Context, groupID, userID string, args map[string]interface{}) error
-	GetGroupMemberInfoIfOwnerOrAdmin(ctx context.Context) ([]*model_struct.LocalGroupMember, error)
 	SearchGroupMembersDB(ctx context.Context, keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error)
 }
 
 type MessageModel interface {
 	BatchInsertMessageList(ctx context.Context, conversationID string, MessageList []*model_struct.LocalChatLog) error
-	// BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
 	InsertMessage(ctx context.Context, conversationID string, Message *model_struct.LocalChatLog) error
-	// InsertMessageController(ctx context.Context, message *model_struct.LocalChatLog) error
 	SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
-	// SearchMessageByKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
-	// SearchMessageByContentTypeController(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error)
 	GetMessage(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error)
 	GetMessageBySeq(ctx context.Context, conversationID string, seq int64) (*model_struct.LocalChatLog, error)
 	UpdateColumnsMessage(ctx context.Context, conversationID string, ClientMsgID string, args map[string]interface{}) error
-	// UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error
 	UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error
 	UpdateMessageBySeq(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error
-	// UpdateMessageStatusBySourceIDController(ctx context.Context, sourceID string, status, sessionType int32) error
 	UpdateMessageTimeAndStatus(ctx context.Context, conversationID, clientMsgID string, serverMsgID string, sendTime int64, status int32) error
-	// UpdateMessageTimeAndStatusController(ctx context.Context, msg *sdk_struct.MsgStruct) error
 	GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
-	// GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	GetMessageListNoTime(ctx context.Context, conversationID string, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
-	// GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error)
 	MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error)
 	GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error)
@@ -108,9 +80,6 @@ type MessageModel interface {
 	GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 	GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 
-	UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
-	UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
-	// UpdateMsgSenderFaceURLAndSenderNicknameController(ctx context.Context, sendID, faceURL, nickname string, sessionType int) error
 	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error
 	GetAbnormalMsgSeq(ctx context.Context) (int64, error)
 	GetAbnormalMsgSeqList(ctx context.Context) ([]int64, error)
@@ -126,7 +95,6 @@ type MessageModel interface {
 	BatchInsertConversationUnreadMessageList(ctx context.Context, messageList []*model_struct.LocalConversationUnreadMessage) error
 	DeleteConversationUnreadMessageList(ctx context.Context, conversationID string, sendTime int64) int64
 	DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error
-	// DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error
 	SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error
 	BatchInsertNotificationSeq(ctx context.Context, notificationSeqs []*model_struct.NotificationSeqs) error
 	GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqs, error)
@@ -172,8 +140,6 @@ type UserModel interface {
 	UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	UpdateLoginUserByMap(ctx context.Context, user *model_struct.LocalUser, args map[string]interface{}) error
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
-	GetStrangerInfo(ctx context.Context, userIDs []string) ([]*model_struct.LocalStranger, error)
-	SetStrangerInfo(ctx context.Context, localStrangerList []*model_struct.LocalStranger) error
 	ProcessUserCommandAdd(ctx context.Context, command *model_struct.LocalUserCommand) error
 	ProcessUserCommandUpdate(ctx context.Context, command *model_struct.LocalUserCommand) error
 	ProcessUserCommandDelete(ctx context.Context, command *model_struct.LocalUserCommand) error
@@ -215,8 +181,6 @@ type ReactionModel interface {
 	GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
 	UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error
-	// GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
-	// DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
 	GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error)
 	DeleteMessageReactionExtension(ctx context.Context, msgID string) error
 }

@@ -17,34 +17,35 @@ package sdkerrs
 import "github.com/openimsdk/tools/errs"
 
 var (
-	ErrArgs           = errs.NewCodeError(ArgsError, "ArgsError")
-	ErrCtxDeadline    = errs.NewCodeError(CtxDeadlineExceededError, "CtxDeadlineExceededError")
-	ErrSdkInternal    = errs.NewCodeError(SdkInternalError, "SdkInternalError")
-	ErrNetwork        = errs.NewCodeError(NetworkError, "NetworkError")
-	ErrNetworkTimeOut = errs.NewCodeError(NetworkTimeoutError, "NetworkTimeoutError")
+	// Common errors
+	ErrArgs           = errs.NewCodeError(ArgsError, "Invalid input arguments")
+	ErrCtxDeadline    = errs.NewCodeError(CtxDeadlineExceededError, "Context deadline exceeded")
+	ErrSdkInternal    = errs.NewCodeError(SdkInternalError, "Internal SDK error")
+	ErrNetwork        = errs.NewCodeError(NetworkError, "Network error")
+	ErrNetworkTimeOut = errs.NewCodeError(NetworkTimeoutError, "Network timeout error")
 
-	ErrGroupIDNotFound = errs.NewCodeError(GroupIDNotFoundError, "GroupIDNotFoundError")
-	ErrUserIDNotFound  = errs.NewCodeError(UserIDNotFoundError, "UserIDNotFoundError")
+	ErrGroupIDNotFound = errs.NewCodeError(GroupIDNotFoundError, "Group ID not found")
+	ErrUserIDNotFound  = errs.NewCodeError(UserIDNotFoundError, "User ID not found")
 
-	ErrResourceLoad = errs.NewCodeError(ResourceLoadNotCompleteError, "ResourceLoadNotCompleteError")
+	ErrResourceLoad = errs.NewCodeError(ResourceLoadNotCompleteError, "Resource initialization incomplete")
 
-	//消息相关
-	ErrFileNotFound             = errs.NewCodeError(FileNotFoundError, "FileNotFoundError")
-	ErrMsgDecodeBinaryWs        = errs.NewCodeError(MsgDecodeBinaryWsError, "MsgDecodeBinaryWsError")
-	ErrMsgDeCompression         = errs.NewCodeError(MsgDeCompressionError, "MsgDeCompressionError")
-	ErrMsgBinaryTypeNotSupport  = errs.NewCodeError(MsgBinaryTypeNotSupportError, "MsgTypeNotSupportError")
-	ErrMsgRepeated              = errs.NewCodeError(MsgRepeatError, "only failed message can be repeatedly send")
-	ErrMsgContentTypeNotSupport = errs.NewCodeError(MsgContentTypeNotSupportError, "contentType not support currently") // msg 	// msg
-	ErrMsgHasNoSeq              = errs.NewCodeError(MsgHasNoSeqError, "msg has no seq")                                 // msg 	// msg
+	// Message-related errors
+	ErrFileNotFound             = errs.NewCodeError(FileNotFoundError, "File not found")
+	ErrMsgDecodeBinaryWs        = errs.NewCodeError(MsgDecodeBinaryWsError, "Message binary WebSocket decoding failed")
+	ErrMsgDeCompression         = errs.NewCodeError(MsgDeCompressionError, "Message decompression failed")
+	ErrMsgBinaryTypeNotSupport  = errs.NewCodeError(MsgBinaryTypeNotSupportError, "Message type not supported")
+	ErrMsgRepeated              = errs.NewCodeError(MsgRepeatError, "Only failed messages can be resent")
+	ErrMsgContentTypeNotSupport = errs.NewCodeError(MsgContentTypeNotSupportError, "Message content type not supported")
+	ErrMsgHasNoSeq              = errs.NewCodeError(MsgHasNoSeqError, "Message has no sequence number")
 
-	//会话相关
-	ErrNotSupportOpt  = errs.NewCodeError(NotSupportOptError, "super group not support this opt")
-	ErrNotSupportType = errs.NewCodeError(NotSupportTypeError, "only support super group type type")
-	ErrUnreadCount    = errs.NewCodeError(UnreadCountError, "unread count has zero")
-	//群组相关
+	// Conversation-related errors
+	ErrNotSupportOpt  = errs.NewCodeError(NotSupportOptError, "Operation not supported for supergroup")
+	ErrNotSupportType = errs.NewCodeError(NotSupportTypeError, "Only supergroup type supported")
+	ErrUnreadCount    = errs.NewCodeError(UnreadCountError, "Unread count is zero")
 
-	ErrGroupType = errs.NewCodeError(GroupTypeErr, "group type error")
+	// Group-related errors
+	ErrGroupType = errs.NewCodeError(GroupTypeErr, "Invalid group type")
 
-	ErrLoginOut    = errs.NewCodeError(LoginOutError, "LoginOutError")
-	ErrLoginRepeat = errs.NewCodeError(LoginRepeatError, "LoginRepeatError")
+	ErrLoginOut    = errs.NewCodeError(LoginOutError, "User has logged out")
+	ErrLoginRepeat = errs.NewCodeError(LoginRepeatError, "User has logged in repeatedly")
 )

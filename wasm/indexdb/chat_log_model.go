@@ -362,18 +362,6 @@ func (i *LocalChatLogs) GetTestMessage(ctx context.Context, seq uint32) (*model_
 	}
 }
 
-// Update the sender's nickname in the chat logs
-func (i *LocalChatLogs) UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error {
-	_, err := exec.Exec(sendID, nickname, sType)
-	return err
-}
-
-// Update the sender's face URL in the chat logs
-func (i *LocalChatLogs) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error {
-	_, err := exec.Exec(sendID, faceURL, sType)
-	return err
-}
-
 // Update the sender's face URL and nickname in the chat logs
 func (i *LocalChatLogs) UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error {
 	_, err := exec.Exec(conversationID, sendID, faceURL, nickname)
