@@ -315,12 +315,11 @@ func syncCall(operationID string, fn any, args ...any) (res string) {
 			return ""
 		}
 		if len(outs) == 1 {
-			//callback.OnSuccess("") // 只有一个返回值为error，且error == nil
 			return ""
 		}
 		outVals = outVals[:len(outVals)-1]
 	}
-	// 将map和slice的nil转换为非nil
+	// Convert nil maps and slices to non-nil
 	for i := 0; i < len(outVals); i++ {
 		switch outs[i].Kind() {
 		case reflect.Map:
@@ -441,7 +440,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 
 		outVals = outVals[:len(outVals)-1]
 	}
-	// 将map和slice的nil转换为非nil
+	// Convert nil maps and slices to non-nil
 	for i := 0; i < len(outVals); i++ {
 		switch outs[i].Kind() {
 		case reflect.Map:
