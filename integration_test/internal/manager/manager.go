@@ -2,10 +2,11 @@ package manager
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	authPB "github.com/openimsdk/protocol/auth"
@@ -27,7 +28,7 @@ func NewMetaManager() *MetaManager {
 }
 
 func (m *MetaManager) ApiPost(ctx context.Context, route string, req, resp any) (err error) {
-	return util.ApiPost(ctx, route, req, resp)
+	return network.ApiPost(ctx, route, req, resp)
 }
 
 // PostWithCtx should only be used for scenarios such as registration and login that do not require a token or

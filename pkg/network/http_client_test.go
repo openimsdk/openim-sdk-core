@@ -1,9 +1,11 @@
-package util
+package network
 
 import (
 	"context"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+
 	"testing"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 )
 
 func TestName(t *testing.T) {

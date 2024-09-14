@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/protocol/sdkws"
 )
 
@@ -21,7 +21,7 @@ type Api[Req, Resp any] struct {
 
 func (a Api[Req, Resp]) Invoke(ctx context.Context, req *Req) (*Resp, error) {
 	var resp Resp
-	if err := util.ApiPost(ctx, a.api, req, &resp); err != nil {
+	if err := network.ApiPost(ctx, a.api, req, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil
