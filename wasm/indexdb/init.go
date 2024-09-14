@@ -38,6 +38,7 @@ import (
 // you do not need to use the structures in temp_struct.
 // 7. Whenever there's a name conflict with an interface, the DB interface should append the "DB" suffix.
 // 8. For any map types, use JSON string conversion, and document this clearly.
+
 type IndexDB struct {
 	LocalUsers
 	LocalConversations

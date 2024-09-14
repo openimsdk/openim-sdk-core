@@ -29,19 +29,19 @@ func init() {
 }
 
 var (
-	totalOnlineUserNum int     // 总在线用户数
-	randomSender       int     // 随机发送者数
-	randomReceiver     int     // 随机接收者数
-	singleSamplingRate float64 // 单聊抽样率
-	GroupSenderRate    float64 // 群聊随机的发送者比例
-	GroupOnlineRate    float64 //group chat online user rate
+	totalOnlineUserNum int     // total online users num
+	randomSender       int     // random sender num
+	randomReceiver     int     // random receiver num
+	singleSamplingRate float64 // sampling rate for single chat
+	GroupSenderRate    float64 // the random sender ratio for group chats
+	GroupOnlineRate    float64 // group chat online user rate
 	start              int
 	end                int
 	count              int
 	sendInterval       int
 
-	//recvMsgUserNum int // 消息接收者数, 抽样账号
-	isRegisterUser  bool // 是否注册用户
+	//recvMsgUserNum int // the number of message recipients, sampled accounts
+	isRegisterUser  bool // If register users
 	onlineUsersOnly bool
 	pprofEnable     bool
 
