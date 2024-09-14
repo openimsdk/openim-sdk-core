@@ -128,6 +128,7 @@ const (
 
 	//MsgFrom
 	UserMsgType = 100
+	SysMsgType  = 200
 
 	/////////////////////////////////////
 	//SessionType
@@ -154,7 +155,10 @@ const (
 	IsSenderConversationUpdate = "senderConversationUpdate"
 
 	//GroupStatus
+	GroupOk              = 0
+	GroupBanChat         = 1
 	GroupStatusDismissed = 2
+	GroupStatusMuted     = 3
 )
 
 const (
@@ -171,19 +175,17 @@ const (
 )
 
 const (
-	AddConOrUpLatMsg             = 2
-	UnreadCountSetZero           = 3
-	IncrUnread                   = 5
-	TotalUnreadMessageChanged    = 6
-	UpdateConFaceUrlAndNickName  = 7
-	UpdateLatestMessageChange    = 8
-	ConChange                    = 9
-	NewCon                       = 10
-	ConChangeDirect              = 11
-	NewConDirect                 = 12
-	ConversationLatestMsgHasRead = 13
-	UpdateMsgFaceUrlAndNickName  = 14
-	SyncConversation             = 15
+	AddConOrUpLatMsg             = 1
+	TotalUnreadMessageChanged    = 2
+	UpdateConFaceUrlAndNickName  = 3
+	UpdateLatestMessageChange    = 4
+	ConChange                    = 5
+	NewCon                       = 6
+	ConChangeDirect              = 7
+	NewConDirect                 = 8
+	ConversationLatestMsgHasRead = 9
+	UpdateMsgFaceUrlAndNickName  = 10
+	SyncConversation             = 11
 
 	HasRead = 1
 	NotRead = 0
@@ -206,7 +208,9 @@ const (
 // conversation
 const (
 	//MsgReceiveOpt
-	ReceiveMessage          = 0
+	ReceiveMessage = 0
+	//该选项暂时没启用
+	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
 
 	Online  = 1
@@ -234,6 +238,7 @@ const (
 )
 const (
 	AtAllString = "AtAllTag" // String for 'all people' mention tag
+	AtNormal    = 0          // Mention mode: normal
 	AtMe        = 1          // Mention mode: mention sender only
 	AtAll       = 2          // Mention mode: mention all people
 	AtAllAtMe   = 3          // Mention mode: mention all people and sender
