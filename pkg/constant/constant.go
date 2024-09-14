@@ -209,7 +209,7 @@ const (
 const (
 	//MsgReceiveOpt
 	ReceiveMessage = 0
-	//该选项暂时没启用
+	// NotReceiveMessage This option is currently disabled
 	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
 
