@@ -178,7 +178,11 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfoW
 	return nil
 }
 
-func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
+func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*model_struct.LocalUser, error) {
+	return u.UserCache.FetchGet(ctx, cacheKey)
+}
+
+func (u *User) GetUserInfoWithCacheFunc(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
 	if userInfo, ok := u.UserCache.Load(cacheKey); ok {
 		return userInfo, nil
 	}

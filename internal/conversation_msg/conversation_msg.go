@@ -23,7 +23,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
 	"github.com/openimsdk/protocol/sdkws"
@@ -1000,16 +999,7 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 		}
 		return faceURL, name, nil
 	}
-	userInfo, err := c.user.GetUserInfoWithCache(ctx, userID, func(ctx context.Context, key string) (*model_struct.LocalUser, error) {
-		users, err := c.user.GetUserInfoFromServer(ctx, []string{userID})
-		if err != nil {
-			return nil, err
-		}
-		if len(users) > 0 {
-			return users[0], nil
-		}
-		return nil, sdkerrs.ErrUserIDNotFound.Wrap()
-	})
+	userInfo, err := c.user.GetUserInfoWithCache(ctx, userID)
 	if err != nil {
 		return "", "", nil
 	}

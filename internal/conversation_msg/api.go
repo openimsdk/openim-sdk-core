@@ -985,13 +985,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, err := c.user.GetUserInfoWithCache(ctx, c.loginUserID, func(ctx context.Context, key string) (*model_struct.LocalUser, error) {
-		info, err := c.db.GetLoginUser(ctx, key)
-		if err != nil {
-			return nil, err
-		}
-		return info, nil
-	})
+	userInfo, err := c.user.GetUserInfoWithCacheFunc(ctx, c.loginUserID, c.db.GetLoginUser)
 	if err != nil {
 		return err
 	}
