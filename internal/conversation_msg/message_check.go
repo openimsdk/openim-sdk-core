@@ -112,7 +112,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minS
 
 	} else {
 		log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "minSeq", minSeq, "conversationID", conversationID)
-		//local don't have messages,本地无消息，但是服务器最大消息不为0
+		// local don't have messages, but the server's maximum message count is not zero
 		seqList := []int64{0, 0}
 		c.pullMessageAndReGetHistoryMessages(ctx, conversationID, seqList, notStartTime, isReverse, count, startTime, list, messageListCallback)
 
@@ -308,9 +308,15 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 	}
 }
 
-// 拉取的消息都需要经过块内部连续性检测以及块和上一块之间的连续性检测不连续则补，补齐的过程中如果出现任何异常只给seq从大到小到断层
-// 拉取消息不满量，获取服务器中该群最大seq以及用户对于此群最小seq，本地该群的最小seq，如果本地的不为0并且小于等于服务器最小的，说明已经到底部
-// 如果本地的为0，可以理解为初始化的时候，数据还未同步，或者异常情况，如果服务器最大seq-服务器最小seq>=0说明还未到底部，否则到底部
+// All pulled messages must undergo continuity checks within the block and between the current block and the previous
+// one. If discontinuity is detected, the gaps should be filled. During the gap-filling process, if any exceptions occur,
+// only provide the sequence numbers in descending order up to the break.
+// When the pulled messages are less than expected, retrieve the server's maximum sequence (seq) for the group, the
+// user's minimum seq for the group, and the local minimum seq for the group. If the local seq is not zero and is less
+// than or equal to the server's minimum seq, it indicates that the bottom has been reached. If the local seq is zero,
+// it can be understood as an initialization where the data hasn't been synchronized yet, or there is an exceptional
+// case. If the difference between the server's maximum seq and minimum seq is greater than or equal to zero, it
+// indicates that the bottom hasn't been reached. Otherwise, the bottom has been reached.
 
 // faceURLAndNicknameHandle handles the assignment of face URLs and nicknames for chat logs
 // based on the conversation type (single chat or group chat).

@@ -22,10 +22,10 @@ import (
 )
 
 var (
-	qpsCounter    int64      // Global variable used for request counting
-	qpsMutex      sync.Mutex // Mutex used to protect concurrent access to global variable
-	qpsUpdateTime time.Time  // Global variable used to record the last update time
-	QPSChan       chan int64 // Channel used to periodically update qpsCounter
+	qpsCounter    int64      // Global variable used to count the number of requests
+	qpsMutex      sync.Mutex // Mutex to protect concurrent access to the global variable
+	qpsUpdateTime time.Time  // Global variable to track the last update time
+	QPSChan       chan int64 // Channel used for periodic updates to qpsCounter
 )
 
 //func init() {
@@ -37,7 +37,7 @@ func IncrementQPS() {
 	defer qpsMutex.Unlock()
 
 	now := time.Now()
-	// If the time since the last update exceeds 1 second, reset the counter
+	// If more than 1 second has passed since the last update, reset the counter.
 	if now.Sub(qpsUpdateTime) >= time.Second {
 		QPSChan <- qpsCounter
 		qpsCounter = 0
@@ -189,12 +189,12 @@ func (b *SendMsgUser) BatchSendSingleMsg(ctx context.Context, userID string, ind
 }
 
 func (b *SendMsgUser) SendGroupMsg(ctx context.Context, groupID string, index int) error {
-	return b.sendMsg(ctx, "", groupID, index, constant.ReadGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
+	return b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
 }
 
 func (b *SendMsgUser) BatchSendGroupMsg(ctx context.Context, groupID string, index int) error {
 	content := fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index)
-	err := b.sendMsg(ctx, "", groupID, index, constant.ReadGroupChatType, content)
+	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
 	if err != nil {
 		log.ZError(ctx, "send msg failed", err, "groupID", groupID, "index", index, "content", content)
 		//b.singleFailedMessageMap[content] = err
@@ -226,7 +226,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 			b.singleFailedMessageMap[clientMsgID] = &errorValue{err: err,
 				SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
 			log.ZError(ctx, "send single msg failed", err, "userID", userID, "index", index, "content", content)
-		case constant.ReadGroupChatType:
+		case constant.SuperGroupChatType:
 			b.groupFailedMessageMap[groupID] = append(b.groupFailedMessageMap[groupID], &errorValue{err: err,
 				SendID: b.userID, RecvID: groupID, MsgID: clientMsgID, GroupID: groupID, OperationID: mcontext.GetOperationID(ctx)})
 			log.ZError(ctx, "send group msg failed", err, "groupID", groupID, "index", index, "content", content)
@@ -245,7 +245,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 				sendTime:    msg.SendTime,
 			}
 		}
-	case constant.ReadGroupChatType:
+	case constant.SuperGroupChatType:
 		b.groupSendSampleNum[groupID]++
 	}
 
@@ -291,7 +291,7 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 				Latency:     b.GetRelativeServerTime() - msg.SendTime,
 			}
 		}
-	case constant.ReadGroupChatType:
+	case constant.SuperGroupChatType:
 		if b.userID == b.p.groupOwnerUserID[msg.GroupID] {
 			b.groupMessage++
 			log.ZWarn(context.Background(), "recv message", nil, "userID", b.userID,

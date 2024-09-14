@@ -242,7 +242,7 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
 	lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
-	//根据单聊群聊类型组装消息和会话
+	//assemble messages and conversations based on single or group chat types
 	if recvID == "" {
 		g, err := c.group.FetchGroupOrError(ctx, groupID)
 		if err != nil {
