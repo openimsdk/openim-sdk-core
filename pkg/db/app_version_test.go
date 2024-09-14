@@ -1,17 +1,16 @@
-package test
+package db
 
 import (
 	"context"
 	"testing"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/tools/log"
 )
 
 func Test_GetAppSDKVersion(t *testing.T) {
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
@@ -26,7 +25,7 @@ func Test_GetAppSDKVersion(t *testing.T) {
 
 func Test_SetAppSDKVersion(t *testing.T) {
 	ctx := context.Background()
-	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
+	db, err := NewDataBase(ctx, "1695766238", "./", 6)
 	if err != nil {
 		return
 	}
