@@ -17,8 +17,8 @@ package conversation_msg
 import (
 	"context"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
@@ -35,8 +35,10 @@ func NewMessageController(db db_interface.DataBase, ch chan common.Cmd2Value) *M
 }
 
 func (c *Conversation) PullMessageBySeqs(ctx context.Context, seqs []*sdkws.SeqRange) (*sdkws.PullMessageBySeqsResp, error) {
-	return network.CallApi[sdkws.PullMessageBySeqsResp](ctx, constant.PullUserMsgBySeqRouter, sdkws.PullMessageBySeqsReq{UserID: c.loginUserID, SeqRanges: seqs})
+	req := &sdkws.PullMessageBySeqsReq{UserID: c.loginUserID, SeqRanges: seqs}
+	return api.PullUserMsgBySeq.Invoke(ctx, req)
 }
+
 func (m *MessageController) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string,
 	keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	var list []*model_struct.LocalChatLog

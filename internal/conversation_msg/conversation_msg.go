@@ -8,6 +8,7 @@ import (
 	"math"
 	"sync"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/utils/stringutil"
 
@@ -182,7 +183,7 @@ func (c *Conversation) initSyncer() {
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](func(resp *pbConversation.GetOwnerConversationResp) []*model_struct.LocalConversation {
 			return datautil.Batch(ServerConversationToLocal, resp.Conversations)
 		}),
-		syncer.WithReqApiRouter[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](constant.GetOwnerConversationRouter),
+		syncer.WithReqApiRouter[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](api.GetOwnerConversation.Route()),
 		syncer.WithFullSyncLimit[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](conversationSyncLimit),
 	)
 
