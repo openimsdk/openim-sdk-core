@@ -116,13 +116,7 @@ func (u *User) GetUserInfoFromServer(ctx context.Context, userIDs []string) ([]*
 }
 
 func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struct.PublicUser, error) {
-	usersInfo, err := u.GetUsersInfoWithCache(ctx, userIDs, func(ctx context.Context, missingKeys []string) ([]*model_struct.LocalUser, error) {
-		users, err := u.GetUserInfoFromServer(ctx, missingKeys)
-		if err != nil {
-			return nil, err
-		}
-		return users, nil
-	})
+	usersInfo, err := u.GetUsersInfoWithCache(ctx, userIDs)
 	if err != nil {
 		return nil, err
 	}
