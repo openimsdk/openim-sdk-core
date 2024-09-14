@@ -36,7 +36,7 @@ report_sizes: true
 
 builds:
   - id: openIM.wasm
-    main: wasm/cmd/main.go  # 指定 wasm 主文件路径
+    main: wasm/cmd/main.go  # Specify the path to the main WASM file
     binary: openIM.wasm
     ldflags: "-s -w"
     goos:

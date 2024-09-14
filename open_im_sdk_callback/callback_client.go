@@ -102,15 +102,15 @@ type OnMessageKvInfoListener interface {
 }
 
 type OnListenerForService interface {
-	//有人申请进群
+	// OnGroupApplicationAdded someone has requested to join the group.
 	OnGroupApplicationAdded(groupApplication string)
-	//进群申请被同意
+	// OnGroupApplicationAccepted the group join request has been approved.
 	OnGroupApplicationAccepted(groupApplication string)
-	//有人申请添加你为好友
+	// OnFriendApplicationAdded someone has requested to add you as a friend.
 	OnFriendApplicationAdded(friendApplication string)
-	//好友申请被同意
+	// OnFriendApplicationAccepted the friend request has been accepted.
 	OnFriendApplicationAccepted(groupApplication string)
-	//收到新消息
+	// OnRecvNewMessage new message received
 	OnRecvNewMessage(message string)
 }
 
@@ -137,14 +137,14 @@ type OnSignalingListener interface {
 }
 
 type UploadFileCallback interface {
-	Open(size int64)                                                    // 文件打开的大小
-	PartSize(partSize int64, num int)                                   // 分片大小,数量
-	HashPartProgress(index int, size int64, partHash string)            // 每块分片的hash值
-	HashPartComplete(partsHash string, fileHash string)                 // 分块完成，服务端标记hash和文件最终hash
-	UploadID(uploadID string)                                           // 上传ID
-	UploadPartComplete(index int, partSize int64, partHash string)      // 上传分片进度
-	UploadComplete(fileSize int64, streamSize int64, storageSize int64) // 整体进度
-	Complete(size int64, url string, typ int)                           // 上传完成
+	Open(size int64)                                                    // Open a file with the specified size
+	PartSize(partSize int64, num int)                                   // Set the size and number of parts for chunking
+	HashPartProgress(index int, size int64, partHash string)            // Track the hash value of each part
+	HashPartComplete(partsHash string, fileHash string)                 // Mark chunking complete with the final hash values
+	UploadID(uploadID string)                                           // Assign an upload ID
+	UploadPartComplete(index int, partSize int64, partHash string)      // Track the progress of each uploaded part
+	UploadComplete(fileSize int64, streamSize int64, storageSize int64) // Track the overall upload progress
+	Complete(size int64, url string, typ int)                           // Mark the upload as complete with final details
 }
 
 type UploadLogProgress interface {

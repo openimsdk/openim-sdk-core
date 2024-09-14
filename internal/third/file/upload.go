@@ -147,7 +147,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 		Hash:        partMd5Val,
 		Size:        fileSize,
 		PartSize:    partSize,
-		MaxParts:    int32(maxParts), // 一次性获取签名数量
+		MaxParts:    int32(maxParts), // retrieve the number of signatures in one go
 		Cause:       req.Cause,
 		Name:        req.Name,
 		ContentType: req.ContentType,
