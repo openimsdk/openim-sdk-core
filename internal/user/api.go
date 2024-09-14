@@ -62,7 +62,25 @@ func (u *User) UserOnlineStatusChange(users map[string][]int32) {
 }
 
 func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
-	return u.getSelfUserInfo(ctx)
+	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
+	if errLocal == nil {
+		return userInfo, nil
+	}
+
+	userInfoFromServer, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
+	if errServer != nil {
+		return nil, errServer
+	}
+
+	if len(userInfoFromServer) == 0 {
+		return nil, sdkerrs.ErrUserIDNotFound
+	}
+
+	if err := u.InsertLoginUser(ctx, userInfoFromServer[0]); err != nil {
+		return nil, err
+	}
+
+	return userInfoFromServer[0], nil
 }
 
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
@@ -150,4 +168,39 @@ func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struc
 		}
 	}
 	return res, nil
+}
+
+// GetUsersInfoFromSvr retrieves user information from the server.
+func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
+	users, err := u.getUsersInfo(ctx, userIDs)
+	if err != nil {
+		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromSvr failed")
+	}
+	return datautil.Batch(ServerUserToLocalUser, users), nil
+}
+
+func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*model_struct.LocalUser, error) {
+	return u.UserCache.FetchGet(ctx, cacheKey)
+}
+
+func (u *User) GetUserInfoWithCacheFunc(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
+	if userInfo, ok := u.UserCache.Load(cacheKey); ok {
+		return userInfo, nil
+	}
+
+	fetchedData, err := fetchFunc(ctx, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+
+	u.UserCache.Store(cacheKey, fetchedData)
+	return fetchedData, nil
+}
+
+func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([]*model_struct.LocalUser, error) {
+	m, err := u.UserCache.MultiFetchGet(ctx, cacheKeys)
+	if err != nil {
+		return nil, err
+	}
+	return datautil.MapToSlice(m), nil
 }
