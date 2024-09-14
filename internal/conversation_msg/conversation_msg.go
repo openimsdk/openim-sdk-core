@@ -41,7 +41,8 @@ import (
 )
 
 const (
-	conversationSyncLimit int64 = math.MaxInt64
+	conversationSyncLimit       int64 = math.MaxInt64
+	searchMessageGoroutineLimit       = 10
 )
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
@@ -63,7 +64,6 @@ type Conversation struct {
 	group                 *group.Group
 	user                  *user.User
 	file                  *file.File
-	messageController     *MessageController
 	cache                 *cache.Cache[string, *model_struct.LocalConversation]
 	maxSeqRecorder        MaxSeqRecorder
 	IsExternalExtensions  bool
@@ -106,7 +106,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		group:                group,
 		user:                 user,
 		file:                 file,
-		messageController:    NewMessageController(db, ch),
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
 		msgOffset:            0,
