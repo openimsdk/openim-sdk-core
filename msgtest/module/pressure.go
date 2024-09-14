@@ -3,15 +3,16 @@ package module
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/tools/utils/datautil"
 	"math/rand"
 	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -24,9 +25,6 @@ var (
 
 	PLATFORMID = constant.AndroidPlatformID
 	LogLevel   = uint32(5)
-
-	REGISTERADDR = APIADDR + constant.UserRegister
-	TOKENADDR    = APIADDR + constant.GetUsersToken
 )
 
 var (
@@ -223,7 +221,7 @@ func (p *PressureTester) getGroup(fastenedUserIDs []string, groupMemberNum int, 
 	offlineUserID := p.Shuffle(p.offlineUserIDs, groupMemberNum-olineUserIDNum)
 	ownerUserID = p.Shuffle(userIDs, 1)[0]
 	randomSender = p.Shuffle(userIDs, int(float64(groupMemberNum)*groupSenderRate))
-	return ownerUserID, append(utils.RemoveOneInList(userIDs, ownerUserID), offlineUserID...), randomSender
+	return ownerUserID, append(datautil.DeleteElems(userIDs, ownerUserID), offlineUserID...), randomSender
 }
 
 func (p *PressureTester) CreateTestGroups(fastenedUserIDs []string, total int, groupSenderRate, groupOnlineRate float64, hundredThousandGroupNum, tenThousandGroupNum, thousandGroupNum,
