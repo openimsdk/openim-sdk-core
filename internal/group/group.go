@@ -18,18 +18,16 @@ import (
 	"context"
 	"sync"
 
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/group"
@@ -51,7 +49,7 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 		conversationCh: conversationCh,
 	}
 	g.initSyncer()
-	g.groupMemberCache = cache.NewCache[string, *cache.Cache[string, *sdk_struct.BasicInfo]]()
+	g.groupMemberCache = cache.NewCache[string, *model_struct.LocalGroupMember]()
 	return g
 }
 
@@ -70,7 +68,7 @@ type Group struct {
 	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService
 
-	groupMemberCache *cache.Cache[string, *cache.Cache[string, *sdk_struct.BasicInfo]]
+	groupMemberCache *cache.Cache[string, *model_struct.LocalGroupMember]
 }
 
 func (g *Group) initSyncer() {
