@@ -22,7 +22,7 @@ import (
 
 	"github.com/jinzhu/copier"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
@@ -43,10 +43,8 @@ func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversati
 	apiReq.Conversation.UserID = localConversation.UserID
 	apiReq.Conversation.GroupID = localConversation.GroupID
 	apiReq.UserIDs = []string{c.loginUserID}
-	if err := util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil); err != nil {
-		return err
-	}
-	return nil
+
+	return api.SetConversations.Execute(ctx, apiReq)
 }
 
 func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sdk.GetAdvancedHistoryMessageListParams, isReverse bool) (*sdk.GetAdvancedHistoryMessageListCallback, error) {
