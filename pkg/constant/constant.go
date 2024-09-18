@@ -65,6 +65,8 @@ const (
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
 
+	NotificationBegin = 1000
+
 	FriendNotificationBegin = 1200
 
 	FriendApplicationApprovedNotification = 1201 //add_friend_response
@@ -124,6 +126,7 @@ const (
 
 	HasReadReceipt = 2200
 
+	NotificationEnd = 5000
 	////////////////////////////////////////
 
 	//MsgFrom
