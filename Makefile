@@ -130,16 +130,6 @@ ifeq ($(origin GOBIN), undefined)
 	GOBIN := $(GOPATH)/bin
 endif
 
-COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*))
-BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
-
-ifeq (${COMMANDS},)
-  $(error Could not determine COMMANDS, set ROOT_DIR or run in source dir)
-endif
-ifeq (${BINS},)
-  $(error Could not determine BINS, set ROOT_DIR or run in source dir)
-endif
-
 EXCLUDE_TESTS=github.com/openimsdk/openim-sdk-core/test
 
 # ==============================================================================
