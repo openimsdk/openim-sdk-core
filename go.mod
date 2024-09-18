@@ -16,7 +16,7 @@ require golang.org/x/net v0.22.0 // indirect
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/openimsdk/protocol v0.0.72-alpha.21
+	github.com/openimsdk/protocol v0.0.72-alpha.23
 	github.com/openimsdk/tools v0.0.50-alpha.14
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	golang.org/x/image v0.15.0
