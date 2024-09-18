@@ -41,8 +41,8 @@ func (g *Group) dismissGroup(ctx context.Context, groupID string) error {
 	return api.DismissGroup.Execute(ctx, &group.DismissGroupReq{GroupID: groupID})
 }
 
-func (g *Group) setGroupInfo(ctx context.Context, req *group.SetGroupInfoEXReq) error {
-	return api.SetGroupInfoEX.Execute(ctx, req)
+func (g *Group) setGroupInfo(ctx context.Context, req *group.SetGroupInfoExReq) error {
+	return api.SetGroupInfoEx.Execute(ctx, req)
 }
 
 func (g *Group) setGroupMemberInfo(ctx context.Context, req *group.SetGroupMemberInfoReq) error {
