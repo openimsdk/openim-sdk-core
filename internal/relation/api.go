@@ -185,19 +185,52 @@ func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*mode
 }
 
 func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int, filterBlack bool) ([]*model_struct.LocalFriend, error) {
-	friends, err := r.GetFriendList(ctx, filterBlack)
+	dataFetcher := datafetcher.NewDataFetcher(
+		r.db,
+		r.friendListTableName(),
+		r.loginUserID,
+		func(localFriend *model_struct.LocalFriend) string {
+			return localFriend.FriendUserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalFriend) error {
+			return r.db.BatchInsertFriend(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriendList, err := r.db.GetFriendInfoList(ctx, userIDs)
+			return localFriendList, true, err
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			serverFriend, err := r.GetDesignatedFriends(ctx, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
+		},
+	)
+	localBlackList, err := r.db.GetBlackListDB(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if offset >= len(friends) {
-		return friends[:0], nil
+	if (!filterBlack) || len(localBlackList) == 0 {
+		return dataFetcher.FetchWithPagination(ctx, offset, count)
 	}
-	friends = friends[offset:]
-	if len(friends) > count {
-		return friends[:count], nil
-	} else {
-		return friends, nil
+	localFriendList, err := dataFetcher.FetchWithPagination(ctx, offset, count*2)
+	if err != nil {
+		return nil, err
 	}
+	blackUserIDs := datautil.SliceSetAny(localBlackList, func(e *model_struct.LocalBlack) string {
+		return e.BlockUserID
+	})
+	res := localFriendList[:0]
+	for _, friend := range localFriendList {
+		if _, ok := blackUserIDs[friend.FriendUserID]; !ok {
+			res = append(res, friend)
+		}
+		if len(res) == count {
+			break
+		}
+	}
+	return res, nil
 }
 
 func (r *Relation) SearchFriends(ctx context.Context, param *sdk.SearchFriendsParam) ([]*sdk.SearchFriendItem, error) {
