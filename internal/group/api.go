@@ -305,7 +305,7 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.ErrRecordNotFound.Is(err) {
+			if !errs.ErrRecordNotFound.Is(err) {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)
@@ -366,7 +366,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 
 		_, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
 		if err != nil {
-			if errs.ErrRecordNotFound.Is(err) {
+			if !errs.ErrRecordNotFound.Is(err) {
 				return nil, err
 			}
 			err := g.IncrSyncGroupAndMember(ctx, groupID)

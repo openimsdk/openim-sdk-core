@@ -3,6 +3,8 @@ package manager
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
@@ -14,7 +16,6 @@ import (
 	sdkUtils "github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"time"
 )
 
 type TestMsgManager struct {
@@ -63,7 +64,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 
 			friends = datautil.ShuffleSlice(friends)
 			for _, friend := range friends {
-				if friend.FriendInfo != nil {
+				if friend != nil {
 					for i := 0; i < vars.SingleMessageNum; i++ {
 						msg, err := testSDK.SDK.Conversation().CreateTextMessage(ctx,
 							fmt.Sprintf("count %d:my userID is %s", i, testSDK.UserID))
@@ -73,7 +74,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 						t := time.Now()
 						log.ZWarn(ctx, "sendSingleMessages begin", nil)
-						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendInfo.FriendUserID)
+						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendUserID)
 						if err != nil {
 							return err
 						}

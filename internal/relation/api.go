@@ -16,8 +16,8 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
-func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
-	datafetcher := datafetcher.NewDataFetcher(
+func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string, filterBlack bool) ([]*model_struct.LocalFriend, error) {
+	dataFetcher := datafetcher.NewDataFetcher(
 		r.db,
 		r.friendListTableName(),
 		r.loginUserID,
@@ -39,28 +39,31 @@ func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList
 			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
 		},
 	)
-	localFriendList, err := datafetcher.FetchMissingAndFillLocal(ctx, friendUserIDList)
+	localFriendList, err := dataFetcher.FetchMissingAndFillLocal(ctx, friendUserIDList)
 	if err != nil {
 		return nil, err
 	}
-
+	if !filterBlack {
+		return localFriendList, nil
+	}
 	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "localFriendList", localFriendList)
 	blackList, err := r.db.GetBlackInfoList(ctx, friendUserIDList)
 	if err != nil {
 		return nil, err
 	}
-	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "blackList", blackList)
-	m := make(map[string]*model_struct.LocalBlack)
-	for i, black := range blackList {
-		m[black.BlockUserID] = blackList[i]
+	if len(blackList) == 0 {
+		return localFriendList, nil
 	}
-	res := make([]*server_api_params.FullUserInfo, 0, len(localFriendList))
+
+	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "blackList", blackList)
+	m := datautil.SliceSetAny(blackList, func(e *model_struct.LocalBlack) string {
+		return e.BlockUserID
+	})
+	var res []*model_struct.LocalFriend
 	for _, localFriend := range localFriendList {
-		res = append(res, &server_api_params.FullUserInfo{
-			PublicInfo: nil,
-			FriendInfo: localFriend,
-			BlackInfo:  m[localFriend.FriendUserID],
-		})
+		if _, ok := m[localFriend.FriendUserID]; !ok {
+			res = append(res, localFriend)
+		}
 	}
 	return res, nil
 }
@@ -159,9 +162,6 @@ func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*mode
 	if err != nil {
 		return nil, err
 	}
-	if localFriendList == nil {
-		localFriendList = []*model_struct.LocalFriend{}
-	}
 	if len(localFriendList) == 0 || !filterBlack {
 		return localFriendList, nil
 	}
@@ -172,33 +172,65 @@ func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*mode
 	if len(localBlackList) == 0 {
 		return localFriendList, nil
 	}
-	blackSet := make(map[string]struct{})
-	for _, black := range localBlackList {
-		blackSet[black.BlockUserID] = struct{}{}
-	}
-	res := localFriendList[:0]
-	for i, friend := range localFriendList {
+	blackSet := datautil.SliceSetAny(localBlackList, func(e *model_struct.LocalBlack) string {
+		return e.BlockUserID
+	})
+	var res []*model_struct.LocalFriend
+	for _, friend := range localFriendList {
 		if _, ok := blackSet[friend.FriendUserID]; !ok {
-			res = append(res, localFriendList[i])
+			res = append(res, friend)
 		}
 	}
 	return res, nil
 }
 
-func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int, filterBlack bool) ([]*model_struct.LocalFriend, error) {
-	friends, err := r.GetFriendList(ctx, filterBlack)
+func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int32, filterBlack bool) ([]*model_struct.LocalFriend, error) {
+	dataFetcher := datafetcher.NewDataFetcher(
+		r.db,
+		r.friendListTableName(),
+		r.loginUserID,
+		func(localFriend *model_struct.LocalFriend) string {
+			return localFriend.FriendUserID
+		},
+		func(ctx context.Context, values []*model_struct.LocalFriend) error {
+			return r.db.BatchInsertFriend(ctx, values)
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, bool, error) {
+			localFriendList, err := r.db.GetFriendInfoList(ctx, userIDs)
+			return localFriendList, true, err
+		},
+		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
+			serverFriend, err := r.GetDesignatedFriends(ctx, userIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
+		},
+	)
+	localBlackList, err := r.db.GetBlackListDB(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if offset >= len(friends) {
-		return friends[:0], nil
+	if (!filterBlack) || len(localBlackList) == 0 {
+		return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 	}
-	friends = friends[offset:]
-	if len(friends) > count {
-		return friends[:count], nil
-	} else {
-		return friends, nil
+	localFriendList, err := dataFetcher.FetchWithPagination(ctx, int(offset), int(count*2))
+	if err != nil {
+		return nil, err
 	}
+	blackUserIDs := datautil.SliceSetAny(localBlackList, func(e *model_struct.LocalBlack) string {
+		return e.BlockUserID
+	})
+	res := localFriendList[:0]
+	for _, friend := range localFriendList {
+		if _, ok := blackUserIDs[friend.FriendUserID]; !ok {
+			res = append(res, friend)
+		}
+		if len(res) == int(count) {
+			break
+		}
+	}
+	return res, nil
 }
 
 func (r *Relation) SearchFriends(ctx context.Context, param *sdk.SearchFriendsParam) ([]*sdk.SearchFriendItem, error) {
@@ -256,6 +288,7 @@ func (r *Relation) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack
 }
 
 func (r *Relation) UpdateFriends(ctx context.Context, req *relation.UpdateFriendsReq) error {
+	req.OwnerUserID = r.loginUserID
 	if err := r.updateFriends(ctx, req); err != nil {
 		return err
 	}

@@ -51,4 +51,3 @@ func DeleteUserCommand(callback open_im_sdk_callback.Base, operationID string, T
 func GetAllUserCommands(callback open_im_sdk_callback.Base, operationID string, Type int32) {
 	call(callback, operationID, UserForSDK.User().ProcessUserCommandGetAll, Type)
 }
-

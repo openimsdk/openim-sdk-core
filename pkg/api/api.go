@@ -60,7 +60,7 @@ var (
 
 var (
 	CreateGroup                    = newApi[group.CreateGroupReq, group.CreateGroupResp]("/group/create_group")
-	SetGroupInfoEX                 = newApi[group.SetGroupInfoEXReq, group.SetGroupInfoEXResp]("/group/set_group_info_EX")
+	SetGroupInfoEX                 = newApi[group.SetGroupInfoEXReq, group.SetGroupInfoEXResp]("/group/set_group_info_ex")
 	JoinGroup                      = newApi[group.JoinGroupReq, group.JoinGroupResp]("/group/join_group")
 	QuitGroup                      = newApi[group.QuitGroupReq, group.QuitGroupResp]("/group/quit_group")
 	GetGroupsInfo                  = newApi[group.GetGroupsInfoReq, group.GetGroupsInfoResp]("/group/get_groups_info")
