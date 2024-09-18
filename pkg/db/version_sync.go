@@ -19,6 +19,7 @@ package db
 
 import (
 	"context"
+	"errors"
 
 	"gorm.io/gorm"
 
@@ -32,7 +33,7 @@ func (d *DataBase) GetVersionSync(ctx context.Context, tableName, entityID strin
 	var res model_struct.LocalVersionSync
 	err := d.conn.WithContext(ctx).Where("`table_name` = ? and `entity_id` = ?", tableName, entityID).Take(&res).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return &model_struct.LocalVersionSync{}, errs.ErrRecordNotFound.Wrap()
 		}
 		return nil, errs.Wrap(err)
