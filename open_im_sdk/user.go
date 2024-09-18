@@ -52,7 +52,3 @@ func GetAllUserCommands(callback open_im_sdk_callback.Base, operationID string, 
 	call(callback, operationID, UserForSDK.User().ProcessUserCommandGetAll, Type)
 }
 
-// GetUsersInfoWithCache gets the user's information with cache.
-func GetUsersInfoWithCache(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.User().GetUsersInfoWithCache, userIDs)
-}
