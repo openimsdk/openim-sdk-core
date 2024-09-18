@@ -16,7 +16,7 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
-func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
+func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string, filterBlack bool) ([]*model_struct.LocalFriend, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		r.db,
 		r.friendListTableName(),
@@ -43,24 +43,27 @@ func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList
 	if err != nil {
 		return nil, err
 	}
-
+	if !filterBlack {
+		return localFriendList, nil
+	}
 	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "localFriendList", localFriendList)
 	blackList, err := r.db.GetBlackInfoList(ctx, friendUserIDList)
 	if err != nil {
 		return nil, err
 	}
-	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "blackList", blackList)
-	m := make(map[string]*model_struct.LocalBlack)
-	for i, black := range blackList {
-		m[black.BlockUserID] = blackList[i]
+	if len(blackList) == 0 {
+		return localFriendList, nil
 	}
-	res := make([]*server_api_params.FullUserInfo, 0, len(localFriendList))
+
+	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "blackList", blackList)
+	m := datautil.SliceSetAny(blackList, func(e *model_struct.LocalBlack) string {
+		return e.BlockUserID
+	})
+	var res []*model_struct.LocalFriend
 	for _, localFriend := range localFriendList {
-		res = append(res, &server_api_params.FullUserInfo{
-			PublicInfo: nil,
-			FriendInfo: localFriend,
-			BlackInfo:  m[localFriend.FriendUserID],
-		})
+		if _, ok := m[localFriend.FriendUserID]; !ok {
+			res = append(res, localFriend)
+		}
 	}
 	return res, nil
 }
@@ -159,9 +162,6 @@ func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*mode
 	if err != nil {
 		return nil, err
 	}
-	if localFriendList == nil {
-		localFriendList = []*model_struct.LocalFriend{}
-	}
 	if len(localFriendList) == 0 || !filterBlack {
 		return localFriendList, nil
 	}
@@ -172,14 +172,13 @@ func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*mode
 	if len(localBlackList) == 0 {
 		return localFriendList, nil
 	}
-	blackSet := make(map[string]struct{})
-	for _, black := range localBlackList {
-		blackSet[black.BlockUserID] = struct{}{}
-	}
-	res := localFriendList[:0]
-	for i, friend := range localFriendList {
+	blackSet := datautil.SliceSetAny(localBlackList, func(e *model_struct.LocalBlack) string {
+		return e.BlockUserID
+	})
+	var res []*model_struct.LocalFriend
+	for _, friend := range localFriendList {
 		if _, ok := blackSet[friend.FriendUserID]; !ok {
-			res = append(res, localFriendList[i])
+			res = append(res, friend)
 		}
 	}
 	return res, nil

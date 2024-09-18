@@ -3,20 +3,15 @@ package sdk
 import (
 	"context"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 )
 
-func (s *TestSDK) GetAllFriends(ctx context.Context) ([]*server_api_params.FullUserInfo, error) {
+func (s *TestSDK) GetAllFriends(ctx context.Context) ([]*model_struct.LocalFriend, error) {
 	res, err := s.SDK.Relation().GetFriendList(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := []*server_api_params.FullUserInfo{}
+	return res, nil
 
-	for _, v := range res {
-		resp = append(resp, &server_api_params.FullUserInfo{FriendInfo: v})
-	}
-
-	return resp, nil
 }
