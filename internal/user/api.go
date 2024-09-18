@@ -178,29 +178,3 @@ func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*mo
 	}
 	return datautil.Batch(ServerUserToLocalUser, users), nil
 }
-
-func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*model_struct.LocalUser, error) {
-	return u.UserCache.FetchGet(ctx, cacheKey)
-}
-
-func (u *User) GetUserInfoWithCacheFunc(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
-	if userInfo, ok := u.UserCache.Load(cacheKey); ok {
-		return userInfo, nil
-	}
-
-	fetchedData, err := fetchFunc(ctx, cacheKey)
-	if err != nil {
-		return nil, err
-	}
-
-	u.UserCache.Store(cacheKey, fetchedData)
-	return fetchedData, nil
-}
-
-func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([]*model_struct.LocalUser, error) {
-	m, err := u.UserCache.MultiFetchGet(ctx, cacheKeys)
-	if err != nil {
-		return nil, err
-	}
-	return datautil.MapToSlice(m), nil
-}

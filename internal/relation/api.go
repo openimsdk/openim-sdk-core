@@ -17,7 +17,7 @@ import (
 )
 
 func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
-	datafetcher := datafetcher.NewDataFetcher(
+	dataFetcher := datafetcher.NewDataFetcher(
 		r.db,
 		r.friendListTableName(),
 		r.loginUserID,
@@ -39,7 +39,7 @@ func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList
 			return datautil.Batch(ServerFriendToLocalFriend, serverFriend), nil
 		},
 	)
-	localFriendList, err := datafetcher.FetchMissingAndFillLocal(ctx, friendUserIDList)
+	localFriendList, err := dataFetcher.FetchMissingAndFillLocal(ctx, friendUserIDList)
 	if err != nil {
 		return nil, err
 	}
