@@ -34,8 +34,8 @@ func GetMultipleConversation(callback open_im_sdk_callback.Base, operationID str
 	call(callback, operationID, UserForSDK.Conversation().GetMultipleConversation, conversationIDList)
 }
 
-func SetConversations(callback open_im_sdk_callback.Base, operationID string, conversationID string, req string) {
-	call(callback, operationID, UserForSDK.Conversation().SetConversations, conversationID, req)
+func SetConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string, req string) {
+	call(callback, operationID, UserForSDK.Conversation().SetConversation, conversationID, req)
 }
 
 func HideConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string) {

@@ -126,7 +126,7 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 	return nil
 }
 
-func (c *Conversation) SetConversations(ctx context.Context, conversationID string, req *pbConversation.ConversationReq) error {
+func (c *Conversation) SetConversation(ctx context.Context, conversationID string, req *pbConversation.ConversationReq) error {
 	c.conversationSyncMutex.Lock()
 	defer c.conversationSyncMutex.Unlock()
 

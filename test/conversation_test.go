@@ -86,8 +86,8 @@ func Test_SetConversationDraft(t *testing.T) {
 	}
 }
 
-func Test_SetConversations(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().SetConversations(ctx, "group_17729585012", &conversation.ConversationReq{})
+func Test_SetConversation(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().SetConversation(ctx, "group_17729585012", &conversation.ConversationReq{})
 	if err != nil {
 		t.Fatal(err)
 	}

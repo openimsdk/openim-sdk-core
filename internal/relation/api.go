@@ -184,7 +184,7 @@ func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*mode
 	return res, nil
 }
 
-func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int, filterBlack bool) ([]*model_struct.LocalFriend, error) {
+func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int32, filterBlack bool) ([]*model_struct.LocalFriend, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		r.db,
 		r.friendListTableName(),
@@ -212,9 +212,9 @@ func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int, fil
 		return nil, err
 	}
 	if (!filterBlack) || len(localBlackList) == 0 {
-		return dataFetcher.FetchWithPagination(ctx, offset, count)
+		return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 	}
-	localFriendList, err := dataFetcher.FetchWithPagination(ctx, offset, count*2)
+	localFriendList, err := dataFetcher.FetchWithPagination(ctx, int(offset), int(count*2))
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int, fil
 		if _, ok := blackUserIDs[friend.FriendUserID]; !ok {
 			res = append(res, friend)
 		}
-		if len(res) == count {
+		if len(res) == int(count) {
 			break
 		}
 	}
@@ -288,6 +288,7 @@ func (r *Relation) GetBlackList(ctx context.Context) ([]*model_struct.LocalBlack
 }
 
 func (r *Relation) UpdateFriends(ctx context.Context, req *relation.UpdateFriendsReq) error {
+	req.OwnerUserID = r.loginUserID
 	if err := r.updateFriends(ctx, req); err != nil {
 		return err
 	}

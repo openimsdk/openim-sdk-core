@@ -85,6 +85,7 @@ func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, er
 
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
 	// updateSelfUserInfo updates the user's information with Ex field.
+	userInfo.UserID = u.loginUserID
 	if err := u.updateUserInfo(ctx, userInfo); err != nil {
 		return err
 	}
