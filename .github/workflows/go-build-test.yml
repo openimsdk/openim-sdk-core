@@ -84,12 +84,12 @@ jobs:
           go mod tidy
           cd ${{ github.workspace }}/integration_test
           mkdir data
-          go run main.go -lgr 0.8 -imf -crg -ckgn -ckcon -sem -ckmsn -u 10 -su 3 -lg 0 -cg 4 -cgm 5 -sm 20 -gm 10 -reg
+          go run main.go -lgr 0.8 -imf -crg -ckgn -ckcon -sem -ckmsn -u 10 -su 3 -lg 0 -cg 4 -cgm 5 -sm 5 -gm 5 -reg
 
-      - name: Stop Server
-        run: |
-          cd ${{ github.workspace }}/open-im-server
-          mage stop
+#      - name: Stop Server
+#        run: |
+#          cd ${{ github.workspace }}/open-im-server
+#          mage stop
 
 #   dockerfile-test:
 #     name: Build and Test Dockerfile

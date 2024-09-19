@@ -143,6 +143,9 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 					log.ZWarn(ctx, fmt.Sprintf("check num:%d, %s un correct",
 						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
 						nil, c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
+					if checkCount == config.MaxCheckLoopNum {
+						return nil
+					}
 				} else {
 					log.ZInfo(ctx, fmt.Sprintf("check num:%d, %s correct",
 						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
