@@ -58,6 +58,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'openimsdk/open-im-server'
+          path: 'open-im-server'
 
       - name: Set up Go ${{ matrix.go_version }}
         uses: actions/setup-go@v5
