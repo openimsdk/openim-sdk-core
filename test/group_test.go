@@ -275,7 +275,7 @@ func Test_GetGroupMemberList(t *testing.T) {
 }
 
 func Test_SetGroupInfo(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &sdkws.GroupInfoForSetEx{
+	err := open_im_sdk.UserForSDK.Group().SetGroupInfo(ctx, &group.SetGroupInfoExReq{
 		GroupID: "3889561099",
 		Ex:      &wrapperspb.StringValue{Value: "groupex"},
 	})
