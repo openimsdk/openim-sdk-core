@@ -14,9 +14,12 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/formatutil"
+	"os"
 	"runtime/debug"
 	"time"
 )
+
+const runFailed = -1
 
 func Init(ctx context.Context) error {
 	initialization.InitFlag()
@@ -100,24 +103,28 @@ func DoFlagFunc(ctx context.Context) (err error) {
 }
 
 func main() {
+	var err error
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("panic: %v\n", r)
 			fmt.Println("Stack trace:")
 			fmt.Printf("%s", debug.Stack())
+			os.Exit(runFailed)
+		}
+		if err != nil {
+			fmt.Println(utils.FormatErrorStack(err))
+			os.Exit(runFailed)
 		}
 	}()
 	ctx := context.Background()
-	if err := Init(ctx); err != nil {
+	if err = Init(ctx); err != nil {
 		log.ZError(ctx, "init err", err, "stack", utils.FormatErrorStack(err))
 		fmt.Println("init err")
-		fmt.Println(utils.FormatErrorStack(err))
 		return
 	}
-	if err := DoFlagFunc(ctx); err != nil {
+	if err = DoFlagFunc(ctx); err != nil {
 		log.ZError(ctx, "do flag err", err, "stack", utils.FormatErrorStack(err))
 		fmt.Println("do flag err")
-		fmt.Println(utils.FormatErrorStack(err))
 		return
 	}
 
