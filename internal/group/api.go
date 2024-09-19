@@ -160,8 +160,8 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	return g.IncrSyncGroupAndMember(ctx, groupID)
 }
 
-func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSetEx) error {
-	if err := g.setGroupInfo(ctx, &group.SetGroupInfoExReq{GroupInfoForSet: groupInfo}); err != nil {
+func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *group.SetGroupInfoExReq) error {
+	if err := g.setGroupInfo(ctx, groupInfo); err != nil {
 		return err
 	}
 
