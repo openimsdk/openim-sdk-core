@@ -45,7 +45,7 @@ jobs:
     permissions:
       contents: write
     env:
-      SERVER_DIR: ${{ github.workspace }}/open-im-server
+      SERVER_DIR: open-im-server
       CONFIG_PATH: config/notification.yml
     #   pull-requests: write
     strategy:
@@ -61,7 +61,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'openimsdk/open-im-server'
-          path: 'open-im-server'
+          path: ${{ env.SERVER_DIR }}
 
       - name: Set up Go ${{ matrix.go_version }}
         uses: actions/setup-go@v5
@@ -70,7 +70,7 @@ jobs:
 
       - name: Get Server dependencies
         run: |
-          cd ${{ github.workspace }}/open-im-server
+          cd ${{ env.SERVER_DIR }}
           go install github.com/magefile/mage@latest
           go mod download
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Start Server Services
         run: |
-          cd ${{ github.workspace }}/open-im-server
+          cd ${{ env.SERVER_DIR }}
           docker compose up -d
           mage build
           mage start
@@ -95,7 +95,7 @@ jobs:
       - name: Build test SDK core
         run: |
           go mod tidy
-          cd ${{ github.workspace }}/integration_test
+          cd integration_test
           mkdir data
           go run main.go -lgr 0.8 -imf -crg -ckgn -ckcon -sem -ckmsn -u 20 -su 5 -lg 2 -cg 2 -cgm 3 -sm 10 -gm 10 -reg
 
