@@ -94,7 +94,7 @@ jobs:
           go mod tidy
           cd ${{ github.workspace }}/integration_test
           mkdir data
-          go run main.go -lgr 0.8 -imf -crg -ckgn -ckcon -sem -ckmsn -u 10 -su 2 -lg 1 -cg 2 -cgm 3 -sm 5 -gm 5 -reg
+          go run main.go -lgr 0.8 -imf -crg -ckgn -ckcon -sem -ckmsn -u 20 -su 5 -lg 2 -cg 2 -cgm 3 -sm 10 -gm 10 -reg
 
 #      - name: Stop Server
 #        run: |
