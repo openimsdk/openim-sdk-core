@@ -78,8 +78,8 @@ jobs:
 
       - name: Modify Server Configuration
         run: |
-          yq e '.groupCreated.unreadCount = true' -i ${{ github.workspace }}/config/notification.yml
-          yq e '.friendApplicationApproved.unreadCount = true' -i ${{ github.workspace }}/config/notification.yml
+          yq e '.groupCreated.unreadCount = true' -i ${{ github.workspace }}/open-im-server/config/notification.yml
+          yq e '.friendApplicationApproved.unreadCount = true' -i ${{ github.workspace }}/open-im-server/config/notification.yml
 
       - name: Start Server Services
         run: |
