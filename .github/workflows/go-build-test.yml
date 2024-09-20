@@ -39,7 +39,7 @@ jobs:
 
   # TODO: add coverage test
   go-test:
-    name: Test with go ${{ matrix.go_version }} on ${{ matrix.os }}
+    name: Benchmark Test with go ${{ matrix.go_version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
