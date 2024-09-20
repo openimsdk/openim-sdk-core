@@ -80,8 +80,9 @@ jobs:
 
       - name: Modify Server Configuration
         run: |
-          yq e '.groupCreated.unreadCount = true' -i ${{ env.SERVER_DIR }}/${{ env.CONFIG_PATH }}
-          yq e '.friendApplicationApproved.unreadCount = true' -i ${{ env.SERVER_DIR }}/${{ env.CONFIG_PATH }}
+          cd ${{ env.SERVER_DIR }}
+          yq e '.groupCreated.unreadCount = true' -i ${{ env.CONFIG_PATH }}
+          yq e '.friendApplicationApproved.unreadCount = true' -i ${{ env.CONFIG_PATH }}
 
       - name: Start Server Services
         run: |
