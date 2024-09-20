@@ -70,7 +70,17 @@ jobs:
           cd ${{ github.workspace }}/open-im-server
           go install github.com/magefile/mage@latest
           go mod download
-          
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/download/v4.34.1/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Modify Server Configuration
+        run: |
+          yq e '.groupCreated.unreadCount = true' -i ${{ github.workspace }}/config/notification.yml
+          yq e '.friendApplicationApproved.unreadCount = true' -i ${{ github.workspace }}/config/notification.yml
+
       - name: Start Server Services
         run: |
           cd ${{ github.workspace }}/open-im-server
