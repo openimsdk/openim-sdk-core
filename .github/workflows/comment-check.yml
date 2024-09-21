@@ -139,7 +139,8 @@ jobs:
 
       - name: Debug Token
         run: |
-          echo "Token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+          echo "Token: ${{ secrets.BOT_TOKEN }}"
+          echo "Token: ${{ secrets.GITHUB_TOKEN }}"
 
       - name: Comment on PR if errors found
         if: failure() # This step runs only if the previous step fails
