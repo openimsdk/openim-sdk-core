@@ -138,6 +138,7 @@ jobs:
           body-includes: Non-English comments were found in the following locations
 
       - name: Debug Token
+        if: failure()
         run: |
           echo "Token: ${{ secrets.BOT_TOKEN }}"
           echo "Token: ${{ secrets.GITHUB_TOKEN }}"
