@@ -137,6 +137,10 @@ jobs:
           comment-author: "github-actions[bot]"
           body-includes: Non-English comments were found in the following locations
 
+      - name: Debug Token
+        run: |
+          echo "Token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+
       - name: Comment on PR if errors found
         if: failure() # This step runs only if the previous step fails
         uses: peter-evans/create-or-update-comment@v4.0.0
