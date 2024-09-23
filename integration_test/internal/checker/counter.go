@@ -110,8 +110,6 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 		gr, cctx = reerrgroup.WithContext(ctx, c.GoroutineLimit)
 		total    int
 		now      int
-
-		checkers = make(map[K]*Counter, len(sdk.TestSDKs))
 	)
 	total = len(c.LoopSlice)
 	p := progress.FuncBarPrint(cctx, stringutil.GetFuncName(1), gr, now, total)
@@ -140,9 +138,13 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 				if !isEqual {
 					checkCount++
 
-					log.ZWarn(ctx, fmt.Sprintf("check num:%d, %s un correct",
-						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
-						nil, c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
+					checkMsg := fmt.Sprintf("check num:%d, %s un correct", checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName))
+
+					log.ZWarn(ctx, checkMsg, nil, c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum)
+
+					if checkCount == config.MaxCheckLoopNum {
+						return errs.New(checkMsg, c.CheckerKeyName, key, c.checkNumName, totalNum, "correct num", correctNum).Wrap()
+					}
 				} else {
 					log.ZInfo(ctx, fmt.Sprintf("check num:%d, %s correct",
 						checkCount, stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
@@ -156,16 +158,6 @@ func (c *CounterChecker[T, K]) LoopCheck(ctx context.Context) error {
 	if err := gr.Wait(); err != nil {
 		return err
 	}
-
-	if len(checkers) != 0 {
-		err := errs.New(fmt.Sprintf("%s un correct!", stringutil.CamelCaseToSpaceSeparated(c.CheckName))).Wrap()
-		for k, ck := range checkers {
-			log.ZWarn(ctx, fmt.Sprintf("%s un correct", stringutil.CamelCaseToSpaceSeparated(c.checkNumName)),
-				err, c.CheckerKeyName, k, c.checkNumName, ck.TotalCount, "correct num", ck.CorrectCount)
-		}
-		InsertToErrChan(ctx, err)
-	} else {
-		log.ZInfo(ctx, fmt.Sprintf("%s success", stringutil.CamelCaseToSpaceSeparated(c.CheckName)))
-	}
+	log.ZInfo(ctx, fmt.Sprintf("%s success", stringutil.CamelCaseToSpaceSeparated(c.CheckName)))
 	return nil
 }

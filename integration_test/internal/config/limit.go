@@ -17,8 +17,9 @@ const (
 )
 
 const (
-	CheckMsgRate = 1 // Sampling and statistical message ratio. Max check message is MaxCheckMsg
-	MaxCheckMsg  = 1e+8
+	CheckMsgRate    = 1 // Sampling and statistical message ratio. Max check message is MaxCheckMsg
+	MaxCheckMsg     = 1e+8
+	MaxCheckLoopNum = 40
 )
 
 const (
