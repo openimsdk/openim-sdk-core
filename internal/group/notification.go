@@ -120,6 +120,11 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if detail.Group == nil {
 				return errs.New(fmt.Sprintf("group is nil, groupID: %s", detail.Group.GroupID)).Wrap()
 			}
+			if detail.NewGroupOwner.RoleLevel < constant.GroupAdmin && detail.OldGroupOwner == g.loginUserID {
+				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
+					return err
+				}
+			}
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 				[]*sdkws.GroupMemberFullInfo{detail.NewGroupOwner, detail.OldGroupOwnerInfo}, nil,
 				detail.Group, groupSortIDChanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
@@ -136,6 +141,9 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				}
 			}
 			if self {
+				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
+					return err
+				}
 				return g.IncrSyncJoinGroup(ctx)
 			} else {
 				return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, detail.KickedUserList, nil,
@@ -232,6 +240,11 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			var detail sdkws.GroupMemberInfoSetTips
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 				return err
+			}
+			if detail.ChangedUser.UserID == g.loginUserID {
+				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
+					return err
+				}
 			}
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 				[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, nil,
