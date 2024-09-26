@@ -15,6 +15,7 @@
 package open_im_sdk
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 )
@@ -37,4 +38,8 @@ func Logs(callback open_im_sdk_callback.Base, operationID string, logLevel int, 
 		return
 	}
 	call(callback, operationID, UserForSDK.Third().Log, logLevel, file, line, msgs, err, keyAndValue)
+}
+
+func UploadFile(callback open_im_sdk_callback.Base, operationID string, req string, progress open_im_sdk_callback.UploadFileCallback) {
+	call(callback, operationID, UserForSDK.File().UploadFile, req, file.UploadFileCallback(progress))
 }
