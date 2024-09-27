@@ -44,8 +44,8 @@ const (
 const InitSyncProgress = 10
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
-	log.ZDebug(c2v.Ctx, "NotificationCmd start", "cmd", c2v.Cmd, "value", c2v.Value)
-	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "cmd", c2v.Cmd, "value", c2v.Value)
+	log.ZDebug(c2v.Ctx, "NotificationCmd start", "caller", c2v.Caller, "cmd", c2v.Cmd, "value", c2v.Value)
+	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "caller", c2v.Caller, "cmd", c2v.Cmd, "value", c2v.Value)
 	switch c2v.Cmd {
 	case constant.CmdNewMsgCome:
 		c.doMsgNew(c2v)
@@ -191,6 +191,9 @@ func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string
 }
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
+	if c2v.Caller == "" {
+		c2v.Caller = common.GetCaller(2)
+	}
 	ctx := c2v.Ctx
 	node := c2v.Value.(common.UpdateConNode)
 	log.ZInfo(ctx, "doUpdateConversation", "node", node)
@@ -209,7 +212,9 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 					oc.LatestMsgSendTime = lc.LatestMsgSendTime
 					oc.LatestMsg = lc.LatestMsg
 					list = append(list, oc)
-					c.ConversationListener().OnConversationChanged(utils.StructToJsonString(list))
+					data := utils.StructToJsonString(list)
+					log.ZInfo(ctx, "OnConversationChanged", "data", data)
+					c.ConversationListener().OnConversationChanged(data)
 				}
 			}
 		} else {
@@ -295,7 +300,9 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 					newCList = append(newCList, v)
 				}
 			}
-			c.ConversationListener().OnConversationChanged(utils.StructToJsonStringDefault(newCList))
+			data := utils.StructToJsonStringDefault(newCList)
+			log.ZInfo(ctx, "OnConversationChanged", "data", data)
+			c.ConversationListener().OnConversationChanged(data)
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
@@ -310,6 +317,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.ConChangeDirect:
 		cidList := node.Args.(string)
+		log.ZInfo(ctx, "ConversationChanged", "cidList", cidList)
 		c.ConversationListener().OnConversationChanged(cidList)
 
 	case constant.NewConDirect:

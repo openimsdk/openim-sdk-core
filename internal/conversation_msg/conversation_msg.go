@@ -669,7 +669,7 @@ func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map
 				conversation.LatestMsg = utils.StructToJsonString(latestMsg)
 
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID,
-					Action: constant.AddConOrUpLatMsg, Args: *conversation, Caller: "batchUpdateMessageList"}})
+					Action: constant.AddConOrUpLatMsg, Args: *conversation}})
 
 			}
 		}
