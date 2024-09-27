@@ -32,7 +32,7 @@ type Cmd2Value struct {
 
 func sendCmd(ch chan<- Cmd2Value, value Cmd2Value, timeout time.Duration) error {
 	if value.Caller == "" {
-		value.Caller = getFuncName()
+		value.Caller = GetCaller(3)
 	}
 	log.ZDebug(value.Ctx, "sendCmd chan success", "caller", value.Caller, "cmd", value.Cmd, "value", value.Value)
 	if ch == nil {
@@ -51,8 +51,8 @@ func sendCmd(ch chan<- Cmd2Value, value Cmd2Value, timeout time.Duration) error 
 	}
 }
 
-func getFuncName() string {
-	pc, _, line, ok := runtime.Caller(3)
+func GetCaller(skip int) string {
+	pc, _, line, ok := runtime.Caller(skip)
 	if !ok {
 		return "runtime.caller.failed"
 	}

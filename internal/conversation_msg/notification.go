@@ -191,6 +191,9 @@ func (c *Conversation) getConversationLatestMsgClientID(latestMsg string) string
 }
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
+	if c2v.Caller == "" {
+		c2v.Caller = common.GetCaller(3)
+	}
 	ctx := c2v.Ctx
 	node := c2v.Value.(common.UpdateConNode)
 	log.ZInfo(ctx, "doUpdateConversation", "node", node)
