@@ -116,6 +116,7 @@ func registerFunc() {
 	js.Global().Set("insertGroupMessageToLocalStorage", js.FuncOf(wrapperConMsg.InsertGroupMessageToLocalStorage))
 	js.Global().Set("searchLocalMessages", js.FuncOf(wrapperConMsg.SearchLocalMessages))
 	js.Global().Set("setMessageLocalEx", js.FuncOf(wrapperConMsg.SetMessageLocalEx))
+	js.Global().Set("searchConversation", js.FuncOf(wrapperConMsg.SearchConversation))
 
 	js.Global().Set("changeInputStates", js.FuncOf(wrapperConMsg.ChangeInputStates))
 	js.Global().Set("getInputStates", js.FuncOf(wrapperConMsg.GetInputStates))
