@@ -44,8 +44,8 @@ const (
 const InitSyncProgress = 10
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
-	log.ZDebug(c2v.Ctx, "NotificationCmd start", "cmd", c2v.Cmd, "value", c2v.Value)
-	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "cmd", c2v.Cmd, "value", c2v.Value)
+	log.ZDebug(c2v.Ctx, "NotificationCmd start", "caller", c2v.Caller, "cmd", c2v.Cmd, "value", c2v.Value)
+	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "caller", c2v.Caller, "cmd", c2v.Cmd, "value", c2v.Value)
 	switch c2v.Cmd {
 	case constant.CmdNewMsgCome:
 		c.doMsgNew(c2v)

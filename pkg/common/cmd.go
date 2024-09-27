@@ -34,6 +34,7 @@ func sendCmd(ch chan<- Cmd2Value, value Cmd2Value, timeout time.Duration) error 
 	if value.Caller == "" {
 		value.Caller = getFuncName()
 	}
+	log.ZDebug(value.Ctx, "sendCmd chan success", "caller", value.Caller, "cmd", value.Cmd, "value", value.Value)
 	if ch == nil {
 		log.ZError(value.Ctx, "sendCmd chan is nil", ErrChanNil, "caller", value.Caller, "cmd", value.Cmd, "value", value.Value)
 		return ErrChanNil
@@ -60,4 +61,30 @@ func getFuncName() string {
 		name = strings.TrimPrefix(name, packet)
 	}
 	return fmt.Sprintf("%s:%d", name, line)
+}
+
+type goroutine interface {
+	Work(cmd Cmd2Value)
+	GetCh() chan Cmd2Value
+}
+
+func DoListener(ctx context.Context, li goroutine) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			log.ZWarn(ctx, "DoListener panic", nil, "panic info", err)
+		}
+	}()
+
+	for {
+		select {
+		case cmd := <-li.GetCh():
+			log.ZInfo(cmd.Ctx, "recv cmd", "caller", cmd.Caller, "cmd", cmd.Cmd, "value", cmd.Value)
+			li.Work(cmd)
+			log.ZInfo(cmd.Ctx, "done cmd", "caller", cmd.Caller, "cmd", cmd.Cmd, "value", cmd.Value)
+		case <-ctx.Done():
+			log.ZInfo(ctx, "conversation done sdk logout.....")
+			return
+		}
+	}
 }

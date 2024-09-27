@@ -210,7 +210,7 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 		}
 		if (!latestMsg.IsRead) && datautil.Contain(latestMsg.Seq, seqs...) {
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID,
-				Action: constant.UpdateLatestMessageChange, Args: []string{conversation.ConversationID}, Caller: "doUnreadCount"}, Ctx: ctx})
+				Action: constant.UpdateLatestMessageChange, Args: []string{conversation.ConversationID}}, Ctx: ctx})
 		}
 	} else {
 		if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"unread_count": 0}); err != nil {

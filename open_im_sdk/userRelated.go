@@ -378,7 +378,7 @@ func setListener[T any](ctx context.Context, listener *T, getter func() T, setFu
 func (u *LoginMgr) run(ctx context.Context) {
 	u.longConnMgr.Run(ctx)
 	go u.msgSyncer.DoListener(ctx)
-	go common.DoListener(u.conversation, u.ctx)
+	go common.DoListener(u.ctx, u.conversation)
 	go u.logoutListener(ctx)
 }
 

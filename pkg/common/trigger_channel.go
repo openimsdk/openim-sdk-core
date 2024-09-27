@@ -17,8 +17,6 @@ package common
 import (
 	"context"
 	"errors"
-	"fmt"
-	"runtime/debug"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -152,8 +150,7 @@ type UpdateConNode struct {
 	ConID  string
 	Action int //1 Delete the conversation; 2 Update the latest news in the conversation or add a conversation; 3 Put a conversation on the top;
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
-	Args   interface{}
-	Caller string
+	Args interface{}
 }
 
 type UpdateMessageNode struct {
@@ -179,29 +176,4 @@ type SourceIDAndSessionType struct {
 	SessionType int32
 	FaceURL     string
 	Nickname    string
-}
-
-type goroutine interface {
-	Work(cmd Cmd2Value)
-	GetCh() chan Cmd2Value
-}
-
-func DoListener(Li goroutine, ctx context.Context) {
-	defer func() {
-		if r := recover(); r != nil {
-			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-
-			log.ZWarn(ctx, "DoListener panic", nil, "panic info", err)
-		}
-	}()
-
-	for {
-		select {
-		case cmd := <-Li.GetCh():
-			Li.Work(cmd)
-		case <-ctx.Done():
-			log.ZInfo(ctx, "conversation done sdk logout.....")
-			return
-		}
-	}
 }
