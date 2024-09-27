@@ -3,15 +3,16 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"github.com/OpenIMSDK/protocol/sdkws"
-	"github.com/OpenIMSDK/tools/errs"
-	"github.com/OpenIMSDK/tools/log"
-	utils2 "github.com/OpenIMSDK/tools/utils"
 	"github.com/jinzhu/copier"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	pconstant "github.com/openimsdk/protocol/constant"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/datautil"
 	"github.com/patrickmn/go-cache"
 	"time"
 )
@@ -34,13 +35,13 @@ func newTyping(c *Conversation) *typing {
 		send:  cache.New(inputStatesSendTime, inputStatesTimeout),
 		state: cache.New(inputStatesTimeout, inputStatesTimeout),
 	}
-	e.platformIDs = make([]int32, 0, len(constant.PlatformID2Name))
+	e.platformIDs = make([]int32, 0, len(pconstant.PlatformID2Name))
 	e.platformIDSet = make(map[int32]struct{})
-	for id := range constant.PlatformID2Name {
+	for id := range pconstant.PlatformID2Name {
 		e.platformIDSet[int32(id)] = struct{}{}
 		e.platformIDs = append(e.platformIDs, int32(id))
 	}
-	utils2.Sort(e.platformIDs, true)
+	datautil.Sort(e.platformIDs, true)
 	e.state.OnEvicted(func(key string, val interface{}) {
 		var data inputStatesKey
 		if err := json.Unmarshal([]byte(key), &data); err != nil {
@@ -63,7 +64,7 @@ type typing struct {
 
 func (e *typing) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
 	if conversationID == "" {
-		return errs.ErrArgs.Wrap("conversationID can't be empty")
+		return errs.ErrArgs.WrapMsg("conversationID can't be empty")
 	}
 	conversation, err := e.conv.db.GetConversation(ctx, conversationID)
 	if err != nil {

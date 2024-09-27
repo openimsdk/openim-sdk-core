@@ -18,10 +18,11 @@ import (
 	"context"
 	"errors"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 	"sync"
 	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/tools/log"
 )
 
 type GeneralWsResp struct {
@@ -58,14 +59,15 @@ func GenMsgIncr(userID string) string {
 func (u *WsRespAsyn) AddCh(userID string) (string, chan *GeneralWsResp) {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
-	msgIncr := GenMsgIncr(userID)
-
-	ch := make(chan *GeneralWsResp, 1)
-	_, ok := u.wsNotification[msgIncr]
-	if ok {
+	for {
+		msgIncr := GenMsgIncr(userID)
+		ch := make(chan *GeneralWsResp, 1)
+		if _, ok := u.wsNotification[msgIncr]; ok {
+			continue
+		}
+		u.wsNotification[msgIncr] = ch
+		return msgIncr, ch
 	}
-	u.wsNotification[msgIncr] = ch
-	return msgIncr, ch
 }
 
 func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan *GeneralWsResp {
@@ -120,7 +122,7 @@ func (u *WsRespAsyn) NotifyResp(ctx context.Context, wsResp GeneralWsResp) error
 
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		return utils.Wrap(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
+		return errs.WrapMsg(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
 	}
 	for {
 		err := u.notifyCh(ch, &wsResp, 1)

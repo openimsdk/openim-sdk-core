@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -40,9 +41,18 @@ func (i *LocalGroups) DeleteGroup(ctx context.Context, groupID string) error {
 	return err
 }
 
-// 该函数需要全更新
+// this method need full update
 func (i *LocalGroups) UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	_, err := exec.Exec(groupInfo.GroupID, utils.StructToJsonString(groupInfo))
+	return err
+}
+
+func (i *LocalGroups) BatchInsertGroup(ctx context.Context, groupList []*model_struct.LocalGroup) error {
+	_, err := exec.Exec(utils.StructToJsonString(groupList))
+	return err
+}
+func (i *LocalGroups) DeleteAllGroup(ctx context.Context) error {
+	_, err := exec.Exec()
 	return err
 }
 
@@ -122,32 +132,6 @@ func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, k
 			for _, v := range temp {
 				v1 := v
 				result = append(result, &v1)
-			}
-			return result, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}
-
-func (i *LocalGroups) AddMemberCount(ctx context.Context, groupID string) error {
-	_, err := exec.Exec(groupID)
-	return err
-}
-
-func (i *LocalGroups) SubtractMemberCount(ctx context.Context, groupID string) error {
-	_, err := exec.Exec(groupID)
-	return err
-}
-func (i *LocalGroups) GetGroupMemberAllGroupIDs(ctx context.Context) (result []string, err error) {
-	groupIDList, err := exec.Exec()
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := groupIDList.(string); ok {
-			err := utils.JsonStringToStruct(v, &result)
-			if err != nil {
-				return nil, err
 			}
 			return result, err
 		} else {

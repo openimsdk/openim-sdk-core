@@ -38,17 +38,16 @@ func (d *Default) SetWriteDeadline(timeout time.Duration) error {
 }
 
 func (d *Default) SetReadLimit(limit int64) {
-	if !d.isSetConf {
-		d.conn.SetReadLimit(limit)
-	}
+	d.conn.SetReadLimit(limit)
 
 }
 
-func (d *Default) SetPongHandler(handler PongHandler) {
-	if !d.isSetConf {
-		d.conn.SetPongHandler(handler)
-		d.isSetConf = true
-	}
+func (d *Default) SetPingHandler(handler PingPongHandler) {
+	d.conn.SetPingHandler(handler)
+}
+
+func (d *Default) SetPongHandler(handler PingPongHandler) {
+	d.conn.SetPongHandler(handler)
 }
 
 func (d *Default) LocalAddr() string {

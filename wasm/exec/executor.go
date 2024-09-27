@@ -20,12 +20,13 @@ package exec
 import (
 	"context"
 	"errors"
-	"github.com/OpenIMSDK/tools/errs"
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"runtime"
 	"syscall/js"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
 
 type CallbackData struct {
@@ -40,7 +41,7 @@ const JSNOTFOUND = 10002
 var ErrType = errors.New("from javascript data type err")
 var PrimaryKeyNull = errors.New("primary key is null err")
 
-var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout，maybe should check  function from javascript")
+var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout, maybe should check  function from javascript")
 var jsErr = js.Global().Get("Error")
 
 func Exec(args ...interface{}) (output interface{}, err error) {
@@ -49,11 +50,11 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
 			case string:
-				err = utils.Wrap(errors.New(x), "")
+				err = errs.WrapMsg(errors.New(x), "")
 			case error:
 				err = x
 			default:
-				err = utils.Wrap(errors.New("unknown panic"), "")
+				err = errs.WrapMsg(errors.New("unknown panic"), "")
 			}
 		}
 	}()
@@ -69,11 +70,11 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			if r := recover(); r != nil {
 				switch x := r.(type) {
 				case string:
-					err = utils.Wrap(errors.New(x), "")
+					err = errs.WrapMsg(errors.New(x), "")
 				case error:
 					err = x
 				default:
-					err = utils.Wrap(errors.New("unknown panic"), "")
+					err = errs.WrapMsg(errors.New("unknown panic"), "")
 				}
 			}
 		}()
@@ -88,11 +89,11 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			if r := recover(); r != nil {
 				switch x := r.(type) {
 				case string:
-					err = utils.Wrap(errors.New(x), "")
+					err = errs.WrapMsg(errors.New(x), "")
 				case error:
 					err = x
 				default:
-					err = utils.Wrap(errors.New("unknown panic"), "")
+					err = errs.WrapMsg(errors.New("unknown panic"), "")
 				}
 			}
 		}()
@@ -109,7 +110,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			case js.TypeString:
 				interErr := utils.JsonStringToStruct(result[0].String(), &data)
 				if interErr != nil {
-					err = utils.Wrap(err, "return json unmarshal err from javascript")
+					err = errs.WrapMsg(err, "return json unmarshal err from javascript")
 				}
 			case js.TypeObject:
 				return result[0], nil

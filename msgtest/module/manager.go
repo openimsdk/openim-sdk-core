@@ -5,16 +5,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	authPB "github.com/OpenIMSDK/protocol/auth"
-	"github.com/OpenIMSDK/protocol/msg"
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/OpenIMSDK/tools/mcontext"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	authPB "github.com/openimsdk/protocol/auth"
+	"github.com/openimsdk/protocol/constant"
+	"github.com/openimsdk/protocol/msg"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 const (
@@ -55,18 +59,18 @@ func (m *MetaManager) NewApiMsgSender() *ApiMsgSender {
 func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) (err error) {
 	operationID, _ := ctx.Value("operationID").(string)
 	if operationID == "" {
-		err := sdkerrs.ErrArgs.Wrap("call api operationID is empty")
-		return err
+		return errs.ErrArgs.WrapMsg("call api operationID is empty")
 	}
 	reqBody, err := json.Marshal(req)
 	if err != nil {
-		return sdkerrs.ErrSdkInternal.Wrap("json.Marshal(req) failed " + err.Error())
+		return errs.ErrArgs.WrapMsg("json.Marshal(req) failed " + err.Error())
 	}
 	reqUrl := m.apiAddr + route
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, reqUrl, bytes.NewReader(reqBody))
 	if err != nil {
-		return sdkerrs.ErrSdkInternal.Wrap("sdk http.NewRequestWithContext failed " + err.Error())
+		return errs.ErrArgs.WrapMsg("sdk http.NewRequestWithContext failed " + err.Error())
 	}
+	start := time.Now()
 	log.ZDebug(ctx, "ApiRequest", "url", reqUrl, "body", string(reqBody))
 	request.ContentLength = int64(len(reqBody))
 	request.Header.Set("Content-Type", "application/json")
@@ -76,18 +80,19 @@ func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) 
 	}
 	response, err := new(http.Client).Do(request)
 	if err != nil {
-		return sdkerrs.ErrNetwork.Wrap("ApiPost http.Client.Do failed " + err.Error())
+		return errs.ErrArgs.WrapMsg("ApiPost http.Client.Do failed " + err.Error())
 	}
 	defer response.Body.Close()
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "read body", "status", response.Status)
-		return sdkerrs.ErrSdkInternal.Wrap("io.ReadAll(ApiResponse) failed " + err.Error())
+		return errs.ErrArgs.WrapMsg("io.ReadAll(ApiResponse) failed " + err.Error())
 	}
-	log.ZDebug(ctx, "ApiResponse", "url", reqUrl, "status", response.Status, "body", string(respBody))
-	var baseApi util.ApiResponse
+	log.ZDebug(ctx, "ApiResponse", "url", reqUrl, "status", response.Status,
+		"body", string(respBody), "time", time.Since(start).Milliseconds())
+	var baseApi network.ApiResponse
 	if err := json.Unmarshal(respBody, &baseApi); err != nil {
-		return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("api %s json.Unmarshal(%q, %T) failed %s", m.apiAddr, string(respBody), &baseApi, err.Error()))
+		return sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("api %s json.Unmarshal(%q, %T) failed %s", m.apiAddr, string(respBody), &baseApi, err.Error()))
 	}
 	if baseApi.ErrCode != 0 {
 		err := sdkerrs.New(baseApi.ErrCode, baseApi.ErrMsg, baseApi.ErrDlt)
@@ -97,7 +102,7 @@ func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) 
 		return nil
 	}
 	if err := json.Unmarshal(baseApi.Data, resp); err != nil {
-		return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("json.Unmarshal(%q, %T) failed %s", string(baseApi.Data), resp, err.Error()))
+		return sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("json.Unmarshal(%q, %T) failed %s", string(baseApi.Data), resp, err.Error()))
 	}
 	return nil
 }
@@ -113,7 +118,7 @@ func (m *MetaManager) buildCtx() context.Context {
 func (m *MetaManager) getToken(userID string, platformID int32) (string, error) {
 	req := authPB.UserTokenReq{PlatformID: platformID, UserID: userID, Secret: m.secret}
 	resp := authPB.UserTokenResp{}
-	err := m.postWithCtx(constant.GetUsersToken, &req, &resp)
+	err := m.postWithCtx(api.GetUsersToken.Route(), &req, &resp)
 	if err != nil {
 		return "", err
 	}
@@ -131,7 +136,7 @@ func (m *MetaManager) initToken() error {
 func (m *MetaManager) GetServerTime() (int64, error) {
 	req := msg.GetServerTimeReq{}
 	resp := msg.GetServerTimeResp{}
-	err := m.postWithCtx(constant.GetServerTimeRouter, &req, &resp)
+	err := m.postWithCtx(api.GetServerTime.Route(), &req, &resp)
 	if err != nil {
 		return 0, err
 	} else {

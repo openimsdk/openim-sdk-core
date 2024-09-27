@@ -29,6 +29,7 @@ var ext = map[string]string{
 	"flv":  "video/x-flv",
 	"webm": "video/webm",
 	"3gp":  "video/3gpp",
+	"m4a":  "audio/mp4",
 	"mp3":  "audio/mpeg",
 	"wav":  "audio/wav",
 	"ogg":  "audio/ogg",

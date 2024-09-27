@@ -17,7 +17,7 @@ style: github
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://github.com/OpenIMSDK/openim-sdk-core
+  repository_url: https://github.com/openimsdk/openim-sdk-core
 options:
   tag_filter_pattern: '^v'
   sort: "date"

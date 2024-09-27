@@ -19,6 +19,7 @@ package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
@@ -43,24 +44,6 @@ func (i *LocalGroupMember) GetGroupMemberInfoByGroupIDUserID(ctx context.Context
 				return nil, err
 			}
 			return &temp, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}
-
-func (i *LocalGroupMember) GetAllGroupMemberList(ctx context.Context) ([]model_struct.LocalGroupMember, error) {
-	member, err := exec.Exec()
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := member.(string); ok {
-			var temp []model_struct.LocalGroupMember
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			return temp, err
 		} else {
 			return nil, exec.ErrType
 		}
@@ -114,22 +97,6 @@ func (i *LocalGroupMember) GetGroupSomeMemberInfo(ctx context.Context, groupID s
 	}
 }
 
-func (i *LocalGroupMember) GetGroupAdminID(ctx context.Context, groupID string) ([]string, error) {
-	IDList, err := exec.Exec(groupID)
-	if err != nil {
-		return nil, err
-	}
-	if v, ok := IDList.(string); ok {
-		var temp []string
-		err := utils.JsonStringToStruct(v, &temp)
-		if err != nil {
-			return nil, err
-		}
-		return temp, nil
-	}
-	return nil, exec.ErrType
-}
-
 func (i *LocalGroupMember) GetGroupMemberListByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	member, err := exec.Exec(groupID)
 	if err != nil {
@@ -139,6 +106,23 @@ func (i *LocalGroupMember) GetGroupMemberListByGroupID(ctx context.Context, grou
 			var temp []*model_struct.LocalGroupMember
 			err := utils.JsonStringToStruct(v, &temp)
 			if err != nil {
+				return nil, err
+			}
+			return temp, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
+func (i *LocalGroupMember) GetGroupMemberListByUserIDs(ctx context.Context, groupID string, filter int32, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
+	member, err := exec.Exec(groupID, filter, utils.StructToJsonString(userIDs))
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := member.(string); ok {
+			var temp []*model_struct.LocalGroupMember
+			if err := utils.JsonStringToStruct(v, &temp); err != nil {
 				return nil, err
 			}
 			return temp, err
@@ -184,24 +168,6 @@ func (i *LocalGroupMember) GetGroupMemberOwnerAndAdminDB(ctx context.Context, gr
 	}
 }
 
-func (i *LocalGroupMember) GetGroupMemberOwner(ctx context.Context, groupID string) (*model_struct.LocalGroupMember, error) {
-	member, err := exec.Exec(groupID)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := member.(string); ok {
-			var temp model_struct.LocalGroupMember
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			return &temp, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}
-
 func (i *LocalGroupMember) GetGroupMemberListSplitByJoinTimeFilter(ctx context.Context, groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	member, err := exec.Exec(groupID, offset, count, joinTimeBegin, joinTimeEnd, utils.StructToJsonString(userIDList))
 	if err != nil {
@@ -218,39 +184,6 @@ func (i *LocalGroupMember) GetGroupMemberListSplitByJoinTimeFilter(ctx context.C
 			return nil, exec.ErrType
 		}
 	}
-}
-
-func (i *LocalGroupMember) GetGroupOwnerAndAdminByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
-	member, err := exec.Exec(groupID)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := member.(string); ok {
-			var temp []*model_struct.LocalGroupMember
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			return temp, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}
-
-func (i *LocalGroupMember) GetGroupMemberUIDListByGroupID(ctx context.Context, groupID string) (result []string, err error) {
-	IDList, err := exec.Exec(groupID)
-	if err != nil {
-		return nil, err
-	}
-	if v, ok := IDList.(string); ok {
-		err := utils.JsonStringToStruct(v, &result)
-		if err != nil {
-			return nil, err
-		}
-		return result, nil
-	}
-	return nil, exec.ErrType
 }
 
 func (i *LocalGroupMember) InsertGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error {
@@ -276,29 +209,6 @@ func (i *LocalGroupMember) DeleteGroupAllMembers(ctx context.Context, groupID st
 func (i *LocalGroupMember) UpdateGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error {
 	_, err := exec.Exec(utils.StructToJsonString(groupMember))
 	return err
-}
-
-func (i *LocalGroupMember) UpdateGroupMemberField(ctx context.Context, groupID, userID string, args map[string]interface{}) error {
-	_, err := exec.Exec(groupID, userID, utils.StructToJsonString(args))
-	return err
-}
-
-func (i *LocalGroupMember) GetGroupMemberInfoIfOwnerOrAdmin(ctx context.Context) ([]*model_struct.LocalGroupMember, error) {
-	member, err := exec.Exec()
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := member.(string); ok {
-			var temp []*model_struct.LocalGroupMember
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			return temp, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
 }
 
 func (i *LocalGroupMember) SearchGroupMembersDB(ctx context.Context, keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {

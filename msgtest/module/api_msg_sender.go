@@ -2,12 +2,13 @@ package module
 
 import (
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
-	"github.com/OpenIMSDK/protocol/msg"
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/constant"
+	"github.com/openimsdk/protocol/msg"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 type ApiMsgSender struct {
@@ -47,5 +48,5 @@ func (a *ApiMsgSender) SendMsg(sendID, recvID string, index int) error {
 		},
 	}
 	var resp msg.SendMsgResp
-	return a.postWithCtx(constant.SendMsgRouter, req, &resp)
+	return a.postWithCtx(api.SendMsg.Route(), req, &resp)
 }

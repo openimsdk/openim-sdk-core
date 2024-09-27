@@ -27,6 +27,6 @@
 - Merge branch 'tuoyun'
 
 
-[Unreleased]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.3.3...HEAD
-[v2.3.3]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.3.2...v2.3.3
-[v2.3.2]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.3.0-rc0...v2.3.2
+[Unreleased]: https://github.com/openimsdk/openim-sdk-core/compare/v2.3.3...HEAD
+[v2.3.3]: https://github.com/openimsdk/openim-sdk-core/compare/v2.3.2...v2.3.3
+[v2.3.2]: https://github.com/openimsdk/openim-sdk-core/compare/v2.3.0-rc0...v2.3.2

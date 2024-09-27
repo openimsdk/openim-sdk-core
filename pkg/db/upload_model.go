@@ -19,10 +19,11 @@ package db
 
 import (
 	"context"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"time"
 
-	"github.com/OpenIMSDK/tools/errs"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+
+	"github.com/openimsdk/tools/errs"
 )
 
 func (d *DataBase) GetUpload(ctx context.Context, partHash string) (*model_struct.LocalUpload, error) {
@@ -47,8 +48,8 @@ func (d *DataBase) deleteUpload(ctx context.Context, partHash string) error {
 }
 
 func (d *DataBase) UpdateUpload(ctx context.Context, upload *model_struct.LocalUpload) error {
-	d.groupMtx.Lock()
-	defer d.groupMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return errs.Wrap(d.conn.WithContext(ctx).Updates(upload).Error)
 }
 

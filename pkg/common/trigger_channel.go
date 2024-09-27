@@ -17,81 +17,73 @@ package common
 import (
 	"context"
 	"errors"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"fmt"
+	"runtime/debug"
 	"time"
 
-	"github.com/OpenIMSDK/tools/log"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
+
+	"github.com/openimsdk/protocol/sdkws"
 )
 
-func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
-	if joinedSuperGroupCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-	c2v := Cmd2Value{Cmd: constant.CmdJoinedSuperGroup, Value: cmd}
-	return sendCmd(joinedSuperGroupCh, c2v, 100)
-}
+const (
+	timeOut = 10000
+)
+
+var ErrChanNil = errs.New("channal == nil")
 
 func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg, Ctx: ctx}
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
-func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
+func TriggerCmdMsgSyncInReinstall(ctx context.Context, msg sdk_struct.CmdMsgSyncInReinstall, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 
-	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
-	return sendCmd(conversationCh, c2v, 100)
+	c2v := Cmd2Value{Cmd: constant.CmdMsgSyncInReinstall, Value: msg, Ctx: ctx}
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
-func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-
+func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
-	return sendCmd(conversationCh, c2v, 100)
+	err := sendCmd(conversationCh, c2v, timeOut)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdNotification error", err, "msg", msg)
+	}
 }
 
-func TriggerCmdWakeUp(ch chan Cmd2Value) error {
+func TriggerCmdSyncFlag(ctx context.Context, syncFlag int, conversationCh chan Cmd2Value) {
+	c2v := Cmd2Value{Cmd: constant.CmdSyncFlag, Value: sdk_struct.CmdNewMsgComeToConversation{SyncFlag: syncFlag}, Ctx: ctx}
+	err := sendCmd(conversationCh, c2v, timeOut)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdNotification error", err, "syncFlag", syncFlag)
+	}
+}
+
+func TriggerCmdWakeUpDataSync(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
-	return sendCmd(ch, c2v, 100)
+	c2v := Cmd2Value{Cmd: constant.CmdWakeUpDataSync, Value: nil, Ctx: ctx}
+	return sendCmd(ch, c2v, timeOut)
 }
 
-func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) {
+	c2v := Cmd2Value{Cmd: constant.CmdSyncData, Value: nil, Ctx: ctx}
+	err := sendCmd(ch, c2v, timeOut)
+	if err != nil {
+		log.ZWarn(ctx, "TriggerCmdSyncData error", err)
 	}
-	c2v := Cmd2Value{
-		Cmd:   constant.CmdDeleteConversation,
-		Value: DeleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
-	}
-
-	return sendCmd(conversationCh, c2v, 100)
-}
-
-func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-	c2v := Cmd2Value{
-		Cmd:   constant.CmSyncReactionExtensions,
-		Value: node,
-	}
-
-	return sendCmd(conversationCh, c2v, 100)
 }
 
 func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conversationCh chan<- Cmd2Value) error {
@@ -101,7 +93,7 @@ func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conve
 		Ctx:   ctx,
 	}
 
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 func TriggerCmdUpdateMessage(ctx context.Context, node UpdateMessageNode, conversationCh chan Cmd2Value) error {
@@ -111,43 +103,34 @@ func TriggerCmdUpdateMessage(ctx context.Context, node UpdateMessageNode, conver
 		Ctx:   ctx,
 	}
 
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 // Push message, msg for msgData slice
 func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
-}
-
-// seq trigger
-func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
-	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdLogOut, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 // Connection success trigger
 func TriggerCmdConnected(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
+		return errs.Wrap(ErrChanNil)
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdConnSuccesss, Value: nil, Ctx: ctx}
-	return sendCmd(ch, c2v, 100)
+	return sendCmd(ch, c2v, timeOut)
 }
 
 type DeleteConNode struct {
@@ -164,7 +147,8 @@ type UpdateConNode struct {
 	ConID  string
 	Action int //1 Delete the conversation; 2 Update the latest news in the conversation or add a conversation; 3 Put a conversation on the top;
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
-	Args interface{}
+	Args   interface{}
+	Caller string
 }
 type UpdateMessageNode struct {
 	Action int
@@ -197,7 +181,7 @@ type SourceIDAndSessionType struct {
 
 func UnInitAll(conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdUnInit}
-	return sendCmd(conversationCh, c2v, 100)
+	return sendCmd(conversationCh, c2v, timeOut)
 }
 
 type goroutine interface {
@@ -207,6 +191,14 @@ type goroutine interface {
 }
 
 func DoListener(Li goroutine, ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+
+			log.ZWarn(ctx, "DoListener panic", nil, "panic info", err)
+		}
+	}()
+
 	for {
 		select {
 		case cmd := <-Li.GetCh():

@@ -19,12 +19,10 @@ package indexdb
 
 import (
 	"context"
-	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
-)
 
-import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
 type LocalGroupRequest struct {
@@ -65,21 +63,6 @@ func (i *LocalGroupRequest) GetSendGroupApplication(ctx context.Context) ([]*mod
 	}
 }
 
-func (i *LocalGroupRequest) InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
-	_, err := exec.Exec(utils.StructToJsonString(groupRequest))
-	return err
-}
-
-func (i *LocalGroupRequest) DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error {
-	_, err := exec.Exec(groupID, userID)
-	return err
-}
-
-func (i *LocalGroupRequest) UpdateAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
-	_, err := exec.Exec(utils.StructToJsonString(groupRequest))
-	return err
-}
-
 func (i *LocalGroupRequest) GetAdminGroupApplication(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
 	result, err := exec.Exec()
 	if err != nil {
@@ -94,4 +77,19 @@ func (i *LocalGroupRequest) GetAdminGroupApplication(ctx context.Context) ([]*mo
 	} else {
 		return nil, exec.ErrType
 	}
+}
+
+func (i *LocalGroupRequest) InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
+	_, err := exec.Exec(utils.StructToJsonString(groupRequest))
+	return err
+}
+
+func (i *LocalGroupRequest) DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error {
+	_, err := exec.Exec(groupID, userID)
+	return err
+}
+
+func (i *LocalGroupRequest) UpdateAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
+	_, err := exec.Exec(utils.StructToJsonString(groupRequest))
+	return err
 }

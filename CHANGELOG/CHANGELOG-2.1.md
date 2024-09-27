@@ -20,4 +20,4 @@
 - Merge branch 'tuoyun'
 
 
-[Unreleased]: https://github.com/OpenIMSDK/openim-sdk-core/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/openimsdk/openim-sdk-core/compare/v2.1.0...HEAD

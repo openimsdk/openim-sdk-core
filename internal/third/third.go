@@ -15,43 +15,19 @@
 package third
 
 import (
-	"context"
-	"github.com/OpenIMSDK/protocol/third"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
+	"sync"
 )
 
 type Third struct {
-	platformID   int32
-	loginUserID  string
-	version      string
-	systemType   string
-	LogFilePath  string
-	fileUploader *file.File
+	platformID    int32
+	loginUserID   string
+	systemType    string
+	LogFilePath   string
+	fileUploader  *file.File
+	logUploadLock sync.Mutex
 }
 
-func NewThird(platformID int32, loginUserID, version, systemType, LogFilePath string, fileUploader *file.File) *Third {
-	return &Third{platformID: platformID, loginUserID: loginUserID, version: version, systemType: systemType, LogFilePath: LogFilePath, fileUploader: fileUploader}
-}
-
-func (c *Third) UpdateFcmToken(ctx context.Context, fcmToken string, expireTime int64) error {
-	req := third.FcmUpdateTokenReq{
-		PlatformID: c.platformID,
-		FcmToken:   fcmToken,
-		Account:    c.loginUserID,
-		ExpireTime: expireTime}
-	_, err := util.CallApi[third.FcmUpdateTokenResp](ctx, constant.FcmUpdateTokenRouter, &req)
-	return err
-
-}
-
-func (c *Third) SetAppBadge(ctx context.Context, appUnreadCount int32) error {
-	req := third.SetAppBadgeReq{
-		UserID:         c.loginUserID,
-		AppUnreadCount: appUnreadCount,
-	}
-	_, err := util.CallApi[third.SetAppBadgeResp](ctx, constant.SetAppBadgeRouter, &req)
-	return err
+func NewThird(platformID int32, loginUserID, systemType, LogFilePath string, fileUploader *file.File) *Third {
+	return &Third{platformID: platformID, loginUserID: loginUserID, systemType: systemType, LogFilePath: LogFilePath, fileUploader: fileUploader}
 }

@@ -18,28 +18,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"strings"
 
-	"github.com/OpenIMSDK/tools/log"
-	"github.com/OpenIMSDK/tools/mcontext"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	pbConstant "github.com/openimsdk/protocol/constant"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
+
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 func GetSdkVersion() string {
-	return constant.GetSdkVersion()
+	return version.Version
 }
 
 const (
-	rotateCount  uint = 0
+	rotateCount  uint = 1
 	rotationTime uint = 24
 )
-
-func SetHeartbeatInterval(heartbeatInterval int) {
-	constant.HeartbeatInterval = heartbeatInterval
-}
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
 	if UserForSDK != nil {
@@ -54,7 +54,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	if configArgs.PlatformID == 0 {
 		return false
 	}
-	if err := log.InitFromConfig("open-im-sdk-core", "", int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime); err != nil {
+	if err := log.InitLoggerFromConfig("open-im-sdk-core", "", configArgs.SystemType, pbConstant.PlatformID2Name[int(configArgs.PlatformID)], int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version, true); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 	}
 	fmt.Println("init log success")
@@ -69,7 +69,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		return false
 	}
 
-	log.ZInfo(ctx, "InitSDK info", "config", configArgs, "sdkVersion", GetSdkVersion())
+	log.ZInfo(ctx, "InitSDK info", "config", configArgs)
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false

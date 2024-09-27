@@ -3,11 +3,12 @@ package module
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"time"
 
-	"github.com/OpenIMSDK/protocol/group"
-	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/openimsdk/protocol/group"
+	"github.com/openimsdk/protocol/sdkws"
 )
 
 type TestGroupManager struct {
@@ -37,7 +38,7 @@ func (t *TestGroupManager) CreateGroup(groupID string, groupName string, ownerUs
 		},
 	}
 	resp := &group.CreateGroupResp{}
-	if err := t.postWithCtx(constant.CreateGroupRouter, &req, &resp); err != nil {
+	if err := t.postWithCtx(api.CreateGroup.Route(), &req, &resp); err != nil {
 		return err
 	}
 	if len(userIDs) > batch {
@@ -57,7 +58,7 @@ func (t *TestGroupManager) CreateGroup(groupID string, groupName string, ownerUs
 				"reason":         "test",
 			}
 			resp := struct{}{}
-			if err := t.postWithCtx(constant.RouterGroup+"/invite_user_to_group", req, &resp); err != nil {
+			if err := t.postWithCtx(api.InviteUserToGroup.Route(), req, &resp); err != nil {
 				return err
 			}
 		}
@@ -71,5 +72,5 @@ func (t *TestGroupManager) InviteUserToGroup(ctx context.Context, groupID string
 		InvitedUserIDs: invitedUserIDs,
 	}
 	resp := &group.InviteUserToGroupResp{}
-	return t.postWithCtx(constant.InviteUserToGroupRouter, &req, &resp)
+	return t.postWithCtx(api.InviteUserToGroup.Route(), &req, &resp)
 }

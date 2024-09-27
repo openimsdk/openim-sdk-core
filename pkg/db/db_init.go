@@ -26,37 +26,58 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
 
-	"github.com/OpenIMSDK/tools/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
 
-//"github.com/glebarez/sqlite"
+type TableChecker struct {
+	tableCache map[string]bool
+	mu         sync.RWMutex
+}
 
-var UserDBMap map[string]*DataBase
+func NewTableChecker(tables []string) *TableChecker {
+	tc := &TableChecker{
+		tableCache: make(map[string]bool),
+	}
+	tc.InitTableCache(tables)
+	return tc
+}
 
-var UserDBLock sync.RWMutex
+func (tc *TableChecker) InitTableCache(tables []string) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	for _, table := range tables {
+		tc.tableCache[table] = true
+	}
+}
 
-func init() {
-	UserDBMap = make(map[string]*DataBase, 0)
+func (tc *TableChecker) HasTable(tableName string) bool {
+	tc.mu.RLock()
+	defer tc.mu.RUnlock()
+	return tc.tableCache[tableName]
+}
+func (tc *TableChecker) UpdateTable(tableName string) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	tc.tableCache[tableName] = true
 }
 
 type DataBase struct {
-	loginUserID   string
-	dbDir         string
-	conn          *gorm.DB
-	mRWMutex      sync.RWMutex
-	groupMtx      sync.RWMutex
-	friendMtx     sync.RWMutex
-	userMtx       sync.RWMutex
-	superGroupMtx sync.RWMutex
+	loginUserID  string
+	dbDir        string
+	conn         *gorm.DB
+	tableChecker *TableChecker
+	mRWMutex     sync.RWMutex
 }
 
 func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -77,38 +98,32 @@ func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) er
 }
 
 func (d *DataBase) Close(ctx context.Context) error {
-	UserDBLock.Lock()
 	dbConn, err := d.conn.WithContext(ctx).DB()
 	if err != nil {
-		// log.Error("", "get db conn failed ", err.Error())
+		return err
 	} else {
 		if dbConn != nil {
-			// log.Info("", "close db finished")
 			err := dbConn.Close()
 			if err != nil {
-				// log.Error("", "close db failed ", err.Error())
+				return err
 			}
 		}
 	}
-	// log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
-	delete(UserDBMap, d.loginUserID)
-	UserDBLock.Unlock()
 	return nil
 }
 
 func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel int) (*DataBase, error) {
-	UserDBLock.Lock()
-	defer UserDBLock.Unlock()
-	dataBase, ok := UserDBMap[loginUserID]
-	if !ok {
-		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
-		err := dataBase.initDB(ctx, logLevel)
-		if err != nil {
-			return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
-		}
-		UserDBMap[loginUserID] = dataBase
-		//log.Info(operationID, "open db", loginUserID)
+	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
+	err := dataBase.initDB(ctx, logLevel)
+	if err != nil {
+		return dataBase, errs.WrapMsg(err, "initDB failed "+dbDir)
 	}
+	tables, err := dataBase.GetExistTables(ctx)
+	if err != nil {
+		return dataBase, errs.Wrap(err)
+	}
+	dataBase.tableChecker = NewTableChecker(tables)
+
 	return dataBase, nil
 }
 
@@ -127,20 +142,24 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	}
 	log.ZInfo(ctx, "sqlite", "path", dbFileName)
 	// slowThreshold := 500
-	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
+	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.ServerConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
 	if logLevel > 5 {
 		zLogLevel = logger.Info
 	} else {
 		zLogLevel = logger.Silent
 	}
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+	var (
+		db *gorm.DB
+	)
+	db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 	if err != nil {
-		return utils.Wrap(err, "open db failed "+dbFileName)
+		return errs.WrapMsg(err, "open db failed "+dbFileName)
 	}
-	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
+
+	log.ZDebug(ctx, "open db success", "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {
-		return utils.Wrap(err, "get sql db failed")
+		return errs.WrapMsg(err, "get sql db failed")
 	}
 
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
@@ -149,31 +168,15 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	sqlDB.SetConnMaxIdleTime(time.Minute * 10)
 	d.conn = db
 
-	err = db.AutoMigrate(
-		&model_struct.LocalFriend{},
-		&model_struct.LocalFriendRequest{},
-		&model_struct.LocalGroup{},
-		&model_struct.LocalGroupMember{},
-		&model_struct.LocalGroupRequest{},
-		&model_struct.LocalErrChatLog{},
-		&model_struct.LocalUser{},
-		&model_struct.LocalBlack{},
-		&model_struct.LocalConversation{},
-		&model_struct.NotificationSeqs{},
-		&model_struct.LocalChatLog{},
-		&model_struct.LocalAdminGroupRequest{},
-		&model_struct.LocalWorkMomentsNotification{},
-		&model_struct.LocalWorkMomentsNotificationUnreadCount{},
-		&model_struct.TempCacheLocalChatLog{},
-		&model_struct.LocalChatLogReactionExtensions{},
-		&model_struct.LocalUpload{},
-		&model_struct.LocalStranger{},
-		&model_struct.LocalSendingMessages{},
-		&model_struct.LocalUserCommand{},
-	)
-	if err != nil {
+	// base
+	if err = db.AutoMigrate(&model_struct.LocalAppSDKVersion{}); err != nil {
 		return err
 	}
+
+	if err = d.versionDataMigrate(ctx); err != nil {
+		return err
+	}
+
 	//if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
 	//	return err
 	//}
@@ -181,13 +184,55 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	return nil
 }
 
-func (d *DataBase) versionDataFix(ctx context.Context) {
-	//todo some model auto migrate data conversion
-	//conversationIDs, err := d.FindAllConversationConversationID(ctx)
-	//if err != nil {
-	//	log.ZError(ctx, "FindAllConversationConversationID err", err)
-	//}
-	//for _, conversationID := range conversationIDs {
-	//	d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
-	//}
+func (d *DataBase) versionDataMigrate(ctx context.Context) error {
+	verModel, err := d.GetAppSDKVersion(ctx)
+	if errs.Unwrap(err) == errs.ErrRecordNotFound {
+		err = d.conn.AutoMigrate(
+			&model_struct.LocalAppSDKVersion{},
+			&model_struct.LocalFriend{},
+			&model_struct.LocalFriendRequest{},
+			&model_struct.LocalGroup{},
+			&model_struct.LocalGroupMember{},
+			&model_struct.LocalGroupRequest{},
+			&model_struct.LocalErrChatLog{},
+			&model_struct.LocalUser{},
+			&model_struct.LocalBlack{},
+			&model_struct.LocalConversation{},
+			&model_struct.NotificationSeqs{},
+			&model_struct.LocalChatLog{},
+			&model_struct.LocalAdminGroupRequest{},
+			&model_struct.LocalWorkMomentsNotification{},
+			&model_struct.LocalWorkMomentsNotificationUnreadCount{},
+			&model_struct.TempCacheLocalChatLog{},
+			&model_struct.LocalChatLogReactionExtensions{},
+			&model_struct.LocalUpload{},
+			&model_struct.LocalStranger{},
+			&model_struct.LocalSendingMessages{},
+			&model_struct.LocalUserCommand{},
+			&model_struct.LocalVersionSync{},
+		)
+		if err != nil {
+			return err
+		}
+		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if verModel.Version != version.Version {
+		switch version.Version {
+		case "3.8.0":
+			d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{})
+		}
+		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

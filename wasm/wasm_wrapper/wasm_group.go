@@ -18,10 +18,11 @@
 package wasm_wrapper
 
 import (
+	"syscall/js"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/event_listener"
-	"syscall/js"
 )
 
 // ------------------------------------group---------------------------
@@ -63,11 +64,6 @@ func (w *WrapperGroup) ChangeGroupMemberMute(_ js.Value, args []js.Value) interf
 	return event_listener.NewCaller(open_im_sdk.ChangeGroupMemberMute, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperGroup) SetGroupMemberRoleLevel(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetGroupMemberRoleLevel, callback, &args).AsyncCallWithCallback()
-}
-
 func (w *WrapperGroup) SetGroupMemberInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetGroupMemberInfo, callback, &args).AsyncCallWithCallback()
@@ -78,6 +74,11 @@ func (w *WrapperGroup) GetJoinedGroupList(_ js.Value, args []js.Value) interface
 	return event_listener.NewCaller(open_im_sdk.GetJoinedGroupList, callback, &args).AsyncCallWithCallback()
 }
 
+func (w *WrapperGroup) GetJoinedGroupListPage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetJoinedGroupListPage, callback, &args).AsyncCallWithCallback()
+}
+
 func (w *WrapperGroup) SearchGroups(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SearchGroups, callback, &args).AsyncCallWithCallback()
@@ -86,21 +87,6 @@ func (w *WrapperGroup) SearchGroups(_ js.Value, args []js.Value) interface{} {
 func (w *WrapperGroup) SetGroupInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetGroupInfo, callback, &args).AsyncCallWithCallback()
-}
-
-func (w *WrapperGroup) SetGroupVerification(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetGroupVerification, callback, &args).AsyncCallWithCallback()
-}
-
-func (w *WrapperGroup) SetGroupLookMemberInfo(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetGroupLookMemberInfo, callback, &args).AsyncCallWithCallback()
-}
-
-func (w *WrapperGroup) SetGroupApplyMemberFriend(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetGroupApplyMemberFriend, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperGroup) GetGroupMemberList(_ js.Value, args []js.Value) interface{} {
@@ -158,11 +144,6 @@ func (w *WrapperGroup) RefuseGroupApplication(_ js.Value, args []js.Value) inter
 	return event_listener.NewCaller(open_im_sdk.RefuseGroupApplication, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperGroup) SetGroupMemberNickname(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetGroupMemberNickname, callback, &args).AsyncCallWithCallback()
-}
-
 func (w *WrapperGroup) SearchGroupMembers(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SearchGroupMembers, callback, &args).AsyncCallWithCallback()
@@ -171,6 +152,11 @@ func (w *WrapperGroup) SearchGroupMembers(_ js.Value, args []js.Value) interface
 func (w *WrapperGroup) IsJoinGroup(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.IsJoinGroup, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperGroup) GetUsersInGroup(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetUsersInGroup, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperGroup) GetSpecifiedGroupsInfo(_ js.Value, args []js.Value) interface{} {
