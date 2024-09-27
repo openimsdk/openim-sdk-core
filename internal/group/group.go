@@ -299,3 +299,7 @@ func (g *Group) FetchGroupOrError(ctx context.Context, groupID string) (*model_s
 	}
 	return groups[0], nil
 }
+
+func (g *Group) delLocalGroupRequest(ctx context.Context, groupID, userID string) error {
+	return g.db.DeleteGroupRequest(ctx, groupID, userID)
+}
