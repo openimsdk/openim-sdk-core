@@ -157,7 +157,7 @@ func (c *Conversation) doNotificationManager(c2v common.Cmd2Value) {
 func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 		if err := c.doNotification(ctx, msg); err != nil {
-			log.ZWarn(ctx, "DoGroupNotification failed", err)
+			log.ZWarn(ctx, "DoConversationNotification failed", err)
 		}
 	}()
 }
