@@ -83,5 +83,5 @@ func GetUserToken(ctx context.Context, userID string, platformID int32, secret s
 		PlatformID: platformID,
 		Secret:     secret,
 	}
-	return api.ExtractField(ctx, api.GetUsersToken.Invoke, req, (*auth.UserTokenResp).GetToken)
+	return api.ExtractField(ctx, api.UsersToken.Invoke, req, (*auth.UserTokenResp).GetToken)
 }
