@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/protocol/sdkws"
 	userPB "github.com/openimsdk/protocol/user"
@@ -37,11 +38,10 @@ func (t *TestUserManager) RegisterUsers(userIDs ...string) error {
 		users = append(users, &sdkws.UserInfo{UserID: userID, Nickname: userID})
 	}
 	return t.postWithCtx(api.UserRegister.Route(), &userPB.UserRegisterReq{
-		Secret: t.secret,
-		Users:  users,
+		Users: users,
 	}, nil)
 }
 
 func (t *TestUserManager) GetToken(userID string, platformID int32) (string, error) {
-	return t.getToken(userID, platformID)
+	return t.getUserToken(userID, platformID)
 }
