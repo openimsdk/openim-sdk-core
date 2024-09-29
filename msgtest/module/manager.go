@@ -118,7 +118,7 @@ func (m *MetaManager) buildCtx() context.Context {
 func (m *MetaManager) getToken(userID string, platformID int32) (string, error) {
 	req := authPB.UserTokenReq{PlatformID: platformID, UserID: userID, Secret: m.secret}
 	resp := authPB.UserTokenResp{}
-	err := m.postWithCtx(api.GetUsersToken.Route(), &req, &resp)
+	err := m.postWithCtx(api.UsersToken.Route(), &req, &resp)
 	if err != nil {
 		return "", err
 	}

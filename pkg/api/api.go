@@ -95,7 +95,8 @@ var (
 )
 
 var (
-	GetUsersToken = newApi[auth.UserTokenReq, auth.UserTokenResp]("/auth/user_token")
+	UsersToken    = newApi[auth.UserTokenReq, auth.UserTokenResp]("/auth/user_token")
+	GetUsersToken = newApi[auth.UserTokenReq, auth.UserTokenResp]("/auth/get_user_token")
 )
 
 var (
