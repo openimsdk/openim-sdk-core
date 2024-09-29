@@ -1,6 +1,6 @@
 <h1 align="center" style="border-bottom: none">
     <b>
-        <a href="https://doc.rentsoft.cn/">openim-sdk-core</a><br>
+        <a href="https://doc.rentsoft.cn/sdks/introduction">openim-sdk-core</a><br>
     </b>
 </h1>
 <h3 align="center" style="border-bottom: none">

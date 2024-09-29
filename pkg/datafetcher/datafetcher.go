@@ -125,6 +125,9 @@ func (ds *DataFetcher[T]) sortByUserIDs(data []T, userIDs []string) []T {
 
 // FetchMissingAndCombineLocal fetches missing data from the server and combines it with local data without inserting it into the local database
 func (ds *DataFetcher[T]) FetchMissingAndCombineLocal(ctx context.Context, uids []string) ([]T, error) {
+	if len(uids) == 0 {
+		return nil, nil
+	}
 	localData, needServer, err := ds.FetchFromLocal(ctx, uids)
 	if err != nil {
 		return nil, err

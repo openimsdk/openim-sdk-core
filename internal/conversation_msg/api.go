@@ -392,7 +392,6 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
 			delFile = append(delFile, sourcePath)
 		}
-		// log.Info("", "file", sourcePath, delFile)
 		log.ZDebug(ctx, "send picture", "path", sourcePath)
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
@@ -833,6 +832,7 @@ func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conver
 	return c.markConversationMessageAsRead(ctx, conversationID)
 }
 
+// deprecated
 func (c *Conversation) MarkMessagesAsReadByMsgID(ctx context.Context, conversationID string, clientMsgIDs []string) error {
 	return c.markMessagesAsReadByMsgID(ctx, conversationID, clientMsgIDs)
 }
