@@ -2,6 +2,8 @@ package manager
 
 import (
 	"context"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
@@ -17,7 +19,6 @@ import (
 	userPB "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/mcontext"
-	"time"
 )
 
 type TestUserManager struct {
@@ -53,8 +54,7 @@ func (t *TestUserManager) registerUsers(ctx context.Context, userIDs ...string) 
 			end = len(users)
 		}
 		if err := t.PostWithCtx(api.UserRegister.Route(), &userPB.UserRegisterReq{
-			Secret: t.GetSecret(),
-			Users:  users[i:end],
+			Users: users[i:end],
 		}, nil); err != nil {
 			return err
 		}
@@ -134,7 +134,7 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
-			token, err := t.GetToken(userID, config.PlatformID)
+			token, err := t.GetUserToken(userID, config.PlatformID)
 			if err != nil {
 				return err
 			}
