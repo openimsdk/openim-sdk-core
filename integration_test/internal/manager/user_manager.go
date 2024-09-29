@@ -134,7 +134,7 @@ func (t *TestUserManager) login(ctx context.Context, userIDs ...string) error {
 	for _, userID := range userIDs {
 		userID := userID
 		gr.Go(func() error {
-			token, err := t.GetToken(userID, config.PlatformID)
+			token, err := t.GetAdminToken(userID, config.PlatformID)
 			if err != nil {
 				return err
 			}
