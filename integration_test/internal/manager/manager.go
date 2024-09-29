@@ -57,9 +57,9 @@ func (m *MetaManager) GetSecret() string {
 }
 
 func (m *MetaManager) GetAdminToken(userID string, platformID int32) (string, error) {
-	req := authPB.UserTokenReq{PlatformID: platformID, UserID: userID, Secret: m.secret}
-	resp := authPB.UserTokenResp{}
-	err := m.PostWithCtx(api.UsersToken.Route(), &req, &resp)
+	req := authPB.GetAdminTokenReq{UserID: userID, Secret: m.secret}
+	resp := authPB.GetAdminTokenResp{}
+	err := m.PostWithCtx(api.GetAdminToken.Route(), &req, &resp)
 	if err != nil {
 		return "", err
 	}

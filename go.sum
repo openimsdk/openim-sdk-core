@@ -25,8 +25,8 @@ github.com/lestrrat-go/strftime v1.0.6 h1:CFGsDEt1pOpFNU+TJB0nhz9jl+K0hZSLE205Ah
 github.com/lestrrat-go/strftime v1.0.6/go.mod h1:f7jQKgV5nnJpYgdEasS+/y7EsTb8ykN2z68n3TtcTaw=
 github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o4kU=
 github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
-github.com/openimsdk/protocol v0.0.72-alpha.24 h1:1Dl8TEZVXhdmve+ewoLkJa2wbFBIHqPgjvr9u/J66JM=
-github.com/openimsdk/protocol v0.0.72-alpha.24/go.mod h1:OZQA9FR55lseYoN2Ql1XAHYKHJGu7OMNkUbuekrKCM8=
+github.com/openimsdk/protocol v0.0.72 h1:K+vslwaR7lDXyBzb07UuEQITaqsgighz7NyXVIWsu6A=
+github.com/openimsdk/protocol v0.0.72/go.mod h1:OZQA9FR55lseYoN2Ql1XAHYKHJGu7OMNkUbuekrKCM8=
 github.com/openimsdk/tools v0.0.50-alpha.14 h1:7mqOwJWHcG181KvkmU+oJn9ZpYNoUykt9WtuOQg4sDU=
 github.com/openimsdk/tools v0.0.50-alpha.14/go.mod h1:h1cYmfyaVtgFbKmb1Cfsl8XwUOMTt8ubVUQrdGtsUh4=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=

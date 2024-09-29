@@ -5,16 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	authPB "github.com/openimsdk/protocol/auth"
-	"github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -115,10 +115,20 @@ func (m *MetaManager) buildCtx() context.Context {
 	return mcontext.NewCtx(utils.OperationIDGenerator())
 }
 
-func (m *MetaManager) getToken(userID string, platformID int32) (string, error) {
-	req := authPB.UserTokenReq{PlatformID: platformID, UserID: userID, Secret: m.secret}
-	resp := authPB.UserTokenResp{}
-	err := m.postWithCtx(api.UsersToken.Route(), &req, &resp)
+func (m *MetaManager) getAdminToken(userID string) (string, error) {
+	req := authPB.GetAdminTokenReq{UserID: userID, Secret: m.secret}
+	resp := authPB.GetAdminTokenResp{}
+	err := m.postWithCtx(api.GetAdminToken.Route(), &req, &resp)
+	if err != nil {
+		return "", err
+	}
+	return resp.Token, nil
+}
+
+func (m *MetaManager) getUserToken(userID string, platform int32) (string, error) {
+	req := authPB.GetUserTokenReq{UserID: userID, PlatformID: platform}
+	resp := authPB.GetUserTokenResp{}
+	err := m.postWithCtx(api.GetUsersToken.Route(), &req, &resp)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +136,7 @@ func (m *MetaManager) getToken(userID string, platformID int32) (string, error) 
 }
 
 func (m *MetaManager) initToken() error {
-	token, err := m.getToken(m.managerUserID, constant.AdminPlatformID)
+	token, err := m.getAdminToken(m.managerUserID)
 	if err != nil {
 		return err
 	}
