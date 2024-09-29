@@ -392,7 +392,6 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
 			delFile = append(delFile, sourcePath)
 		}
-		// log.Info("", "file", sourcePath, delFile)
 		log.ZDebug(ctx, "send picture", "path", sourcePath)
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
