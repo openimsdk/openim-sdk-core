@@ -100,8 +100,8 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	ctx := ccontext.WithOperationID(UserForSDK.Context(), operationID)
 	defer func(start time.Time) {
 		if r := recover(); r != nil {
-			p := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			err = fmt.Errorf("call panic: %+v", p)
+			fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			err = fmt.Errorf("call panic: %+v", r)
 		} else {
 			elapsed := time.Since(start).Milliseconds()
 			if err == nil {
