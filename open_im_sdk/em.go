@@ -237,20 +237,6 @@ func (e *emptyAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "message", message)
 }
 
-type emptyBatchMsgListener struct{}
-
-func newEmptyBatchMsgListener() *emptyBatchMsgListener {
-	return &emptyBatchMsgListener{}
-}
-
-func (e *emptyBatchMsgListener) OnRecvNewMessages(messageList string) {
-
-}
-
-func (e *emptyBatchMsgListener) OnRecvOfflineNewMessages(messageList string) {
-
-}
-
 type emptyUserListener struct {
 	ctx context.Context
 }
