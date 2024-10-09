@@ -157,5 +157,5 @@ func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([
 	if err != nil {
 		return nil, err
 	}
-	return datautil.MapToSlice(m), nil
+	return datautil.Values(m), nil
 }
