@@ -17,18 +17,25 @@ package open_im_sdk
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"runtime"
 	"runtime/debug"
+	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/protocol/errinfo"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/mw/specialerror"
 
 	"github.com/openimsdk/tools/errs"
 )
@@ -98,10 +105,11 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		return nil, sdkerrs.ErrResourceLoad.WrapMsg("not load resource")
 	}
 	ctx := ccontext.WithOperationID(UserForSDK.Context(), operationID)
+
 	defer func(start time.Time) {
 		if r := recover(); r != nil {
-			fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			err = fmt.Errorf("call panic: %+v", r)
+			p := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			err = fmt.Errorf("call panic: %+v", p)
 		} else {
 			elapsed := time.Since(start).Milliseconds()
 			if err == nil {
@@ -113,16 +121,20 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 
 		}
 	}(t)
+
 	log.ZInfo(ctx, "func call req", "function name", funcName, "args", args)
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
 		return nil, sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("call function fn is not function, is %T", fn))
 	}
+
 	fnt := fnv.Type()
 	nin := fnt.NumIn()
+
 	if len(args)+1 != nin {
-		return nil, sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("go code error: fn in args num is not match"))
+		return nil, sdkerrs.ErrSdkInternal.WrapMsg("go code error: fn in args num is not match")
 	}
+
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -157,27 +169,32 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 				continue
 			}
 		}
+
 		//if isNumeric(arg.Kind()) && isNumeric(inFnField.Kind()) {
 		//	v := reflect.Zero(inFnField).Interface()
 		//	setNumeric(args[i], &v)
 		//	ins = append(ins, reflect.ValueOf(v))
 		//	continue
 		//}
-		return nil, sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("go code error: fn in args type is not match"))
+
+		return nil, sdkerrs.ErrSdkInternal.WrapMsg("go code error: fn in args type is not match")
 	}
+
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
 		return "", nil
 	}
+
 	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
 		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
-			return nil, errValueOf.Interface().(error)
+			return nil, handleCallError(ctx, funcName, args, errValueOf.Interface().(error))
 		}
 		if len(outs) == 1 {
 			return "", nil
 		}
 		outs = outs[:len(outs)-1]
 	}
+
 	for i := 0; i < len(outs); i++ {
 		out := outs[i]
 		switch out.Kind() {
@@ -191,13 +208,16 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 			}
 		}
 	}
+
 	if len(outs) == 1 {
 		return outs[0].Interface(), nil
 	}
+
 	val := make([]any, 0, len(outs))
 	for i := range outs {
 		val = append(val, outs[i].Interface())
 	}
+
 	return val, nil
 }
 
@@ -481,4 +501,75 @@ func listenerCall(fn any, listener any) {
 	}
 	args := reflect.ValueOf(listener)
 	fnv.Call([]reflect.Value{args})
+}
+
+func handleCallError(ctx context.Context, funcName string, args []any, err error) error {
+	log.ZWarn(ctx, "fn call WithDetails Response is error", formatError(err), "funcName", funcName, "args", args)
+	unwrap := errs.Unwrap(err)
+	codeErr := specialerror.ErrCode(unwrap)
+	if codeErr == nil {
+		log.ZError(ctx, "internal server error", formatError(err), "funcName", funcName, "args", args)
+		codeErr = errs.ErrInternalServer
+	}
+	code := codeErr.Code()
+	if code <= 0 || int64(code) > int64(math.MaxUint32) {
+		log.ZError(ctx, "unknown error code", formatError(err), "funcName", funcName, "args", args, "unknown code:", int64(code))
+		code = errs.ServerInternalError
+	}
+	grpcStatus := status.New(codes.Code(code), err.Error())
+	errInfo := &errinfo.ErrorInfo{Cause: err.Error()}
+	details, err := grpcStatus.WithDetails(errInfo)
+	if err != nil {
+		log.ZWarn(ctx, "fn call WithDetails Response is error", formatError(err), "funcName", funcName)
+		return errs.WrapMsg(err, "fn error in setting grpc status details", "err", err)
+	}
+	log.ZWarn(ctx, "fn call Response is error", details.Err())
+
+	return nil
+}
+
+func formatError(err error) error {
+	type stackTracer interface {
+		StackTrace() errors.StackTrace
+	}
+	if e, ok := err.(stackTracer); ok {
+		st := e.StackTrace()
+		var sb strings.Builder
+		sb.WriteString("Error: ")
+		sb.WriteString(err.Error())
+		sb.WriteString(" | Error trace: ")
+
+		var callPath []string
+		for _, f := range st {
+			pc := uintptr(f) - 1
+			fn := runtime.FuncForPC(pc)
+			if fn == nil {
+				continue
+			}
+			if strings.Contains(fn.Name(), "runtime.") {
+				continue
+			}
+			file, line := fn.FileLine(pc)
+			funcName := simplifyFuncName(fn.Name())
+			callPath = append(callPath, fmt.Sprintf("%s (%s:%d)", funcName, file, line))
+		}
+		for i := len(callPath) - 1; i >= 0; i-- {
+			if i != len(callPath)-1 {
+				sb.WriteString(" -> ")
+			}
+			sb.WriteString(callPath[i])
+		}
+		return errors.New(sb.String())
+	}
+	return err
+}
+
+func simplifyFuncName(fullFuncName string) string {
+	parts := strings.Split(fullFuncName, "/")
+	lastPart := parts[len(parts)-1]
+	parts = strings.Split(lastPart, ".")
+	if len(parts) > 1 {
+		return parts[len(parts)-1]
+	}
+	return lastPart
 }
