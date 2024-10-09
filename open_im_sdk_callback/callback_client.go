@@ -76,11 +76,6 @@ type OnAdvancedMsgListener interface {
 	OnRecvOnlineOnlyMessage(message string)
 }
 
-type OnBatchMsgListener interface {
-	OnRecvNewMessages(messageList string)
-	OnRecvOfflineNewMessages(messageList string)
-}
-
 type OnUserListener interface {
 	OnSelfInfoUpdated(userInfo string)
 	OnUserStatusChanged(userOnlineStatus string)

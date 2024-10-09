@@ -48,11 +48,6 @@ func (s *SetListener) setAdvancedMsgListener() {
 	open_im_sdk.SetAdvancedMsgListener(callback)
 }
 
-func (s *SetListener) setBatchMessageListener() {
-	callback := event_listener.NewBatchMessageCallback(s.commonFunc)
-	open_im_sdk.SetBatchMsgListener(callback)
-}
-
 func (s *SetListener) setFriendListener() {
 	callback := event_listener.NewFriendCallback(s.commonFunc)
 	open_im_sdk.SetFriendListener(callback)
@@ -80,7 +75,6 @@ func (s *SetListener) setCustomBusinessListener() {
 func (s *SetListener) SetAllListener() {
 	s.setConversationListener()
 	s.setAdvancedMsgListener()
-	s.setBatchMessageListener()
 	s.setFriendListener()
 	s.setGroupListener()
 	s.setUserListener()

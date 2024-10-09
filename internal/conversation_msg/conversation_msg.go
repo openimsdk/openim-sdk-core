@@ -54,7 +54,6 @@ type Conversation struct {
 	ConversationListener  func() open_im_sdk_callback.OnConversationListener
 	msgListener           func() open_im_sdk_callback.OnAdvancedMsgListener
 	msgKvListener         func() open_im_sdk_callback.OnMessageKvInfoListener
-	batchMsgListener      func() open_im_sdk_callback.OnBatchMsgListener
 	businessListener      func() open_im_sdk_callback.OnCustomBusinessListener
 	recvCH                chan common.Cmd2Value
 	loginUserID           string
@@ -82,10 +81,6 @@ func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.On
 
 func (c *Conversation) SetMsgKvListener(msgKvListener func() open_im_sdk_callback.OnMessageKvInfoListener) {
 	c.msgKvListener = msgKvListener
-}
-
-func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_callback.OnBatchMsgListener) {
-	c.batchMsgListener = batchMsgListener
 }
 
 func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_callback.OnCustomBusinessListener) {
@@ -431,11 +426,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	if c.batchMsgListener() != nil {
-		c.batchNewMessages(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	} else {
-		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	}
+	c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
+
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
 	}
@@ -734,54 +726,6 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 			} else {
 				c.msgListener().OnRecvNewMessage(utils.StructToJsonString(w))
 			}
-		}
-	}
-}
-
-func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList, conversationChanged, newConversation map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
-	if len(newMessagesList) == 0 {
-		log.ZWarn(ctx, "newMessagesList is empty", errs.New("newMessagesList is empty"))
-		return
-	}
-
-	sort.Sort(newMessagesList)
-	var needNotificationMsgList sdk_struct.NewMsgList
-
-	// offline
-	if c.GetBackground() {
-		u, err := c.user.GetSelfUserInfo(ctx)
-		if err != nil {
-			log.ZWarn(ctx, "GetSelfUserInfo err", err)
-		}
-
-		if u.GlobalRecvMsgOpt != constant.ReceiveMessage {
-			return
-		}
-
-		for _, w := range newMessagesList {
-			conversationID := utils.GetConversationIDByMsg(w)
-			if v, ok := conversationChanged[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
-				needNotificationMsgList = append(needNotificationMsgList, w)
-			}
-			if v, ok := newConversation[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
-				needNotificationMsgList = append(needNotificationMsgList, w)
-			}
-		}
-
-		if len(needNotificationMsgList) != 0 {
-			c.batchMsgListener().OnRecvOfflineNewMessages(utils.StructToJsonString(needNotificationMsgList))
-		}
-	} else { // online
-		for _, w := range newMessagesList {
-			if w.ContentType == constant.Typing {
-				continue
-			}
-
-			needNotificationMsgList = append(needNotificationMsgList, w)
-		}
-
-		if len(needNotificationMsgList) != 0 {
-			c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(needNotificationMsgList))
 		}
 	}
 }
