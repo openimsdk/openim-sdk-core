@@ -4,6 +4,7 @@ components
 logs
 out-test
 *.db
+open-im-sdk-core.*
 
 ### Backup ###
 *.bak
