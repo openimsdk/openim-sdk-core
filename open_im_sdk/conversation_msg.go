@@ -79,17 +79,17 @@ func CreateCardMessage(operationID string, cardInfo string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateCardMessage, cardInfo)
 
 }
-func CreateImageMessage(operationID string, imagePath string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessage, imagePath)
+func CreateImageMessage(operationID string, imageSourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessage, imageSourcePath, sourcePicture, bigPicture, snapshotPicture)
 }
-func CreateSoundMessage(operationID string, soundPath string, duration int64) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateSoundMessage, soundPath, duration)
+func CreateSoundMessage(operationID string, soundPath string, duration int64, soundBaseInfo string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateSoundMessage, soundPath, duration, soundBaseInfo)
 }
-func CreateVideoMessage(operationID string, videoPath string, videoType string, duration int64, snapshotPath string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateVideoMessage, videoPath, videoType, duration, snapshotPath)
+func CreateVideoMessage(operationID string, videoSourcePath string, videoType string, duration int64, snapshotSourcePath string, videoBaseInfo string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateVideoMessage, videoSourcePath, videoType, duration, snapshotSourcePath, videoBaseInfo)
 }
-func CreateFileMessage(operationID string, filePath string, fileName string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateFileMessage, filePath, fileName)
+func CreateFileMessage(operationID string, fileSourcePath string, fileName string, fileBaseInfo string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateFileMessage, fileSourcePath, fileName, fileBaseInfo)
 }
 func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateMergerMessage, messageList, title, summaryList)
