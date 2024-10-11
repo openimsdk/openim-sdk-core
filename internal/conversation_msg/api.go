@@ -328,7 +328,10 @@ func (c *Conversation) GetConversationIDBySessionType(_ context.Context, sourceI
 
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
 	// Message is created by URL
-	if s.FileElem.SourceURL != "" || s.SoundElem.SourceURL != "" || s.VideoElem.VideoURL != "" || (s.PictureElem.SourcePicture.Url != "" || s.PictureElem.BigPicture.Url != "" || s.PictureElem.SnapshotPicture.Url != "") {
+	if (s.FileElem != nil && s.FileElem.SourceURL != "") ||
+		(s.SoundElem != nil && s.SoundElem.SourceURL != "") ||
+		(s.VideoElem != nil && s.VideoElem.VideoURL != "") ||
+		(s.PictureElem != nil && (s.PictureElem.SourcePicture.Url != "" || s.PictureElem.BigPicture.Url != "" || s.PictureElem.SnapshotPicture.Url != "")) {
 		return c.sendMessageNotOss(ctx, s, recvID, groupID, p, isOnlineOnly)
 	}
 
