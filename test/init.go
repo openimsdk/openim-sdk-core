@@ -50,7 +50,20 @@ func init() {
 	}
 	ctx = open_im_sdk.UserForSDK.Context()
 	ctx = ccontext.WithOperationID(ctx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
-	token, err := GetAdminToken(ctx, UserID, Secret)
+	imToken, err := GetAdminToken(ctx, AdminUserID, Secret)
+	if err != nil {
+		panic(err)
+	}
+	userCtx := context.Background()
+	userCtx = ccontext.WithOperationID(userCtx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
+
+	userCtx = ccontext.WithInfo(userCtx, &ccontext.GlobalConfig{
+		UserID:   UserID,
+		Token:    string(imToken),
+		IMConfig: config,
+	})
+
+	token, err := GetUserToken(userCtx, UserID, int32(PlatformID), imToken)
 	if err != nil {
 		panic(err)
 	}
@@ -83,4 +96,12 @@ func GetAdminToken(ctx context.Context, userID string, secret string) (string, e
 		Secret: secret,
 	}
 	return api.ExtractField(ctx, api.GetAdminToken.Invoke, req, (*auth.GetAdminTokenResp).GetToken)
+}
+
+func GetUserToken(ctx context.Context, userID string, platformID int32, token string) (string, error) {
+	req := &auth.GetUserTokenReq{
+		UserID:     userID,
+		PlatformID: platformID,
+	}
+	return api.ExtractField(ctx, api.GetUsersToken.Invoke, req, (*auth.GetUserTokenResp).GetToken)
 }
