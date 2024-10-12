@@ -27,8 +27,8 @@ import (
 
 // ProcessUserCommandAdd adds a new user command to the database.
 func (d *DataBase) ProcessUserCommandAdd(ctx context.Context, command *model_struct.LocalUserCommand) error {
-	d.userMtx.Lock()
-	defer d.userMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 
 	userCommand := model_struct.LocalUserCommand{
 		UserID:     command.UserID,
@@ -44,8 +44,8 @@ func (d *DataBase) ProcessUserCommandAdd(ctx context.Context, command *model_str
 
 // ProcessUserCommandUpdate updates an existing user command in the database.
 func (d *DataBase) ProcessUserCommandUpdate(ctx context.Context, command *model_struct.LocalUserCommand) error {
-	d.userMtx.Lock()
-	defer d.userMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 
 	t := d.conn.WithContext(ctx).Model(command).Select("*").Updates(*command)
 	if t.RowsAffected == 0 {
@@ -57,16 +57,16 @@ func (d *DataBase) ProcessUserCommandUpdate(ctx context.Context, command *model_
 
 // ProcessUserCommandDelete deletes a user command from the database.
 func (d *DataBase) ProcessUserCommandDelete(ctx context.Context, command *model_struct.LocalUserCommand) error {
-	d.userMtx.Lock()
-	defer d.userMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Where("type = ? AND uuid = ?", command.Type, command.Uuid).Delete(&model_struct.LocalUserCommand{}).Error,
 		"ProcessUserCommandDelete failed")
 }
 
 // ProcessUserCommandGetAll retrieves user commands from the database.
 func (d *DataBase) ProcessUserCommandGetAll(ctx context.Context) ([]*model_struct.LocalUserCommand, error) {
-	d.userMtx.RLock()
-	defer d.userMtx.RUnlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var commands []*model_struct.LocalUserCommand
 	return commands, errs.WrapMsg(d.conn.WithContext(ctx).Find(&commands).Error, "ProcessUserCommandGetAll failed")
 }

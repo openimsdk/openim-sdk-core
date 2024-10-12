@@ -4,28 +4,29 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/version"
-	"github.com/openimsdk/protocol/third"
-	"github.com/openimsdk/tools/errs"
-	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
+	"github.com/openimsdk/protocol/constant"
+	"github.com/openimsdk/protocol/third"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
 
 const (
 	buffer = 10 * 1024 * 1024
 )
 
-// UploadLogs uploadLogs.
-func (c *Third) UploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
+func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
 	if c.logUploadLock.TryLock() {
 		defer c.logUploadLock.Unlock()
 	} else {
@@ -118,8 +119,7 @@ func (c *Third) UploadLogs(ctx context.Context, line int, ex string, progress Pr
 		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
 		Ex:         ex,
 	}
-	_, err = util.CallApi[third.UploadLogsResp](ctx, constant.UploadLogsRouter, reqLog)
-	return err
+	return api.UploadLogs.Execute(ctx, reqLog)
 }
 
 func checkLogPath(logPath string) bool {
@@ -186,4 +186,10 @@ func readLastNLines(filename string, n int) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+func (c *Third) printLog(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
+	errString := errs.New(err)
+
+	log.SDKLog(ctx, logLevel, file, line, msg, errString, keysAndValues)
 }

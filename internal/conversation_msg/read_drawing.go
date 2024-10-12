@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -29,25 +28,9 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
 
-	pbMsg "github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
-
-func (c *Conversation) markMsgAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
-	req := &pbMsg.MarkMsgsAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, Seqs: seqs}
-	return util.ApiPost(ctx, constant.MarkMsgsAsReadRouter, req, nil)
-}
-
-func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversationID string, hasReadSeq int64, seqs []int64) error {
-	req := &pbMsg.MarkConversationAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq, Seqs: seqs}
-	return util.ApiPost(ctx, constant.MarkConversationAsRead, req, nil)
-}
-
-func (c *Conversation) setConversationHasReadSeq(ctx context.Context, conversationID string, hasReadSeq int64) error {
-	req := &pbMsg.SetConversationHasReadSeqReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
-	return util.ApiPost(ctx, constant.SetConversationHasReadSeq, req, nil)
-}
 
 func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, conversationID string) error {
 	maxSeq, err := c.db.GetConversationNormalMsgSeq(ctx, conversationID)
@@ -57,17 +40,13 @@ func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, c
 	if maxSeq == 0 {
 		return nil
 	}
-	if err := c.setConversationHasReadSeq(ctx, conversationID, maxSeq); err != nil {
-		return err
-	}
-	if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"has_read_seq": maxSeq}); err != nil {
-		return err
-	}
-	return nil
+	return c.setConversationHasReadSeq(ctx, conversationID, maxSeq)
 }
 
 // mark a conversation's all message as read
 func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conversationID string) error {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
 	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -95,10 +74,13 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 		if len(seqs) == 0 {
 			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
+			if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, seqs); err != nil {
+				return err
+			}
 		} else {
 			log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs",
 				seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-			if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
+			if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, seqs); err != nil {
 				return err
 			}
 			_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
@@ -106,9 +88,9 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 				log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
 			}
 		}
-	case constant.SuperGroupChatType, constant.NotificationChatType:
+	case constant.ReadGroupChatType, constant.NotificationChatType:
 		log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-		if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, nil); err != nil {
+		if err := c.markConversationAsReadServer(ctx, conversationID, maxSeq, nil); err != nil {
 			return err
 		}
 	}
@@ -145,7 +127,7 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
 		return nil
 	}
-	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
+	if err := c.markMsgAsRead2Server(ctx, conversationID, seqs); err != nil {
 		return err
 	}
 	decrCount, err := c.db.MarkConversationMessageAsReadDB(ctx, conversationID, markAsReadMsgIDs)
@@ -191,23 +173,33 @@ func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID s
 func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_struct.LocalConversation, hasReadSeq int64, seqs []int64) error {
 	if conversation.ConversationType == constant.SingleChatType {
 		if len(seqs) != 0 {
-			_, err := c.db.MarkConversationMessageAsReadBySeqs(ctx, conversation.ConversationID, seqs)
+			hasReadMessage, err := c.db.GetMessageBySeq(ctx, conversation.ConversationID, hasReadSeq)
 			if err != nil {
-				log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversation.ConversationID, "seqs", seqs)
 				return err
 			}
+			if hasReadMessage.IsRead {
+				return errs.New("read info from self can be ignored").Wrap()
+
+			} else {
+				_, err := c.db.MarkConversationMessageAsReadBySeqs(ctx, conversation.ConversationID, seqs)
+				if err != nil {
+					return err
+				}
+			}
+
 		} else {
-			log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversation.ConversationID, "hasReadSeq", hasReadSeq)
-			return errs.New("seqs is empty", "conversationID", conversation.ConversationID, "hasReadSeq", hasReadSeq).Wrap()
+			return errs.New("seqList is empty", "conversationID", conversation.ConversationID, "hasReadSeq", hasReadSeq).Wrap()
 		}
-		if hasReadSeq > conversation.HasReadSeq {
-			decrUnreadCount := hasReadSeq - conversation.HasReadSeq
-			if err := c.db.DecrConversationUnreadCount(ctx, conversation.ConversationID, decrUnreadCount); err != nil {
-				log.ZError(ctx, "DecrConversationUnreadCount err", err, "conversationID", conversation.ConversationID, "decrUnreadCount", decrUnreadCount)
-				return err
+		currentMaxSeq := c.maxSeqRecorder.Get(conversation.ConversationID)
+		if currentMaxSeq == 0 {
+			return errs.New("currentMaxSeq is 0", "conversationID", conversation.ConversationID).Wrap()
+		} else {
+			unreadCount := currentMaxSeq - hasReadSeq
+			if unreadCount < 0 {
+				log.ZWarn(ctx, "unread count is less than 0", nil, "conversationID", conversation.ConversationID, "currentMaxSeq", currentMaxSeq, "hasReadSeq", hasReadSeq)
+				unreadCount = 0
 			}
-			if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"has_read_seq": hasReadSeq}); err != nil {
-				log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversation.ConversationID)
+			if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"unread_count": unreadCount}); err != nil {
 				return err
 			}
 		}
@@ -217,9 +209,8 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 			return err
 		}
 		if (!latestMsg.IsRead) && datautil.Contain(latestMsg.Seq, seqs...) {
-			latestMsg.IsRead = true
-			conversation.LatestMsg = utils.StructToJsonString(&latestMsg)
-			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
+			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID,
+				Action: constant.UpdateLatestMessageChange, Args: []string{conversation.ConversationID}}, Ctx: ctx})
 		}
 	} else {
 		if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"unread_count": 0}); err != nil {
@@ -288,7 +279,7 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) er
 			c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 		}
 	} else {
-		c.doUnreadCount(ctx, conversation, tips.HasReadSeq, tips.Seqs)
+		return c.doUnreadCount(ctx, conversation, tips.HasReadSeq, tips.Seqs)
 	}
 	return nil
 }

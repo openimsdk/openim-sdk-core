@@ -26,6 +26,8 @@ import (
 	"strings"
 	"syscall/js"
 
+	"github.com/openimsdk/tools/errs"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"github.com/openimsdk/tools/log"
@@ -150,7 +152,8 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 	if r.callback == nil {
 		r.callback = NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
 	}
-	log.ZError(ctx, "test", nil, "asyncCallWithOutCallback", len(r.arguments))
+	log.ZWarn(ctx, "asyncCall", nil, "asyncCallWithOutCallback", len(r.arguments))
+
 	r.callback.SetOperationID(r.arguments[0].String())
 	//strings.SplitAfter()
 	for i := 0; i < len(r.arguments); i++ {
@@ -276,7 +279,7 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	switch x := recover.(type) {
 	case string:
 		log.ZError(ctx, "STRINGERR", nil, "r", x)
-		temp = utils.Wrap(errors.New(x), "").Error()
+		temp = errs.WrapMsg(errors.New(x), "").Error()
 	case error:
 		//buf := make([]byte, 1<<20)
 		//runtime.Stack(buf, true)
@@ -284,7 +287,7 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 		temp = x.Error()
 	default:
 		log.ZError(ctx, "unknown panic", nil, "r", x)
-		temp = utils.Wrap(errors.New("unknown panic"), "").Error()
+		temp = errs.WrapMsg(errors.New("unknown panic"), "").Error()
 	}
 	if r.callback != nil {
 		r.callback.SetErrCode(100).SetErrMsg(temp).SendMessage()

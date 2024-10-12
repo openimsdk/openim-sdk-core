@@ -37,14 +37,16 @@ const (
 )
 
 func (d *DataBase) GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversation model_struct.LocalConversation
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("user_id=?", userID).Find(&conversation).Error, "GetConversationByUserID error")
 	return &conversation, err
 }
 
 func (d *DataBase) GetAllConversationListDB(ctx context.Context) ([]*model_struct.LocalConversation, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversationList []*model_struct.LocalConversation
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Find(&conversationList).Error,
 		"GetAllConversationList failed")
@@ -53,43 +55,49 @@ func (d *DataBase) GetAllConversationListDB(ctx context.Context) ([]*model_struc
 	}
 	return conversationList, err
 }
+
 func (d *DataBase) FindAllConversationConversationID(ctx context.Context) (conversationIDs []string, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	return conversationIDs, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error, "")
 }
+
 func (d *DataBase) GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversationList []*model_struct.LocalConversation
 	return conversationList, errs.WrapMsg(d.conn.WithContext(ctx).Where("latest_msg_send_time = ?", 0).Find(&conversationList).Error,
 		"GetHiddenConversationList failed")
 }
 
 func (d *DataBase) GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversationList []*model_struct.LocalConversation
 	return conversationList, errs.WrapMsg(d.conn.WithContext(ctx).Find(&conversationList).Error, "GetAllConversations failed")
 }
 
 func (d *DataBase) GetAllConversationIDList(ctx context.Context) (result []string, err error) {
-	d.groupMtx.Lock()
-	defer d.groupMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var c model_struct.LocalConversation
 	return result, errs.WrapMsg(d.conn.WithContext(ctx).Model(&c).Pluck("conversation_id", &result).Error, "GetAllConversationIDList failed ")
 }
 
 func (d *DataBase) GetAllSingleConversationIDList(ctx context.Context) (result []string, err error) {
-	d.groupMtx.Lock()
-	defer d.groupMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var c model_struct.LocalConversation
 	return result, errs.WrapMsg(d.conn.WithContext(ctx).Model(&c).Where("conversation_type = ?", constant.SingleChatType).Pluck("conversation_id", &result).Error, "GetAllConversationIDList failed ")
 }
 
 func (d *DataBase) GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversationList []*model_struct.LocalConversation
-	return conversationList, errs.WrapMsg(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Offset(offset).Limit(count).Find(&conversationList).Error,
-		"GetFriendList failed")
+	return conversationList, errs.Wrap(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Offset(offset).Limit(count).Find(&conversationList).Error)
 }
+
 func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
 	if conversationList == nil {
 		return nil
@@ -114,6 +122,8 @@ func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversation
 }
 
 func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	var conversationIDs []string
 	if err := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Pluck("conversation_id", &conversationIDs).Error; err != nil {
 		return err
@@ -160,6 +170,8 @@ func (d *DataBase) DeleteAllConversation(ctx context.Context) error {
 }
 
 func (d *DataBase) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var c model_struct.LocalConversation
 	return &c, errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id = ?",
 		conversationID).Take(&c).Error, "GetConversation failed, conversationID: "+conversationID)
@@ -199,9 +211,10 @@ func (d *DataBase) BatchUpdateConversationList(ctx context.Context, conversation
 	}
 	return nil
 }
+
 func (d *DataBase) ConversationIfExists(ctx context.Context, conversationID string) (bool, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var count int64
 	t := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("conversation_id = ?",
 		conversationID).Count(&count)
@@ -266,6 +279,7 @@ func (d *DataBase) SetConversationDraftDB(ctx context.Context, conversationID, d
 	}
 	return errs.WrapMsg(t.Error, "SetConversationDraft failed")
 }
+
 func (d *DataBase) RemoveConversationDraft(ctx context.Context, conversationID, draftText string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -276,6 +290,7 @@ func (d *DataBase) RemoveConversationDraft(ctx context.Context, conversationID, 
 	}
 	return errs.WrapMsg(t.Error, "RemoveConversationDraft failed")
 }
+
 func (d *DataBase) UnPinConversation(ctx context.Context, conversationID string, isPinned int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -296,6 +311,7 @@ func (d *DataBase) UpdateColumnsConversation(ctx context.Context, conversationID
 	}
 	return errs.WrapMsg(t.Error, "UpdateColumnsConversation failed")
 }
+
 func (d *DataBase) UpdateAllConversation(ctx context.Context, conversation *model_struct.LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -308,6 +324,7 @@ func (d *DataBase) UpdateAllConversation(ctx context.Context, conversation *mode
 	}
 	return errs.WrapMsg(t.Error, "UpdateColumnsConversation failed")
 }
+
 func (d *DataBase) IncrConversationUnreadCount(ctx context.Context, conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -318,9 +335,10 @@ func (d *DataBase) IncrConversationUnreadCount(ctx context.Context, conversation
 	}
 	return errs.WrapMsg(t.Error, "IncrConversationUnreadCount failed")
 }
+
 func (d *DataBase) GetTotalUnreadMsgCountDB(ctx context.Context) (totalUnreadCount int32, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var result []int64
 	err = d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("recv_msg_opt < ? and latest_msg_send_time > ?", constant.ReceiveNotNotifyMessage, 0).Pluck("unread_count", &result).Error
 	if err != nil {
@@ -343,8 +361,8 @@ func (d *DataBase) SetMultipleConversationRecvMsgOpt(ctx context.Context, conver
 }
 
 func (d *DataBase) GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var conversationList []model_struct.LocalConversation
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id IN ?", conversationIDList).Find(&conversationList).Error, "GetMultipleConversation failed")
 	for _, v := range conversationList {
@@ -353,6 +371,7 @@ func (d *DataBase) GetMultipleConversationDB(ctx context.Context, conversationID
 	}
 	return result, err
 }
+
 func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversationID string, count int64) (err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -377,7 +396,10 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 	tx.Commit()
 	return nil
 }
+
 func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	// Define the search condition based on the searchParam
 	condition := fmt.Sprintf("show_name like %q ", "%"+searchParam+"%")
 	var conversationList []*model_struct.LocalConversation

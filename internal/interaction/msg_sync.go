@@ -16,8 +16,11 @@ package interaction
 
 import (
 	"context"
+	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -40,7 +43,8 @@ const (
 	pullMsgGoroutineLimit = 10
 )
 
-// The callback synchronization starts. The reconnection ends
+// MsgSyncer is a central hub for message relay, responsible for sequential message gap pulling,
+// handling network events, and managing app foreground and background events.
 type MsgSyncer struct {
 	loginUserID        string                // login user ID
 	longConnMgr        *LongConnMgr          // long connection manager
@@ -52,6 +56,8 @@ type MsgSyncer struct {
 	syncTimes          int                   // times of sync
 	ctx                context.Context       // context
 	reinstalled        bool                  //true if the app was uninstalled and reinstalled
+	isSyncing          bool                  // indicates whether data is being synced
+	isSyncingLock      sync.Mutex            // lock for syncing state
 
 }
 
@@ -149,6 +155,13 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 // DoListener Listen to the message pipe of the message synchronizer
 // and process received and pushed messages
 func (m *MsgSyncer) DoListener(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+
+			log.ZWarn(ctx, "DoListener panic", nil, "panic info", err)
+		}
+	}()
 	for {
 		select {
 		case cmd := <-m.PushMsgAndMaxSeqCh:
@@ -174,10 +187,19 @@ func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 	switch cmd.Cmd {
 	case constant.CmdConnSuccesss:
 		log.ZInfo(cmd.Ctx, "recv long conn mgr connected", "cmd", cmd.Cmd, "value", cmd.Value)
-		m.doConnected(cmd.Ctx)
-	case constant.CmdMaxSeq:
-		log.ZInfo(cmd.Ctx, "recv max seqs from long conn mgr, start sync msgs", "cmd", cmd.Cmd, "value", cmd.Value)
-		m.compareSeqsAndBatchSync(cmd.Ctx, cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr, defaultPullNums)
+		if m.startSync() {
+			m.doConnected(cmd.Ctx)
+		} else {
+			log.ZWarn(cmd.Ctx, "syncing, ignore connected event", nil, "cmd", cmd.Cmd, "value", cmd.Value)
+		}
+	case constant.CmdWakeUpDataSync:
+		log.ZInfo(cmd.Ctx, "app wake up, start sync msgs", "cmd", cmd.Cmd, "value", cmd.Value)
+		if m.startSync() {
+			m.doWakeupDataSync(cmd.Ctx)
+		} else {
+			log.ZWarn(cmd.Ctx, "syncing, ignore wake up event", nil, "cmd", cmd.Cmd, "value", cmd.Value)
+
+		}
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))
 	}
@@ -191,7 +213,9 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 		messagesSeqMap := make(map[string]int64)
 		for conversationID, seq := range maxSeqToSync {
 			if IsNotification(conversationID) {
-				notificationsSeqMap[conversationID] = seq
+				if seq != 0 { // seq is 0, no need to sync
+					notificationsSeqMap[conversationID] = seq
+				}
 			} else {
 				messagesSeqMap[conversationID] = seq
 			}
@@ -234,11 +258,38 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 					needSyncSeqMap[conversationID] = [2]int64{syncedMaxSeq + 1, maxSeq}
 				}
 			} else {
-				needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
+				if maxSeq != 0 { // seq is 0, no need to sync
+					needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
+				}
 			}
 		}
 		_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap, pullNums)
 	}
+}
+
+// startSync checks if the sync is already in progress.
+// If syncing is in progress, it returns false. Otherwise, it starts syncing and returns true.
+func (ms *MsgSyncer) startSync() bool {
+	ms.isSyncingLock.Lock()
+	defer ms.isSyncingLock.Unlock()
+
+	if ms.isSyncing {
+		// If already syncing, return false
+		return false
+	}
+
+	// Set syncing to true and start the sync
+	ms.isSyncing = true
+
+	// Create a goroutine that waits for 5 seconds and then sets isSyncing to false
+	go func() {
+		time.Sleep(5 * time.Second)
+		ms.isSyncingLock.Lock()
+		ms.isSyncing = false
+		ms.isSyncingLock.Unlock()
+	}()
+
+	return true
 }
 
 func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
@@ -247,14 +298,14 @@ func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerNotification)
 }
 
-func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
-	if len(pullMsgs) == 0 {
+func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pushMessages map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
+	if len(pushMessages) == 0 {
 		return
 	}
 	needSyncSeqMap := make(map[string][2]int64)
 	var lastSeq int64
 	var storageMsgs []*sdkws.MsgData
-	for conversationID, msgs := range pullMsgs {
+	for conversationID, msgs := range pushMessages {
 		for _, msg := range msgs.Msgs {
 			if msg.Seq == 0 {
 				_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: []*sdkws.MsgData{msg}}})
@@ -299,83 +350,83 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 	}
 }
 
+func (m *MsgSyncer) doWakeupDataSync(ctx context.Context) {
+	common.TriggerCmdSyncData(ctx, m.conversationCh)
+	var resp sdkws.GetMaxSeqResp
+	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
+		log.ZError(m.ctx, "get max seq error", err)
+		return
+	} else {
+		log.ZDebug(m.ctx, "get max seq success", "resp", resp.MaxSeqs)
+	}
+	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, defaultPullNums)
+}
+
 func IsNotification(conversationID string) bool {
 	return strings.HasPrefix(conversationID, "n_")
 }
 
-// Fragment synchronization message, seq refresh after successful trigger
 func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
-	if len(seqMap) > 0 {
-		log.ZDebug(ctx, "current sync seqMap", "seqMap", seqMap)
-		var (
-			tempSeqMap = make(map[string][2]int64, 50)
-			msgNum     = 0
-		)
-		for k, v := range seqMap {
-			oneConversationSyncNum := v[1] - v[0] + 1
-			if (oneConversationSyncNum/SplitPullMsgNum) > 1 && IsNotification(k) {
-				nSeqMap := make(map[string][2]int64, 1)
-				count := int(oneConversationSyncNum / SplitPullMsgNum)
-				startSeq := v[0]
-				var end int64
-				for i := 0; i <= count; i++ {
-					if i == count {
-						nSeqMap[k] = [2]int64{startSeq, v[1]}
-					} else {
-						end = startSeq + int64(SplitPullMsgNum)
-						if end > v[1] {
-							end = v[1]
-							i = count
-						}
-						nSeqMap[k] = [2]int64{startSeq, end}
-					}
-					resp, err := m.pullMsgBySeqRange(ctx, nSeqMap, syncMsgNum)
-					if err != nil {
-						log.ZError(ctx, "syncMsgFromSvr err", err, "nSeqMap", nSeqMap)
-						return err
-					}
-					_ = m.triggerConversation(ctx, resp.Msgs)
-					_ = m.triggerNotification(ctx, resp.NotificationMsgs)
-					for conversationID, seqs := range nSeqMap {
-						m.syncedMaxSeqs[conversationID] = seqs[1]
-					}
-					startSeq = end + 1
-				}
-				continue
+	if len(seqMap) == 0 {
+		log.ZDebug(ctx, "nothing to sync", "syncMsgNum", syncMsgNum)
+		return nil
+	}
+
+	log.ZDebug(ctx, "current sync seqMap", "seqMap", seqMap)
+	var (
+		tempSeqMap = make(map[string][2]int64, 50)
+		msgNum     = 0
+	)
+
+	for k, v := range seqMap {
+		oneConversationSyncNum := v[1] - v[0] + 1
+		tempSeqMap[k] = v
+		// For notification conversations, use oneConversationSyncNum directly
+		if IsNotification(k) {
+			msgNum += int(oneConversationSyncNum)
+		} else {
+			// For regular conversations, ensure msgNum is the minimum of oneConversationSyncNum and syncMsgNum
+			currentSyncMsgNum := int64(0)
+			if oneConversationSyncNum > syncMsgNum {
+				currentSyncMsgNum = syncMsgNum
+			} else {
+				currentSyncMsgNum = oneConversationSyncNum
 			}
-			tempSeqMap[k] = v
-			if oneConversationSyncNum > 0 {
-				msgNum += int(oneConversationSyncNum)
-			}
-			if msgNum >= SplitPullMsgNum {
-				resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
-				if err != nil {
-					log.ZError(ctx, "syncMsgFromSvr err", err, "tempSeqMap", tempSeqMap)
-					return err
-				}
-				_ = m.triggerConversation(ctx, resp.Msgs)
-				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
-				for conversationID, seqs := range tempSeqMap {
-					m.syncedMaxSeqs[conversationID] = seqs[1]
-				}
-				tempSeqMap = make(map[string][2]int64, 50)
-				msgNum = 0
-			}
+			msgNum += int(currentSyncMsgNum)
 		}
 
+		// If accumulated msgNum reaches SplitPullMsgNum, trigger a batch pull
+		if msgNum >= SplitPullMsgNum {
+			resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
+			if err != nil {
+				log.ZError(ctx, "syncMsgFromServer error", err, "tempSeqMap", tempSeqMap)
+				return err
+			}
+			_ = m.triggerConversation(ctx, resp.Msgs)
+			_ = m.triggerNotification(ctx, resp.NotificationMsgs)
+			for conversationID, seqs := range tempSeqMap {
+				m.syncedMaxSeqs[conversationID] = seqs[1]
+			}
+			// Reset tempSeqMap and msgNum to handle the next batch
+			tempSeqMap = make(map[string][2]int64, 50)
+			msgNum = 0
+		}
+	}
+
+	// Handle remaining messages to ensure all are synced
+	if len(tempSeqMap) > 0 {
 		resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 		if err != nil {
-			log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
+			log.ZError(ctx, "syncMsgFromServer error", err, "tempSeqMap", tempSeqMap)
 			return err
 		}
 		_ = m.triggerConversation(ctx, resp.Msgs)
 		_ = m.triggerNotification(ctx, resp.NotificationMsgs)
-		for conversationID, seqs := range seqMap {
+		for conversationID, seqs := range tempSeqMap {
 			m.syncedMaxSeqs[conversationID] = seqs[1]
 		}
-	} else {
-		log.ZDebug(ctx, "noting conversation to sync", "syncMsgNum", syncMsgNum)
 	}
+
 	return nil
 }
 
@@ -406,7 +457,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				gr.Go(func() error {
 					resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
 					if err != nil {
-						log.ZError(ctx, "syncMsgFromSvr err", err, "tempSeqMap", tpSeqMap)
+						log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tpSeqMap)
 						return err
 					}
 					_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
@@ -425,7 +476,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 		gr.Go(func() error {
 			resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 			if err != nil {
-				log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
+				log.ZError(ctx, "syncMsgFromServer err", err, "seqMap", seqMap)
 				return err
 			}
 			_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
@@ -474,7 +525,7 @@ func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]
 		})
 	}
 	resp = &sdkws.PullMessageBySeqsResp{}
-	if err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.PullMsgBySeqList, resp); err != nil {
+	if err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.PullMsgByRange, resp); err != nil {
 		return nil, err
 	}
 	return resp, nil
@@ -488,9 +539,9 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 	seqsList := m.splitSeqs(split, seqsNeedSync)
 	for i := 0; i < len(seqsList); {
 		var pullMsgResp sdkws.PullMessageBySeqsResp
-		err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgBySeqList, &pullMsgResp)
+		err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgByRange, &pullMsgResp)
 		if err != nil {
-			log.ZError(ctx, "syncMsgFromSvrSplit err", err, "pullMsgReq", pullMsgReq)
+			log.ZError(ctx, "syncMsgFromServerSplit err", err, "pullMsgReq", pullMsgReq)
 			continue
 		}
 		i++

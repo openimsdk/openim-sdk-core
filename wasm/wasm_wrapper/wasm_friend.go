@@ -64,14 +64,11 @@ func (w *WrapperFriend) AddFriend(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.AddFriend, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperFriend) SetFriendRemark(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperFriend) UpdateFriends(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetFriendRemark, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.UpdateFriends, callback, &args).AsyncCallWithCallback()
 }
-func (w *WrapperFriend) PinFriends(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.PinFriends, callback, &args).AsyncCallWithCallback()
-}
+
 func (w *WrapperFriend) DeleteFriend(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.DeleteFriend, callback, &args).AsyncCallWithCallback()
@@ -110,8 +107,4 @@ func (w *WrapperFriend) RemoveBlack(_ js.Value, args []js.Value) interface{} {
 func (w *WrapperFriend) AddBlack(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.AddBlack, callback, &args).AsyncCallWithCallback()
-}
-func (w *WrapperFriend) SetFriendsEx(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.SetFriendsEx, callback, &args).AsyncCallWithCallback()
 }

@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -28,7 +27,7 @@ import (
 	"github.com/openimsdk/tools/utils/timeutil"
 
 	"github.com/jinzhu/copier"
-	pbMsg "github.com/openimsdk/protocol/msg"
+
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
@@ -49,6 +48,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		log.ZError(ctx, "GetMessageBySeq failed", err, "tips", &tips)
 		return errs.Wrap(err)
 	}
+
 	var revokerRole int32
 	var revokerNickname string
 	if tips.IsAdminRevoke || tips.SesstionType == constant.SingleChatType {
@@ -59,13 +59,15 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		} else {
 			log.ZDebug(ctx, "revoker user name", "userName", userName)
 		}
+
 		revokerNickname = userName
-	} else if tips.SesstionType == constant.SuperGroupChatType {
+	} else if tips.SesstionType == constant.ReadGroupChatType {
 		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
 		if err != nil {
 			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
 			return errs.Wrap(err)
 		}
+
 		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
@@ -134,26 +136,36 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		log.ZError(ctx, "SearchAllMessageByContentType failed", err, "tips", &tips)
 		return errs.Wrap(err)
 	}
+
 	for _, v := range msgList {
 		err = c.quoteMsgRevokeHandle(ctx, tips.ConversationID, v, m)
-		return errs.Wrap(err)
+		if err != nil {
+			log.ZError(ctx, "quote Msg Revoke Handle failed.", err, "chat Log content", v)
+		}
 	}
-	return nil
+	return errs.Wrap(err)
 }
 
 func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID string, v *model_struct.LocalChatLog, revokedMsg sdk_struct.MessageRevoked) error {
-	s := sdk_struct.MsgStruct{}
-	_ = utils.JsonStringToStruct(v.Content, &s.QuoteElem)
+	s := sdk_struct.QuoteElem{}
+	if v.Content == "" {
+		return errs.New("Chat Log Content not found")
+	}
 
-	if s.QuoteElem.QuoteMessage == nil {
+	if err := utils.JsonStringToStruct(v.Content, &s); err != nil {
+		return errs.New("ChatLog content transfer failed.")
+	}
+
+	if s.QuoteMessage == nil {
 		return errs.New("QuoteMessage is nil").Wrap()
 	}
-	if s.QuoteElem.QuoteMessage.ClientMsgID != revokedMsg.ClientMsgID {
+	if s.QuoteMessage.ClientMsgID != revokedMsg.ClientMsgID {
 		return errs.New("quoteMessage ClientMsgID is not revokedMsg ClientMsgID").Wrap()
 	}
-	s.QuoteElem.QuoteMessage.Content = utils.StructToJsonString(revokedMsg)
-	s.QuoteElem.QuoteMessage.ContentType = constant.RevokeNotification
-	v.Content = utils.StructToJsonString(s.QuoteElem)
+
+	s.QuoteMessage.Content = utils.StructToJsonString(revokedMsg)
+	s.QuoteMessage.ContentType = constant.RevokeNotification
+	v.Content = utils.StructToJsonString(s)
 	if err := c.db.UpdateMessageBySeq(ctx, conversationID, v); err != nil {
 		log.ZError(ctx, "UpdateMessage failed", err, "v", v)
 		return errs.Wrap(err)
@@ -178,7 +190,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, cli
 		if message.SendID != c.loginUserID {
 			return errors.New("only send by yourself message can be revoked")
 		}
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		if message.SendID != c.loginUserID {
 			groupAdmins, err := c.db.GetGroupMemberOwnerAndAdminDB(ctx, conversation.GroupID)
 			if err != nil {
@@ -196,9 +208,12 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, cli
 			}
 		}
 	}
-	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq, UserID: c.loginUserID}, nil); err != nil {
+
+	err = c.revokeMessageFromServer(ctx, conversationID, message.Seq)
+	if err != nil {
 		return err
 	}
+
 	c.revokeMessage(ctx, &sdkws.RevokeMsgTips{
 		ConversationID: conversationID,
 		Seq:            message.Seq,

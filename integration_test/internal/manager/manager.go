@@ -2,13 +2,15 @@ package manager
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	authPB "github.com/openimsdk/protocol/auth"
+	"github.com/openimsdk/tools/mcontext"
 )
 
 type MetaManager struct {
@@ -26,7 +28,7 @@ func NewMetaManager() *MetaManager {
 }
 
 func (m *MetaManager) ApiPost(ctx context.Context, route string, req, resp any) (err error) {
-	return util.ApiPost(ctx, route, req, resp)
+	return network.ApiPost(ctx, route, req, resp)
 }
 
 // PostWithCtx should only be used for scenarios such as registration and login that do not require a token or
@@ -46,6 +48,7 @@ func (m *MetaManager) BuildCtx(ctx context.Context) context.Context {
 		IMConfig: m.IMConfig,
 	})
 	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+	ctx = mcontext.SetOpUserID(ctx, "admin")
 	return ctx
 }
 
@@ -53,10 +56,20 @@ func (m *MetaManager) GetSecret() string {
 	return m.secret
 }
 
-func (m *MetaManager) GetToken(userID string, platformID int32) (string, error) {
-	req := authPB.UserTokenReq{PlatformID: platformID, UserID: userID, Secret: m.secret}
-	resp := authPB.UserTokenResp{}
-	err := m.PostWithCtx(constant.GetUsersToken, &req, &resp)
+func (m *MetaManager) GetAdminToken(userID string, platformID int32) (string, error) {
+	req := authPB.GetAdminTokenReq{UserID: userID, Secret: m.secret}
+	resp := authPB.GetAdminTokenResp{}
+	err := m.PostWithCtx(api.GetAdminToken.Route(), &req, &resp)
+	if err != nil {
+		return "", err
+	}
+	return resp.Token, nil
+}
+
+func (m *MetaManager) GetUserToken(userID string, platformID int32) (string, error) {
+	req := authPB.GetUserTokenReq{PlatformID: platformID, UserID: userID}
+	resp := authPB.GetUserTokenResp{}
+	err := m.PostWithCtx(api.GetUsersToken.Route(), &req, &resp)
 	if err != nil {
 		return "", err
 	}
@@ -64,7 +77,7 @@ func (m *MetaManager) GetToken(userID string, platformID int32) (string, error) 
 }
 
 func (m *MetaManager) WithAdminToken() (err error) {
-	token, err := m.GetToken(config.AdminUserID, config.PlatformID)
+	token, err := m.GetAdminToken(config.AdminUserID, config.PlatformID)
 	if err != nil {
 		return err
 	}

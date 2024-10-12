@@ -329,10 +329,15 @@ type CmdMsgSyncInReinstall struct {
 	Total int
 }
 
-type CmdPushMsgToMsgSync struct {
-	Msgs []*sdkws.PushMessages
+type BasicInfo struct {
+	Nickname string
+	FaceURL  string
 }
 
-type CmdMaxSeqToMsgSync struct {
-	ConversationMaxSeqOnSvr map[string]int64
+type PublicUser struct {
+	UserID     string `json:"userID"`
+	Nickname   string `json:"nickname"`
+	FaceURL    string `json:"faceURL"`
+	Ex         string `json:"ex"`
+	CreateTime int64  `json:"createTime"`
 }

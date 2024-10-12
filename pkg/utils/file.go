@@ -43,10 +43,6 @@ func CopyFile(srcName string, dstName string) (written int64, err error) {
 
 func FileTmpPath(fullPath, dbPrefix string) string {
 	suffix := path.Ext(fullPath)
-	if len(suffix) == 0 {
-		sdkLog("suffix  err:")
-	}
-
 	return dbPrefix + Md5(fullPath) + suffix //a->b
 }
 

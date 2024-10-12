@@ -23,26 +23,31 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
-//1,使用wasm原生的方式，tinygo应用于go的嵌入式领域，支持的功能有限，支持go语言的子集,甚至json序列化都无法支持
-//2.函数命名遵从驼峰命名
-//3.提供的sql生成语句中，关于bool值需要特殊处理，create语句的设计的到bool值的需要在创建语句中单独说明，这是因为在原有的sqlite中并不支持bool，用整数1或者0替代，gorm对其做了转换。
-//4.提供的sql生成语句中，字段名是下划线方式 例如：recv_id，但是接口转换的数据json tag字段的风格是recvID，类似的所有的字段需要做个map映射
-//5.任何涉及到gorm获取的是否需要返回错误，比如take和find都需要在文档上说明
-//6.任何涉及到update的操作，一定要看gorm原型中实现，如果有select(*)则不需要用temp_struct中的结构体
-//7.任何和接口重名的时候，db接口统一加上后缀DB
-//8.任何map类型统一使用json字符串转换，文档说明
+// 1. Using the native wasm method, TinyGo is applied to Go's embedded domain,
+// but the supported functionality is limited and only supports a subset of Go.
+// Even JSON serialization is not supported.
+// 2. Function names should follow camelCase convention.
+// 3. In the provided SQL generation statements, boolean values need special handling.
+// For create statements, boolean values should be explicitly handled because SQLite does not natively support boolean types.
+// Instead, integers (1 or 0) are used as substitutes, and GORM converts them automatically.
+// 4. In the provided SQL generation statements, field names use snake_case (e.g., recv_id),
+// but in the interface-converted data, the JSON tag fields follow camelCase (e.g., recvID).
+// All such fields should have a mapped transformation.
+// 5. Any GORM operations that involve retrieval (e.g., take and find) should specify whether they need to return an error in the documentation.
+// 6. For any update operations, be sure to check GORM's implementation. If there is a select(*) query involved,
+// you do not need to use the structures in temp_struct.
+// 7. Whenever there's a name conflict with an interface, the DB interface should append the "DB" suffix.
+// 8. For any map types, use JSON string conversion, and document this clearly.
 
 type IndexDB struct {
 	LocalUsers
 	LocalConversations
 	*LocalChatLogs
-	LocalSuperGroup
 	LocalConversationUnreadMessages
 	LocalGroups
 	LocalGroupMember
 	LocalGroupRequest
 	LocalCacheMessage
-	LocalStrangers
 	LocalUserCommand
 	*FriendRequest
 	*Black
@@ -62,40 +67,4 @@ func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) erro
 }
 
 func (i IndexDB) SetChatLogFailedStatus(ctx context.Context) {
-	//msgList, err := i.GetSendingMessageList()
-	//if err != nil {
-	//	log.Error("", "GetSendingMessageList failed ", err.Error())
-	//	return
-	//}
-	//for _, v := range msgList {
-	//	v.Status = constant.MsgStatusSendFailed
-	//	err := i.UpdateMessage(v)
-	//	if err != nil {
-	//		log.Error("", "UpdateMessage failed ", err.Error(), v)
-	//		continue
-	//	}
-	//}
-	//groupIDList, err := i.GetReadDiffusionGroupIDList()
-	//if err != nil {
-	//	log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
-	//	return
-	//}
-	//for _, v := range groupIDList {
-	//	msgList, err := i.SuperGroupGetSendingMessageList(v)
-	//	if err != nil {
-	//		log.Error("", "GetSendingMessageList failed ", err.Error())
-	//		return
-	//	}
-	//	if len(msgList) > 0 {
-	//		for _, v := range msgList {
-	//			v.Status = constant.MsgStatusSendFailed
-	//			err := i.SuperGroupUpdateMessage(v)
-	//			if err != nil {
-	//				log.Error("", "UpdateMessage failed ", err.Error(), v)
-	//				continue
-	//			}
-	//		}
-	//	}
-	//
-	//}
 }

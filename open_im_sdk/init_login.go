@@ -22,6 +22,8 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	pbConstant "github.com/openimsdk/protocol/constant"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
@@ -35,7 +37,7 @@ func GetSdkVersion() string {
 }
 
 const (
-	rotateCount  uint = 0
+	rotateCount  uint = 1
 	rotationTime uint = 24
 )
 
@@ -52,7 +54,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	if configArgs.PlatformID == 0 {
 		return false
 	}
-	if err := log.InitFromConfig("open-im-sdk-core", "", int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version, true); err != nil {
+	if err := log.InitLoggerFromConfig("open-im-sdk-core", "", configArgs.SystemType, pbConstant.PlatformID2Name[int(configArgs.PlatformID)], int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version, true); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 	}
 	fmt.Println("init log success")
@@ -114,16 +116,8 @@ func GetLoginUserID() string {
 	return UserForSDK.GetLoginUserID()
 }
 
-func (u *LoginMgr) InitMgr(ctx context.Context, userID, token string) error {
-	return u.initMgr(ctx, userID, token)
-}
-
 func (u *LoginMgr) Login(ctx context.Context, userID, token string) error {
 	return u.login(ctx, userID, token)
-}
-
-func (u *LoginMgr) LoginWithOutInit(ctx context.Context, userID, token string) error {
-	return u.loginWithOutInit(ctx, userID, token)
 }
 
 func (u *LoginMgr) Logout(ctx context.Context) error {

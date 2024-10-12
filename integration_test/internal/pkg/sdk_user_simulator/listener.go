@@ -1,9 +1,16 @@
 package sdk_user_simulator
 
 import (
+	"context"
+	"math/rand"
+
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
 
 type conversationCallBack struct {
@@ -81,12 +88,25 @@ func NewMsgListenerCallBak(userID string) *MsgListenerCallBak {
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	var sm sdk_struct.MsgStruct
-	utils.JsonStringToStruct(message, &sm)
+	_ = utils.JsonStringToStruct(message, &sm)
+
+	if rand.Float64() < config.CheckMsgRate && sm.ContentType == constant.Text {
+		rev := utils.GetCurrentTimestampByMill()
+		stm := &vars.StatMsg{
+			CostTime:    rev - sm.CreateTime,
+			ReceiveTime: rev,
+			Msg:         &sm,
+		}
+		select {
+		case vars.RecvMsgConsuming <- stm:
+		default:
+		}
+	}
 	switch sm.SessionType {
 	case constant.SingleChatType:
 		m.SingleDelay[sm.SendID] =
 			append(m.SingleDelay[sm.SendID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		m.GroupDelay[sm.GroupID] =
 			append(m.GroupDelay[sm.GroupID], &SingleMessage{SendID: sm.SendID, ClientMsgID: sm.ClientMsgID, Delay: GetRelativeServerTime() - sm.SendTime})
 	default:
@@ -121,47 +141,47 @@ func (m *MsgListenerCallBak) OnRecvOnlineOnlyMessage(message string) {
 
 }
 
-type testFriendListener struct {
+type testFriendshipListener struct {
 }
 
-func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAdded(callbackInfo string) {
 
 }
-func (testFriendListener) OnFriendApplicationDeleted(callbackInfo string) {
-
-}
-
-func (testFriendListener) OnFriendApplicationAccepted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnFriendApplicationRejected(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationAccepted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnFriendAdded(callbackInfo string) {
-}
-
-func (testFriendListener) OnFriendDeleted(callbackInfo string) {
+func (testFriendshipListener) OnFriendApplicationRejected(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnBlackAdded(callbackInfo string) {
-
-}
-func (testFriendListener) OnBlackDeleted(callbackInfo string) {
-
+func (testFriendshipListener) OnFriendAdded(callbackInfo string) {
 }
 
-func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
+func (testFriendshipListener) OnFriendDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnSuccess() {
+func (testFriendshipListener) OnBlackAdded(callbackInfo string) {
+
+}
+func (testFriendshipListener) OnBlackDeleted(callbackInfo string) {
 
 }
 
-func (testFriendListener) OnError(code int32, msg string) {
+func (testFriendshipListener) OnFriendInfoChanged(callbackInfo string) {
+
+}
+
+func (testFriendshipListener) OnSuccess() {
+
+}
+
+func (testFriendshipListener) OnError(code int32, msg string) {
 
 }
 
@@ -208,27 +228,30 @@ func (testGroupListener) OnGroupDismissed(callbackInfo string) {
 }
 
 type testConnListener struct {
+	UserID string
 }
 
-func (t *testConnListener) OnUserTokenInvalid(errMsg string) {}
+func (t *testConnListener) OnUserTokenInvalid(errMsg string) {
+	log.ZError(context.TODO(), "user token invalid", errs.New("user token invalid").Wrap(), "userID", t.UserID)
+}
 
 func (t *testConnListener) OnUserTokenExpired() {
-
+	log.ZError(context.TODO(), "user token expired", errs.New("user token expired").Wrap(), "userID", t.UserID)
 }
 func (t *testConnListener) OnConnecting() {
 
 }
 
 func (t *testConnListener) OnConnectSuccess() {
-
+	vars.NowLoginNum.Add(1)
 }
 
 func (t *testConnListener) OnConnectFailed(ErrCode int32, ErrMsg string) {
-
+	log.ZError(context.TODO(), "connect failed", errs.NewCodeError(int(ErrCode), ErrMsg), "userID", t.UserID)
 }
 
 func (t *testConnListener) OnKickedOffline() {
-
+	log.ZError(context.TODO(), "kicked offline", errs.New("kicked offline").Wrap(), "userID", t.UserID)
 }
 
 func (t *testConnListener) OnSelfInfoUpdated(info string) {

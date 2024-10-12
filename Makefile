@@ -77,10 +77,9 @@ MAKEFLAGS += --no-print-directory
 endif
 
 # The OS must be linux when building docker images
-# !WARNING: linux_mips64 linux_mips64le
-PLATFORMS ?= linux_s390x darwin_amd64 windows_amd64 linux_amd64 linux_arm64 linux_ppc64le
+
 # The OS can be linux/windows/darwin when building binaries
-# PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64 linux_arm64
+PLATFORMS ?= darwin_amd64 darwin_arm64 windows_amd64 linux_amd64 linux_arm64 
 
 # Set a specific PLATFORM
 ifeq ($(origin PLATFORM), undefined)
@@ -99,26 +98,10 @@ else
 	IMAGE_PLAT := $(PLATFORM)
 endif
 
-# Copy githook scripts when execute makefile
-# NEED Remove. DON'T REJECT!!
-# TODO! GIT_FILE_SIZE_LIMIT=42000000 git commit -m "This commit is allowed file sizes up to 42MB"
-# COPY_GITHOOK:=$(shell cp -f scripts/githooks/* .git/hooks/; chmod +x .git/hooks/*)
 
 # Linux command settings
 FIND := find . ! -path './image/*' ! -path './vendor/*' ! -path './bin/*'
 XARGS := xargs -r
-
-# ==============================================================================
-# TODO: License selection
-# LICENSE_TEMPLATE ?= $(ROOT_DIR)/scripts/LICENSE/license_templates.txt	# MIT License
-LICENSE_TEMPLATE ?= $(ROOT_DIR)/scripts/LICENSE/LICENSE_TEMPLATES  # Apache License
-
-# COMMA: Concatenate multiple strings to form a list of strings
-COMMA := ,
-# SPACE: Used to separate strings
-SPACE :=
-# SPACE: Replace multiple consecutive Spaces with a single space
-SPACE +=
 
 # ==============================================================================
 # Build definition
@@ -147,16 +130,6 @@ ifeq ($(origin GOBIN), undefined)
 	GOBIN := $(GOPATH)/bin
 endif
 
-COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*))
-BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
-
-ifeq (${COMMANDS},)
-  $(error Could not determine COMMANDS, set ROOT_DIR or run in source dir)
-endif
-ifeq (${BINS},)
-  $(error Could not determine BINS, set ROOT_DIR or run in source dir)
-endif
-
 EXCLUDE_TESTS=github.com/openimsdk/openim-sdk-core/test
 
 # ==============================================================================
@@ -164,7 +137,7 @@ EXCLUDE_TESTS=github.com/openimsdk/openim-sdk-core/test
 
 ## all: Build all the necessary targets.
 .PHONY: all
-all: copyright-verify build # tidy lint cover
+all: build # tidy lint cover
 
 # Define available OS and ARCH
 OSES = linux
@@ -301,20 +274,6 @@ docker-push:
 docker-buildx-push:
 	docker buildx build --platform linux/arm64,linux/amd64 -t ${IMG} . --push
 
-## copyright-verify: Validate boilerplate headers for assign files.
-.PHONY: copyright-verify
-copyright-verify: tools.verify.addlicense copyright-add
-	@echo "===========> Validate boilerplate headers for assign files starting in the $(ROOT_DIR) directory"
-	@$(TOOLS_DIR)/addlicense -v -check -ignore **/test/** -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
-	@echo "===========> End of boilerplate headers check..."
-
-## copyright-add: Add the boilerplate headers for all files.
-.PHONY: copyright-add
-copyright-add: tools.verify.addlicense
-	@echo "===========> Adding $(LICENSE_TEMPLATE) the boilerplate headers for all files"
-	@$(TOOLS_DIR)/addlicense -y $(shell date +"%Y") -v -c "OpenIM open source community." -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
-	@echo "===========> End the copyright is added..."
-
 ## clean: Clean all builds.
 .PHONY: clean
 clean:
@@ -331,7 +290,7 @@ help: Makefile
 ######################################=> common tools<= ############################################
 # tools
 
-BUILD_TOOLS ?= go-gitlint golangci-lint goimports addlicense deepcopy-gen conversion-gen ginkgo go-junit-report 
+BUILD_TOOLS ?= go-gitlint golangci-lint goimports addlicense deepcopy-gen conversion-gen ginkgo 
 
 ## tools.verify.%: Check if a tool is installed and install it
 .PHONY: tools.verify.%
@@ -374,16 +333,6 @@ install.conversion-gen:
 install.ginkgo:
 	@$(GO) install github.com/onsi/ginkgo/ginkgo@v1.16.2
 
-.PHONY: install.go-gitlint
-# wget -P _output/tools/ https://openim-1306374445.cos.ap-guangzhou.myqcloud.com/openim/tools/go-gitlint
-# go install github.com/antham/go-gitlint/cmd/gitlint@latest
-install.go-gitlint:
-	@wget -q https://openim-1306374445.cos.ap-guangzhou.myqcloud.com/openim/tools/go-gitlint -O ${TOOLS_DIR}/go-gitlint
-	@chmod +x ${TOOLS_DIR}/go-gitlint
-
-.PHONY: install.go-junit-report
-install.go-junit-report:
-	@$(GO) install github.com/jstemmer/go-junit-report@latest
 
 # ==============================================================================
 # Tools that might be used include go gvm, cos

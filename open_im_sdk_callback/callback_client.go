@@ -70,12 +70,7 @@ type OnConversationListener interface {
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
-	OnRecvGroupReadReceipt(groupMsgReceiptList string)
-
 	OnNewRecvMessageRevoked(messageRevoked string)
-	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
-	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
-	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
 	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
 	OnRecvOnlineOnlyMessage(message string)
@@ -102,15 +97,15 @@ type OnMessageKvInfoListener interface {
 }
 
 type OnListenerForService interface {
-	//有人申请进群
+	// OnGroupApplicationAdded Someone applied to join a group
 	OnGroupApplicationAdded(groupApplication string)
-	//进群申请被同意
+	// OnGroupApplicationAccepted Group join application has been accepted
 	OnGroupApplicationAccepted(groupApplication string)
-	//有人申请添加你为好友
+	// OnFriendApplicationAdded Someone applied to add you as a friend
 	OnFriendApplicationAdded(friendApplication string)
-	//好友申请被同意
-	OnFriendApplicationAccepted(groupApplication string)
-	//收到新消息
+	// OnFriendApplicationAccepted Friend request has been accepted
+	OnFriendApplicationAccepted(friendApplication string)
+	// OnRecvNewMessage Received a new message
 	OnRecvNewMessage(message string)
 }
 
@@ -124,11 +119,11 @@ type OnSignalingListener interface {
 	OnInviteeRejected(inviteeRejectedCallback string)
 
 	OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string)
-	//
+
 	OnInvitationCancelled(invitationCancelledCallback string)
-	//
+
 	OnInvitationTimeout(invitationTimeoutCallback string)
-	//
+
 	OnHangUp(hangUpCallback string)
 
 	OnRoomParticipantConnected(onRoomParticipantConnectedCallback string)
@@ -137,22 +132,24 @@ type OnSignalingListener interface {
 }
 
 type UploadFileCallback interface {
-	Open(size int64)                                                    // 文件打开的大小
-	PartSize(partSize int64, num int)                                   // 分片大小,数量
-	HashPartProgress(index int, size int64, partHash string)            // 每块分片的hash值
-	HashPartComplete(partsHash string, fileHash string)                 // 分块完成，服务端标记hash和文件最终hash
-	UploadID(uploadID string)                                           // 上传ID
-	UploadPartComplete(index int, partSize int64, partHash string)      // 上传分片进度
-	UploadComplete(fileSize int64, streamSize int64, storageSize int64) // 整体进度
-	Complete(size int64, url string, typ int)                           // 上传完成
+	// Open a file with a given size
+	Open(size int64)
+	// PartSize Set the size of each part and the total number of parts
+	PartSize(partSize int64, num int)
+	// HashPartProgress Progress of hashing each part, including the part index, size, and hash value
+	HashPartProgress(index int, size int64, partHash string)
+	// HashPartComplete All parts have been hashed, providing the combined hash of all parts and the final file hash
+	HashPartComplete(partsHash string, fileHash string)
+	// UploadID Upload ID is generated and provided
+	UploadID(uploadID string)
+	// UploadPartComplete A specific part has completed uploading, providing the part index, size, and hash value
+	UploadPartComplete(index int, partSize int64, partHash string)
+	// UploadComplete The entire file upload progress, including the file size, stream size, and storage size
+	UploadComplete(fileSize int64, streamSize int64, storageSize int64)
+	// Complete The file upload is complete, providing the final size, URL, and type of the file
+	Complete(size int64, url string, typ int)
 }
 
 type UploadLogProgress interface {
 	OnProgress(current int64, size int64)
-}
-
-type AppDataSyncListener interface {
-	OnAppDataSyncStart()
-	OnAppDataSyncProgress(progress int)
-	OnAppDataSyncFinish()
 }

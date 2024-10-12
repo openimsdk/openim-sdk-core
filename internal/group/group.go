@@ -18,10 +18,12 @@ import (
 	"context"
 	"sync"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/util"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/page"
@@ -47,10 +49,10 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 		conversationCh: conversationCh,
 	}
 	g.initSyncer()
+	g.groupMemberCache = cache.NewCache[string, *model_struct.LocalGroupMember]()
 	return g
 }
 
-// //utils.GetCurrentTimestampByMill()
 type Group struct {
 	listener                func() open_im_sdk_callback.OnGroupListener
 	loginUserID             string
@@ -65,6 +67,8 @@ type Group struct {
 
 	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService
+
+	groupMemberCache *cache.Cache[string, *model_struct.LocalGroupMember]
 }
 
 func (g *Group) initSyncer() {
@@ -97,7 +101,7 @@ func (g *Group) initSyncer() {
 				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
 					Action: constant.UpdateConFaceUrlAndNickName,
 					Args: common.SourceIDAndSessionType{
-						SourceID: server.GroupID, SessionType: constant.SuperGroupChatType,
+						SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
 						FaceURL: server.FaceURL, Nickname: server.GroupName,
 					},
 				}, g.conversationCh)
@@ -118,7 +122,7 @@ func (g *Group) initSyncer() {
 						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
 							Action: constant.UpdateConFaceUrlAndNickName,
 							Args: common.SourceIDAndSessionType{
-								SourceID: server.GroupID, SessionType: constant.SuperGroupChatType,
+								SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
 								FaceURL: server.FaceURL, Nickname: server.GroupName,
 							},
 						}, g.conversationCh)
@@ -127,6 +131,7 @@ func (g *Group) initSyncer() {
 			}
 			return nil
 		}),
+
 		syncer.WithBatchInsert[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, values []*model_struct.LocalGroup) error {
 			return g.db.BatchInsertGroup(ctx, values)
 		}),
@@ -140,10 +145,9 @@ func (g *Group) initSyncer() {
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(resp *group.GetJoinedGroupListResp) []*model_struct.LocalGroup {
 			return datautil.Batch(ServerGroupToLocalGroup, resp.Groups)
 		}),
-		syncer.WithReqApiRouter[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](constant.GetJoinedGroupListRouter),
+		syncer.WithReqApiRouter[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](api.GetJoinedGroupList.Route()),
 		syncer.WithFullSyncLimit[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](groupSyncLimit),
 	)
-
 	g.groupMemberSyncer = syncer.New2[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](
 		syncer.WithInsert[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(ctx context.Context, value *model_struct.LocalGroupMember) error {
 			return g.db.InsertGroupMember(ctx, value)
@@ -166,7 +170,7 @@ func (g *Group) initSyncer() {
 					common.UpdateMessageNode{
 						Action: constant.UpdateMsgFaceUrlAndNickName,
 						Args: common.UpdateMessageInfo{
-							SessionType: constant.SuperGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
+							SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 							Nickname: server.Nickname, GroupID: server.GroupID,
 						},
 					}, g.conversationCh)
@@ -179,7 +183,7 @@ func (g *Group) initSyncer() {
 						common.UpdateMessageNode{
 							Action: constant.UpdateMsgFaceUrlAndNickName,
 							Args: common.UpdateMessageInfo{
-								SessionType: constant.SuperGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
+								SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 								Nickname: server.Nickname, GroupID: server.GroupID,
 							},
 						}, g.conversationCh)
@@ -199,7 +203,7 @@ func (g *Group) initSyncer() {
 		syncer.WithBatchPageRespConvertFunc[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(resp *group.GetGroupMemberListResp) []*model_struct.LocalGroupMember {
 			return datautil.Batch(ServerGroupMemberToLocalGroupMember, resp.Members)
 		}),
-		syncer.WithReqApiRouter[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](constant.GetGroupMemberListRouter),
+		syncer.WithReqApiRouter[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](api.GetGroupMemberList.Route()),
 		syncer.WithFullSyncLimit[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](groupMemberSyncLimit),
 	)
 
@@ -263,89 +267,39 @@ func (g *Group) SetListenerForService(listener open_im_sdk_callback.OnListenerFo
 	g.listenerForService = listener
 }
 
-func (g *Group) GetGroupOwnerIDAndAdminIDList(ctx context.Context, groupID string) (ownerID string, adminIDList []string, err error) {
-	localGroup, err := g.db.GetGroupInfoByGroupID(ctx, groupID)
-	if err != nil {
-		return "", nil, err
-	}
-	adminIDList, err = g.db.GetGroupAdminID(ctx, groupID)
-	if err != nil {
-		return "", nil, err
-	}
-	return localGroup.OwnerUserID, adminIDList, nil
-}
-
-func (g *Group) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
-	localGroup, err := g.db.GetGroupInfoByGroupID(ctx, groupID)
-	if err == nil {
-		return localGroup, nil
-	}
-	svrGroup, err := g.getGroupsInfoFromSvr(ctx, []string{groupID})
-	if err != nil {
-		return nil, err
-	}
-	if len(svrGroup) == 0 {
-		return nil, sdkerrs.ErrGroupIDNotFound.WrapMsg("server not this group")
-	}
-	return ServerGroupToLocalGroup(svrGroup[0]), nil
-}
-
-func (g *Group) GetGroupsInfoFromLocal2Svr(ctx context.Context, groupIDs ...string) (map[string]*model_struct.LocalGroup, error) {
-	groupMap := make(map[string]*model_struct.LocalGroup)
-	if len(groupIDs) == 0 {
-		return groupMap, nil
-	}
-	groups, err := g.db.GetGroups(ctx, groupIDs)
+func (g *Group) FetchGroupOrError(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupTableName(),
+		g.loginUserID,
+		func(localGroup *model_struct.LocalGroup) string {
+			return localGroup.GroupID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroup) error {
+			return g.db.BatchInsertGroup(ctx, values)
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, bool, error) {
+			localGroups, err := g.db.GetGroups(ctx, groupIDs)
+			return localGroups, true, err
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+			serverGroupInfo, err := g.getGroupsInfoFromServer(ctx, groupIDs)
+			if err != nil {
+				return nil, err
+			}
+			return datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo), nil
+		},
+	)
+	groups, err := dataFetcher.FetchMissingAndCombineLocal(ctx, []string{groupID})
 	if err != nil {
 		return nil, err
 	}
-	var groupIDsNeedSync []string
-	localGroupIDs := datautil.Slice(groups, func(group *model_struct.LocalGroup) string {
-		return group.GroupID
-	})
-	for _, groupID := range groupIDs {
-		if !datautil.Contain(groupID, localGroupIDs...) {
-			groupIDsNeedSync = append(groupIDsNeedSync, groupID)
-		}
+	if len(groups) == 0 {
+		return nil, sdkerrs.ErrGroupIDNotFound.WrapMsg("sdk and server not this group")
 	}
-
-	if len(groupIDsNeedSync) > 0 {
-		svrGroups, err := g.getGroupsInfoFromSvr(ctx, groupIDsNeedSync)
-		if err != nil {
-			return nil, err
-		}
-		for _, svrGroup := range svrGroups {
-			groups = append(groups, ServerGroupToLocalGroup(svrGroup))
-		}
-	}
-	for _, group := range groups {
-		groupMap[group.GroupID] = group
-	}
-	return groupMap, nil
+	return groups[0], nil
 }
 
-func (g *Group) getGroupsInfoFromSvr(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
-	resp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: groupIDs})
-	if err != nil {
-		return nil, err
-	}
-	return resp.GroupInfos, nil
-}
-
-func (g *Group) getGroupAbstractInfoFromSvr(ctx context.Context, groupIDs []string) (*group.GetGroupAbstractInfoResp, error) {
-	return util.CallApi[group.GetGroupAbstractInfoResp](ctx, constant.GetGroupAbstractInfoRouter, &group.GetGroupAbstractInfoReq{GroupIDs: groupIDs})
-}
-
-func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]string, error) {
-	groups, err := g.GetServerJoinGroup(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var groupIDs []string
-	for _, g := range groups {
-		if g.GroupType == constant.WorkingGroup {
-			groupIDs = append(groupIDs, g.GroupID)
-		}
-	}
-	return groupIDs, nil
+func (g *Group) delLocalGroupRequest(ctx context.Context, groupID, userID string) error {
+	return g.db.DeleteGroupRequest(ctx, groupID, userID)
 }

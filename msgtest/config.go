@@ -3,8 +3,8 @@ package msgtest
 import (
 	"fmt"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/constant"
 )
 
 // config here
@@ -12,16 +12,13 @@ import (
 // system
 var (
 	TESTIP        = "127.0.0.1"
-	APIADDR       = fmt.Sprintf("http://%v:20002", TESTIP)
-	WSADDR        = fmt.Sprintf("ws://%v:20001", TESTIP)
+	APIADDR       = fmt.Sprintf("http://%v:10002", TESTIP)
+	WSADDR        = fmt.Sprintf("ws://%v:10001", TESTIP)
 	SECRET        = "openIM123"
 	MANAGERUSERID = "openIMAdmin"
 
 	PLATFORMID = constant.WindowsPlatformID
 	LogLevel   = uint32(5)
-
-	REGISTERADDR = APIADDR + constant.UserRegister
-	TOKENADDR    = APIADDR + constant.GetUsersToken
 )
 
 func GetConfig() *sdk_struct.IMConfig {

@@ -19,6 +19,7 @@ package db
 
 import (
 	"context"
+	"errors"
 
 	"gorm.io/gorm"
 
@@ -27,12 +28,12 @@ import (
 )
 
 func (d *DataBase) GetVersionSync(ctx context.Context, tableName, entityID string) (*model_struct.LocalVersionSync, error) {
-	d.versionMtx.RLock()
-	defer d.versionMtx.RUnlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var res model_struct.LocalVersionSync
 	err := d.conn.WithContext(ctx).Where("`table_name` = ? and `entity_id` = ?", tableName, entityID).Take(&res).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return &model_struct.LocalVersionSync{}, errs.ErrRecordNotFound.Wrap()
 		}
 		return nil, errs.Wrap(err)
@@ -41,8 +42,8 @@ func (d *DataBase) GetVersionSync(ctx context.Context, tableName, entityID strin
 }
 
 func (d *DataBase) SetVersionSync(ctx context.Context, lv *model_struct.LocalVersionSync) error {
-	d.versionMtx.Lock()
-	defer d.versionMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 
 	var existing model_struct.LocalVersionSync
 	err := d.conn.WithContext(ctx).Where("`table_name` = ? AND `entity_id` = ?", lv.Table, lv.EntityID).First(&existing).Error
@@ -64,8 +65,8 @@ func (d *DataBase) SetVersionSync(ctx context.Context, lv *model_struct.LocalVer
 }
 
 func (d *DataBase) DeleteVersionSync(ctx context.Context, tableName, entityID string) error {
-	d.versionMtx.Lock()
-	defer d.versionMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	localVersionSync := model_struct.LocalVersionSync{Table: tableName, EntityID: entityID}
 	return errs.WrapMsg(d.conn.WithContext(ctx).Delete(&localVersionSync).Error, "DeleteVersionSync failed")
 }

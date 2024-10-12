@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 	"sync"
 	"time"
 
@@ -121,7 +122,7 @@ func (u *WsRespAsyn) NotifyResp(ctx context.Context, wsResp GeneralWsResp) error
 
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		return utils.Wrap(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
+		return errs.WrapMsg(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
 	}
 	for {
 		err := u.notifyCh(ch, &wsResp, 1)

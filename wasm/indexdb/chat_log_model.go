@@ -173,6 +173,24 @@ func (i *LocalChatLogs) GetMessageListNoTime(ctx context.Context, conversationID
 	}
 }
 
+func (i *LocalChatLogs) GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	msg, err := exec.Exec(conversationID, isReverse)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msg.(string); ok {
+			err := utils.JsonStringToStruct(v, result)
+			if err != nil {
+				return nil, err
+			}
+
+			return result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
 // UpdateSingleMessageHasRead updates the hasRead field of a single message in the local chat log.
 func (i *LocalChatLogs) UpdateSingleMessageHasRead(ctx context.Context, sendID string, msgIDList []string) error {
 	_, err := exec.Exec(sendID, utils.StructToJsonString(msgIDList))
@@ -342,18 +360,6 @@ func (i *LocalChatLogs) GetTestMessage(ctx context.Context, seq uint32) (*model_
 			return nil, exec.ErrType
 		}
 	}
-}
-
-// Update the sender's nickname in the chat logs
-func (i *LocalChatLogs) UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error {
-	_, err := exec.Exec(sendID, nickname, sType)
-	return err
-}
-
-// Update the sender's face URL in the chat logs
-func (i *LocalChatLogs) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error {
-	_, err := exec.Exec(sendID, faceURL, sType)
-	return err
 }
 
 // Update the sender's face URL and nickname in the chat logs

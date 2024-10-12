@@ -69,16 +69,11 @@ func (tc *TableChecker) UpdateTable(tableName string) {
 }
 
 type DataBase struct {
-	loginUserID   string
-	dbDir         string
-	conn          *gorm.DB
-	tableChecker  *TableChecker
-	mRWMutex      sync.RWMutex
-	groupMtx      sync.RWMutex
-	friendMtx     sync.RWMutex
-	userMtx       sync.RWMutex
-	versionMtx    sync.RWMutex
-	superGroupMtx sync.RWMutex
+	loginUserID  string
+	dbDir        string
+	conn         *gorm.DB
+	tableChecker *TableChecker
+	mRWMutex     sync.RWMutex
 }
 
 func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
@@ -147,17 +142,21 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	}
 	log.ZInfo(ctx, "sqlite", "path", dbFileName)
 	// slowThreshold := 500
-	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
+	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.ServerConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
 	if logLevel > 5 {
 		zLogLevel = logger.Info
 	} else {
 		zLogLevel = logger.Silent
 	}
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+	var (
+		db *gorm.DB
+	)
+	db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 	if err != nil {
 		return errs.WrapMsg(err, "open db failed "+dbFileName)
 	}
-	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
+
+	log.ZDebug(ctx, "open db success", "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {
 		return errs.WrapMsg(err, "get sql db failed")
