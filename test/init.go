@@ -30,9 +30,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 )
 
-var (
-	ctx context.Context
-)
+var ctx context.Context
 
 func init() {
 	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test init func <<<<<<<<<<<<<<<<<<<------------------------")
@@ -50,20 +48,7 @@ func init() {
 	}
 	ctx = open_im_sdk.UserForSDK.Context()
 	ctx = ccontext.WithOperationID(ctx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
-	imToken, err := GetAdminToken(ctx, AdminUserID, Secret)
-	if err != nil {
-		panic(err)
-	}
-	userCtx := context.Background()
-	userCtx = ccontext.WithOperationID(userCtx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
-
-	userCtx = ccontext.WithInfo(userCtx, &ccontext.GlobalConfig{
-		UserID:   UserID,
-		Token:    string(imToken),
-		IMConfig: config,
-	})
-
-	token, err := GetUserToken(userCtx, UserID, int32(PlatformID), imToken)
+	token, err := GetUserToken(ctx, UserID, PlatformID, Secret, config)
 	if err != nil {
 		panic(err)
 	}
@@ -90,18 +75,23 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	return cf
 }
 
-func GetAdminToken(ctx context.Context, userID string, secret string) (string, error) {
-	req := &auth.GetAdminTokenReq{
-		UserID: userID,
+func GetUserToken(ctx context.Context, userID string, platformID int32, secret string, imConf sdk_struct.IMConfig) (string, error) {
+	adminReq := &auth.GetAdminTokenReq{
+		UserID: AdminUserID,
 		Secret: secret,
 	}
-	return api.ExtractField(ctx, api.GetAdminToken.Invoke, req, (*auth.GetAdminTokenResp).GetToken)
-}
-
-func GetUserToken(ctx context.Context, userID string, platformID int32, token string) (string, error) {
-	req := &auth.GetUserTokenReq{
+	adminToken, err := api.ExtractField(ctx, api.GetAdminToken.Invoke, adminReq, (*auth.GetAdminTokenResp).GetToken)
+	if err != nil {
+		return "", err
+	}
+	userReq := &auth.GetUserTokenReq{
 		UserID:     userID,
 		PlatformID: platformID,
 	}
-	return api.ExtractField(ctx, api.GetUsersToken.Invoke, req, (*auth.GetUserTokenResp).GetToken)
+	ctx = ccontext.WithInfo(ctx, &ccontext.GlobalConfig{
+		UserID:   userID,
+		Token:    adminToken,
+		IMConfig: imConf,
+	})
+	return api.ExtractField(ctx, api.GetUsersToken.Invoke, userReq, (*auth.GetUserTokenResp).GetToken)
 }
