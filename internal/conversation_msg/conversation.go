@@ -423,8 +423,8 @@ func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context,
 		g.Go(func() error {
 			sList, err := c.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, conversationID, keywordList, keywordListMatchType, startTime, endTime)
 			if err != nil {
-				// TODO: log.Error(operationID, "search message in group err", err.Error(), conversationID)
-				return err
+				log.ZWarn(ctx, "search conversation message", err, "conversationID", conversationID)
+				return nil
 			}
 
 			mu.Lock()
