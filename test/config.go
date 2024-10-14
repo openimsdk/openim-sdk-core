@@ -23,6 +23,7 @@ const (
 )
 
 const (
-	PlatformID = constant.LinuxPlatformID
-	Secret     = "openIM123"
+	PlatformID  = constant.LinuxPlatformID
+	Secret      = "openIM123"
+	AdminUserID = "imAdmin"
 )
