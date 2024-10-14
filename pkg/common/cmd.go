@@ -3,11 +3,12 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/tools/log"
 	"runtime"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/openimsdk/tools/log"
 )
 
 var packet string
@@ -34,7 +35,6 @@ func sendCmd(ch chan<- Cmd2Value, value Cmd2Value, timeout time.Duration) error 
 	if value.Caller == "" {
 		value.Caller = GetCaller(3)
 	}
-	log.ZDebug(value.Ctx, "sendCmd chan success", "caller", value.Caller, "cmd", value.Cmd, "value", value.Value)
 	if ch == nil {
 		log.ZError(value.Ctx, "sendCmd chan is nil", ErrChanNil, "caller", value.Caller, "cmd", value.Cmd, "value", value.Value)
 		return ErrChanNil

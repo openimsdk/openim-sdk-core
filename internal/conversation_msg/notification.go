@@ -196,7 +196,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	}
 	ctx := c2v.Ctx
 	node := c2v.Value.(common.UpdateConNode)
-	log.ZInfo(ctx, "doUpdateConversation", "node", node)
+	log.ZInfo(ctx, "doUpdateConversation", "node", node, "cmd", c2v.Cmd, "caller", c2v.Caller)
 	switch node.Action {
 	case constant.AddConOrUpLatMsg:
 		var list []*model_struct.LocalConversation
