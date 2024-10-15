@@ -228,6 +228,7 @@ func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType [
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
 	return result, err
 }
+
 func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
@@ -260,6 +261,17 @@ func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int
 	condition = fmt.Sprintf(" send_time  between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
 	condition += subCondition
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
+	return result, err
+}
+
+func (d *DataBase) SearchMessageBySenderUserID(ctx context.Context, contentType []int, SenderUserIDList []string, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	condition := fmt.Sprintf("send_id IN ? AND send_time between %d and %d AND status <=%d AND content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
+
+	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, SenderUserIDList, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
+
 	return result, err
 }
 
@@ -303,6 +315,18 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 
 	// Execute the query using the constructed condition and handle errors
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
+
+	return result, err
+}
+
+// SearchMessageByContentTypeAndSenderUserID searches for messages in the database that match specified content types and sender user IDs within a given time range.
+func (d *DataBase) SearchMessageByContentTypeAndSenderUserID(ctx context.Context, contentType []int, conversationID string, SenderUserIDList []string, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	condition := fmt.Sprintf("send_id IN ? AND send_time between %d and %d AND status <=%d AND content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
+
+	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, SenderUserIDList, contentType).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
 
 	return result, err
 }
