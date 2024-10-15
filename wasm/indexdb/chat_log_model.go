@@ -249,15 +249,32 @@ func (i *LocalChatLogs) SearchMessageByContentTypeAndKeyword(ctx context.Context
 		return nil, err
 	} else {
 		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
+			var result []*model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
 			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
+
+			return result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
+// SearchMessageByContentTypeAndSenderUserID searches for messages in the local chat log by content type and sender user ID.
+func (i *LocalChatLogs) SearchMessageByContentTypeAndSenderUserID(ctx context.Context, contentType []int, conversationID string, senderUserIDList []string, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(senderUserIDList), startTime, endTime)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var result []*model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
+
 			return result, err
 		} else {
 			return nil, exec.ErrType
@@ -506,15 +523,33 @@ func (i *LocalChatLogs) SearchMessageByKeyword(ctx context.Context, contentType 
 		return nil, err
 	} else {
 		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
+			var result []*model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
 			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
+
+			return result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
+// SearchMessageBySenderUserID searches for messages in the local chat log by sender user ID.
+func (i *LocalChatLogs) SearchMessageBySenderUserID(ctx context.Context, contentType []int, SenderUserIDList []string, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(SenderUserIDList), startTime, endTime, offset, count)
+
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var result []*model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
+
 			return result, err
 		} else {
 			return nil, exec.ErrType
@@ -687,15 +722,12 @@ func (i *LocalChatLogs) GetMessagesBySeqs(ctx context.Context, conversationID st
 		return nil, err
 	} else {
 		if v, ok := msgs.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
+			var result []*model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
 			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
-			}
+
 			return result, err
 		} else {
 			return nil, exec.ErrType

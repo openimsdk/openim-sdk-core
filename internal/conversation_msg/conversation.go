@@ -279,9 +279,14 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if err != nil {
 			return nil, err
 		}
+
 		// Search by content type or keyword based on provided parameters
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
 			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+			if err != nil {
+				return nil, err
+			}
+
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -302,6 +307,10 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			} else {
 				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType,
 					searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+			}
+
+			if err != nil {
+				return nil, err
 			}
 		}
 	} else {
