@@ -262,9 +262,9 @@ func (i *LocalChatLogs) SearchMessageByContentTypeAndKeyword(ctx context.Context
 	}
 }
 
-// SearchMessageByContentTypeAndSenderUserID searches for messages in the local chat log by content type and sender user ID.
-func (i *LocalChatLogs) SearchMessageByContentTypeAndSenderUserID(ctx context.Context, contentType []int, conversationID string, senderUserIDList []string, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(senderUserIDList), startTime, endTime)
+// SearchMessageByAll searches for messages in the local chat log by content type, sender user ID, and keywords.
+func (i *LocalChatLogs) SearchMessageByAll(ctx context.Context, contentType []int, conversationID string, senderUserIDList []string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(senderUserIDList), utils.StructToJsonString(keywordList), keywordListMatchType, startTime, endTime)
 	if err != nil {
 		return nil, err
 	} else {
@@ -537,8 +537,8 @@ func (i *LocalChatLogs) SearchMessageByKeyword(ctx context.Context, contentType 
 }
 
 // SearchMessageBySenderUserID searches for messages in the local chat log by sender user ID.
-func (i *LocalChatLogs) SearchMessageBySenderUserID(ctx context.Context, contentType []int, SenderUserIDList []string, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(SenderUserIDList), startTime, endTime, offset, count)
+func (i *LocalChatLogs) SearchMessageBySenderUserIDAndKeyword(ctx context.Context, contentType []int, senderUserIDList []string, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(senderUserIDList), utils.StructToJsonString(keywordList), keywordListMatchType, startTime, endTime, offset, count)
 
 	if err != nil {
 		return nil, err
