@@ -16,6 +16,7 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -45,6 +46,7 @@ func (c *OnConnListener) OnUserTokenExpired() {
 
 type onConversationListener struct {
 	ctx context.Context
+	ch  chan error
 }
 
 func (o *onConversationListener) OnSyncServerStart(reinstalled bool) {
@@ -53,10 +55,12 @@ func (o *onConversationListener) OnSyncServerStart(reinstalled bool) {
 
 func (o *onConversationListener) OnSyncServerFinish(reinstalled bool) {
 	log.ZInfo(o.ctx, "OnSyncServerFinish")
+	o.ch <- nil
 }
 
 func (o *onConversationListener) OnSyncServerFailed(reinstalled bool) {
 	log.ZInfo(o.ctx, "OnSyncServerFailed")
+	o.ch <- fmt.Errorf("OnSyncServerFailed")
 }
 
 func (o *onConversationListener) OnSyncServerProgress(progress int) {

@@ -16,10 +16,16 @@ package test
 
 import "github.com/openimsdk/protocol/constant"
 
+//const (
+//	APIADDR = "http://127.0.0.1:10002"
+//	WSADDR  = "ws://127.0.0.1:10001"
+//	UserID  = "3717417654"
+//)
+
 const (
-	APIADDR = "http://127.0.0.1:10002"
-	WSADDR  = "ws://127.0.0.1:10001"
-	UserID  = "3717417654"
+	APIADDR = "http://172.16.8.135:10002"
+	WSADDR  = "ws://172.16.8.135:10001"
+	UserID  = "3725415129"
 )
 
 const (
