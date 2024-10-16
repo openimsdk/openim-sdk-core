@@ -110,6 +110,76 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 	}
 	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t))
 	t = time.Now()
+	//var thisMinSeq int64
+	//for _, v := range list {
+	//	if v.Seq != 0 && thisMinSeq == 0 {
+	//		thisMinSeq = v.Seq
+	//	}
+	//	if v.Seq < thisMinSeq && v.Seq != 0 {
+	//		thisMinSeq = v.Seq
+	//	}
+	//	if v.Status >= constant.MsgStatusHasDeleted {
+	//		log.ZDebug(ctx, "this message has been deleted or exception message", "msg", v)
+	//		continue
+	//	}
+	//	temp := sdk_struct.MsgStruct{}
+	//	temp.ClientMsgID = v.ClientMsgID
+	//	temp.ServerMsgID = v.ServerMsgID
+	//	temp.CreateTime = v.CreateTime
+	//	temp.SendTime = v.SendTime
+	//	temp.SessionType = v.SessionType
+	//	temp.SendID = v.SendID
+	//	temp.RecvID = v.RecvID
+	//	temp.MsgFrom = v.MsgFrom
+	//	temp.ContentType = v.ContentType
+	//	temp.SenderPlatformID = v.SenderPlatformID
+	//	temp.SenderNickname = v.SenderNickname
+	//	temp.SenderFaceURL = v.SenderFaceURL
+	//	temp.Content = v.Content
+	//	temp.Seq = v.Seq
+	//	temp.IsRead = v.IsRead
+	//	temp.Status = v.Status
+	//	var attachedInfo sdk_struct.AttachedInfoElem
+	//	_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
+	//	temp.AttachedInfoElem = &attachedInfo
+	//	temp.Ex = v.Ex
+	//	temp.LocalEx = v.LocalEx
+	//	err := c.msgHandleByContentType(&temp)
+	//	if err != nil {
+	//		log.ZError(ctx, "Parsing data error", err, "temp", temp)
+	//		continue
+	//	}
+	//	switch sessionType {
+	//	case constant.WriteGroupChatType:
+	//		fallthrough
+	//	case constant.ReadGroupChatType:
+	//		temp.GroupID = temp.RecvID
+	//		temp.RecvID = c.loginUserID
+	//	}
+	//	if attachedInfo.IsPrivateChat && temp.SendTime+int64(attachedInfo.BurnDuration) < time.Now().Unix() {
+	//		continue
+	//	}
+	//	messageList = append(messageList, &temp)
+	//}
+	var thisMinSeq int64
+	thisMinSeq, messageList = c.LocalChatLog2MsgStruct(ctx, list, sessionType)
+	log.ZDebug(ctx, "message convert and unmarshal", "unmarshal cost time", time.Since(t))
+	t = time.Now()
+	if !isReverse {
+		sort.Sort(messageList)
+	}
+	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
+	messageListCallback.MessageList = messageList
+	if thisMinSeq == 0 {
+		thisMinSeq = req.LastMinSeq
+	}
+	messageListCallback.LastMinSeq = thisMinSeq
+	return &messageListCallback, nil
+
+}
+
+func (c *Conversation) LocalChatLog2MsgStruct(ctx context.Context, list []*model_struct.LocalChatLog, sessionType int) (int64, []*sdk_struct.MsgStruct) {
+	messageList := make([]*sdk_struct.MsgStruct, 0, len(list))
 	var thisMinSeq int64
 	for _, v := range list {
 		if v.Seq != 0 && thisMinSeq == 0 {
@@ -161,19 +231,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 		}
 		messageList = append(messageList, &temp)
 	}
-	log.ZDebug(ctx, "message convert and unmarshal", "unmarshal cost time", time.Since(t))
-	t = time.Now()
-	if !isReverse {
-		sort.Sort(messageList)
-	}
-	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
-	messageListCallback.MessageList = messageList
-	if thisMinSeq == 0 {
-		thisMinSeq = req.LastMinSeq
-	}
-	messageListCallback.LastMinSeq = thisMinSeq
-	return &messageListCallback, nil
-
+	return thisMinSeq, messageList
 }
 
 func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
