@@ -301,8 +301,12 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 				newContentTypeList = SearchContentType
 			}
 
+			if searchParam.MessageTypeList == nil {
+
+			}
+
 			if len(searchParam.SenderUserIDList) != 0 {
-				list, err = c.db.SearchMessageBySenderUserID(ctx, newContentTypeList, searchParam.SenderUserIDList,
+				list, err = c.db.SearchMessageBySenderUserIDAndKeyword(ctx, newContentTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType,
 					searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 			} else {
 				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType,
@@ -320,7 +324,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		}
 
 		if len(searchParam.SenderUserIDList) != 0 {
-			list, err = c.searchMessageByContentTypeAndSenderUserID(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, startTime, endTime)
+			list, err = c.searchMessageByAll(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 		} else {
 			list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 		}
@@ -340,7 +344,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
 	// log.Debug("", "get raw data length is", len(list))
-	log.ZDebug(ctx, "get raw data length is", len(list))
+	log.ZDebug(ctx, "get raw data length is", "len", len(list))
 
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
@@ -465,8 +469,8 @@ func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context,
 	return list, nil
 }
 
-func (c *Conversation) searchMessageByContentTypeAndSenderUserID(ctx context.Context, contentType []int, senderUserIDList []string,
-	startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+func (c *Conversation) searchMessageByAll(ctx context.Context, contentType []int, senderUserIDList []string, keywordList []string,
+	keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	var list []*model_struct.LocalChatLog
 
 	conversationIDList, err := c.db.GetAllConversationIDList(ctx)
@@ -482,7 +486,7 @@ func (c *Conversation) searchMessageByContentTypeAndSenderUserID(ctx context.Con
 		conversationID := cID
 
 		eg.Go(func() error {
-			sList, err := c.db.SearchMessageByContentTypeAndSenderUserID(ctx, contentType, conversationID, senderUserIDList, startTime, endTime)
+			sList, err := c.db.SearchMessageByAll(ctx, contentType, conversationID, senderUserIDList, keywordList, keywordListMatchType, startTime, endTime)
 			if err != nil {
 				log.ZWarn(ctx, "search conversation message", err, "conversationID", conversationID)
 				return nil
