@@ -62,6 +62,12 @@ func (d *DataBase) FindAllConversationConversationID(ctx context.Context) (conve
 	return conversationIDs, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error, "")
 }
 
+func (d *DataBase) FindAllUnreadConversationConversationID(ctx context.Context) (conversationIDs []string, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	return conversationIDs, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("unread_count > ?", 0).Pluck("conversation_id", &conversationIDs).Error, "")
+}
+
 func (d *DataBase) GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

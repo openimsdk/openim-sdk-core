@@ -832,6 +832,19 @@ func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conver
 	return c.markConversationMessageAsRead(ctx, conversationID)
 }
 
+func (c *Conversation) MarkAllConversationMessageAsRead(ctx context.Context) error {
+	conversationIDs, err := c.db.FindAllUnreadConversationConversationID(ctx)
+	if err != nil {
+		return err
+	}
+	for _, conversationID := range conversationIDs {
+		if err = c.markConversationMessageAsRead(ctx, conversationID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // deprecated
 func (c *Conversation) MarkMessagesAsReadByMsgID(ctx context.Context, conversationID string, clientMsgIDs []string) error {
 	return c.markMessagesAsReadByMsgID(ctx, conversationID, clientMsgIDs)

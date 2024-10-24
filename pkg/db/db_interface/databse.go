@@ -103,6 +103,7 @@ type MessageModel interface {
 type ConversationModel interface {
 	GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error)
 	GetAllConversationListDB(ctx context.Context) ([]*model_struct.LocalConversation, error)
+	FindAllUnreadConversationConversationID(ctx context.Context) ([]string, error)
 	GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetAllSingleConversationIDList(ctx context.Context) (result []string, err error)
