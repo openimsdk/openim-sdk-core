@@ -8,7 +8,6 @@ before:
     - go generate ./...
 
 
-
 git:
   # What should be used to sort tags when gathering the current and previous
   # tags if there are more than one tag in the same commit.
@@ -37,7 +36,7 @@ report_sizes: true
 builds:
   - id: openIM.wasm
     main: wasm/cmd/main.go  # Specify the path to the main WASM file
-    binary: openIM.wasm
+    binary: openIM
     ldflags: "-s -w"
     goos:
       - js
@@ -88,39 +87,39 @@ archives:
     - goos: windows
       format: zip
 
-changelog:
-  sort: asc
-  use: github
-  filters:
-    exclude:
-      - "^test:"
-      - "^chore"
-      - "merge conflict"
-      - Merge pull request
-      - Merge remote-tracking branch
-      - Merge branch
-      - go mod tidy
-  groups:
-    - title: Dependency updates
-      regexp: '^.*?(feat|fix)\(deps\)!?:.+$'
-      order: 300
-    - title: "New Features"
-      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
-      order: 100
-    - title: "Security updates"
-      regexp: '^.*?sec(\([[:word:]]+\))??!?:.+$'
-      order: 150
-    - title: "Bug fixes"
-      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
-      order: 200
-    - title: "Documentation updates"
-      regexp: ^.*?doc(\([[:word:]]+\))??!?:.+$
-      order: 400
-    - title: "Build process updates"
-      regexp: ^.*?build(\([[:word:]]+\))??!?:.+$
-      order: 400
-    - title: Other work
-      order: 9999
+# changelog:
+#   sort: asc
+#   use: github
+#   filters:
+#     exclude:
+#       - "^test:"
+#       - "^chore"
+#       - "merge conflict"
+#       - Merge pull request
+#       - Merge remote-tracking branch
+#       - Merge branch
+#       - go mod tidy
+#   groups:
+#     - title: Dependency updates
+#       regexp: '^.*?(feat|fix)\(deps\)!?:.+$'
+#       order: 300
+#     - title: "New Features"
+#       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+#       order: 100
+#     - title: "Security updates"
+#       regexp: '^.*?sec(\([[:word:]]+\))??!?:.+$'
+#       order: 150
+#     - title: "Bug fixes"
+#       regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+#       order: 200
+#     - title: "Documentation updates"
+#       regexp: ^.*?doc(\([[:word:]]+\))??!?:.+$
+#       order: 400
+#     - title: "Build process updates"
+#       regexp: ^.*?build(\([[:word:]]+\))??!?:.+$
+#       order: 400
+#     - title: Other work
+#       order: 9999
 
 
 # nfpms:
@@ -166,23 +165,6 @@ dist: ./_output/dist
 #     #
 #     # Default: '{{ .Tag }}'
 #     name_template: "Current Release"
-
-# publishers:
-#   - name: "fury.io"
-#     ids:
-#       - packages
-#     dir: "{{ dir .ArtifactPath }}"
-#     cmd: |
-#       bash -c '
-#       if [[ "{{ .Tag }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-#         curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/{{ .Env.USERNAME }}/
-#       else
-#         echo "Skipping deployment: Non-production release detected"
-#       fi'
-
-checksum:
-  name_template: "{{ .ProjectName }}_checksums.txt"
-  algorithm: sha256
 
 release:
   prerelease: auto
