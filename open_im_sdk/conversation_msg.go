@@ -79,42 +79,17 @@ func CreateCardMessage(operationID string, cardInfo string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateCardMessage, cardInfo)
 
 }
-func CreateVideoMessageFromFullPath(operationID string, videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateVideoMessageFromFullPath, videoFullPath, videoType, duration, snapshotFullPath)
+func CreateImageMessage(operationID string, imageSourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessage, imageSourcePath, sourcePicture, bigPicture, snapshotPicture)
 }
-func CreateImageMessageFromFullPath(operationID string, imageFullPath string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessageFromFullPath, imageFullPath)
+func CreateSoundMessage(operationID string, soundPath string, duration int64, soundBaseInfo string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateSoundMessage, soundPath, duration, soundBaseInfo)
 }
-func CreateSoundMessageFromFullPath(operationID string, soundPath string, duration int64) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateSoundMessageFromFullPath, soundPath, duration)
+func CreateVideoMessage(operationID string, videoSourcePath string, videoType string, duration int64, snapshotSourcePath string, videoBaseInfo string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateVideoMessage, videoSourcePath, videoType, duration, snapshotSourcePath, videoBaseInfo)
 }
-func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateFileMessageFromFullPath, fileFullPath, fileName)
-}
-func CreateImageMessage(operationID string, imagePath string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessage, imagePath)
-}
-func CreateImageMessageByURL(operationID string, sourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessageByURL, sourcePath, sourcePicture, bigPicture, snapshotPicture)
-}
-
-func CreateSoundMessageByURL(operationID string, soundBaseInfo string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateSoundMessageByURL, soundBaseInfo)
-}
-func CreateSoundMessage(operationID string, soundPath string, duration int64) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateSoundMessage, soundPath, duration)
-}
-func CreateVideoMessageByURL(operationID string, videoBaseInfo string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateVideoMessageByURL, videoBaseInfo)
-}
-func CreateVideoMessage(operationID string, videoPath string, videoType string, duration int64, snapshotPath string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateVideoMessage, videoPath, videoType, duration, snapshotPath)
-}
-func CreateFileMessageByURL(operationID string, fileBaseInfo string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateFileMessageByURL, fileBaseInfo)
-}
-func CreateFileMessage(operationID string, filePath string, fileName string) string {
-	return syncCall(operationID, UserForSDK.Conversation().CreateFileMessage, filePath, fileName)
+func CreateFileMessage(operationID string, fileSourcePath string, fileName string, fileBaseInfo string) string {
+	return syncCall(operationID, UserForSDK.Conversation().CreateFileMessage, fileSourcePath, fileName, fileBaseInfo)
 }
 func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateMergerMessage, messageList, title, summaryList)
@@ -130,9 +105,6 @@ func GetConversationIDBySessionType(operationID string, sourceID string, session
 }
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string, isOnlineOnly bool) {
 	messageCall(callback, operationID, UserForSDK.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
-}
-func SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, operationID string, message, recvID, groupID string, offlinePushInfo string, isOnlineOnly bool) {
-	messageCall(callback, operationID, UserForSDK.Conversation().SendMessageNotOss, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
 }
 
 func FindMessageList(callback open_im_sdk_callback.Base, operationID string, findMessageOptions string) {
