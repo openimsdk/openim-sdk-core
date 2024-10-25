@@ -921,21 +921,6 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		return err
 	}
 
-	var handleUserIDs []string
-
-	for userID := range users {
-		handleUserIDs = append(handleUserIDs, userID)
-	}
-
-	loseUserIDs := datautil.Single(userIDs, handleUserIDs)
-
-	if len(loseUserIDs) != 0 {
-		for _, userID := range loseUserIDs {
-			users[userID] = &model_struct.LocalUser{UserID: userID, Nickname: "UserNotFound", FaceURL: ""}
-		}
-		log.ZError(ctx, "lose usersInfo", errs.New("userInfo not found"), "loseUserIDs", loseUserIDs)
-	}
-
 	groupInfoList, err := c.group.GetSpecifiedGroupsInfo(ctx, groupIDs)
 	if err != nil {
 		return err
@@ -952,8 +937,10 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.Nickname
 			} else {
-				log.ZWarn(ctx, "user info not found", errors.New("user not found"),
-					"userID", conversation.UserID)
+				log.ZWarn(ctx, "user info not found", errors.New("user not found"),"userID", conversation.UserID)
+				
+				conversation.FaceURL = ""
+				conversation.ShowName = "UserNotFound"
 			}
 		} else if conversation.ConversationType == constant.ReadGroupChatType {
 			if v, ok := groups[conversation.GroupID]; ok {
