@@ -232,6 +232,13 @@ func Test_MarkConversationMessageAsRead(t *testing.T) {
 	}
 }
 
+func Test_MarkAllConversationMessageAsRead(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().MarkAllConversationMessageAsRead(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_MarkMsgsAsRead(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().MarkMessagesAsReadByMsgID(ctx, "si_2688118337_7249315132",
 		[]string{"fb56ed151b675e0837ed3af79dbf66b1",
