@@ -55,7 +55,6 @@ deploy/Open-IM-SDK-Core
 # Dependency directories (remove the comment below to include it)
 vendor/
 bin/
-tools/
 tmp/
 
 

@@ -162,7 +162,7 @@ func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context,
 func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID string, latestMsgIsRead bool) {
 	if latestMsgIsRead {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID,
-			Action: constant.UpdateLatestMessageChange, Args: []string{conversationID}}, Ctx: ctx})
+			Action: constant.UpdateLatestMessageReadState, Args: []string{conversationID}}, Ctx: ctx})
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID,
 		Action: constant.ConChange, Args: []string{conversationID}}, Ctx: ctx})
@@ -210,7 +210,7 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversation *model_st
 		}
 		if (!latestMsg.IsRead) && datautil.Contain(latestMsg.Seq, seqs...) {
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID,
-				Action: constant.UpdateLatestMessageChange, Args: []string{conversation.ConversationID}}, Ctx: ctx})
+				Action: constant.UpdateLatestMessageReadState, Args: []string{conversation.ConversationID}}, Ctx: ctx})
 		}
 	} else {
 		if err := c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"unread_count": 0}); err != nil {

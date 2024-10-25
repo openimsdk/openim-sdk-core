@@ -8,6 +8,8 @@ import (
 	"math"
 	"sync"
 
+	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/utils/stringutil"
@@ -923,6 +925,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 	if err != nil {
 		return err
 	}
+
 	groups := datautil.SliceToMap(groupInfoList, func(groupInfo *model_struct.LocalGroup) string {
 		return groupInfo.GroupID
 	})
@@ -934,8 +937,10 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.Nickname
 			} else {
-				log.ZWarn(ctx, "user info not found", errors.New("user not found"),
-					"userID", conversation.UserID)
+				log.ZWarn(ctx, "user info not found", errors.New("user not found"),"userID", conversation.UserID)
+				
+				conversation.FaceURL = ""
+				conversation.ShowName = "UserNotFound"
 			}
 		} else if conversation.ConversationType == constant.ReadGroupChatType {
 			if v, ok := groups[conversation.GroupID]; ok {
@@ -948,6 +953,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 
 		}
 	}
+
 	return nil
 }
 
@@ -978,10 +984,12 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}
 		m[localFriend.FriendUserID] = userInfo
 	}
+
 	usersInfo, err := c.user.GetUsersInfoWithCache(ctx, notInFriend)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, userInfo := range usersInfo {
 		m[userInfo.UserID] = userInfo
 	}
@@ -1012,4 +1020,54 @@ func (c *Conversation) GetInputStates(ctx context.Context, conversationID string
 
 func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
 	return c.typing.ChangeInputStates(ctx, conversationID, focus)
+}
+
+func (c *Conversation) FetchSurroundingMessages(ctx context.Context, conversationID string, seq int64, before int64, after int64) ([]*sdk_struct.MsgStruct, error) {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return nil, err
+	}
+	c.pullMessageAndReGetHistoryMessages(ctx, conversationID, []int64{seq}, false, false, 0, 0, &[]*model_struct.LocalChatLog{}, &sdk.GetAdvancedHistoryMessageListCallback{})
+	res, err := c.db.GetMessagesBySeqs(ctx, conversationID, []int64{seq})
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return []*sdk_struct.MsgStruct{}, nil
+	}
+	_, msgList := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{res[0]}, int(lc.ConversationType))
+	if len(msgList) == 0 {
+		return []*sdk_struct.MsgStruct{}, nil
+	}
+	msg := msgList[0]
+	result := make([]*sdk_struct.MsgStruct, 0, before+after+1)
+	if before > 0 {
+		req := sdk.GetAdvancedHistoryMessageListParams{
+			LastMinSeq:       msg.Seq,
+			ConversationID:   conversationID,
+			Count:            int(before),
+			StartClientMsgID: msg.ClientMsgID,
+		}
+		val, err := c.getAdvancedHistoryMessageList(ctx, req, false)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, val.MessageList...)
+	}
+	result = append(result, msg)
+	if after > 0 {
+		req := sdk.GetAdvancedHistoryMessageListParams{
+			LastMinSeq:       msg.Seq,
+			ConversationID:   conversationID,
+			Count:            int(after),
+			StartClientMsgID: msg.ClientMsgID,
+		}
+		val, err := c.getAdvancedHistoryMessageList(ctx, req, true)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, val.MessageList...)
+	}
+	sort.Sort(sdk_struct.NewMsgList(result))
+	return result, nil
 }

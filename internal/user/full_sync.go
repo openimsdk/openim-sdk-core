@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	userPb "github.com/openimsdk/protocol/user"
 	"github.com/openimsdk/tools/errs"
@@ -11,7 +12,7 @@ import (
 )
 
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {
-	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
+	remoteUser, err := u.GetSingleUserFromServer(ctx, u.loginUserID)
 	if err != nil {
 		return err
 	}
@@ -28,7 +29,7 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 }
 
 func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
-	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
+	remoteUser, err := u.GetSingleUserFromServer(ctx, u.loginUserID)
 	if err != nil {
 		return err
 	}

@@ -203,7 +203,6 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		lc := node.Args.(model_struct.LocalConversation)
 		oc, err := c.db.GetConversation(ctx, lc.ConversationID)
 		if err == nil {
-			// log.Info("this is old conversation", *oc)
 			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime || c.getConversationLatestMsgClientID(lc.LatestMsg) == c.getConversationLatestMsgClientID(oc.LatestMsg) { // The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
@@ -269,7 +268,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}})
 
-	case constant.UpdateLatestMessageChange:
+	case constant.UpdateLatestMessageReadState:
 		conversationID := node.ConID
 		var latestMsg sdk_struct.MsgStruct
 		l, err := c.db.GetConversation(ctx, conversationID)
@@ -288,6 +287,43 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 		}
+	case constant.UpdateLatestMessageFaceUrlAndNickName:
+		args := node.Args.(common.UpdateMessageInfo)
+		switch args.SessionType {
+		case constant.ReadGroupChatType:
+			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.ReadGroupChatType)
+			lc, err := c.db.GetConversation(ctx, conversationID)
+			if err != nil {
+				log.ZWarn(ctx, "getConversation err", err)
+				return
+			}
+			var latestMsg sdk_struct.MsgStruct
+			err = json.Unmarshal([]byte(lc.LatestMsg), &latestMsg)
+			if err != nil {
+				log.ZError(ctx, "latestMsg,Unmarshal err", err)
+			} else {
+				//If the sender of the latest message in the conversation
+				//happens to be a member of the group whose status has changed,
+				//then update the sender's avatar and nickname for the latest message.
+				if latestMsg.SendID == args.UserID {
+					latestMsg.SenderFaceURL = args.FaceURL
+					latestMsg.SenderNickname = args.Nickname
+					newLatestMessage := utils.StructToJsonString(latestMsg)
+					lc.LatestMsg = newLatestMessage
+					err = c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg": newLatestMessage})
+					if err != nil {
+						log.ZError(ctx, "updateConversationLatestMsgModel err", err)
+					} else {
+						var cList []*model_struct.LocalConversation
+						cList = append(cList, lc)
+						data := utils.StructToJsonStringDefault(cList)
+						c.ConversationListener().OnConversationChanged(data)
+					}
+
+				}
+			}
+		}
+
 	case constant.ConChange:
 		conversationIDs := node.Args.([]string)
 		conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDs)
@@ -325,43 +361,59 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		log.ZDebug(ctx, "NewConversation", "cidList", cidList)
 		c.ConversationListener().OnNewConversation(cidList)
 
-	case constant.ConversationLatestMsgHasRead:
-		hasReadMsgList := node.Args.(map[string][]string)
-		var result []*model_struct.LocalConversation
-		var latestMsg sdk_struct.MsgStruct
-		var lc model_struct.LocalConversation
-		for conversationID, msgIDList := range hasReadMsgList {
-			LocalConversation, err := c.db.GetConversation(ctx, conversationID)
-			if err != nil {
-				log.ZWarn(ctx, "get conversation err", err, "conversationID", conversationID)
-				continue
-			}
-			err = utils.JsonStringToStruct(LocalConversation.LatestMsg, &latestMsg)
-			if err != nil {
-				log.ZWarn(ctx, "JsonStringToStruct err", err, "conversationID", conversationID)
-				continue
-			}
-			if utils.IsContain(latestMsg.ClientMsgID, msgIDList) {
-				latestMsg.IsRead = true
-				lc.ConversationID = conversationID
-				lc.LatestMsg = utils.StructToJsonString(latestMsg)
-				LocalConversation.LatestMsg = utils.StructToJsonString(latestMsg)
-				err := c.db.UpdateConversation(ctx, &lc)
-				if err != nil {
-					log.ZWarn(ctx, "UpdateConversation err", err)
-					continue
-				} else {
-					result = append(result, LocalConversation)
-				}
-			}
-		}
-		if result != nil {
-			log.ZDebug(ctx, "getMultipleConversationModel success", "result", result)
-			c.ConversationListener().OnNewConversation(utils.StructToJsonString(result))
-		}
-	case constant.SyncConversation:
-
 	}
+}
+
+func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
+	node := c2v.Value.(common.UpdateMessageNode)
+	ctx := c2v.Ctx
+	switch node.Action {
+	case constant.UpdateMsgFaceUrlAndNickName:
+		args := node.Args.(common.UpdateMessageInfo)
+		switch args.SessionType {
+		case constant.SingleChatType:
+			if args.UserID == c.loginUserID {
+				conversationIDList, err := c.db.GetAllSingleConversationIDList(ctx)
+				if err != nil {
+					log.ZError(ctx, "GetAllSingleConversationIDList err", err)
+					return
+				} else {
+					log.ZDebug(ctx, "get single conversationID list", "conversationIDList", conversationIDList)
+					for _, conversationID := range conversationIDList {
+						err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+						if err != nil {
+							log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+							continue
+						}
+					}
+
+				}
+			} else {
+				conversationID := c.getConversationIDBySessionType(args.UserID, constant.SingleChatType)
+				err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+				if err != nil {
+					log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+				}
+
+			}
+		case constant.ReadGroupChatType:
+			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.ReadGroupChatType)
+			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+			if err != nil {
+				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+			}
+		case constant.NotificationChatType:
+			conversationID := c.getConversationIDBySessionType(args.UserID, constant.NotificationChatType)
+			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+			if err != nil {
+				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+			}
+		default:
+			log.ZError(ctx, "not support sessionType", nil, "args", args)
+			return
+		}
+	}
+
 }
 
 func (c *Conversation) syncData(c2v common.Cmd2Value) {
@@ -431,58 +483,6 @@ func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, 
 	} else {
 		log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
 	}
-}
-
-func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
-	node := c2v.Value.(common.UpdateMessageNode)
-	ctx := c2v.Ctx
-	switch node.Action {
-	case constant.UpdateMsgFaceUrlAndNickName:
-		args := node.Args.(common.UpdateMessageInfo)
-		switch args.SessionType {
-		case constant.SingleChatType:
-			if args.UserID == c.loginUserID {
-				conversationIDList, err := c.db.GetAllSingleConversationIDList(ctx)
-				if err != nil {
-					log.ZError(ctx, "GetAllSingleConversationIDList err", err)
-					return
-				} else {
-					log.ZDebug(ctx, "get single conversationID list", "conversationIDList", conversationIDList)
-					for _, conversationID := range conversationIDList {
-						err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
-						if err != nil {
-							log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
-							continue
-						}
-					}
-
-				}
-			} else {
-				conversationID := c.getConversationIDBySessionType(args.UserID, constant.SingleChatType)
-				err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
-				if err != nil {
-					log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
-				}
-
-			}
-		case constant.ReadGroupChatType:
-			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.ReadGroupChatType)
-			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
-			if err != nil {
-				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
-			}
-		case constant.NotificationChatType:
-			conversationID := c.getConversationIDBySessionType(args.UserID, constant.NotificationChatType)
-			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
-			if err != nil {
-				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
-			}
-		default:
-			log.ZError(ctx, "not support sessionType", nil, "args", args)
-			return
-		}
-	}
-
 }
 
 func (c *Conversation) DoConversationChangedNotification(ctx context.Context, msg *sdkws.MsgData) error {
