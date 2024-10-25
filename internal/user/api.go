@@ -16,9 +16,9 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
-// GetSingleUserFromSvr retrieves user information from the server.
-func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
-	users, err := u.GetUsersInfoFromSvr(ctx, []string{userID})
+// GetSingleUserFromServer retrieves user information from the server.
+func (u *User) GetSingleUserFromServer(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
+	users, err := u.GetUsersInfoFromServer(ctx, []string{userID})
 	if err != nil {
 		return nil, err
 	}
@@ -171,11 +171,11 @@ func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struc
 	return res, nil
 }
 
-// GetUsersInfoFromSvr retrieves user information from the server.
-func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
+// GetUsersInfoFromServer retrieves user information from the server.
+func (u *User) GetUsersInfoFromServer(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
 	users, err := u.getUsersInfo(ctx, userIDs)
 	if err != nil {
-		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromSvr failed")
+		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromServer failed")
 	}
 	return datautil.Batch(ServerUserToLocalUser, users), nil
 }

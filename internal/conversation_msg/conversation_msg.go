@@ -979,10 +979,12 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}
 		m[localFriend.FriendUserID] = userInfo
 	}
+
 	usersInfo, err := c.user.GetUsersInfoWithCache(ctx, notInFriend)
 	if err != nil {
 		return nil, err
 	}
+	
 	for _, userInfo := range usersInfo {
 		m[userInfo.UserID] = userInfo
 	}
