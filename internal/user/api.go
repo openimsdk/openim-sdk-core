@@ -125,10 +125,18 @@ func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb
 
 // GetUserInfoFromServer retrieves user information from the server.
 func (u *User) GetUserInfoFromServer(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
+	var err error
+
 	serverUsersInfo, err := u.getUsersInfo(ctx, userIDs)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(serverUsersInfo) == 0 {
+		log.ZError(ctx, "serverUsersInfo is empty", err, "userIDs", userIDs)
+		return nil, err
+	}
+
 	return datautil.Batch(ServerUserToLocalUser, serverUsersInfo), nil
 }
 

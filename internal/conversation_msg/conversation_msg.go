@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"math"
 	"sync"
+
+	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
@@ -920,10 +921,26 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		return err
 	}
 
+	var handleUserIDs []string
+
+	for userID := range users {
+		handleUserIDs = append(handleUserIDs, userID)
+	}
+
+	loseUserIDs := datautil.Single(userIDs, handleUserIDs)
+
+	if len(loseUserIDs) != 0 {
+		for _, userID := range loseUserIDs {
+			users[userID] = &model_struct.LocalUser{UserID: userID, Nickname: "UserNotFound", FaceURL: ""}
+		}
+		log.ZError(ctx, "lose usersInfo", errs.New("userInfo not found"), "loseUserIDs", loseUserIDs)
+	}
+
 	groupInfoList, err := c.group.GetSpecifiedGroupsInfo(ctx, groupIDs)
 	if err != nil {
 		return err
 	}
+
 	groups := datautil.SliceToMap(groupInfoList, func(groupInfo *model_struct.LocalGroup) string {
 		return groupInfo.GroupID
 	})
@@ -949,6 +966,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 
 		}
 	}
+
 	return nil
 }
 
@@ -984,7 +1002,7 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, userInfo := range usersInfo {
 		m[userInfo.UserID] = userInfo
 	}
