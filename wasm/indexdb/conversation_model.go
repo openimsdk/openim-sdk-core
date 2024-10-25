@@ -56,6 +56,23 @@ func (i *LocalConversations) GetAllConversationListDB(ctx context.Context) (resu
 	}
 }
 
+func (i *LocalConversations) FindAllUnreadConversationConversationID(ctx context.Context) (result []string, err error) {
+	cList, err := exec.Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := cList.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, nil
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
 func (i *LocalConversations) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {
 	c, err := exec.Exec(conversationID)
 	if err != nil {

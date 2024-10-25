@@ -4,10 +4,6 @@
 
 ROOT_PACKAGE=github.com/openimsdk/Open-IM-SDK-Core
 
-# Copyright 2023 OpenIM. All rights reserved.
-# Use of this source code is governed by a MIT style
-# license that can be found in the LICENSE file.
-
 ###################################=> common commands <=#############################################
 # ========================== Capture Environment ===============================
 # get the repo root and output path

@@ -7,7 +7,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.4.0
 	github.com/pkg/errors v0.9.1
-	google.golang.org/protobuf v1.33.0 // indirect
+	google.golang.org/protobuf v1.33.0
 	gorm.io/driver/sqlite v1.5.5
 	nhooyr.io/websocket v1.8.10
 )
@@ -17,10 +17,11 @@ require golang.org/x/net v0.22.0 // indirect
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/openimsdk/protocol v0.0.72
-	github.com/openimsdk/tools v0.0.50-alpha.16
+	github.com/openimsdk/tools v0.0.50-alpha.21
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	golang.org/x/image v0.15.0
 	golang.org/x/sync v0.6.0
+	google.golang.org/grpc v1.62.1
 	gorm.io/gorm v1.25.10
 )
 
@@ -35,5 +36,4 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
-	google.golang.org/grpc v1.62.1 // indirect
 )
