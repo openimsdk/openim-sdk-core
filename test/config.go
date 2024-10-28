@@ -17,10 +17,9 @@ package test
 import "github.com/openimsdk/protocol/constant"
 
 const (
-	APIADDR     = "http://127.0.0.1:10002"
-	WSADDR      = "ws://127.0.0.1:10001"
-	UserID      = "3717417654"
-	AdminUserID = "imAdmin"
+	APIADDR = "http://127.0.0.1:10002"
+	WSADDR  = "ws://127.0.0.1:10001"
+	UserID  = "2237746339"
 )
 
 const (

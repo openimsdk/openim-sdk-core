@@ -1,0 +1,20 @@
+syntax = "proto3";
+package openim.ffi;
+option go_package = "github.com/openimsdk/openim-sdk-core/v3/proto";
+
+import "conversation.proto";
+
+// import "error.proto";
+
+message FfiRequest {
+  openim.sdk.conversation.FuncRequestEventName funcName = 1;
+  bytes data = 2;
+}
+
+message FfiResult {
+  int32 errCode = 1;
+  string errMsg = 2;
+  openim.sdk.conversation.FuncRequestEventName funcName = 3;
+  bytes data = 4;
+  uint64 handleID = 5;
+}

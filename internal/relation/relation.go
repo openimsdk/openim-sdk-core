@@ -62,6 +62,27 @@ func (r *Relation) initSyncer() {
 			switch state {
 			case syncer.Insert:
 				r.friendshipListener.OnFriendAdded(*server)
+				if server.Remark != "" {
+					server.Nickname = server.Remark
+				}
+				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+					Action: constant.UpdateConFaceUrlAndNickName,
+					Args: common.SourceIDAndSessionType{
+						SourceID:    server.FriendUserID,
+						SessionType: constant.SingleChatType,
+						FaceURL:     server.FaceURL,
+						Nickname:    server.Nickname,
+					},
+				}, r.conversationCh)
+				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{
+					Action: constant.UpdateMsgFaceUrlAndNickName,
+					Args: common.UpdateMessageInfo{
+						SessionType: constant.SingleChatType,
+						UserID:      server.FriendUserID,
+						FaceURL:     server.FaceURL,
+						Nickname:    server.Nickname,
+					},
+				}, r.conversationCh)
 			case syncer.Delete:
 				log.ZDebug(ctx, "syncer OnFriendDeleted", "local", local)
 				r.friendshipListener.OnFriendDeleted(*local)

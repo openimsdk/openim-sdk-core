@@ -187,6 +187,10 @@ func (g *Group) initSyncer() {
 								Nickname: server.Nickname, GroupID: server.GroupID,
 							},
 						}, g.conversationCh)
+					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateLatestMessageFaceUrlAndNickName, Args: common.UpdateMessageInfo{
+						SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
+						Nickname: server.Nickname, GroupID: server.GroupID,
+					}}, g.conversationCh)
 				}
 			}
 			return nil

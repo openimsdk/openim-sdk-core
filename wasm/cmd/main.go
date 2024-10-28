@@ -72,6 +72,7 @@ func registerFunc() {
 	js.Global().Set("createLocationMessage", js.FuncOf(wrapperConMsg.CreateLocationMessage))
 	js.Global().Set("getAtAllTag", js.FuncOf(wrapperConMsg.GetAtAllTag))
 	js.Global().Set("markConversationMessageAsRead", js.FuncOf(wrapperConMsg.MarkConversationMessageAsRead))
+	js.Global().Set("markAllConversationMessageAsRead", js.FuncOf(wrapperConMsg.MarkAllConversationMessageAsRead))
 	js.Global().Set("markMessagesAsReadByMsgID", js.FuncOf(wrapperConMsg.MarkMessagesAsReadByMsgID))
 	js.Global().Set("sendMessage", js.FuncOf(wrapperConMsg.SendMessage))
 	//js.Global().Set("setMessageReactionExtensions", js.FuncOf(wrapperConMsg.SetMessageReactionExtensions))
@@ -109,6 +110,7 @@ func registerFunc() {
 
 	js.Global().Set("changeInputStates", js.FuncOf(wrapperConMsg.ChangeInputStates))
 	js.Global().Set("getInputStates", js.FuncOf(wrapperConMsg.GetInputStates))
+	js.Global().Set("fetchSurroundingMessages", js.FuncOf(wrapperConMsg.FetchSurroundingMessages))
 
 	//register group func
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)
