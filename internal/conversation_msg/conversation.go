@@ -359,13 +359,9 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 				newContentTypeList = SearchContentType
 			}
 
-			if searchParam.MessageTypeList == nil {
-
-			}
-
 			if len(searchParam.SenderUserIDList) != 0 {
-				list, err = c.db.SearchMessageBySenderUserIDAndKeyword(ctx, newContentTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType,
-					searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+				list, err = c.db.SearchMessageBySenderUserIDAndAll(ctx, newContentTypeList, searchParam.ConversationID, searchParam.SenderUserIDList,
+					searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime, offset, searchParam.Count)
 			} else {
 				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType,
 					searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
@@ -544,7 +540,7 @@ func (c *Conversation) searchMessageByAll(ctx context.Context, contentType []int
 		conversationID := cID
 
 		eg.Go(func() error {
-			sList, err := c.db.SearchMessageByAll(ctx, contentType, conversationID, senderUserIDList, keywordList, keywordListMatchType, startTime, endTime)
+			sList, err := c.db.SearchMessageBySenderUserIDAndAll(ctx, contentType, conversationID, senderUserIDList, keywordList, keywordListMatchType, startTime, endTime, 0, 0)
 			if err != nil {
 				log.ZWarn(ctx, "search conversation message", err, "conversationID", conversationID)
 				return nil
