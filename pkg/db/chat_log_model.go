@@ -229,11 +229,11 @@ func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType [
 	var condition strings.Builder
 	var args []interface{}
 
-	condition.WriteString("send_time between ? AND ? AND status <= ? AND content_type IN (?)")
+	condition.WriteString("send_time between ? AND ? AND status <= ? AND content_type IN (?) ")
 	args = append(args, startTime, endTime, constant.MsgStatusSendFailed, contentType)
 
 	if len(senderUserIDList) != 0 {
-		condition.WriteString("And send_id IN (?)")
+		condition.WriteString(" And send_id IN (?)")
 		args = append(args, senderUserIDList)
 	}
 
@@ -249,13 +249,13 @@ func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int
 	var subCondition strings.Builder
 	var args []interface{}
 
-	condition.WriteString("send_time between ? AND ? AND status <= ? AND content_type IN (?)")
+	condition.WriteString(" send_time between ? AND ? AND status <= ? AND content_type IN (?)")
 	args = append(args, startTime, endTime, constant.MsgStatusSendFailed, contentType)
 
 	// Construct a sub-condition for SQL query based on keyword list and match type
 	if keywordListMatchType == constant.KeywordMatchOr {
 		// Use OR logic if keywordListMatchType is KeywordMatchOr
-		subCondition.WriteString("AND (")
+		subCondition.WriteString(" AND (")
 		for i, keyword := range keywordList {
 			if i > 0 {
 				subCondition.WriteString(" OR ")
@@ -267,7 +267,7 @@ func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int
 		subCondition.WriteString(") ")
 	} else {
 		// Use AND logic for other keywordListMatchType
-		subCondition.WriteString("AND (")
+		subCondition.WriteString(" AND (")
 		for i, keyword := range keywordList {
 			if i > 0 {
 				subCondition.WriteString(" AND ")
@@ -282,7 +282,7 @@ func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int
 	condition.WriteString(subCondition.String())
 
 	if senderUserIDList != nil {
-		condition.WriteString("And send_id IN (?)")
+		condition.WriteString(" And send_id IN (?)")
 		args = append(args, senderUserIDList)
 	}
 
@@ -301,13 +301,13 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 	var args []interface{}
 
 	// Construct the main SQL condition string
-	condition.WriteString("send_time between ? AND ? AND status <= ? AND content_type IN (?)")
+	condition.WriteString(" send_time between ? AND ? AND status <= ? AND content_type IN (?)")
 	args = append(args, startTime, endTime, constant.MsgStatusSendFailed, contentType)
 
 	// Construct a sub-condition for SQL query based on keyword list and match type
 	if keywordListMatchType == constant.KeywordMatchOr {
 		// Use OR logic if keywordListMatchType is KeywordMatchOr
-		subCondition.WriteString("AND (")
+		subCondition.WriteString(" AND (")
 		for i, keyword := range keywordList {
 			if i > 0 {
 				subCondition.WriteString(" OR ")
@@ -319,7 +319,7 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 		subCondition.WriteString(") ")
 	} else {
 		// Use AND logic for other keywordListMatchType
-		subCondition.WriteString("AND (")
+		subCondition.WriteString(" AND (")
 		for i, keyword := range keywordList {
 			if i > 0 {
 				subCondition.WriteString(" AND ")
@@ -334,7 +334,7 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 	condition.WriteString(subCondition.String())
 
 	if senderUserIDList != nil {
-		condition.WriteString("And send_id IN (?)")
+		condition.WriteString(" And send_id IN (?)")
 		args = append(args, senderUserIDList)
 	}
 
