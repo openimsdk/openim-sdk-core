@@ -360,10 +360,10 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			}
 
 			if len(searchParam.SenderUserIDList) != 0 {
-				list, err = c.db.SearchMessageBySenderUserIDAndAll(ctx, newContentTypeList, searchParam.ConversationID, searchParam.SenderUserIDList,
-					searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime, offset, searchParam.Count)
+				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.SenderUserIDList, searchParam.KeywordList,
+					searchParam.KeywordListMatchType, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 			} else {
-				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType,
+				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, nil, searchParam.KeywordList, searchParam.KeywordListMatchType,
 					searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 			}
 
@@ -378,9 +378,9 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		}
 
 		if len(searchParam.SenderUserIDList) != 0 {
-			list, err = c.searchMessageByAll(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+			list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 		} else {
-			list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+			list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, nil, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 		}
 	}
 
@@ -486,7 +486,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	return &r, nil // Return the final search results
 }
 
-func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string,
+func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, senderUserIDList []string, keywordList []string,
 	keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	var list []*model_struct.LocalChatLog
 
@@ -502,45 +502,7 @@ func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context,
 		conversationID := cID
 
 		eg.Go(func() error {
-			sList, err := c.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, conversationID, keywordList, keywordListMatchType, startTime, endTime)
-			if err != nil {
-				log.ZWarn(ctx, "search conversation message", err, "conversationID", conversationID)
-				return nil
-			}
-
-			mu.Lock()
-			list = append(list, sList...)
-			mu.Unlock()
-
-			return nil
-		})
-	}
-
-	if err := eg.Wait(); err != nil {
-		return nil, err
-	}
-
-	return list, nil
-}
-
-func (c *Conversation) searchMessageByAll(ctx context.Context, contentType []int, senderUserIDList []string, keywordList []string,
-	keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
-	var list []*model_struct.LocalChatLog
-
-	conversationIDList, err := c.db.GetAllConversationIDList(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var mu sync.Mutex
-	eg, _ := errgroup.WithContext(ctx)
-	eg.SetLimit(searchMessageGoroutineLimit)
-
-	for _, cID := range conversationIDList {
-		conversationID := cID
-
-		eg.Go(func() error {
-			sList, err := c.db.SearchMessageBySenderUserIDAndAll(ctx, contentType, conversationID, senderUserIDList, keywordList, keywordListMatchType, startTime, endTime, 0, 0)
+			sList, err := c.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, conversationID, senderUserIDList, keywordList, keywordListMatchType, startTime, endTime)
 			if err != nil {
 				log.ZWarn(ctx, "search conversation message", err, "conversationID", conversationID)
 				return nil
