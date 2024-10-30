@@ -37,7 +37,7 @@ func (d *DataBase) initChatLog(ctx context.Context, conversationID string) error
 	tableName := utils.GetTableName(conversationID)
 	if !d.tableChecker.HasTable(tableName) {
 		createTableSQL := fmt.Sprintf(`
-            CREATE TABLE %s (
+            CREATE TABLE "%s" (
                 client_msg_id CHAR(64),
                 server_msg_id CHAR(64),
                 send_id CHAR(64),
