@@ -198,8 +198,8 @@ func (i *LocalChatLogs) UpdateSingleMessageHasRead(ctx context.Context, sendID s
 }
 
 // SearchMessageByContentType searches for messages in the local chat log by content type.
-func (i *LocalChatLogs) SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
-	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), startTime, endTime, offset, count)
+func (i *LocalChatLogs) SearchMessageByContentType(ctx context.Context, contentType []int, senderUserIDList []string, conversationID string, startTime, endTime int64, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+	msgList, err := exec.Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(senderUserIDList), startTime, endTime, offset, count)
 	if err != nil {
 		return nil, err
 	} else {

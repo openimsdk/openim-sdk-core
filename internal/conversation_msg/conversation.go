@@ -340,11 +340,10 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 
 		// Search by content type or keyword based on provided parameters
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 			if err != nil {
 				return nil, err
 			}
-
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -359,14 +358,8 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 				newContentTypeList = SearchContentType
 			}
 
-			if len(searchParam.SenderUserIDList) != 0 {
-				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.SenderUserIDList, searchParam.KeywordList,
-					searchParam.KeywordListMatchType, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
-			} else {
-				list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, nil, searchParam.KeywordList, searchParam.KeywordListMatchType,
-					searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
-			}
-
+			list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.SenderUserIDList, searchParam.KeywordList,
+				searchParam.KeywordListMatchType, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 			if err != nil {
 				return nil, err
 			}
@@ -377,11 +370,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			searchParam.MessageTypeList = SearchContentType
 		}
 
-		if len(searchParam.SenderUserIDList) != 0 {
-			list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
-		} else {
-			list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, nil, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
-		}
+		list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 	}
 
 	// Handle any errors encountered during the search
