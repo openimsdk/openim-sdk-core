@@ -1067,3 +1067,11 @@ func (c *Conversation) SearchConversation(ctx context.Context, searchParam strin
 	// Return the list of conversations
 	return apiConversations, nil
 }
+
+func (c *Conversation) GetAllConversationIDsFromServer(ctx context.Context) ([]string, error) {
+	resp, err := c.getAllConversationIDsFromServer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return resp.ConversationIDs, err
+}
