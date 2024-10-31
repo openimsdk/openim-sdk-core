@@ -377,6 +377,7 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 	}
 	for _, chatLog := range allMessage {
 		if g, ok := groupMap[chatLog.SendID]; ok { // If group member info is successfully retrieved
+			log.ZDebug(ctx, "find in GetGroupMemberNameAndFaceURL", "sendID", chatLog.SendID, "faceURL", g.FaceURL, "nickName", g.Nickname)
 			if g.FaceURL != "" && g.Nickname != "" {
 				chatLog.SenderFaceURL = g.FaceURL
 				chatLog.SenderNickname = g.Nickname
@@ -386,6 +387,7 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 			if err != nil {
 				log.ZWarn(ctx, "getUserNameAndFaceURL error", err, "senderID", chatLog.SendID)
 			} else if faceURL != "" && name != "" {
+				log.ZDebug(ctx, "find in getUserNameAndFaceURL", "sendID", chatLog.SendID, "faceURL", faceURL, "nickName", name)
 				chatLog.SenderFaceURL = faceURL
 				chatLog.SenderNickname = name
 			}
