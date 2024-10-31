@@ -104,7 +104,7 @@ func (r *Relation) SyncAllBlackList(ctx context.Context) error {
 		return err
 	}
 	log.ZDebug(ctx, "black from local", "data", localData)
-	return r.blockSyncer.Sync(ctx, datautil.Batch(ServerBlackToLocalBlack, serverData), localData, nil)
+	return r.blackSyncer.Sync(ctx, datautil.Batch(ServerBlackToLocalBlack, serverData), localData, nil)
 }
 
 func (r *Relation) SyncAllBlackListWithoutNotice(ctx context.Context) error {
@@ -118,7 +118,7 @@ func (r *Relation) SyncAllBlackListWithoutNotice(ctx context.Context) error {
 		return err
 	}
 	log.ZDebug(ctx, "black from local", "data", localData)
-	return r.blockSyncer.Sync(ctx, datautil.Batch(ServerBlackToLocalBlack, serverData), localData, nil, false, true)
+	return r.blackSyncer.Sync(ctx, datautil.Batch(ServerBlackToLocalBlack, serverData), localData, nil, false, true)
 }
 
 func (r *Relation) GetDesignatedFriends(ctx context.Context, friendIDs []string) ([]*sdkws.FriendInfo, error) {
