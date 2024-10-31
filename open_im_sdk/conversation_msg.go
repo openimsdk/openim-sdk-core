@@ -160,6 +160,10 @@ func MarkConversationMessageAsRead(callback open_im_sdk_callback.Base, operation
 	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsRead, conversationID)
 }
 
+func MarkAllConversationMessageAsRead(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.Conversation().MarkAllConversationMessageAsRead)
+}
+
 func MarkMessagesAsReadByMsgID(callback open_im_sdk_callback.Base, operationID string, conversationID string, clientMsgIDs string) {
 	call(callback, operationID, UserForSDK.Conversation().MarkMessagesAsReadByMsgID, conversationID, clientMsgIDs)
 }
@@ -217,4 +221,8 @@ func ChangeInputStates(callback open_im_sdk_callback.Base, operationID string, c
 
 func GetInputStates(callback open_im_sdk_callback.Base, operationID string, conversationID string, userID string) {
 	call(callback, operationID, UserForSDK.Conversation().GetInputStates, conversationID, userID)
+}
+
+func FetchSurroundingMessages(callback open_im_sdk_callback.Base, operationID string, conversationID string, seq int64, before int64, after int64) {
+	call(callback, operationID, UserForSDK.Conversation().FetchSurroundingMessages, conversationID, seq, before, after)
 }

@@ -36,7 +36,7 @@ type Relation struct {
 	db                 db_interface.DataBase
 	user               *user.User
 	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string]
-	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, syncer.NoResp, [2]string]
+	blackSyncer        *syncer.Syncer[*model_struct.LocalBlack, syncer.NoResp, [2]string]
 	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
 	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
 	conversationCh     chan common.Cmd2Value
@@ -53,6 +53,7 @@ func (r *Relation) initSyncer() {
 			return r.db.DeleteFriendDB(ctx, value.FriendUserID)
 		}),
 		syncer.WithUpdate[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, server, local *model_struct.LocalFriend) error {
+			r.user.UserCache.Delete(server.FriendUserID)
 			return r.db.UpdateFriend(ctx, server)
 		}),
 		syncer.WithUUID[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(value *model_struct.LocalFriend) [2]string {
@@ -62,6 +63,27 @@ func (r *Relation) initSyncer() {
 			switch state {
 			case syncer.Insert:
 				r.friendshipListener.OnFriendAdded(*server)
+				if server.Remark != "" {
+					server.Nickname = server.Remark
+				}
+				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+					Action: constant.UpdateConFaceUrlAndNickName,
+					Args: common.SourceIDAndSessionType{
+						SourceID:    server.FriendUserID,
+						SessionType: constant.SingleChatType,
+						FaceURL:     server.FaceURL,
+						Nickname:    server.Nickname,
+					},
+				}, r.conversationCh)
+				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{
+					Action: constant.UpdateMsgFaceUrlAndNickName,
+					Args: common.UpdateMessageInfo{
+						SessionType: constant.SingleChatType,
+						UserID:      server.FriendUserID,
+						FaceURL:     server.FaceURL,
+						Nickname:    server.Nickname,
+					},
+				}, r.conversationCh)
 			case syncer.Delete:
 				log.ZDebug(ctx, "syncer OnFriendDeleted", "local", local)
 				r.friendshipListener.OnFriendDeleted(*local)
@@ -111,7 +133,7 @@ func (r *Relation) initSyncer() {
 		syncer.WithFullSyncLimit[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](friendSyncLimit),
 	)
 
-	r.blockSyncer = syncer.New[*model_struct.LocalBlack, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalBlack) error {
+	r.blackSyncer = syncer.New[*model_struct.LocalBlack, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return r.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return r.db.DeleteBlack(ctx, value.BlockUserID)

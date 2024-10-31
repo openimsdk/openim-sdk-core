@@ -17,18 +17,20 @@ package open_im_sdk
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
 	"runtime/debug"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 
 	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/mw"
 
 	"github.com/openimsdk/tools/errs"
 )
@@ -98,31 +100,36 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		return nil, sdkerrs.ErrResourceLoad.WrapMsg("not load resource")
 	}
 	ctx := ccontext.WithOperationID(UserForSDK.Context(), operationID)
+
 	defer func(start time.Time) {
 		if r := recover(); r != nil {
-			fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
-			err = fmt.Errorf("call panic: %+v", r)
+			p := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			err = fmt.Errorf("call panic: %+v", p)
 		} else {
 			elapsed := time.Since(start).Milliseconds()
 			if err == nil {
 				log.ZInfo(ctx, "fn call success", "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed), "resp", res)
 			} else {
-				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
+				log.ZError(ctx, "fn call error", mw.FormatError(err), "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
 
 			}
 
 		}
 	}(t)
+
 	log.ZInfo(ctx, "func call req", "function name", funcName, "args", args)
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
 		return nil, sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("call function fn is not function, is %T", fn))
 	}
+
 	fnt := fnv.Type()
 	nin := fnt.NumIn()
+
 	if len(args)+1 != nin {
-		return nil, sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("go code error: fn in args num is not match"))
+		return nil, sdkerrs.ErrSdkInternal.WrapMsg("go code error: fn in args num is not match")
 	}
+
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -157,18 +164,22 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 				continue
 			}
 		}
+
 		//if isNumeric(arg.Kind()) && isNumeric(inFnField.Kind()) {
 		//	v := reflect.Zero(inFnField).Interface()
 		//	setNumeric(args[i], &v)
 		//	ins = append(ins, reflect.ValueOf(v))
 		//	continue
 		//}
-		return nil, sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("go code error: fn in args type is not match"))
+
+		return nil, sdkerrs.ErrSdkInternal.WrapMsg("go code error: fn in args type is not match")
 	}
+
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
 		return "", nil
 	}
+
 	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
 		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
 			return nil, errValueOf.Interface().(error)
@@ -178,6 +189,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		}
 		outs = outs[:len(outs)-1]
 	}
+
 	for i := 0; i < len(outs); i++ {
 		out := outs[i]
 		switch out.Kind() {
@@ -191,13 +203,16 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 			}
 		}
 	}
+
 	if len(outs) == 1 {
 		return outs[0].Interface(), nil
 	}
+
 	val := make([]any, 0, len(outs))
 	for i := range outs {
 		val = append(val, outs[i].Interface())
 	}
+
 	return val, nil
 }
 
