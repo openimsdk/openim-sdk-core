@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.2.0
 
     - name: Get the PR title and extract PR numbers
       id: extract_pr_numbers
@@ -36,15 +36,6 @@ jobs:
           echo "proceed=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Delete branch after PR close
-      if: steps.extract_pr_numbers.outputs.proceed == 'true' || contains(github.event.pull_request.labels.*.name, 'milestone-merge')
-      run: |
-        BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-        echo "Branch to delete: $BRANCH_NAME"
-        git push origin --delete "$BRANCH_NAME"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Use extracted PR numbers and label PRs
       if: (steps.extract_pr_numbers.outputs.proceed == 'true' || contains(github.event.pull_request.labels.*.name, 'milestone-merge')) && github.event.pull_request.merged == true
       run: |
@@ -61,5 +52,14 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/labels \
             -d '{"labels":["cherry-picked"]}'
         done
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Delete branch after PR close
+      if: steps.extract_pr_numbers.outputs.proceed == 'true' || contains(github.event.pull_request.labels.*.name, 'milestone-merge')
+      run: |
+        BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+        echo "Branch to delete: $BRANCH_NAME"
+        git push origin --delete "$BRANCH_NAME"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
