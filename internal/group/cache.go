@@ -22,7 +22,7 @@ func (g *Group) GetGroupMembersInfoFunc(ctx context.Context, groupID string, use
 	for _, userID := range userIDs {
 		key := g.buildGroupMemberKey(groupID, userID)
 		if member, ok := g.groupMemberCache.Load(key); ok {
-			res[key] = member
+			res[userID] = member
 		} else {
 			missingKeys = append(missingKeys, userIDs...)
 		}
@@ -36,7 +36,7 @@ func (g *Group) GetGroupMembersInfoFunc(ctx context.Context, groupID string, use
 
 	for i, data := range fetchData {
 		key := g.buildGroupMemberKey(groupID, data.UserID)
-		res[key] = fetchData[i]
+		res[data.UserID] = fetchData[i]
 		g.groupMemberCache.Store(key, fetchData[i])
 	}
 
