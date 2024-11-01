@@ -72,7 +72,7 @@ func (o *onConversationListener) OnNewConversation(conversationList string) {
 }
 
 func (o *onConversationListener) OnConversationChanged(conversationList string) {
-	log.ZInfo(o.ctx, "OnConversationChanged", "conversationList", conversationList)
+	log.ZInfo(o.ctx, "OnConversationChanged", "####### conversationList", conversationList)
 }
 
 func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
@@ -146,6 +146,10 @@ func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
 
 func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
+}
+
+func (o *onAdvancedMsgListener) OnMsgEdited(message string) {
+	log.ZInfo(o.ctx, "OnMsgEdited", "######## message", message)
 }
 
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {

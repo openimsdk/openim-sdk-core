@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"context"
-
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	pbConversation "github.com/openimsdk/protocol/conversation"
 	pbMsg "github.com/openimsdk/protocol/msg"
@@ -70,4 +69,8 @@ func (c *Conversation) getAllConversationIDsFromServer(ctx context.Context) (*pb
 func (c *Conversation) getIncrementalConversationFromServer(ctx context.Context, version uint64, versionID string) (*pbConversation.GetIncrementalConversationResp, error) {
 	req := &pbConversation.GetIncrementalConversationReq{UserID: c.loginUserID, Version: version, VersionID: versionID}
 	return api.GetIncrementalConversation.Invoke(ctx, req)
+}
+
+func (c *Conversation) getStreamMsg(ctx context.Context, clientMsgID string) (*pbMsg.GetStreamMsgResp, error) {
+	return api.GetStreamMsg.Invoke(ctx, &pbMsg.GetStreamMsgReq{ClientMsgID: clientMsgID})
 }
