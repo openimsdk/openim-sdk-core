@@ -399,7 +399,8 @@ func (LocalVersionSync) TableName() string {
 }
 
 type LocalAppSDKVersion struct {
-	Version string `gorm:"column:version;type:varchar(255);primary_key" json:"version"`
+	Version   string `gorm:"column:version;type:varchar(255);primary_key" json:"version"`
+	Installed bool   `gorm:"column:installed" json:"installed"` // Mark whether it has already been loaded
 }
 
 func (LocalAppSDKVersion) TableName() string {
