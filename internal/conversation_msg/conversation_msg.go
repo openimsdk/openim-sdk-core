@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	pconstant "github.com/openimsdk/protocol/constant"
 	"math"
 	"sync"
 
@@ -72,6 +73,7 @@ type Conversation struct {
 	msgOffset             int
 	progress              int
 	conversationSyncMutex sync.Mutex
+	streamMsgMutex        sync.Mutex
 
 	startTime time.Time
 
@@ -868,6 +870,10 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		t := sdk_struct.CardElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.CardElem = &t
+	case pconstant.Stream:
+		t := sdk_struct.StreamElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.StreamElem = &t
 	default:
 		t := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
@@ -937,8 +943,8 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.Nickname
 			} else {
-				log.ZWarn(ctx, "user info not found", errors.New("user not found"),"userID", conversation.UserID)
-				
+				log.ZWarn(ctx, "user info not found", errors.New("user not found"), "userID", conversation.UserID)
+
 				conversation.FaceURL = ""
 				conversation.ShowName = "UserNotFound"
 			}

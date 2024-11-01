@@ -114,6 +114,10 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 
 }
 
+func (m *MsgListenerCallBak) OnMsgEdited(message string) {
+
+}
+
 func (m *MsgListenerCallBak) OnRecvC2CReadReceipt(msgReceiptList string) {
 }
 
