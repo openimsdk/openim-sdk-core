@@ -337,9 +337,13 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if err != nil {
 			return nil, err
 		}
+
 		// Search by content type or keyword based on provided parameters
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -349,18 +353,24 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 				}
 				return result
 			}(searchParam.MessageTypeList)
+
 			if len(newContentTypeList) == 0 {
 				newContentTypeList = SearchContentType
 			}
-			list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType,
-				searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+
+			list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.SenderUserIDList, searchParam.KeywordList,
+				searchParam.KeywordListMatchType, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		// Comprehensive search across all conversations
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
-		list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+
+		list, err = c.searchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.SenderUserIDList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 	}
 
 	// Handle any errors encountered during the search
@@ -377,7 +387,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
 	// log.Debug("", "get raw data length is", len(list))
-	log.ZDebug(ctx, "get raw data length is", len(list))
+	log.ZDebug(ctx, "get raw data length is", "len", len(list))
 
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
@@ -465,21 +475,23 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	return &r, nil // Return the final search results
 }
 
-func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string,
+func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, senderUserIDList []string, keywordList []string,
 	keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	var list []*model_struct.LocalChatLog
+
 	conversationIDList, err := c.db.GetAllConversationIDList(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	var mu sync.Mutex
-	g, _ := errgroup.WithContext(ctx)
-	g.SetLimit(searchMessageGoroutineLimit)
-	for _, v := range conversationIDList {
-		conversationID := v
-		g.Go(func() error {
-			sList, err := c.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, conversationID, keywordList, keywordListMatchType, startTime, endTime)
+	eg, _ := errgroup.WithContext(ctx)
+	eg.SetLimit(searchMessageGoroutineLimit)
+	for _, cID := range conversationIDList {
+		conversationID := cID
+
+		eg.Go(func() error {
+			sList, err := c.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, conversationID, senderUserIDList, keywordList, keywordListMatchType, startTime, endTime)
 			if err != nil {
 				log.ZWarn(ctx, "search conversation message", err, "conversationID", conversationID)
 				return nil
@@ -488,11 +500,12 @@ func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context,
 			mu.Lock()
 			list = append(list, sList...)
 			mu.Unlock()
+
 			return nil
 		})
 	}
 
-	if err := g.Wait(); err != nil {
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
 
