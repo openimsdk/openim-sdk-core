@@ -201,6 +201,13 @@ type TypingElem struct {
 	MsgTips string `json:"msgTips,omitempty"`
 }
 
+type StreamElem struct {
+	Type    string   `json:"type,omitempty"`
+	Content string   `json:"content,omitempty"`
+	Packets []string `json:"packets,omitempty"`
+	End     bool     `json:"end"`
+}
+
 type MsgStruct struct {
 	ClientMsgID          string                 `json:"clientMsgID,omitempty"`
 	ServerMsgID          string                 `json:"serverMsgID,omitempty"`
@@ -240,6 +247,7 @@ type MsgStruct struct {
 	NotificationElem     *NotificationElem      `json:"notificationElem,omitempty"`
 	AdvancedTextElem     *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
 	TypingElem           *TypingElem            `json:"typingElem,omitempty"`
+	StreamElem           *StreamElem            `json:"streamElem,omitempty"`
 	AttachedInfoElem     *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
 }
 

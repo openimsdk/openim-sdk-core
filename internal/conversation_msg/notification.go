@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	pconstant "github.com/openimsdk/protocol/constant"
 	"reflect"
 	"runtime"
 	"sync"
@@ -178,6 +179,8 @@ func (c *Conversation) doNotification(ctx context.Context, msg *sdkws.MsgData) e
 		return c.doDeleteMsgs(ctx, msg)
 	case constant.HasReadReceipt: // 2200
 		return c.doReadDrawing(ctx, msg)
+	case pconstant.StreamMsgNotification:
+		return c.doStreamMsgNotification(ctx, msg)
 	}
 	return errs.New("unknown tips type", "contentType", msg.ContentType).Wrap()
 }
