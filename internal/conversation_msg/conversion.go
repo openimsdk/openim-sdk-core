@@ -194,6 +194,10 @@ func msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 		t := sdk_struct.CardElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.CardElem = &t
+	case pconstant.Stream:
+		t := sdk_struct.StreamElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.StreamElem = &t
 	default:
 		t := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
