@@ -99,7 +99,7 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	// If all retrieved messages are either deleted or filtered out, continue fetching messages from an earlier point.
 	shouldFetchMoreMessages := func(messages []*model_struct.LocalChatLog) bool {
 		if len(messages) == 0 {
-			return false // 如果没有消息，则无需向前补齐
+			return false
 		}
 
 		allDeleted := true
@@ -113,7 +113,7 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	}
 	getNewStartTime := func(messages []*model_struct.LocalChatLog) int64 {
 		if len(messages) == 0 {
-			return 0 // 如果列表为空，返回 0 表示无效的起始时间
+			return 0
 		}
 		// Returns the SendTime of the last element in the message list
 		return messages[len(messages)-1].SendTime
