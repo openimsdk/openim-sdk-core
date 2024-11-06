@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"context"
 	"fmt"
+	pconstant "github.com/openimsdk/protocol/constant"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -511,6 +512,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		s.Content = utils.StructToJsonString(s.FaceElem)
 	case constant.AdvancedText:
 		s.Content = utils.StructToJsonString(s.AdvancedTextElem)
+	case pconstant.Stream:
+		s.Content = utils.StructToJsonString(s.StreamElem)
 	default:
 		return nil, sdkerrs.ErrMsgContentTypeNotSupport
 	}
@@ -595,6 +598,8 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 		s.Content = utils.StructToJsonString(s.FaceElem)
 	case constant.AdvancedText:
 		s.Content = utils.StructToJsonString(s.AdvancedTextElem)
+	case pconstant.Stream:
+		s.Content = utils.StructToJsonString(s.StreamElem)
 	default:
 		return nil, sdkerrs.ErrMsgContentTypeNotSupport
 	}
@@ -729,6 +734,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sd
 		s := make([]*sdk_struct.MsgStruct, 0)
 		result.MessageList = s
 	}
+	c.streamMsgReplace(ctx, req.ConversationID, result.MessageList)
 	return result, nil
 }
 
@@ -741,6 +747,7 @@ func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context,
 		s := make([]*sdk_struct.MsgStruct, 0)
 		result.MessageList = s
 	}
+	c.streamMsgReplace(ctx, req.ConversationID, result.MessageList)
 	return result, nil
 }
 

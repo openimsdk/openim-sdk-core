@@ -73,6 +73,7 @@ type Conversation struct {
 	msgOffset             int
 	progress              int
 	conversationSyncMutex sync.Mutex
+	streamMsgMutex        sync.Mutex
 
 	startTime time.Time
 
