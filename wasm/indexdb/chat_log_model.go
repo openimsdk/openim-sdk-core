@@ -179,7 +179,7 @@ func (i *LocalChatLogs) GetLatestActiveMessage(ctx context.Context, conversation
 		return nil, err
 	} else {
 		if v, ok := msg.(string); ok {
-			err := utils.JsonStringToStruct(v, result)
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
 			}
