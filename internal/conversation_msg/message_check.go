@@ -17,9 +17,9 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 )
 
-// Check for internal continuity. If discontinuity is found, fill in the gaps.
-// Retrieve the maximum and minimum seq of this group of messages, as well as the length of the seq list that needs to be filled in.
-func (c *Conversation) messageBlocksInternalContinuityCheck(ctx context.Context, conversationID string, isReverse bool, count int,
+// validateAndFillInternalGaps checks for continuity within a block of messages. If gaps are detected, it initiates a fill operation
+// to retrieve and merge missing messages. It returns the maximum `seq` of this batch, which helps in determining continuity with subsequent batches.
+func (c *Conversation) validateAndFillInternalGaps(ctx context.Context, conversationID string, isReverse bool, count int,
 	startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) int64 {
 	var lostSeqListLength int
 	maxSeq, minSeq, haveSeqList := c.getMaxAndMinHaveSeqList(*list)
@@ -37,9 +37,9 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(ctx context.Context,
 	return maxSeq
 }
 
-// Check the continuity between message blocks. If discontinuity is found, fill in the gaps forward.
-// Returns whether the blocks are continuous as a boolean value.
-func (c *Conversation) messageBlocksBetweenContinuityCheck(ctx context.Context, maxSeq int64, conversationID string,
+// validateAndFillInterBlockGaps checks for continuity between blocks of messages. If a gap is identified, it retrieves the missing messages
+// to bridge the gap. The function returns a boolean indicating whether the blocks are continuous.
+func (c *Conversation) validateAndFillInterBlockGaps(ctx context.Context, maxSeq int64, conversationID string,
 	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) bool {
 	lastMinSeq, _ := c.messagePullMinSeqMap.Load(conversationID)
 	if lastMinSeq != 0 {
@@ -95,22 +95,29 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(ctx context.Context, 
 //	}
 //
 // }
-func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, conversationID string,
-	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
-	//如果一批消息经过了块内部连续性检测，块之间连续性检测，但是获取的消息数量仍然<count，那么还需要对其进行消息块触底检测
 
+// validateAndFillEndBlockContinuity performs an end-of-block continuity check. If a batch of messages has passed
+// internal and inter-block continuity checks but contains fewer messages than `count`, this function verifies if the end
+// of the message history has been reached. If not, it attempts to retrieve any missing messages to ensure continuity.
+func (c *Conversation) validateAndFillEndBlockContinuity(ctx context.Context, conversationID string,
+	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
+	// Perform an end-of-block check if the retrieved message count is less than requested
 	if len(*list) < count {
 		_, minSeq, _ := c.getMaxAndMinHaveSeqList(*list)
 		log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "minSeq", minSeq, "conversationID", conversationID)
-		if minSeq == 1 { //其中的1可以替换成用户关于seq的最小值
+		if minSeq == 1 { // todo Replace `1` with the minimum sequence value as defined by the user or system
 			messageListCallback.IsEnd = true
 		} else {
 			lastMinSeq, _ := c.messagePullMinSeqMap.Load(conversationID)
 			log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "lastMinSeq", lastMinSeq, "conversationID", conversationID)
-			if minSeq == 0 && lastMinSeq == 1 { //这批消息全部属于本地消息，上一批有效消息最小的seq已经到达服务器消息拉取的最小值
+			// If `minSeq` is zero and `lastMinSeq` is at the minimum server sequence, this batch is fully local
+			if minSeq == 0 && lastMinSeq == 1 { // All messages in this batch are local messages,
+				// and the minimum seq of the last batch of valid messages has already reached the minimum pullable seq from the server.
 				messageListCallback.IsEnd = true
-			} else { //这批消息有带seq但是没有达到最小值，或者上一批有效消息最小的seq没有到达服务器消息拉取的最小值，这一批消息全部是本地消息
-				//仅仅是minSeq>1这种情况存在，lastMinSeq>1不存在，因为被块间连续性检测补了
+			} else {
+				// The batch includes sequences but has not reached the minimum value,
+				// This condition indicates local-only messages, with `minSeq > 1` as the only case,
+				// since `lastMinSeq > 1` is handled in inter-block continuity.
 				lostSeqList := getLostSeqListWithLimitLength(1, minSeq-1, []int64{})
 				if len(lostSeqList) > 0 {
 					log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "lostSeqList", lostSeqList)
@@ -193,7 +200,6 @@ func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, convers
 		}
 		if v, ok := getSeqMessageResp.Msgs[conversationID]; ok {
 			c.pullMessageIntoTable(ctx, getSeqMessageResp.Msgs)
-			//消息补齐成功,判断是否还是未到达需要的消息数量
 			log.ZDebug(ctx, "syncMsgFromServerSplit pull msg success",
 				"conversationID", conversationID, "count", count, "len", len(*list), "msgLen", len(v.Msgs))
 			localMessage := datautil.Batch(MsgDataToLocalChatLog, v.Msgs)

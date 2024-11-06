@@ -96,7 +96,7 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 
 	var list []*model_struct.LocalChatLog
 
-	// 定义匿名函数来检查是否需要继续拉取消息
+	// If all retrieved messages are either deleted or filtered out, continue fetching messages from an earlier point.
 	shouldFetchMoreMessages := func(messages []*model_struct.LocalChatLog) bool {
 		if len(messages) == 0 {
 			return false // 如果没有消息，则无需向前补齐
@@ -115,7 +115,7 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 		if len(messages) == 0 {
 			return 0 // 如果列表为空，返回 0 表示无效的起始时间
 		}
-		// 返回列表最后一个元素的 SendTime
+		// Returns the SendTime of the last element in the message list
 		return messages[len(messages)-1].SendTime
 	}
 
@@ -128,16 +128,19 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 		return nil, err
 	}
 	t = time.Now()
-	maxSeq := c.messageBlocksInternalContinuityCheck(ctx, conversationID, isReverse,
+	maxSeq := c.validateAndFillInternalGaps(ctx, conversationID, isReverse,
 		count, startTime, &list, messageListCallback)
 	log.ZDebug(ctx, "internal continuity check", "cost time", time.Since(t))
 	t = time.Now()
-	c.messageBlocksBetweenContinuityCheck(ctx, maxSeq, conversationID,
+	c.validateAndFillInterBlockGaps(ctx, maxSeq, conversationID,
 		isReverse, count, startTime, &list, messageListCallback)
 	log.ZDebug(ctx, "between continuity check", "cost time", time.Since(t))
-	//如果一批消息经过了块内部连续性检测，块之间连续性检测，但是获取的消息数量仍然<count，那么还需要对其进行消息块触底检测
-	c.messageBlocksEndContinuityCheck(ctx, conversationID, isReverse,
+	t = time.Now()
+	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse,
 		count, startTime, &list, messageListCallback)
+	log.ZDebug(ctx, "end continuity check", "cost time", time.Since(t))
+	// If all retrieved messages are either deleted or filtered out,
+	//continue fetching recursively until either valid messages are found or all messages have been fetched.
 	if shouldFetchMoreMessages(list) && !messageListCallback.IsEnd {
 		return c.fetchMessagesWithGapCheck(ctx, conversationID, count, getNewStartTime(list), isReverse, messageListCallback)
 	}
