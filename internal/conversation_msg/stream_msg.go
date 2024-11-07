@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -11,7 +13,6 @@ import (
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
-	"time"
 )
 
 func (c *Conversation) parseStreamMsgTips(content []byte) (*sdkws.StreamMsgTips, error) {
@@ -70,7 +71,7 @@ func (c *Conversation) setStreamMsg(ctx context.Context, conversationID string, 
 	if err := c.db.UpdateMessage(ctx, conversationID, msg); err != nil {
 		return err
 	}
-	_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg}, int(msg.SessionType))
+	_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg})
 	if len(res) == 0 {
 		log.ZWarn(ctx, "LocalChatLog2MsgStruct failed", nil, "msg", msg)
 		return nil
@@ -95,7 +96,7 @@ func (c *Conversation) updateConversationLastMsg(ctx context.Context, conversati
 			return nil
 		}
 	}
-	_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg}, int(msg.SessionType))
+	_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg})
 	if len(res) == 0 {
 		log.ZWarn(ctx, "LocalChatLog2MsgStruct failed", nil, "msg", msg)
 		return nil
