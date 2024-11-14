@@ -60,26 +60,23 @@ func (i *LocalChatLogs) UpdateMessage(ctx context.Context, conversationID string
 		return exec.PrimaryKeyNull
 	}
 	tempLocalChatLog := temp_struct.LocalChatLog{
-		ServerMsgID:          c.ServerMsgID,
-		SendID:               c.SendID,
-		RecvID:               c.RecvID,
-		SenderPlatformID:     c.SenderPlatformID,
-		SenderNickname:       c.SenderNickname,
-		SenderFaceURL:        c.SenderFaceURL,
-		SessionType:          c.SessionType,
-		MsgFrom:              c.MsgFrom,
-		ContentType:          c.ContentType,
-		Content:              c.Content,
-		IsRead:               c.IsRead,
-		Status:               c.Status,
-		Seq:                  c.Seq,
-		SendTime:             c.SendTime,
-		CreateTime:           c.CreateTime,
-		AttachedInfo:         c.AttachedInfo,
-		Ex:                   c.Ex,
-		IsReact:              c.IsReact,
-		IsExternalExtensions: c.IsExternalExtensions,
-		MsgFirstModifyTime:   c.MsgFirstModifyTime,
+		ServerMsgID:      c.ServerMsgID,
+		SendID:           c.SendID,
+		RecvID:           c.RecvID,
+		SenderPlatformID: c.SenderPlatformID,
+		SenderNickname:   c.SenderNickname,
+		SenderFaceURL:    c.SenderFaceURL,
+		SessionType:      c.SessionType,
+		MsgFrom:          c.MsgFrom,
+		ContentType:      c.ContentType,
+		Content:          c.Content,
+		IsRead:           c.IsRead,
+		Status:           c.Status,
+		Seq:              c.Seq,
+		SendTime:         c.SendTime,
+		CreateTime:       c.CreateTime,
+		AttachedInfo:     c.AttachedInfo,
+		Ex:               c.Ex,
 	}
 	_, err := exec.Exec(conversationID, c.ClientMsgID, utils.StructToJsonString(tempLocalChatLog))
 	return err
@@ -150,36 +147,13 @@ func (i *LocalChatLogs) GetMessageList(ctx context.Context, conversationID strin
 	}
 }
 
-// GetMessageListNoTime retrieves a list of messages from the local chat log without specifying a start time.
-func (i *LocalChatLogs) GetMessageListNoTime(ctx context.Context, conversationID string, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := exec.Exec(conversationID, count, isReverse)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
-			}
-			return result, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}
-
 func (i *LocalChatLogs) GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	msg, err := exec.Exec(conversationID, isReverse)
 	if err != nil {
 		return nil, err
 	} else {
 		if v, ok := msg.(string); ok {
-			err := utils.JsonStringToStruct(v, result)
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
 			}
@@ -579,26 +553,23 @@ func (i *LocalChatLogs) UpdateMessageBySeq(ctx context.Context, conversationID s
 		return exec.PrimaryKeyNull
 	}
 	tempLocalChatLog := temp_struct.LocalChatLog{
-		ServerMsgID:          c.ServerMsgID,
-		SendID:               c.SendID,
-		RecvID:               c.RecvID,
-		SenderPlatformID:     c.SenderPlatformID,
-		SenderNickname:       c.SenderNickname,
-		SenderFaceURL:        c.SenderFaceURL,
-		SessionType:          c.SessionType,
-		MsgFrom:              c.MsgFrom,
-		ContentType:          c.ContentType,
-		Content:              c.Content,
-		IsRead:               c.IsRead,
-		Status:               c.Status,
-		Seq:                  c.Seq,
-		SendTime:             c.SendTime,
-		CreateTime:           c.CreateTime,
-		AttachedInfo:         c.AttachedInfo,
-		Ex:                   c.Ex,
-		IsReact:              c.IsReact,
-		IsExternalExtensions: c.IsExternalExtensions,
-		MsgFirstModifyTime:   c.MsgFirstModifyTime,
+		ServerMsgID:      c.ServerMsgID,
+		SendID:           c.SendID,
+		RecvID:           c.RecvID,
+		SenderPlatformID: c.SenderPlatformID,
+		SenderNickname:   c.SenderNickname,
+		SenderFaceURL:    c.SenderFaceURL,
+		SessionType:      c.SessionType,
+		MsgFrom:          c.MsgFrom,
+		ContentType:      c.ContentType,
+		Content:          c.Content,
+		IsRead:           c.IsRead,
+		Status:           c.Status,
+		Seq:              c.Seq,
+		SendTime:         c.SendTime,
+		CreateTime:       c.CreateTime,
+		AttachedInfo:     c.AttachedInfo,
+		Ex:               c.Ex,
 	}
 	_, err := exec.Exec(conversationID, c.Seq, utils.StructToJsonString(tempLocalChatLog))
 	return err

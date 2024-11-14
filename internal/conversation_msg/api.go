@@ -150,56 +150,6 @@ func (c *Conversation) SetConversationListener(listener func() open_im_sdk_callb
 	c.ConversationListener = listener
 }
 
-func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
-	var lc model_struct.LocalChatLog
-	copier.Copy(&lc, src)
-	switch src.ContentType {
-	case constant.Text:
-		lc.Content = utils.StructToJsonString(src.TextElem)
-	case constant.Picture:
-		lc.Content = utils.StructToJsonString(src.PictureElem)
-	case constant.Sound:
-		lc.Content = utils.StructToJsonString(src.SoundElem)
-	case constant.Video:
-		lc.Content = utils.StructToJsonString(src.VideoElem)
-	case constant.File:
-		lc.Content = utils.StructToJsonString(src.FileElem)
-	case constant.AtText:
-		lc.Content = utils.StructToJsonString(src.AtTextElem)
-	case constant.Merger:
-		lc.Content = utils.StructToJsonString(src.MergeElem)
-	case constant.Card:
-		lc.Content = utils.StructToJsonString(src.CardElem)
-	case constant.Location:
-		lc.Content = utils.StructToJsonString(src.LocationElem)
-	case constant.Custom:
-		lc.Content = utils.StructToJsonString(src.CustomElem)
-	case constant.Quote:
-		lc.Content = utils.StructToJsonString(src.QuoteElem)
-	case constant.Face:
-		lc.Content = utils.StructToJsonString(src.FaceElem)
-	case constant.AdvancedText:
-		lc.Content = utils.StructToJsonString(src.AdvancedTextElem)
-	default:
-		lc.Content = utils.StructToJsonString(src.NotificationElem)
-	}
-	if src.SessionType == constant.WriteGroupChatType || src.SessionType == constant.ReadGroupChatType {
-		lc.RecvID = src.GroupID
-	}
-	lc.AttachedInfo = utils.StructToJsonString(src.AttachedInfoElem)
-	return &lc
-}
-func (c *Conversation) msgDataToLocalChatLog(src *sdkws.MsgData) *model_struct.LocalChatLog {
-	var lc model_struct.LocalChatLog
-	copier.Copy(&lc, src)
-	lc.Content = string(src.Content)
-	if src.SessionType == constant.WriteGroupChatType || src.SessionType == constant.ReadGroupChatType {
-		lc.RecvID = src.GroupID
-
-	}
-	return &lc
-
-}
 func (c *Conversation) msgDataToLocalErrChatLog(src *model_struct.LocalChatLog) *model_struct.LocalErrChatLog {
 	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, src)
@@ -345,7 +295,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	if !isOnlineOnly {
 		oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
 		if err != nil {
-			localMessage := c.msgStructToLocalChatLog(s)
+			localMessage := MsgStructToLocalChatLog(s)
 			err := c.db.InsertMessage(ctx, lc.ConversationID, localMessage)
 			if err != nil {
 				return nil, err
@@ -566,7 +516,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	}
 	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 		if !isOnlineOnly {
-			localMessage := c.msgStructToLocalChatLog(s)
+			localMessage := MsgStructToLocalChatLog(s)
 			log.ZDebug(ctx, "update message is ", "localMessage", localMessage)
 			err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
 			if err != nil {
@@ -589,7 +539,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	if !isOnlineOnly {
 		oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
 		if err != nil {
-			localMessage := c.msgStructToLocalChatLog(s)
+			localMessage := MsgStructToLocalChatLog(s)
 			err := c.db.InsertMessage(ctx, lc.ConversationID, localMessage)
 			if err != nil {
 				return nil, err
@@ -650,7 +600,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	}
 	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 		if isOnlineOnly {
-			localMessage := c.msgStructToLocalChatLog(s)
+			localMessage := MsgStructToLocalChatLog(s)
 			err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
 			if err != nil {
 				return nil, err
@@ -750,39 +700,8 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 		if err == nil {
 			var tempMessageList []*sdk_struct.MsgStruct
 			for _, message := range messages {
-				temp := sdk_struct.MsgStruct{}
-				temp.ClientMsgID = message.ClientMsgID
-				temp.ServerMsgID = message.ServerMsgID
-				temp.CreateTime = message.CreateTime
-				temp.SendTime = message.SendTime
-				temp.SessionType = message.SessionType
-				temp.SendID = message.SendID
-				temp.RecvID = message.RecvID
-				temp.MsgFrom = message.MsgFrom
-				temp.ContentType = message.ContentType
-				temp.SenderPlatformID = message.SenderPlatformID
-				temp.SenderNickname = message.SenderNickname
-				temp.SenderFaceURL = message.SenderFaceURL
-				temp.Content = message.Content
-				temp.Seq = message.Seq
-				temp.IsRead = message.IsRead
-				temp.Status = message.Status
-				temp.AttachedInfo = message.AttachedInfo
-				temp.Ex = message.Ex
-				temp.LocalEx = message.LocalEx
-				err := c.msgHandleByContentType(&temp)
-				if err != nil {
-					log.ZError(ctx, "msgHandleByContentType err", err, "message", temp)
-					continue
-				}
-				switch message.SessionType {
-				case constant.WriteGroupChatType:
-					fallthrough
-				case constant.ReadGroupChatType:
-					temp.GroupID = temp.RecvID
-					temp.RecvID = c.loginUserID
-				}
-				tempMessageList = append(tempMessageList, &temp)
+				temp := LocalChatLogToMsgStruct(message)
+				tempMessageList = append(tempMessageList, temp)
 			}
 			findResultItem := sdk_params_callback.SearchByConversationResult{}
 			findResultItem.ConversationID = v.conversation.ConversationID
@@ -916,7 +835,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	s.SendTime = utils.GetCurrentTimestampByMill()
 	s.SessionType = constant.SingleChatType
 	s.Status = constant.MsgStatusSendSuccess
-	localMessage := c.msgStructToLocalChatLog(s)
+	localMessage := MsgStructToLocalChatLog(s)
 	conversation.LatestMsg = utils.StructToJsonString(s)
 	conversation.ConversationType = constant.SingleChatType
 	conversation.LatestMsgSendTime = s.SendTime
@@ -956,7 +875,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	s.SendTime = utils.GetCurrentTimestampByMill()
 	s.SessionType = conversation.ConversationType
 	s.Status = constant.MsgStatusSendSuccess
-	localMessage := c.msgStructToLocalChatLog(s)
+	localMessage := MsgStructToLocalChatLog(s)
 	conversation.LatestMsg = utils.StructToJsonString(s)
 	conversation.LatestMsgSendTime = s.SendTime
 	conversation.FaceURL = s.SenderFaceURL
@@ -1015,7 +934,6 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.MsgFrom = msgFrom
 	message.ContentType = contentType
 	message.SenderPlatformID = c.platformID
-	message.IsExternalExtensions = c.IsExternalExtensions
 	return nil
 }
 
