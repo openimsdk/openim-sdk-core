@@ -8,6 +8,8 @@ import (
 	"math"
 	"sync"
 
+	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/utils/stringutil"
@@ -42,7 +44,7 @@ import (
 
 const (
 	conversationSyncLimit       int64 = math.MaxInt64
-	searchMessageGoroutineLimit       = 10
+	searchMessageGoroutineLimit int   = 10
 )
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
@@ -65,10 +67,12 @@ type Conversation struct {
 	file                  *file.File
 	cache                 *cache.Cache[string, *model_struct.LocalConversation]
 	maxSeqRecorder        MaxSeqRecorder
+	messagePullMinSeqMap  *cache.Cache[string, int64]
 	IsExternalExtensions  bool
 	msgOffset             int
 	progress              int
 	conversationSyncMutex sync.Mutex
+	streamMsgMutex        sync.Mutex
 
 	startTime time.Time
 
@@ -103,6 +107,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		file:                 file,
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
+		messagePullMinSeqMap: cache.NewCache[string, int64](),
 		msgOffset:            0,
 		progress:             0,
 	}
@@ -244,14 +249,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
 			if msg.Status == constant.MsgStatusHasDeleted {
-				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
+				insertMessage = append(insertMessage, MsgStructToLocalChatLog(msg))
 				continue
 			}
 
 			msg.Status = constant.MsgStatusSendSuccess
 
 			//De-analyze data
-			err := c.msgHandleByContentType(msg)
+			err := msgHandleByContentType(msg)
 			if err != nil {
 				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType, "msg", msg)
 				continue
@@ -283,7 +288,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						if !isConversationUpdate {
 							msg.Status = constant.MsgStatusFiltered
 						}
-						updateMessage = append(updateMessage, c.msgStructToLocalChatLog(msg))
+						updateMessage = append(updateMessage, MsgStructToLocalChatLog(msg))
 					} else {
 						exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 					}
@@ -309,7 +314,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						newMessages = append(newMessages, msg)
 					}
 					if isHistory {
-						selfInsertMessage = append(selfInsertMessage, c.msgStructToLocalChatLog(msg))
+						selfInsertMessage = append(selfInsertMessage, MsgStructToLocalChatLog(msg))
 					}
 				}
 			} else { //Sent by others
@@ -343,7 +348,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						newMessages = append(newMessages, msg)
 					}
 					if isHistory {
-						othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
+						othersInsertMessage = append(othersInsertMessage, MsgStructToLocalChatLog(msg))
 					}
 
 				} else {
@@ -351,7 +356,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					log.ZWarn(ctx, "Deduplication operation ", nil, "msg", *c.msgStructToLocalErrChatLog(msg))
 					msg.Status = constant.MsgStatusFiltered
 					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(msg.Seq)
-					othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
+					othersInsertMessage = append(othersInsertMessage, MsgStructToLocalChatLog(msg))
 				}
 			}
 		}
@@ -485,12 +490,12 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
 			if msg.Status == constant.MsgStatusHasDeleted {
-				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
+				insertMessage = append(insertMessage, MsgStructToLocalChatLog(msg))
 				continue
 			}
 			msg.Status = constant.MsgStatusSendSuccess
 
-			err := c.msgHandleByContentType(msg)
+			err := msgHandleByContentType(msg)
 			if err != nil {
 				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType, "msg", msg)
 				continue
@@ -508,9 +513,9 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 
 				latestMsg = msg
 
-				selfInsertMessage = append(selfInsertMessage, c.msgStructToLocalChatLog(msg))
+				selfInsertMessage = append(selfInsertMessage, MsgStructToLocalChatLog(msg))
 			} else { //Sent by others
-				othersInsertMessage = append(othersInsertMessage, c.msgStructToLocalChatLog(msg))
+				othersInsertMessage = append(othersInsertMessage, MsgStructToLocalChatLog(msg))
 
 				latestMsg = msg
 			}
@@ -608,20 +613,6 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *mode
 		lc.RecvID = m.GroupID
 	}
 	return &lc
-}
-
-func (c *Conversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_struct.MsgStruct) {
-	var newMessageList []*model_struct.TempCacheLocalChatLog
-	copier.Copy(&newMessageList, &messageList)
-	if err := c.db.BatchInsertTempCacheMessageList(ctx, newMessageList); err != nil {
-		// log.Error("", "BatchInsertTempCacheMessageList detail err:", err.Error(), len(newMessageList))
-		for _, v := range newMessageList {
-			err := c.db.InsertTempCacheMessage(ctx, v)
-			if err != nil {
-				log.ZWarn(ctx, "InsertTempCacheMessage operation", err, "chat err log: ", *v)
-			}
-		}
-	}
 }
 
 func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map[string][]*model_struct.LocalChatLog) error {
@@ -730,94 +721,52 @@ func (c *Conversation) newMessage(ctx context.Context, newMessagesList sdk_struc
 	}
 }
 
-func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
-	err = c.msgHandleByContentType(msg)
-	if err != nil {
-		return err
-	} else {
-		if msg.SessionType == constant.WriteGroupChatType {
-			msg.GroupID = msg.RecvID
-			msg.RecvID = c.loginUserID
-		}
-		return nil
+func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList, conversationChanged, newConversation map[string]*model_struct.LocalConversation, onlineMsg map[onlineMsgKey]struct{}) {
+	if len(newMessagesList) == 0 {
+		log.ZWarn(ctx, "newMessagesList is empty", errs.New("newMessagesList is empty"))
+		return
 	}
-}
 
-func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
-	switch msg.ContentType {
-	case constant.Text:
-		t := sdk_struct.TextElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.TextElem = &t
-	case constant.Picture:
-		t := sdk_struct.PictureElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.PictureElem = &t
-	case constant.Sound:
-		t := sdk_struct.SoundElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.SoundElem = &t
-	case constant.Video:
-		t := sdk_struct.VideoElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.VideoElem = &t
-	case constant.File:
-		t := sdk_struct.FileElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.FileElem = &t
-	case constant.AdvancedText:
-		t := sdk_struct.AdvancedTextElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.AdvancedTextElem = &t
-	case constant.AtText:
-		t := sdk_struct.AtTextElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.AtTextElem = &t
-		if err == nil {
-			if utils.IsContain(c.loginUserID, msg.AtTextElem.AtUserList) {
-				msg.AtTextElem.IsAtSelf = true
+	sort.Sort(newMessagesList)
+	var needNotificationMsgList sdk_struct.NewMsgList
+
+	// offline
+	if c.GetBackground() {
+		u, err := c.user.GetSelfUserInfo(ctx)
+		if err != nil {
+			log.ZWarn(ctx, "GetSelfUserInfo err", err)
+		}
+
+		if u.GlobalRecvMsgOpt != constant.ReceiveMessage {
+			return
+		}
+
+		for _, w := range newMessagesList {
+			conversationID := utils.GetConversationIDByMsg(w)
+			if v, ok := conversationChanged[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				needNotificationMsgList = append(needNotificationMsgList, w)
+			}
+			if v, ok := newConversation[conversationID]; ok && v.RecvMsgOpt == constant.ReceiveMessage {
+				needNotificationMsgList = append(needNotificationMsgList, w)
 			}
 		}
-	case constant.Location:
-		t := sdk_struct.LocationElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.LocationElem = &t
-	case constant.Custom:
-		fallthrough
-	case constant.CustomMsgNotTriggerConversation:
-		fallthrough
-	case constant.CustomMsgOnlineOnly:
-		t := sdk_struct.CustomElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.CustomElem = &t
-	case constant.Typing:
-		t := sdk_struct.TypingElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.TypingElem = &t
-	case constant.Quote:
-		t := sdk_struct.QuoteElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.QuoteElem = &t
-	case constant.Merger:
-		t := sdk_struct.MergeElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.MergeElem = &t
-	case constant.Face:
-		t := sdk_struct.FaceElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.FaceElem = &t
-	case constant.Card:
-		t := sdk_struct.CardElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.CardElem = &t
-	default:
-		t := sdk_struct.NotificationElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.NotificationElem = &t
-	}
-	msg.Content = ""
 
-	return errs.Wrap(err)
+		if len(needNotificationMsgList) != 0 {
+			c.batchMsgListener().OnRecvOfflineNewMessages(utils.StructToJsonString(needNotificationMsgList))
+		}
+	} else { // online
+		for _, w := range newMessagesList {
+			if w.ContentType == constant.Typing {
+				continue
+			}
+
+			needNotificationMsgList = append(needNotificationMsgList, w)
+		}
+
+		if len(needNotificationMsgList) != 0 {
+			c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(needNotificationMsgList))
+		}
+	}
 }
 
 func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs map[string]*model_struct.LocalConversation) {
@@ -867,6 +816,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 	if err != nil {
 		return err
 	}
+
 	groups := datautil.SliceToMap(groupInfoList, func(groupInfo *model_struct.LocalGroup) string {
 		return groupInfo.GroupID
 	})
@@ -878,8 +828,10 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 				conversation.FaceURL = v.FaceURL
 				conversation.ShowName = v.Nickname
 			} else {
-				log.ZWarn(ctx, "user info not found", errors.New("user not found"),
-					"userID", conversation.UserID)
+				log.ZWarn(ctx, "user info not found", errors.New("user not found"), "userID", conversation.UserID)
+
+				conversation.FaceURL = ""
+				conversation.ShowName = "UserNotFound"
 			}
 		} else if conversation.ConversationType == constant.ReadGroupChatType {
 			if v, ok := groups[conversation.GroupID]; ok {
@@ -892,6 +844,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 
 		}
 	}
+
 	return nil
 }
 
@@ -922,10 +875,12 @@ func (c *Conversation) batchGetUserNameAndFaceURL(ctx context.Context, userIDs .
 		}
 		m[localFriend.FriendUserID] = userInfo
 	}
+
 	usersInfo, err := c.user.GetUsersInfoWithCache(ctx, notInFriend)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, userInfo := range usersInfo {
 		m[userInfo.UserID] = userInfo
 	}
@@ -956,4 +911,48 @@ func (c *Conversation) GetInputStates(ctx context.Context, conversationID string
 
 func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
 	return c.typing.ChangeInputStates(ctx, conversationID, focus)
+}
+
+func (c *Conversation) FetchSurroundingMessages(ctx context.Context, conversationID string, seq int64, before int64, after int64) ([]*sdk_struct.MsgStruct, error) {
+	c.fetchAndMergeMissingMessages(ctx, conversationID, []int64{seq}, false, 0, 0, &[]*model_struct.LocalChatLog{}, &sdk.GetAdvancedHistoryMessageListCallback{})
+	res, err := c.db.GetMessagesBySeqs(ctx, conversationID, []int64{seq})
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return []*sdk_struct.MsgStruct{}, nil
+	}
+	_, msgList := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{res[0]})
+	if len(msgList) == 0 {
+		return []*sdk_struct.MsgStruct{}, nil
+	}
+	msg := msgList[0]
+	result := make([]*sdk_struct.MsgStruct, 0, before+after+1)
+	if before > 0 {
+		req := sdk.GetAdvancedHistoryMessageListParams{
+			ConversationID:   conversationID,
+			Count:            int(before),
+			StartClientMsgID: msg.ClientMsgID,
+		}
+		val, err := c.getAdvancedHistoryMessageList(ctx, req, false)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, val.MessageList...)
+	}
+	result = append(result, msg)
+	if after > 0 {
+		req := sdk.GetAdvancedHistoryMessageListParams{
+			ConversationID:   conversationID,
+			Count:            int(after),
+			StartClientMsgID: msg.ClientMsgID,
+		}
+		val, err := c.getAdvancedHistoryMessageList(ctx, req, true)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, val.MessageList...)
+	}
+	sort.Sort(sdk_struct.NewMsgList(result))
+	return result, nil
 }

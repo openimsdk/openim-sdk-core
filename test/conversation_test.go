@@ -110,15 +110,6 @@ func Test_SendMessage(t *testing.T) {
 	}
 }
 
-func Test_SendMessageNotOss(t *testing.T) {
-	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
-	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageNotOss(ctx, msg, "3411008330", "", nil, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func Test_FindMessageList(t *testing.T) {
 	msgs, err := open_im_sdk.UserForSDK.Conversation().FindMessageList(ctx, []*sdk_params_callback.ConversationArgs{})
 	if err != nil {
@@ -165,7 +156,24 @@ func Test_InsertGroupMessageToLocalStorage(t *testing.T) {
 }
 
 func Test_SearchLocalMessages(t *testing.T) {
-	msgs, err := open_im_sdk.UserForSDK.Conversation().SearchLocalMessages(ctx, &sdk_params_callback.SearchLocalMessagesParams{})
+	// req := &sdk_params_callback.SearchLocalMessagesParams{
+	// 	Count:            20,
+	// 	KeywordList:      []string{"1"},
+	// 	MessageTypeList:  []int{105},
+	// 	PageIndex:        1,
+	// 	SenderUserIDList: []string{},
+	// }
+
+	req := &sdk_params_callback.SearchLocalMessagesParams{
+		KeywordList:      []string{"1"},
+		ConversationID:   "sg_3161900504",
+		MessageTypeList:  []int{105},
+		PageIndex:        1,
+		Count:            20,
+		SenderUserIDList: []string{"1695766238"},
+	}
+
+	msgs, err := open_im_sdk.UserForSDK.Conversation().SearchLocalMessages(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,6 +233,13 @@ func Test_MarkConversationMessageAsRead(t *testing.T) {
 	}
 }
 
+func Test_MarkAllConversationMessageAsRead(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().MarkAllConversationMessageAsRead(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_MarkMsgsAsRead(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().MarkMessagesAsReadByMsgID(ctx, "si_2688118337_7249315132",
 		[]string{"fb56ed151b675e0837ed3af79dbf66b1",
@@ -236,7 +251,7 @@ func Test_MarkMsgsAsRead(t *testing.T) {
 
 func Test_SendImgMsg(t *testing.T) {
 	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
-	msg, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessage(ctx, "C:\\Users\\Admin\\Desktop\\test.png")
+	msg, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessage(ctx, "C:\\Users\\Admin\\Desktop\\test.png", &sdk_struct.PictureBaseInfo{}, &sdk_struct.PictureBaseInfo{}, &sdk_struct.PictureBaseInfo{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -26,8 +26,6 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/timeutil"
 
-	"github.com/jinzhu/copier"
-
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
@@ -109,26 +107,22 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
 	log.ZDebug(ctx, "latestMsg", "latestMsg", &latestMsg, "seq", tips.Seq)
 	if latestMsg.Seq <= tips.Seq {
-		var newLatesetMsg sdk_struct.MsgStruct
-		msgs, err := c.db.GetMessageListNoTime(ctx, tips.ConversationID, 1, false)
+		var newLatestMsg sdk_struct.MsgStruct
+		msgs, err := c.db.GetMessageList(ctx, tips.ConversationID, 1, 0, false)
 		if err != nil || len(msgs) == 0 {
 			log.ZError(ctx, "GetMessageListNoTime failed", err, "tips", &tips)
 			return errs.Wrap(err)
 		}
 		log.ZDebug(ctx, "latestMsg is revoked", "seq", tips.Seq, "msg", msgs[0])
-		copier.Copy(&newLatesetMsg, msgs[0])
-		err = c.msgConvert(&newLatesetMsg)
-		if err != nil {
-			log.ZError(ctx, "parsing data error", err, latestMsg)
+		newLatestMsg = *LocalChatLogToMsgStruct(msgs[0])
+		log.ZDebug(ctx, "revoke update conversatoin", "msg", utils.StructToJsonString(newLatestMsg))
+		if err := c.db.UpdateColumnsConversation(ctx, tips.ConversationID, map[string]interface{}{"latest_msg": utils.StructToJsonString(newLatestMsg),
+			"latest_msg_send_time": newLatestMsg.SendTime}); err != nil {
+			log.ZError(ctx, "UpdateColumnsConversation failed", err, "newLatestMsg", newLatestMsg)
 		} else {
-			log.ZDebug(ctx, "revoke update conversatoin", "msg", utils.StructToJsonString(newLatesetMsg))
-			if err := c.db.UpdateColumnsConversation(ctx, tips.ConversationID, map[string]interface{}{"latest_msg": utils.StructToJsonString(newLatesetMsg),
-				"latest_msg_send_time": newLatesetMsg.SendTime}); err != nil {
-				log.ZError(ctx, "UpdateColumnsConversation failed", err, "newLatesetMsg", newLatesetMsg)
-			} else {
-				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
-			}
+			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
 		}
+
 	}
 	c.msgListener().OnNewRecvMessageRevoked(utils.StructToJsonString(m))
 	msgList, err := c.db.SearchAllMessageByContentType(ctx, conversation.ConversationID, constant.Quote)
@@ -160,7 +154,7 @@ func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID 
 		return errs.New("QuoteMessage is nil").Wrap()
 	}
 	if s.QuoteMessage.ClientMsgID != revokedMsg.ClientMsgID {
-		return errs.New("quoteMessage ClientMsgID is not revokedMsg ClientMsgID").Wrap()
+		return nil
 	}
 
 	s.QuoteMessage.Content = utils.StructToJsonString(revokedMsg)

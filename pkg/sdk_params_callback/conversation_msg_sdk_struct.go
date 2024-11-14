@@ -29,7 +29,6 @@ type FindMessageListCallback struct {
 }
 
 type GetAdvancedHistoryMessageListParams struct {
-	LastMinSeq       int64  `json:"lastMinSeq"`
 	ConversationID   string `json:"conversationID"`
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
@@ -37,7 +36,6 @@ type GetAdvancedHistoryMessageListParams struct {
 
 type GetAdvancedHistoryMessageListCallback struct {
 	MessageList []*sdk_struct.MsgStruct `json:"messageList"`
-	LastMinSeq  int64                   `json:"lastMinSeq"`
 	IsEnd       bool                    `json:"isEnd"`
 	ErrCode     int32                   `json:"errCode"`
 	ErrMsg      string                  `json:"errMsg"`

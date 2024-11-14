@@ -24,8 +24,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
-	"github.com/jinzhu/copier"
-
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 )
@@ -172,12 +170,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 		latestMsgSendTime := latestMsg.SendTime
 		latestMsgStr := ""
 		if len(msg) > 0 {
-			copier.Copy(&latestMsg, msg[0])
-
-			err := c.msgConvert(&latestMsg)
-			if err != nil {
-				log.ZError(ctx, "parsing data error", err, "latest Msg is", latestMsg)
-			}
+			latestMsg = *LocalChatLogToMsgStruct(msg[0])
 
 			latestMsgStr = utils.StructToJsonString(latestMsg)
 			latestMsgSendTime = latestMsg.SendTime
@@ -200,13 +193,6 @@ func (c *Conversation) doDeleteMsgs(ctx context.Context, msg *sdkws.MsgData) err
 		if err != nil {
 			log.ZWarn(ctx, "GetMessageBySeq err", err, "conversationID", tips.ConversationID, "seq", v)
 			continue
-		}
-		var s sdk_struct.MsgStruct
-		copier.Copy(&s, msg)
-		err = c.msgConvert(&s)
-		if err != nil {
-			log.ZWarn(ctx, "parsing data error", err, "msg", msg)
-			return err
 		}
 		if err := c.deleteMessageFromLocal(ctx, tips.ConversationID, msg.ClientMsgID); err != nil {
 			log.ZWarn(ctx, "deleteMessageFromLocal err", err, "conversationID", tips.ConversationID, "seq", v)

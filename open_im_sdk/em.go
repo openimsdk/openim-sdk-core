@@ -196,7 +196,7 @@ func (e *emptyAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvNewMessage(message string) {
-	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "message", message)
+	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented OnRecvNewMessage", nil, "message", message)
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvC2CReadReceipt(msgReceiptList string) {
@@ -212,6 +212,10 @@ func (e *emptyAdvancedMsgListener) OnRecvGroupReadReceipt(groupMsgReceiptList st
 
 func (e *emptyAdvancedMsgListener) OnNewRecvMessageRevoked(messageRevoked string) {
 	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "messageRevoked", messageRevoked)
+}
+
+func (e *emptyAdvancedMsgListener) OnMsgEdited(msg string) {
+	log.ZWarn(e.ctx, "OnMsgEdited is not implemented", nil, "msg", msg)
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {

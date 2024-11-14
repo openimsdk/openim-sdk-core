@@ -165,10 +165,7 @@ func (e *typing) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
 		return
 	}
 	now := time.Now().UnixMilli()
-	expirationTimestamp := msg.SendTime + int64(inputStatesSendTime/time.Millisecond)
-	if msg.SendTime > now || expirationTimestamp <= now {
-		return
-	}
+	expirationTimestamp := now + int64(inputStatesSendTime/time.Millisecond)
 	var sourceID string
 	if msg.GroupID == "" {
 		sourceID = msg.SendID

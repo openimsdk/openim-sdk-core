@@ -69,6 +69,7 @@ func (u *User) initSyncer() {
 			return fmt.Errorf("not support delete user %s", value.UserID)
 		},
 		func(ctx context.Context, serverUser, localUser *model_struct.LocalUser) error {
+			u.UserCache.Delete(localUser.UserID)
 			return u.DataBase.UpdateLoginUser(context.Background(), serverUser)
 		},
 		func(user *model_struct.LocalUser) string {
@@ -157,5 +158,5 @@ func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([
 	if err != nil {
 		return nil, err
 	}
-	return datautil.MapToSlice(m), nil
+	return datautil.Values(m), nil
 }
