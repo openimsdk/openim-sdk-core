@@ -54,7 +54,7 @@ func (d *DataBase) GetGroupSomeMemberInfo(ctx context.Context, groupID string, u
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var groupMemberList []*model_struct.LocalGroupMember
-	err := d.conn.WithContext(ctx).Where("group_id = ? And user_id IN ? ", groupID, userIDList).Find(&groupMemberList).Error
+	err := d.conn.WithContext(ctx).Where("group_id = ? AND user_id IN ? ", groupID, userIDList).Find(&groupMemberList).Error
 	return groupMemberList, errs.WrapMsg(err, "GetGroupMemberListByGroupID failed ")
 }
 

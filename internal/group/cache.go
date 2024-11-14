@@ -3,6 +3,7 @@ package group
 import (
 	"context"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
@@ -20,13 +21,14 @@ func (g *Group) GetGroupMembersInfoFunc(ctx context.Context, groupID string, use
 
 	for _, userID := range userIDs {
 		key := g.buildGroupMemberKey(groupID, userID)
-		if member, ok := g.groupMemberCache.Load(groupID); ok {
-			res[key] = member
+		if member, ok := g.groupMemberCache.Load(key); ok {
+			res[userID] = member
 		} else {
 			missingKeys = append(missingKeys, userIDs...)
 		}
 	}
 
+	log.ZDebug(ctx, "GetGroupMembersInfoFunc fetch", "missingKeys", missingKeys)
 	fetchData, err := fetchFunc(ctx, missingKeys)
 	if err != nil {
 		return nil, err
@@ -34,7 +36,7 @@ func (g *Group) GetGroupMembersInfoFunc(ctx context.Context, groupID string, use
 
 	for i, data := range fetchData {
 		key := g.buildGroupMemberKey(groupID, data.UserID)
-		res[key] = fetchData[i]
+		res[data.UserID] = fetchData[i]
 		g.groupMemberCache.Store(key, fetchData[i])
 	}
 
