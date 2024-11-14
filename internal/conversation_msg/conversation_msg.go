@@ -56,7 +56,6 @@ type Conversation struct {
 	ConversationListener  func() open_im_sdk_callback.OnConversationListener
 	msgListener           func() open_im_sdk_callback.OnAdvancedMsgListener
 	msgKvListener         func() open_im_sdk_callback.OnMessageKvInfoListener
-	batchMsgListener      func() open_im_sdk_callback.OnBatchMsgListener
 	businessListener      func() open_im_sdk_callback.OnCustomBusinessListener
 	recvCH                chan common.Cmd2Value
 	loginUserID           string
@@ -86,10 +85,6 @@ func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.On
 
 func (c *Conversation) SetMsgKvListener(msgKvListener func() open_im_sdk_callback.OnMessageKvInfoListener) {
 	c.msgKvListener = msgKvListener
-}
-
-func (c *Conversation) SetBatchMsgListener(batchMsgListener func() open_im_sdk_callback.OnBatchMsgListener) {
-	c.batchMsgListener = batchMsgListener
 }
 
 func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_callback.OnCustomBusinessListener) {
@@ -436,11 +431,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	if c.batchMsgListener() != nil {
-		c.batchNewMessages(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	} else {
-		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	}
+	c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
+
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
 	}
@@ -760,7 +752,7 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 		}
 
 		if len(needNotificationMsgList) != 0 {
-			c.batchMsgListener().OnRecvOfflineNewMessages(utils.StructToJsonString(needNotificationMsgList))
+			c.msgListener().OnRecvOfflineNewMessage(utils.StructToJsonString(needNotificationMsgList))
 		}
 	} else { // online
 		for _, w := range newMessagesList {
@@ -772,7 +764,7 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 		}
 
 		if len(needNotificationMsgList) != 0 {
-			c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(needNotificationMsgList))
+			c.msgListener().OnRecvOnlineOnlyMessage(utils.StructToJsonString(needNotificationMsgList))
 		}
 	}
 }

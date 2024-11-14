@@ -312,13 +312,6 @@ func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
 	return &BatchMessageCallback{CallbackWriter: NewEventData(callback)}
 }
 
-func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
-	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
-}
-func (b *BatchMessageCallback) OnRecvOfflineNewMessages(messageList string) {
-	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
-}
-
 type FriendCallback struct {
 	CallbackWriter
 }

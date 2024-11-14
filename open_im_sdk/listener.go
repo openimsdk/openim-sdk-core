@@ -30,10 +30,6 @@ func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener)
 	listenerCall(UserForSDK.SetAdvancedMsgListener, listener)
 }
 
-func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
-	listenerCall(UserForSDK.SetBatchMsgListener, listener)
-}
-
 func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	listenerCall(UserForSDK.SetUserListener, listener)
 
