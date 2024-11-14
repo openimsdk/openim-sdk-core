@@ -752,7 +752,7 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 		}
 
 		if len(needNotificationMsgList) != 0 {
-			c.batchMsgListener().OnRecvOfflineNewMessages(utils.StructToJsonString(needNotificationMsgList))
+			c.msgListener().OnRecvOfflineNewMessage(utils.StructToJsonString(needNotificationMsgList))
 		}
 	} else { // online
 		for _, w := range newMessagesList {
@@ -764,7 +764,7 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 		}
 
 		if len(needNotificationMsgList) != 0 {
-			c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(needNotificationMsgList))
+			c.msgListener().OnRecvOnlineOnlyMessage(utils.StructToJsonString(needNotificationMsgList))
 		}
 	}
 }
