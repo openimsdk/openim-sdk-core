@@ -154,7 +154,7 @@ func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID 
 		return errs.New("QuoteMessage is nil").Wrap()
 	}
 	if s.QuoteMessage.ClientMsgID != revokedMsg.ClientMsgID {
-		return errs.New("quoteMessage ClientMsgID is not revokedMsg ClientMsgID").Wrap()
+		return nil
 	}
 
 	s.QuoteMessage.Content = utils.StructToJsonString(revokedMsg)
