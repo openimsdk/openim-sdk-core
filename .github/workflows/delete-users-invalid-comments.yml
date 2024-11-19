@@ -1,0 +1,96 @@
+name: Delete User Comments
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      username:
+        description: "GitHub username of the user whose comments need to be deleted"
+        required: true
+        default: "username_to_delete"
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TEMP_DIR: /tmp  # Temporary directory for storing intermediate data
+
+jobs:
+  delete_user_comments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Temporary Directory
+        run: mkdir -p ${{ env.TEMP_DIR }}
+
+      - name: Fetch All Issues and PRs
+        run: |
+          username="${{ github.event.inputs.username }}"
+          echo "Fetching all issues and pull requests for repository: ${{ github.repository }}"
+          
+          # Fetch issues
+          issues=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues?state=all&per_page=100")
+
+          # Save issue numbers
+          echo "$issues" | jq -r '.[] | select(.pull_request == null) | .number' > ${{ env.TEMP_DIR }}/issues.txt
+          echo "Issues fetched and saved to issues.txt"
+
+          # Fetch pull requests
+          pull_requests=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues?state=all&per_page=100")
+
+          # Save PR numbers
+          echo "$pull_requests" | jq -r '.[] | select(.pull_request != null) | .number' > ${{ env.TEMP_DIR }}/pull_requests.txt
+          echo "Pull requests fetched and saved to pull_requests.txt"
+
+      - name: Delete Comments by User
+        run: |
+          username="${{ github.event.inputs.username }}"
+          echo "Deleting comments by user: $username"
+
+          # Process issues
+          for issue_number in $(cat ${{ env.TEMP_DIR }}/issues.txt); do
+            echo "Processing Issue #$issue_number"
+            
+            # Fetch comments
+            comments=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/$issue_number/comments")
+
+            # Filter and delete user comments
+            echo "$comments" | jq -c ".[] | select(.user.login == \"$username\")" | while read comment; do
+              comment_id=$(echo "$comment" | jq -r '.id')
+              echo "Deleting comment ID: $comment_id from Issue #$issue_number"
+              
+              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/${{ github.repository }}/issues/comments/$comment_id"
+            done
+          done
+
+          # Process pull requests
+          for pr_number in $(cat ${{ env.TEMP_DIR }}/pull_requests.txt); do
+            echo "Processing Pull Request #$pr_number"
+            
+            # Fetch comments
+            comments=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/$pr_number/comments")
+
+            # Filter and delete user comments
+            echo "$comments" | jq -c ".[] | select(.user.login == \"$username\")" | while read comment; do
+              comment_id=$(echo "$comment" | jq -r '.id')
+              echo "Deleting comment ID: $comment_id from Pull Request #$pr_number"
+              
+              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/${{ github.repository }}/issues/comments/$comment_id"
+            done
+          done
+
+      - name: Completion
+        run: echo "All comments by user ${{ github.event.inputs.username }} have been deleted."
