@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	pconstant "github.com/openimsdk/protocol/constant"
+
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
@@ -478,11 +480,18 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			name = fmt.Sprintf("msg_file_%s.unknown", s.ClientMsgID)
 		}
 
-		delFile = append(delFile, s.FileElem.FilePath)
+		var sourcePath string
+		if utils.FileExist(s.FileElem.FilePath) {
+			sourcePath = s.FileElem.FilePath
+			delFile = append(delFile, utils.FileTmpPath(s.FileElem.FilePath, c.DataDir))
+		} else {
+			sourcePath = utils.FileTmpPath(s.FileElem.FilePath, c.DataDir)
+			delFile = append(delFile, sourcePath)
+		}
 
 		res, err := c.file.UploadFile(ctx, &file.UploadFileReq{
 			ContentType: content_type.GetType(s.FileElem.FileType, filepath.Ext(s.FileElem.FilePath), filepath.Ext(s.FileElem.FileName)),
-			Filepath:    s.FileElem.FilePath,
+			Filepath:    sourcePath,
 			Uuid:        s.FileElem.UUID,
 			Name:        c.fileName("file", s.ClientMsgID) + "/" + filepath.Base(name),
 			Cause:       "msg-file",
