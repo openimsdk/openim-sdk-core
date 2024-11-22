@@ -114,7 +114,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	var wg sync.WaitGroup
 	resultMaps := make([]map[string]SyncedSeq, concurrency)
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < partSize; i++ {
 		wg.Add(1)
 		start := i * partSize
 		end := start + partSize
