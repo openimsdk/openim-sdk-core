@@ -109,16 +109,19 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		Err            error
 	}
 
-	concurrency := 20
-	partSize := len(conversationIDList) / concurrency
+	partSize := 20
+	currency := (len(conversationIDList)-1)/partSize + 1
+	if len(conversationIDList) == 0 {
+		currency = 0
+	}
 	var wg sync.WaitGroup
-	resultMaps := make([]map[string]SyncedSeq, concurrency)
+	resultMaps := make([]map[string]SyncedSeq, partSize)
 
-	for i := 0; i < partSize; i++ {
+	for i := 0; i < currency; i++ {
 		wg.Add(1)
 		start := i * partSize
 		end := start + partSize
-		if i == concurrency-1 {
+		if i == currency-1 {
 			end = len(conversationIDList)
 		}
 
