@@ -53,6 +53,11 @@ func (g *GitHubRepo) classifyReleaseNotes(body string) map[string][]string {
 	lines := strings.Split(body, "\n")
 
 	for _, line := range lines {
+		// Skip lines that contain "deps: Merge"
+		if strings.Contains(strings.ToLower(line), "deps: merge #") {
+			continue
+		}
+
 		// Use a regular expression to extract Full Changelog link and its title (case insensitive).
 		if strings.Contains(strings.ToLower(line), "**full changelog**") {
 			matches := regexp.MustCompile(`(?i)\*\*full changelog\*\*: (https://github\.com/[^\s]+/compare/([^\s]+))`).FindStringSubmatch(line)
