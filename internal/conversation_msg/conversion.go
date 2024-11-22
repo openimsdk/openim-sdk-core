@@ -78,7 +78,7 @@ func MsgDataToLocalChatLog(serverMessage *sdkws.MsgData) *model_struct.LocalChat
 		ContentType:      serverMessage.ContentType,
 		Content:          string(serverMessage.Content),
 		IsRead:           serverMessage.IsRead,
-		Status:           serverMessage.Status,
+		Status:           constant.MsgStatusSendSuccess,
 		Seq:              serverMessage.Seq,
 		SendTime:         serverMessage.SendTime,
 		CreateTime:       serverMessage.CreateTime,
