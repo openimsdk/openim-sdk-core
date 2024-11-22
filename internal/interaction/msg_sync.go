@@ -115,7 +115,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		currency = 0
 	}
 	var wg sync.WaitGroup
-	resultMaps := make([]map[string]SyncedSeq, partSize)
+	resultMaps := make([]map[string]SyncedSeq, currency)
 
 	for i := 0; i < currency; i++ {
 		wg.Add(1)
