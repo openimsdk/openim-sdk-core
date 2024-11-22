@@ -96,7 +96,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
-		if !version.Installed {
+		if version == nil || !version.Installed {
 			m.reinstalled = true
 		}
 	}
