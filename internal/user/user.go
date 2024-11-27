@@ -69,6 +69,7 @@ func (u *User) initSyncer() {
 			return fmt.Errorf("not support delete user %s", value.UserID)
 		},
 		func(ctx context.Context, serverUser, localUser *model_struct.LocalUser) error {
+			u.UserCache.Delete(localUser.UserID)
 			return u.DataBase.UpdateLoginUser(context.Background(), serverUser)
 		},
 		func(user *model_struct.LocalUser) string {

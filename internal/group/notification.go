@@ -224,7 +224,11 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 				return err
 			}
-
+			if detail.ChangedUser.RoleLevel < constant.GroupAdmin && detail.ChangedUser.UserID == g.loginUserID {
+				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
+					return err
+				}
+			}
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 				[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, nil,
 				detail.GroupSortVersion, detail.GroupMemberVersion, detail.GroupMemberVersionID)

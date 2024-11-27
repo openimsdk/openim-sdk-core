@@ -156,6 +156,7 @@ func (g *Group) initSyncer() {
 			return g.db.DeleteGroupMember(ctx, value.GroupID, value.UserID)
 		}),
 		syncer.WithUpdate[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(ctx context.Context, server, local *model_struct.LocalGroupMember) error {
+			g.groupMemberCache.Delete(g.buildGroupMemberKey(server.GroupID, server.UserID))
 			return g.db.UpdateGroupMember(ctx, server)
 		}),
 		syncer.WithUUID[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(value *model_struct.LocalGroupMember) [2]string {
@@ -187,6 +188,10 @@ func (g *Group) initSyncer() {
 								Nickname: server.Nickname, GroupID: server.GroupID,
 							},
 						}, g.conversationCh)
+					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateLatestMessageFaceUrlAndNickName, Args: common.UpdateMessageInfo{
+						SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
+						Nickname: server.Nickname, GroupID: server.GroupID,
+					}}, g.conversationCh)
 				}
 			}
 			return nil

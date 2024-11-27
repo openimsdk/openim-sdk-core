@@ -37,7 +37,7 @@ func (d *DataBase) initChatLog(ctx context.Context, conversationID string) error
 	tableName := utils.GetTableName(conversationID)
 	if !d.tableChecker.HasTable(tableName) {
 		createTableSQL := fmt.Sprintf(`
-            CREATE TABLE %s (
+            CREATE TABLE "%s" (
                 client_msg_id CHAR(64),
                 server_msg_id CHAR(64),
                 send_id CHAR(64),
@@ -151,32 +151,12 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Model(model_struct.LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).
 		Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) GetMessageListNoTime(ctx context.Context, conversationID string,
-	count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+
+func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	if err = d.initChatLog(ctx, conversationID); err != nil {
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
 	}
-
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-
-	var timeOrder string
-	if isReverse {
-		timeOrder = "send_time ASC"
-	} else {
-		timeOrder = "send_time DESC"
-	}
-
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
-	if err != nil {
-		return nil, err
-	}
-
-	return result, err
-}
-
-func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var condition, timeOrder, timeSymbol string
@@ -187,12 +167,19 @@ func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, co
 		timeOrder = "send_time DESC"
 		timeSymbol = "<"
 	}
-	condition = "send_time " + timeSymbol + " ?"
-
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime).
-		Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
-	if err != nil {
-		return nil, err
+	if startTime > 0 {
+		condition = "send_time " + timeSymbol + " ?"
+		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime).
+			Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Order(timeOrder).
+			Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
+		if err != nil {
+			return nil, err
+		}
 	}
 	return result, err
 }

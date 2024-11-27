@@ -54,62 +54,102 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 	var messageListCallback sdk.GetAdvancedHistoryMessageListCallback
 	var conversationID string
 	var startTime int64
-	var sessionType int
-	var list []*model_struct.LocalChatLog
 	var err error
 	var messageList sdk_struct.NewMsgList
-	var notStartTime bool
 	conversationID = req.ConversationID
-	lc, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return nil, err
-	}
-	sessionType = int(lc.ConversationType)
-	if req.StartClientMsgID == "" {
-		notStartTime = true
-	} else {
+	if len(req.StartClientMsgID) > 0 {
 		m, err := c.db.GetMessage(ctx, conversationID, req.StartClientMsgID)
 		if err != nil {
 			return nil, err
 		}
 		startTime = m.SendTime
+	} else {
+		c.messagePullMinSeqMap.Delete(conversationID)
 	}
 	log.ZDebug(ctx, "Assembly conversation parameters", "cost time", time.Since(t), "conversationID",
-		conversationID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
-	t = time.Now()
-	if notStartTime {
-		list, err = c.db.GetMessageListNoTime(ctx, conversationID, req.Count, isReverse)
-	} else {
-		list, err = c.db.GetMessageList(ctx, conversationID, req.Count, startTime, isReverse)
+		conversationID, "startTime:", startTime, "count:", req.Count, "startTime", startTime)
+	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, isReverse, &messageListCallback)
+	if err != nil {
+		return nil, err
 	}
+	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t))
+	t = time.Now()
+
+	var thisMinSeq int64
+	thisMinSeq, messageList = c.LocalChatLog2MsgStruct(ctx, list)
+	log.ZDebug(ctx, "message convert and unmarshal", "unmarshal cost time", time.Since(t))
+	t = time.Now()
+	if !isReverse {
+		sort.Sort(messageList)
+	}
+	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
+	messageListCallback.MessageList = messageList
+	if thisMinSeq != 0 {
+		c.messagePullMinSeqMap.Store(conversationID, thisMinSeq)
+	}
+	return &messageListCallback, nil
+
+}
+
+func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversationID string,
+	count int, startTime int64, isReverse bool, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
+
+	var list []*model_struct.LocalChatLog
+
+	// If all retrieved messages are either deleted or filtered out, continue fetching messages from an earlier point.
+	shouldFetchMoreMessages := func(messages []*model_struct.LocalChatLog) bool {
+		if len(messages) == 0 {
+			return false
+		}
+
+		allDeleted := true
+		for _, msg := range messages {
+			if msg.Status < constant.MsgStatusHasDeleted {
+				allDeleted = false
+				break
+			}
+		}
+		return allDeleted
+	}
+	getNewStartTime := func(messages []*model_struct.LocalChatLog) int64 {
+		if len(messages) == 0 {
+			return 0
+		}
+		// Returns the SendTime of the last element in the message list
+		return messages[len(messages)-1].SendTime
+	}
+
+	t := time.Now()
+	list, err := c.db.GetMessageList(ctx, conversationID, count, startTime, isReverse)
 	log.ZDebug(ctx, "db get messageList", "cost time", time.Since(t), "len", len(list), "err",
 		err, "conversationID", conversationID)
 
 	if err != nil {
 		return nil, err
 	}
-	rawMessageLength := len(list)
 	t = time.Now()
-	if rawMessageLength < req.Count {
-		maxSeq, minSeq, lostSeqListLength := c.messageBlocksInternalContinuityCheck(ctx,
-			conversationID, notStartTime, isReverse, req.Count, startTime, &list, &messageListCallback)
-		_ = c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID,
-			notStartTime, isReverse, req.Count, startTime, &list, &messageListCallback)
-		if minSeq == 1 && lostSeqListLength == 0 {
-			messageListCallback.IsEnd = true
-		} else {
-			c.messageBlocksEndContinuityCheck(ctx, minSeq, conversationID, notStartTime, isReverse,
-				req.Count, startTime, &list, &messageListCallback)
-		}
-	} else {
-		maxSeq, _, _ := c.messageBlocksInternalContinuityCheck(ctx, conversationID, notStartTime, isReverse,
-			req.Count, startTime, &list, &messageListCallback)
-		c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID, notStartTime,
-			isReverse, req.Count, startTime, &list, &messageListCallback)
-
+	maxSeq := c.validateAndFillInternalGaps(ctx, conversationID, isReverse,
+		count, startTime, &list, messageListCallback)
+	log.ZDebug(ctx, "internal continuity check", "cost time", time.Since(t))
+	t = time.Now()
+	c.validateAndFillInterBlockGaps(ctx, maxSeq, conversationID,
+		isReverse, count, startTime, &list, messageListCallback)
+	log.ZDebug(ctx, "between continuity check", "cost time", time.Since(t))
+	t = time.Now()
+	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse,
+		count, startTime, &list, messageListCallback)
+	log.ZDebug(ctx, "end continuity check", "cost time", time.Since(t))
+	// If all retrieved messages are either deleted or filtered out,
+	//continue fetching recursively until either valid messages are found or all messages have been fetched.
+	if shouldFetchMoreMessages(list) && !messageListCallback.IsEnd {
+		return c.fetchMessagesWithGapCheck(ctx, conversationID, count, getNewStartTime(list), isReverse, messageListCallback)
 	}
-	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t))
-	t = time.Now()
+
+	return list, nil
+}
+
+func (c *Conversation) LocalChatLog2MsgStruct(ctx context.Context, list []*model_struct.LocalChatLog) (int64, []*sdk_struct.MsgStruct) {
+	messageList := make([]*sdk_struct.MsgStruct, 0, len(list))
 	var thisMinSeq int64
 	for _, v := range list {
 		if v.Seq != 0 && thisMinSeq == 0 {
@@ -122,58 +162,14 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			log.ZDebug(ctx, "this message has been deleted or exception message", "msg", v)
 			continue
 		}
-		temp := sdk_struct.MsgStruct{}
-		temp.ClientMsgID = v.ClientMsgID
-		temp.ServerMsgID = v.ServerMsgID
-		temp.CreateTime = v.CreateTime
-		temp.SendTime = v.SendTime
-		temp.SessionType = v.SessionType
-		temp.SendID = v.SendID
-		temp.RecvID = v.RecvID
-		temp.MsgFrom = v.MsgFrom
-		temp.ContentType = v.ContentType
-		temp.SenderPlatformID = v.SenderPlatformID
-		temp.SenderNickname = v.SenderNickname
-		temp.SenderFaceURL = v.SenderFaceURL
-		temp.Content = v.Content
-		temp.Seq = v.Seq
-		temp.IsRead = v.IsRead
-		temp.Status = v.Status
-		var attachedInfo sdk_struct.AttachedInfoElem
-		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
-		temp.AttachedInfoElem = &attachedInfo
-		temp.Ex = v.Ex
-		temp.LocalEx = v.LocalEx
-		err := c.msgHandleByContentType(&temp)
-		if err != nil {
-			log.ZError(ctx, "Parsing data error", err, "temp", temp)
-			continue
-		}
-		switch sessionType {
-		case constant.WriteGroupChatType:
-			fallthrough
-		case constant.ReadGroupChatType:
-			temp.GroupID = temp.RecvID
-			temp.RecvID = c.loginUserID
-		}
-		if attachedInfo.IsPrivateChat && temp.SendTime+int64(attachedInfo.BurnDuration) < time.Now().Unix() {
-			continue
-		}
-		messageList = append(messageList, &temp)
-	}
-	log.ZDebug(ctx, "message convert and unmarshal", "unmarshal cost time", time.Since(t))
-	t = time.Now()
-	if !isReverse {
-		sort.Sort(messageList)
-	}
-	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
-	messageListCallback.MessageList = messageList
-	if thisMinSeq == 0 {
-		thisMinSeq = req.LastMinSeq
-	}
-	messageListCallback.LastMinSeq = thisMinSeq
-	return &messageListCallback, nil
+		temp := LocalChatLogToMsgStruct(v)
 
+		if temp.AttachedInfoElem.IsPrivateChat && temp.SendTime+int64(temp.AttachedInfoElem.BurnDuration) < time.Now().Unix() {
+			continue
+		}
+		messageList = append(messageList, temp)
+	}
+	return thisMinSeq, messageList
 }
 
 func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
@@ -322,35 +318,8 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	log.ZDebug(ctx, "get raw data length is", len(list))
 
 	for _, v := range list {
-		temp := sdk_struct.MsgStruct{}
-		temp.ClientMsgID = v.ClientMsgID
-		temp.ServerMsgID = v.ServerMsgID
-		temp.CreateTime = v.CreateTime
-		temp.SendTime = v.SendTime
-		temp.SessionType = v.SessionType
-		temp.SendID = v.SendID
-		temp.RecvID = v.RecvID
-		temp.MsgFrom = v.MsgFrom
-		temp.ContentType = v.ContentType
-		temp.SenderPlatformID = v.SenderPlatformID
-		temp.SenderNickname = v.SenderNickname
-		temp.SenderFaceURL = v.SenderFaceURL
-		temp.Content = v.Content
-		temp.Seq = v.Seq
-		temp.IsRead = v.IsRead
-		temp.Status = v.Status
-		var attachedInfo sdk_struct.AttachedInfoElem
-		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
-		temp.AttachedInfoElem = &attachedInfo
-		temp.Ex = v.Ex
-		temp.LocalEx = v.LocalEx
-		err := c.msgHandleByContentType(&temp)
-		if err != nil {
-			// log.Error("", "Parsing data error:", err.Error(), temp)
-			log.ZError(ctx, "Parsing data error:", err, "msg", temp)
-			continue
-		}
-		if c.filterMsg(&temp, searchParam) {
+		temp := LocalChatLogToMsgStruct(v)
+		if c.filterMsg(temp, searchParam) {
 			continue
 		}
 		// Determine the conversation ID based on the session type
@@ -362,12 +331,8 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 				conversationID = c.getConversationIDBySessionType(temp.SendID, constant.SingleChatType)
 			}
 		case constant.WriteGroupChatType:
-			temp.GroupID = temp.RecvID
-			temp.RecvID = c.loginUserID
 			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.WriteGroupChatType)
 		case constant.ReadGroupChatType:
-			temp.GroupID = temp.RecvID
-			temp.RecvID = c.loginUserID
 			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.ReadGroupChatType)
 		}
 		// Populate the conversationMap with search results
@@ -383,12 +348,12 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			searchResultItem.ShowName = localConversation.ShowName
 			searchResultItem.LatestMsgSendTime = localConversation.LatestMsgSendTime
 			searchResultItem.ConversationType = localConversation.ConversationType
-			searchResultItem.MessageList = append(searchResultItem.MessageList, &temp)
+			searchResultItem.MessageList = append(searchResultItem.MessageList, temp)
 			searchResultItem.MessageCount++
 			conversationMap[conversationID] = &searchResultItem
 		} else {
 			oldItem.MessageCount++
-			oldItem.MessageList = append(oldItem.MessageList, &temp)
+			oldItem.MessageList = append(oldItem.MessageList, temp)
 			conversationMap[conversationID] = oldItem
 		}
 	}
@@ -423,8 +388,8 @@ func (c *Conversation) searchMessageByContentTypeAndKeyword(ctx context.Context,
 		g.Go(func() error {
 			sList, err := c.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, conversationID, keywordList, keywordListMatchType, startTime, endTime)
 			if err != nil {
-				// TODO: log.Error(operationID, "search message in group err", err.Error(), conversationID)
-				return err
+				log.ZWarn(ctx, "search conversation message", err, "conversationID", conversationID)
+				return nil
 			}
 
 			mu.Lock()

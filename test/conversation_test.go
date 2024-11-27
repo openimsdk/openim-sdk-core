@@ -165,7 +165,14 @@ func Test_InsertGroupMessageToLocalStorage(t *testing.T) {
 }
 
 func Test_SearchLocalMessages(t *testing.T) {
-	msgs, err := open_im_sdk.UserForSDK.Conversation().SearchLocalMessages(ctx, &sdk_params_callback.SearchLocalMessagesParams{})
+	req := &sdk_params_callback.SearchLocalMessagesParams{
+		Count:            20,
+		KeywordList:      []string{"1"},
+		MessageTypeList:  []int{105},
+		PageIndex:        1,
+		SenderUserIDList: []string{},
+	}
+	msgs, err := open_im_sdk.UserForSDK.Conversation().SearchLocalMessages(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,6 +227,13 @@ func Test_ClearConversationAndDeleteAllMsg(t *testing.T) {
 
 func Test_MarkConversationMessageAsRead(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "si_2688118337_7249315132")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_MarkAllConversationMessageAsRead(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().MarkAllConversationMessageAsRead(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

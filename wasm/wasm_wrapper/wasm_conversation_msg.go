@@ -122,6 +122,12 @@ func (w *WrapperConMsg) MarkConversationMessageAsRead(_ js.Value, args []js.Valu
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.MarkConversationMessageAsRead, callback, &args).AsyncCallWithCallback()
 }
+
+func (w *WrapperConMsg) MarkAllConversationMessageAsRead(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.MarkAllConversationMessageAsRead, callback, &args).AsyncCallWithCallback()
+}
+
 func (w *WrapperConMsg) MarkMessagesAsReadByMsgID(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.MarkMessagesAsReadByMsgID, callback, &args).AsyncCallWithCallback()
@@ -294,4 +300,9 @@ func (w *WrapperConMsg) ChangeInputStates(_ js.Value, args []js.Value) interface
 func (w *WrapperConMsg) GetInputStates(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetInputStates, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperConMsg) FetchSurroundingMessages(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.FetchSurroundingMessages, callback, &args).AsyncCallWithCallback()
 }

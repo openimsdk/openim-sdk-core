@@ -16,7 +16,9 @@ package interaction
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -88,8 +90,15 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		log.ZError(ctx, "get conversation id list failed", err)
 		return err
 	}
+
 	if len(conversationIDList) == 0 {
-		m.reinstalled = true
+		version, err := m.db.GetAppSDKVersion(ctx)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if version == nil || !version.Installed {
+			m.reinstalled = true
+		}
 	}
 
 	// TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
@@ -100,16 +109,19 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		Err            error
 	}
 
-	concurrency := 20
-	partSize := len(conversationIDList) / concurrency
+	partSize := 20
+	currency := (len(conversationIDList)-1)/partSize + 1
+	if len(conversationIDList) == 0 {
+		currency = 0
+	}
 	var wg sync.WaitGroup
-	resultMaps := make([]map[string]SyncedSeq, concurrency)
+	resultMaps := make([]map[string]SyncedSeq, currency)
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < currency; i++ {
 		wg.Add(1)
 		start := i * partSize
 		end := start + partSize
-		if i == concurrency-1 {
+		if i == currency-1 {
 			end = len(conversationIDList)
 		}
 
@@ -248,6 +260,11 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 			}
 		}
 		defer func() {
+			if err := m.db.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{
+				Installed: true,
+			}); err != nil {
+				log.ZError(ctx, "SetAppSDKVersion err", err)
+			}
 			m.reinstalled = false
 		}()
 		_ = m.syncAndTriggerReinstallMsgs(m.ctx, needSyncSeqMap, pullNums)
@@ -269,24 +286,24 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 
 // startSync checks if the sync is already in progress.
 // If syncing is in progress, it returns false. Otherwise, it starts syncing and returns true.
-func (ms *MsgSyncer) startSync() bool {
-	ms.isSyncingLock.Lock()
-	defer ms.isSyncingLock.Unlock()
+func (m *MsgSyncer) startSync() bool {
+	m.isSyncingLock.Lock()
+	defer m.isSyncingLock.Unlock()
 
-	if ms.isSyncing {
+	if m.isSyncing {
 		// If already syncing, return false
 		return false
 	}
 
 	// Set syncing to true and start the sync
-	ms.isSyncing = true
+	m.isSyncing = true
 
 	// Create a goroutine that waits for 5 seconds and then sets isSyncing to false
 	go func() {
 		time.Sleep(5 * time.Second)
-		ms.isSyncingLock.Lock()
-		ms.isSyncing = false
-		ms.isSyncingLock.Unlock()
+		m.isSyncingLock.Lock()
+		m.isSyncing = false
+		m.isSyncingLock.Unlock()
 	}()
 
 	return true
