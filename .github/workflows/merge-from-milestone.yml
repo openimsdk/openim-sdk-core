@@ -110,7 +110,8 @@ jobs:
               git push origin $cherry_pick_branch --force
 
               new_pr_title="$pr_title [Created by @$pr_creator from #$pr_number]"
-              new_pr_body="$pr_body  \\n >This PR cherry-picks commit from original PR #$pr_number."
+              new_pr_body="$pr_body
+              >This PR is created from original PR #$pr_number."
 
               response=$(curl -s -X POST -H "Authorization: token $BOT_TOKEN" \
                 -H "Accept: application/vnd.github+json" \
