@@ -66,11 +66,11 @@ func (d *DataBase) initChatLog(ctx context.Context, conversationID string) error
 		if result := d.conn.Exec(createTableSQL); result.Error != nil {
 			return errs.WrapMsg(result.Error, "Create table failed", "table", tableName)
 		}
-		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID, tableName))
+		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX `%s` ON %s (seq)", "index_seq_"+conversationID, tableName))
 		if result.Error != nil {
 			return errs.WrapMsg(result.Error, "Create index_seq failed", "table", tableName, "index", "index_seq_"+conversationID)
 		}
-		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID, tableName))
+		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX `%s` ON %s (send_time)", "index_send_time_"+conversationID, tableName))
 		if result.Error != nil {
 			return errs.WrapMsg(result.Error, "Create index_send_time failed", "table", tableName, "index", "index_send_time_"+conversationID)
 		}
