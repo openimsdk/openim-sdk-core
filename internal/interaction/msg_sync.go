@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -93,7 +92,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 
 	if len(conversationIDList) == 0 {
 		version, err := m.db.GetAppSDKVersion(ctx)
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err != nil && !errors.Is(err, errs.ErrRecordNotFound) {
 			return err
 		}
 		if version == nil || !version.Installed {
