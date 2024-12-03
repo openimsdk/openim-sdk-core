@@ -17,9 +17,10 @@ func TestMergeSortedArrays(t *testing.T) {
 	reverse(array)
 
 	tests := []struct {
-		arr1, arr2 []*model_struct.LocalChatLog
-		n          int
-		expected   []*model_struct.LocalChatLog
+		arr1, arr2   []*model_struct.LocalChatLog
+		n            int
+		isDescending bool
+		expected     []*model_struct.LocalChatLog
 	}{
 		{
 			// Test merging two descending arrays
@@ -33,7 +34,8 @@ func TestMergeSortedArrays(t *testing.T) {
 				{SendTime: 6, Content: "Message 6"},
 				{SendTime: 2, Content: "Message 2"},
 			},
-			n: 4, // Limit result to first 4 elements
+			n:            4, // Limit result to first 4 elements
+			isDescending: true,
 			expected: []*model_struct.LocalChatLog{
 				{SendTime: 9, Content: "Message 9"},
 				{SendTime: 8, Content: "Message 8"},
@@ -49,7 +51,8 @@ func TestMergeSortedArrays(t *testing.T) {
 				{SendTime: 3, Content: "Message 3"},
 				{SendTime: 1, Content: "Message 1"},
 			},
-			n: 3,
+			n:            3,
+			isDescending: true,
 			expected: []*model_struct.LocalChatLog{
 				{SendTime: 5, Content: "Message 5"},
 				{SendTime: 3, Content: "Message 3"},
@@ -58,10 +61,11 @@ func TestMergeSortedArrays(t *testing.T) {
 		},
 		{
 			// Test merging two empty arrays
-			arr1:     []*model_struct.LocalChatLog{},
-			arr2:     []*model_struct.LocalChatLog{},
-			n:        0,
-			expected: []*model_struct.LocalChatLog{},
+			arr1:         []*model_struct.LocalChatLog{},
+			arr2:         []*model_struct.LocalChatLog{},
+			n:            0,
+			isDescending: true,
+			expected:     []*model_struct.LocalChatLog{},
 		},
 		{
 			// Test merging a descending array and an ascending array
@@ -70,8 +74,9 @@ func TestMergeSortedArrays(t *testing.T) {
 				{SendTime: 5, Content: "Message 5"},
 				{SendTime: 3, Content: "Message 3"},
 			},
-			arr2: array,
-			n:    5, // Limit result to first 5 elements
+			arr2:         array,
+			n:            5, // Limit result to first 5 elements
+			isDescending: true,
 			// Expected result: merged in descending order
 			expected: []*model_struct.LocalChatLog{
 				{SendTime: 7, Content: "Message 7"},
@@ -81,10 +86,34 @@ func TestMergeSortedArrays(t *testing.T) {
 				{SendTime: 3, Content: "Message 3"},
 			},
 		},
+
+		{
+			// Test merging a descending array and an ascending array
+			arr1: []*model_struct.LocalChatLog{
+				{SendTime: 1, Content: "Message 1"},
+				{SendTime: 5, Content: "Message 5"},
+				{SendTime: 7, Content: "Message 7"},
+			},
+			arr2: []*model_struct.LocalChatLog{
+				{SendTime: 2, Content: "Message 2"},
+				{SendTime: 6, Content: "Message 6"},
+				{SendTime: 9, Content: "Message 9"},
+			},
+			n:            5, // Limit result to first 5 elements
+			isDescending: false,
+			// Expected result: merged in descending order
+			expected: []*model_struct.LocalChatLog{
+				{SendTime: 1, Content: "Message 1"},
+				{SendTime: 2, Content: "Message 2"},
+				{SendTime: 5, Content: "Message 5"},
+				{SendTime: 6, Content: "Message 6"},
+				{SendTime: 7, Content: "Message 7"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
-		result := mergeSortedArrays(tt.arr1, tt.arr2, tt.n)
+		result := mergeSortedArrays(tt.arr1, tt.arr2, tt.n, tt.isDescending)
 		if !reflect.DeepEqual(result, tt.expected) {
 			t.Errorf(
 				"mergeSortedArrays(%v, %v, %d) = %v; want %v",
