@@ -34,67 +34,40 @@ func (c *Conversation) validateAndFillInternalGaps(ctx context.Context, conversa
 		}
 
 	}
+	if isReverse {
+		return minSeq
+	}
 	return maxSeq
 }
 
 // validateAndFillInterBlockGaps checks for continuity between blocks of messages. If a gap is identified, it retrieves the missing messages
 // to bridge the gap. The function returns a boolean indicating whether the blocks are continuous.
-func (c *Conversation) validateAndFillInterBlockGaps(ctx context.Context, maxSeq int64, conversationID string,
-	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) bool {
-	lastMinSeq, _ := c.messagePullMinSeqMap.Load(conversationID)
-	if lastMinSeq != 0 {
-		log.ZDebug(ctx, "get lost LastMinSeq is :", "lastMinSeq", lastMinSeq, "thisMaxSeq", maxSeq)
-		if maxSeq+1 != lastMinSeq {
+func (c *Conversation) validateAndFillInterBlockGaps(ctx context.Context, thisStartSeq int64, conversationID string,
+	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 
-			lostSeqList := getLostSeqListWithLimitLength(maxSeq+1, lastMinSeq-1, []int64{})
-			log.ZDebug(ctx, "get lost lostSeqList is :", "lostSeqList", lostSeqList, "length:", len(lostSeqList))
-			if len(lostSeqList) > 0 {
-				log.ZDebug(ctx, "messageBlocksBetweenContinuityCheck", "lostSeqList", lostSeqList)
-				c.fetchAndMergeMissingMessages(ctx, conversationID, lostSeqList, isReverse, count, startTime, list, messageListCallback)
-			}
-		} else {
-			return true
-		}
-
+	var lastEndSeq, startSeq, endSeq int64
+	var isLostSeq bool
+	if isReverse {
+		lastEndSeq, _ = c.messagePullReverseEndSeqMap.Load(conversationID)
+		isLostSeq = lastEndSeq+1 != thisStartSeq
+		startSeq = lastEndSeq + 1
+		endSeq = thisStartSeq - 1
 	} else {
-		return true
+		lastEndSeq, _ = c.messagePullForwardEndSeqMap.Load(conversationID)
+		isLostSeq = thisStartSeq+1 != lastEndSeq
+		startSeq = thisStartSeq + 1
+		endSeq = lastEndSeq - 1
 	}
-
-	return false
+	if isLostSeq {
+		log.ZDebug(ctx, "get lost LastMinSeq is :", "lastEndSeq", lastEndSeq, "thisStartSeq", thisStartSeq, "startSeq", startSeq, "endSeq", endSeq)
+		lostSeqList := getLostSeqListWithLimitLength(startSeq, endSeq, []int64{})
+		log.ZDebug(ctx, "get lost lostSeqList is :", "lostSeqList", lostSeqList, "length:", len(lostSeqList))
+		if len(lostSeqList) > 0 {
+			log.ZDebug(ctx, "messageBlocksBetweenContinuityCheck", "lostSeqList", lostSeqList)
+			c.fetchAndMergeMissingMessages(ctx, conversationID, lostSeqList, isReverse, count, startTime, list, messageListCallback)
+		}
+	}
 }
-
-// func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, conversationID string,
-//
-//	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
-//	maxSeq, minSeq, haveSeqList := c.getMaxAndMinHaveSeqList(*list)
-//	if minSeq != 0 {
-//		seqList := func(seq int64) (seqList []int64) {
-//			startSeq := seq - constant.PullMsgNumForReadDiffusion
-//			if startSeq <= 0 {
-//				startSeq = 1
-//			}
-//			log.ZDebug(ctx, "pull start is ", "start seq", startSeq)
-//			for i := startSeq; i < seq; i++ {
-//				seqList = append(seqList, i)
-//			}
-//			return seqList
-//		}(minSeq)
-//		log.ZDebug(ctx, "pull seqList is ", "seqList", seqList, "len", len(seqList))
-//
-//		if len(seqList) > 0 {
-//			log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "seqList", seqList)
-//			c.fetchAndMergeMissingMessages(ctx, conversationID, seqList, isReverse, count, startTime, list, messageListCallback)
-//		}
-//
-//	} else {
-//		log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "minSeq", minSeq, "conversationID", conversationID)
-//		// local don't have messages, but the server's maximum message count is not zero
-//		seqList := []int64{0, 0}
-//		c.fetchAndMergeMissingMessages(ctx, conversationID, seqList, isReverse, count, startTime, list, messageListCallback)
-//
-//	}
-//
-// }
 
 // validateAndFillEndBlockContinuity performs an end-of-block continuity check. If a batch of messages has passed
 // internal and inter-block continuity checks but contains fewer messages than `count`, this function verifies if the end
@@ -103,27 +76,53 @@ func (c *Conversation) validateAndFillEndBlockContinuity(ctx context.Context, co
 	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	// Perform an end-of-block check if the retrieved message count is less than requested
 	if len(*list) < count {
-		_, minSeq, _ := c.getMaxAndMinHaveSeqList(*list)
-		log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "minSeq", minSeq, "conversationID", conversationID)
-		if minSeq == 1 { // todo Replace `1` with the minimum sequence value as defined by the user or system
-			messageListCallback.IsEnd = true
-		} else {
-			lastMinSeq, _ := c.messagePullMinSeqMap.Load(conversationID)
-			log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "lastMinSeq", lastMinSeq, "conversationID", conversationID)
-			// If `minSeq` is zero and `lastMinSeq` is at the minimum server sequence, this batch is fully local
-			if minSeq == 0 && lastMinSeq == 1 { // All messages in this batch are local messages,
-				// and the minimum seq of the last batch of valid messages has already reached the minimum pullable seq from the server.
+		if isReverse {
+			maxSeq, _, _ := c.getMaxAndMinHaveSeqList(*list)
+			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "maxSeq", maxSeq, "conversationID", conversationID)
+			if maxSeq == c.maxSeqRecorder.Get(conversationID) { // todo Replace `1` with the minimum sequence value as defined by the user or system
 				messageListCallback.IsEnd = true
 			} else {
-				// The batch includes sequences but has not reached the minimum value,
-				// This condition indicates local-only messages, with `minSeq > 1` as the only case,
-				// since `lastMinSeq > 1` is handled in inter-block continuity.
-				lostSeqList := getLostSeqListWithLimitLength(1, minSeq-1, []int64{})
-				if len(lostSeqList) > 0 {
-					log.ZDebug(ctx, "messageBlocksEndContinuityCheck", "lostSeqList", lostSeqList)
-					c.fetchAndMergeMissingMessages(ctx, conversationID, lostSeqList, isReverse, count, startTime, list, messageListCallback)
-				}
+				lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(conversationID)
+				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastEndSeq", lastEndSeq, "conversationID", conversationID)
+				// If `maxSeq` is zero and `lastEndSeq` is at the maximum server sequence, this batch is fully local
+				if maxSeq == 0 && lastEndSeq == c.maxSeqRecorder.Get(conversationID) { // All messages in this batch are local messages,
+					// and the maximum seq of the last batch of valid messages has already reached the maximum pullable seq from the server.
+					messageListCallback.IsEnd = true
+				} else {
+					// The batch includes sequences but has not reached the maximum value,
+					// This condition indicates local-only messages, with `maxSeq < maxSeqRecorderMaxSeq` as the only case,
+					// since `lastEndSeq < maxSeqRecorderMaxSeq` is handled in inter-block continuity.
+					lostSeqList := getLostSeqListWithLimitLength(maxSeq+1, c.maxSeqRecorder.Get(conversationID), []int64{})
+					if len(lostSeqList) > 0 {
+						log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lostSeqList", lostSeqList)
+						c.fetchAndMergeMissingMessages(ctx, conversationID, lostSeqList, isReverse, count, startTime, list, messageListCallback)
+					}
 
+				}
+			}
+		} else {
+			_, minSeq, _ := c.getMaxAndMinHaveSeqList(*list)
+			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "minSeq", minSeq, "conversationID", conversationID)
+			if minSeq == 1 { // todo Replace `1` with the minimum sequence value as defined by the user or system
+				messageListCallback.IsEnd = true
+			} else {
+				lastMinSeq, _ := c.messagePullForwardEndSeqMap.Load(conversationID)
+				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastMinSeq", lastMinSeq, "conversationID", conversationID)
+				// If `minSeq` is zero and `lastMinSeq` is at the minimum server sequence, this batch is fully local
+				if minSeq == 0 && lastMinSeq == 1 { // All messages in this batch are local messages,
+					// and the minimum seq of the last batch of valid messages has already reached the minimum pullable seq from the server.
+					messageListCallback.IsEnd = true
+				} else {
+					// The batch includes sequences but has not reached the minimum value,
+					// This condition indicates local-only messages, with `minSeq > 1` as the only case,
+					// since `lastMinSeq > 1` is handled in inter-block continuity.
+					lostSeqList := getLostSeqListWithLimitLength(1, minSeq-1, []int64{})
+					if len(lostSeqList) > 0 {
+						log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lostSeqList", lostSeqList)
+						c.fetchAndMergeMissingMessages(ctx, conversationID, lostSeqList, isReverse, count, startTime, list, messageListCallback)
+					}
+
+				}
 			}
 		}
 	} else {
@@ -203,8 +202,10 @@ func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, convers
 			log.ZDebug(ctx, "syncMsgFromServerSplit pull msg success",
 				"conversationID", conversationID, "count", count, "len", len(*list), "msgLen", len(v.Msgs))
 			localMessage := datautil.Batch(MsgDataToLocalChatLog, v.Msgs)
-			reverse(localMessage)
-			*list = mergeSortedArrays(*list, localMessage, count)
+			if !isReverse {
+				reverse(localMessage)
+			}
+			*list = mergeSortedArrays(*list, localMessage, count, !isReverse)
 		}
 
 	}
@@ -227,7 +228,7 @@ func errHandle(seqList []int64, list *[]*model_struct.LocalChatLog, err error, m
 	*list = result
 }
 
-func mergeSortedArrays(arr1, arr2 []*model_struct.LocalChatLog, n int) []*model_struct.LocalChatLog {
+func mergeSortedArrays(arr1, arr2 []*model_struct.LocalChatLog, n int, isDescending bool) []*model_struct.LocalChatLog {
 	len1 := len(arr1)
 	len2 := len(arr2)
 	result := make([]*model_struct.LocalChatLog, 0, len1+len2)
@@ -235,7 +236,7 @@ func mergeSortedArrays(arr1, arr2 []*model_struct.LocalChatLog, n int) []*model_
 	i, j := 0, 0
 
 	for i < len1 && j < len2 && len(result) < n {
-		if arr1[i].SendTime >= arr2[j].SendTime {
+		if (isDescending && arr1[i].SendTime >= arr2[j].SendTime) || (!isDescending && arr1[i].SendTime <= arr2[j].SendTime) {
 			result = append(result, arr1[i])
 			i++
 		} else {
