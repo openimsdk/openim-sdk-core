@@ -71,14 +71,14 @@ func (c *Conversation) setStreamMsg(ctx context.Context, conversationID string, 
 	if err := c.db.UpdateMessage(ctx, conversationID, msg); err != nil {
 		return err
 	}
-	_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg})
-	if len(res) == 0 {
-		log.ZWarn(ctx, "LocalChatLog2MsgStruct failed", nil, "msg", msg)
-		return nil
-	}
-	data := utils.StructToJsonString(res[0])
-	log.ZDebug(ctx, "setStreamMsg", "data", data)
-	c.msgListener().OnMsgEdited(data)
+	//_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg})
+	//if len(res) == 0 {
+	//	log.ZWarn(ctx, "LocalChatLog2MsgStruct failed", nil, "msg", msg)
+	//	return nil
+	//}
+	//data := utils.StructToJsonString(res[0])
+	//log.ZDebug(ctx, "setStreamMsg", "data", data)
+	//c.msgListener().OnMsgEdited(data)
 	return c.updateConversationLastMsg(ctx, conversationID, msg)
 }
 
@@ -96,13 +96,13 @@ func (c *Conversation) updateConversationLastMsg(ctx context.Context, conversati
 			return nil
 		}
 	}
-	_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg})
-	if len(res) == 0 {
-		log.ZWarn(ctx, "LocalChatLog2MsgStruct failed", nil, "msg", msg)
-		return nil
-	}
+	//_, res := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{msg})
+	//if len(res) == 0 {
+	//	log.ZWarn(ctx, "LocalChatLog2MsgStruct failed", nil, "msg", msg)
+	//	return nil
+	//}
 	oc.LatestMsgSendTime = msg.SendTime
-	oc.LatestMsg = utils.StructToJsonString(res[0])
+	//oc.LatestMsg = utils.StructToJsonString(res[0])
 	if err := c.db.UpdateConversation(ctx, oc); err != nil {
 		return err
 	}

@@ -51,28 +51,29 @@ var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*interaction.LongConnMgr
-	conversationSyncer    *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
-	db                    db_interface.DataBase
-	ConversationListener  func() open_im_sdk_callback.OnConversationListener
-	msgListener           func() open_im_sdk_callback.OnAdvancedMsgListener
-	msgKvListener         func() open_im_sdk_callback.OnMessageKvInfoListener
-	businessListener      func() open_im_sdk_callback.OnCustomBusinessListener
-	recvCH                chan common.Cmd2Value
-	loginUserID           string
-	platformID            int32
-	DataDir               string
-	relation              *relation.Relation
-	group                 *group.Group
-	user                  *user.User
-	file                  *file.File
-	cache                 *cache.Cache[string, *model_struct.LocalConversation]
-	maxSeqRecorder        MaxSeqRecorder
-	messagePullMinSeqMap  *cache.Cache[string, int64]
-	IsExternalExtensions  bool
-	msgOffset             int
-	progress              int
-	conversationSyncMutex sync.Mutex
-	streamMsgMutex        sync.Mutex
+	conversationSyncer          *syncer.Syncer[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string]
+	db                          db_interface.DataBase
+	ConversationListener        func() open_im_sdk_callback.OnConversationListener
+	msgListener                 func() open_im_sdk_callback.OnAdvancedMsgListener
+	msgKvListener               func() open_im_sdk_callback.OnMessageKvInfoListener
+	businessListener            func() open_im_sdk_callback.OnCustomBusinessListener
+	recvCH                      chan common.Cmd2Value
+	loginUserID                 string
+	platformID                  int32
+	DataDir                     string
+	relation                    *relation.Relation
+	group                       *group.Group
+	user                        *user.User
+	file                        *file.File
+	cache                       *cache.Cache[string, *model_struct.LocalConversation]
+	maxSeqRecorder              MaxSeqRecorder
+	messagePullForwardEndSeqMap *cache.Cache[string, int64]
+	messagePullReverseEndSeqMap *cache.Cache[string, int64]
+	IsExternalExtensions        bool
+	msgOffset                   int
+	progress                    int
+	conversationSyncMutex       sync.Mutex
+	streamMsgMutex              sync.Mutex
 
 	startTime time.Time
 
@@ -96,20 +97,21 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
-		LongConnMgr:          longConnMgr,
-		recvCH:               ch,
-		loginUserID:          info.UserID(),
-		platformID:           info.PlatformID(),
-		DataDir:              info.DataDir(),
-		relation:             relation,
-		group:                group,
-		user:                 user,
-		file:                 file,
-		IsExternalExtensions: info.IsExternalExtensions(),
-		maxSeqRecorder:       NewMaxSeqRecorder(),
-		messagePullMinSeqMap: cache.NewCache[string, int64](),
-		msgOffset:            0,
-		progress:             0,
+		LongConnMgr:                 longConnMgr,
+		recvCH:                      ch,
+		loginUserID:                 info.UserID(),
+		platformID:                  info.PlatformID(),
+		DataDir:                     info.DataDir(),
+		relation:                    relation,
+		group:                       group,
+		user:                        user,
+		file:                        file,
+		IsExternalExtensions:        info.IsExternalExtensions(),
+		maxSeqRecorder:              NewMaxSeqRecorder(),
+		messagePullForwardEndSeqMap: cache.NewCache[string, int64](),
+		messagePullReverseEndSeqMap: cache.NewCache[string, int64](),
+		msgOffset:                   0,
+		progress:                    0,
 	}
 	n.typing = newTyping(n)
 	n.initSyncer()
@@ -922,37 +924,37 @@ func (c *Conversation) FetchSurroundingMessages(ctx context.Context, conversatio
 	if len(res) == 0 {
 		return []*sdk_struct.MsgStruct{}, nil
 	}
-	_, msgList := c.LocalChatLog2MsgStruct(ctx, []*model_struct.LocalChatLog{res[0]})
-	if len(msgList) == 0 {
-		return []*sdk_struct.MsgStruct{}, nil
-	}
-	msg := msgList[0]
+	//_, msgList := c.LocalChatLog2MsgStruct []*model_struct.LocalChatLog{res[0]})
+	//if len(msgList) == 0 {
+	//	return []*sdk_struct.MsgStruct{}, nil
+	//}
+	//msg := msgList[0]
 	result := make([]*sdk_struct.MsgStruct, 0, before+after+1)
-	if before > 0 {
-		req := sdk.GetAdvancedHistoryMessageListParams{
-			ConversationID:   conversationID,
-			Count:            int(before),
-			StartClientMsgID: msg.ClientMsgID,
-		}
-		val, err := c.getAdvancedHistoryMessageList(ctx, req, false)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, val.MessageList...)
-	}
-	result = append(result, msg)
-	if after > 0 {
-		req := sdk.GetAdvancedHistoryMessageListParams{
-			ConversationID:   conversationID,
-			Count:            int(after),
-			StartClientMsgID: msg.ClientMsgID,
-		}
-		val, err := c.getAdvancedHistoryMessageList(ctx, req, true)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, val.MessageList...)
-	}
-	sort.Sort(sdk_struct.NewMsgList(result))
+	//if before > 0 {
+	//	req := sdk.GetAdvancedHistoryMessageListParams{
+	//		ConversationID:   conversationID,
+	//		Count:            int(before),
+	//		StartClientMsgID: msg.ClientMsgID,
+	//	}
+	//	val, err := c.getAdvancedHistoryMessageList(ctx, req, false)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	result = append(result, val.MessageList...)
+	//}
+	//result = append(result, msg)
+	//if after > 0 {
+	//	req := sdk.GetAdvancedHistoryMessageListParams{
+	//		ConversationID:   conversationID,
+	//		Count:            int(after),
+	//		StartClientMsgID: msg.ClientMsgID,
+	//	}
+	//	val, err := c.getAdvancedHistoryMessageList(ctx, req, true)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	result = append(result, val.MessageList...)
+	//}
+	//sort.Sort(sdk_struct.NewMsgList(result))
 	return result, nil
 }
