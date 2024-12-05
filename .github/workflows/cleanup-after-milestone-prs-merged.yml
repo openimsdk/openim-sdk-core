@@ -29,8 +29,8 @@ jobs:
         echo "$PR_NUMBERS" > pr_numbers.txt
         echo "Saved PR Numbers to pr_numbers.txt"
 
-        # Check if the title matches a specific pattern
-        if echo "$PR_TITLE" | grep -qE "^deps: Merge( #[0-9]+)+ PRs into .+"; then
+        # Check if the title matches the specific pattern
+        if echo "$PR_TITLE" | grep -qE "\[Created by @.+ from #[0-9]+\]$"; then
           echo "proceed=true" >> $GITHUB_OUTPUT
         else
           echo "proceed=false" >> $GITHUB_OUTPUT
@@ -57,6 +57,7 @@ jobs:
 
     - name: Delete branch after PR close
       if: steps.extract_pr_numbers.outputs.proceed == 'true' || contains(github.event.pull_request.labels.*.name, 'milestone-merge')
+      continue-on-error: true
       run: |
         BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
         echo "Branch to delete: $BRANCH_NAME"

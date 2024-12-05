@@ -1,0 +1,85 @@
+name: Delete User Comments
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      username:
+        description: "GitHub username of the user whose comments need to be deleted"
+        required: true
+        default: "username_to_delete"
+      issue_pr_range:
+        description: "Comma-separated list of issue/PR numbers to limit deletion scope (optional)"
+        required: false
+        default: ""
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TEMP_DIR: /tmp  # Temporary directory for storing intermediate data
+
+jobs:
+  delete_user_comments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Temporary Directory
+        run: mkdir -p ${{ env.TEMP_DIR }}
+
+      - name: Determine Scope and Fetch Data
+        run: |
+          username="${{ github.event.inputs.username }}"
+          range="${{ github.event.inputs.issue_pr_range }}"
+          
+          if [ -n "$range" ]; then
+            echo "Limiting scope to specified range: $range"
+            echo "$range" | tr ',' '\n' > ${{ env.TEMP_DIR }}/range.txt
+          else
+            echo "Fetching all issues and pull requests for repository: ${{ github.repository }}"
+            
+            # Fetch all issues
+            issues=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/issues?state=all&per_page=100")
+
+            # Save issue and PR numbers separately
+            echo "$issues" | jq -r '.[] | select(.pull_request == null) | .number' > ${{ env.TEMP_DIR }}/issues.txt
+            echo "$issues" | jq -r '.[] | select(.pull_request != null) | .number' > ${{ env.TEMP_DIR }}/pull_requests.txt
+
+            cat ${{ env.TEMP_DIR }}/issues.txt ${{ env.TEMP_DIR }}/pull_requests.txt > ${{ env.TEMP_DIR }}/range.txt
+          fi
+
+      - name: Delete Comments by User
+        run: |
+          username="${{ github.event.inputs.username }}"
+          echo "Deleting comments by user: $username"
+
+          for number in $(cat ${{ env.TEMP_DIR }}/range.txt); do
+            echo "Processing Issue/PR #$number"
+            
+            # Fetch comments for the issue/PR
+            comments=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/$number/comments")
+
+            # Filter and delete user comments
+            echo "$comments" | jq -c ".[] | select(.user.login == \"$username\")" | while read comment; do
+              comment_id=$(echo "$comment" | jq -r '.id')
+              echo "Deleting comment ID: $comment_id from Issue/PR #$number"
+              
+              response=$(curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/${{ github.repository }}/issues/comments/$comment_id")
+
+              if [ -z "$response" ]; then
+                echo "Successfully deleted comment ID: $comment_id"
+              else
+                echo "Failed to delete comment ID: $comment_id. Response: $response"
+              fi
+            done
+          done
+
+      - name: Completion
+        run: echo "All comments by user ${{ github.event.inputs.username }} in the specified scope have been deleted."

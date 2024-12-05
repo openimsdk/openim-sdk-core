@@ -15,9 +15,10 @@
 package test
 
 import (
+	"testing"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"testing"
 )
 
 func Test_CreateTextMessage(t *testing.T) {
@@ -60,14 +61,6 @@ func Test_CreateAdvancedQuoteMessage(t *testing.T) {
 	t.Log(message)
 }
 
-func Test_CreateVideoMessageFromFullPath(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateVideoMessageFromFullPath(ctx, ".\\test.png", "mp4", 10, ".\\test.png")
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(message)
-}
-
 func Test_CreateCardMessage(t *testing.T) {
 	message, err := open_im_sdk.UserForSDK.Conversation().CreateCardMessage(ctx, &sdk_struct.CardElem{
 		UserID:   "123456",
@@ -81,24 +74,8 @@ func Test_CreateCardMessage(t *testing.T) {
 }
 
 func Test_CreateImageMessage(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessage(ctx, ".\\test.png")
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(message)
-}
-
-func Test_CreateImageMessageByURL(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessageByURL(ctx, "",
-		sdk_struct.PictureBaseInfo{}, sdk_struct.PictureBaseInfo{}, sdk_struct.PictureBaseInfo{})
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(message)
-}
-
-func Test_CreateSoundMessageByURL(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateSoundMessageByURL(ctx, &sdk_struct.SoundBaseInfo{})
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessage(ctx, ".\\test.png",
+		&sdk_struct.PictureBaseInfo{}, &sdk_struct.PictureBaseInfo{}, &sdk_struct.PictureBaseInfo{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -106,7 +83,7 @@ func Test_CreateSoundMessageByURL(t *testing.T) {
 }
 
 func Test_CreateSoundMessage(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateSoundMessage(ctx, ".\\test.png", 20)
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateSoundMessage(ctx, ".\\test.png", 20, &sdk_struct.SoundBaseInfo{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -114,15 +91,7 @@ func Test_CreateSoundMessage(t *testing.T) {
 }
 
 func Test_CreateVideoMessage(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateVideoMessage(ctx, ".\\test.png", "mp4", 10, "")
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(message)
-}
-
-func Test_CreateVideoMessageByURL(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateVideoMessageByURL(ctx, sdk_struct.VideoBaseInfo{})
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateVideoMessage(ctx, ".\\test.png", "mp4", 10, ".\\test.png", &sdk_struct.VideoBaseInfo{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -130,15 +99,7 @@ func Test_CreateVideoMessageByURL(t *testing.T) {
 }
 
 func Test_CreateFileMessage(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateFileMessage(ctx, ".\\test.png", "png")
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(message)
-}
-
-func Test_CreateFileMessageByURL(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateFileMessageByURL(ctx, sdk_struct.FileBaseInfo{})
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateFileMessage(ctx, ".\\test.png", "png", &sdk_struct.FileBaseInfo{})
 	if err != nil {
 		t.Error(err)
 	}

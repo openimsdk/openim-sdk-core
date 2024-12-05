@@ -16,6 +16,7 @@ package interaction
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"strings"
@@ -91,10 +92,10 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 
 	if len(conversationIDList) == 0 {
 		version, err := m.db.GetAppSDKVersion(ctx)
-		if err != nil {
+		if err != nil && !errors.Is(err, errs.ErrRecordNotFound) {
 			return err
 		}
-		if !version.Installed {
+		if version == nil || !version.Installed {
 			m.reinstalled = true
 		}
 	}
@@ -107,16 +108,19 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		Err            error
 	}
 
-	concurrency := 20
-	partSize := len(conversationIDList) / concurrency
+	partSize := 20
+	currency := (len(conversationIDList)-1)/partSize + 1
+	if len(conversationIDList) == 0 {
+		currency = 0
+	}
 	var wg sync.WaitGroup
-	resultMaps := make([]map[string]SyncedSeq, concurrency)
+	resultMaps := make([]map[string]SyncedSeq, currency)
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < currency; i++ {
 		wg.Add(1)
 		start := i * partSize
 		end := start + partSize
-		if i == concurrency-1 {
+		if i == currency-1 {
 			end = len(conversationIDList)
 		}
 

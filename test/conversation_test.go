@@ -110,15 +110,6 @@ func Test_SendMessage(t *testing.T) {
 	}
 }
 
-func Test_SendMessageNotOss(t *testing.T) {
-	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
-	msg, _ := open_im_sdk.UserForSDK.Conversation().CreateTextMessage(ctx, "textMsg")
-	_, err := open_im_sdk.UserForSDK.Conversation().SendMessageNotOss(ctx, msg, "3411008330", "", nil, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func Test_FindMessageList(t *testing.T) {
 	msgs, err := open_im_sdk.UserForSDK.Conversation().FindMessageList(ctx, []*sdk_params_callback.ConversationArgs{})
 	if err != nil {
@@ -260,7 +251,7 @@ func Test_MarkMsgsAsRead(t *testing.T) {
 
 func Test_SendImgMsg(t *testing.T) {
 	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
-	msg, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessage(ctx, "C:\\Users\\Admin\\Desktop\\test.png")
+	msg, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessage(ctx, "C:\\Users\\Admin\\Desktop\\test.png", &sdk_struct.PictureBaseInfo{}, &sdk_struct.PictureBaseInfo{}, &sdk_struct.PictureBaseInfo{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -40,18 +40,6 @@ func (w *WrapperConMsg) CreateTextMessage(_ js.Value, args []js.Value) interface
 func (w *WrapperConMsg) CreateImageMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateImageMessage, nil, &args).AsyncCallWithOutCallback()
 }
-func (w *WrapperConMsg) CreateImageMessageByURL(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateImageMessageByURL, nil, &args).AsyncCallWithOutCallback()
-}
-func (w *WrapperConMsg) CreateSoundMessageByURL(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateSoundMessageByURL, nil, &args).AsyncCallWithOutCallback()
-}
-func (w *WrapperConMsg) CreateVideoMessageByURL(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateVideoMessageByURL, nil, &args).AsyncCallWithOutCallback()
-}
-func (w *WrapperConMsg) CreateFileMessageByURL(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateFileMessageByURL, nil, &args).AsyncCallWithOutCallback()
-}
 func (w *WrapperConMsg) CreateCustomMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateCustomMessage, nil, &args).AsyncCallWithOutCallback()
 }
@@ -95,21 +83,6 @@ func (w *WrapperConMsg) CreateLocationMessage(_ js.Value, args []js.Value) inter
 	return event_listener.NewCaller(open_im_sdk.CreateLocationMessage, nil, &args).AsyncCallWithOutCallback()
 }
 
-func (w *WrapperConMsg) CreateVideoMessageFromFullPath(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateVideoMessageFromFullPath, nil, &args).AsyncCallWithOutCallback()
-}
-
-func (w *WrapperConMsg) CreateImageMessageFromFullPath(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateImageMessageFromFullPath, nil, &args).AsyncCallWithOutCallback()
-}
-func (w *WrapperConMsg) CreateSoundMessageFromFullPath(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateSoundMessageFromFullPath, nil, &args).AsyncCallWithOutCallback()
-}
-
-func (w *WrapperConMsg) CreateFileMessageFromFullPath(_ js.Value, args []js.Value) interface{} {
-	return event_listener.NewCaller(open_im_sdk.CreateFileMessageFromFullPath, nil, &args).AsyncCallWithOutCallback()
-}
-
 func (w *WrapperConMsg) CreateSoundMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateSoundMessage, nil, &args).AsyncCallWithOutCallback()
 }
@@ -135,10 +108,6 @@ func (w *WrapperConMsg) MarkMessagesAsReadByMsgID(_ js.Value, args []js.Value) i
 func (w *WrapperConMsg) SendMessage(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return event_listener.NewCaller(open_im_sdk.SendMessage, callback, &args).AsyncCallWithCallback()
-}
-func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
-	return event_listener.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
 }
 
 //func (w *WrapperConMsg) SetMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {

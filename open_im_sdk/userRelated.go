@@ -107,7 +107,6 @@ type LoginMgr struct {
 	friendshipListener   open_im_sdk_callback.OnFriendshipListener
 	conversationListener open_im_sdk_callback.OnConversationListener
 	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
-	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	userListener         open_im_sdk_callback.OnUserListener
 	signalingListener    open_im_sdk_callback.OnSignalingListener
 	businessListener     open_im_sdk_callback.OnCustomBusinessListener
@@ -138,10 +137,6 @@ func (u *LoginMgr) ConversationListener() open_im_sdk_callback.OnConversationLis
 
 func (u *LoginMgr) AdvancedMsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
 	return u.advancedMsgListener
-}
-
-func (u *LoginMgr) BatchMsgListener() open_im_sdk_callback.OnBatchMsgListener {
-	return u.batchMsgListener
 }
 
 func (u *LoginMgr) UserListener() open_im_sdk_callback.OnUserListener {
@@ -213,10 +208,6 @@ func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callba
 
 func (u *LoginMgr) SetMessageKvInfoListener(messageKvInfoListener open_im_sdk_callback.OnMessageKvInfoListener) {
 	u.msgKvListener = messageKvInfoListener
-}
-
-func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
-	u.batchMsgListener = batchMsgListener
 }
 
 func (u *LoginMgr) SetFriendshipListener(friendshipListener open_im_sdk_callback.OnFriendshipListener) {
@@ -364,7 +355,6 @@ func (u *LoginMgr) setListener(ctx context.Context) {
 	setListener(ctx, &u.groupListener, u.GroupListener, u.group.SetGroupListener, newEmptyGroupListener)
 	setListener(ctx, &u.conversationListener, u.ConversationListener, u.conversation.SetConversationListener, newEmptyConversationListener)
 	setListener(ctx, &u.advancedMsgListener, u.AdvancedMsgListener, u.conversation.SetMsgListener, newEmptyAdvancedMsgListener)
-	setListener(ctx, &u.batchMsgListener, u.BatchMsgListener, u.conversation.SetBatchMsgListener, nil)
 	setListener(ctx, &u.businessListener, u.BusinessListener, u.conversation.SetBusinessListener, newEmptyCustomBusinessListener)
 }
 
