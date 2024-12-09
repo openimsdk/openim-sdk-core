@@ -86,15 +86,18 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 	// Perform an end-of-block check if the retrieved message count is less than requested
 	if len(*list) < count {
 		if isReverse {
+			currentMaxSeq := c.maxSeqRecorder.Get(conversationID)
 			maxSeq, _, _ := c.getMaxAndMinHaveSeqList(*list)
-			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "maxSeq", maxSeq, "conversationID", conversationID)
-			if maxSeq == c.maxSeqRecorder.Get(conversationID) { // todo Replace `1` with the minimum sequence value as defined by the user or system
+			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "maxSeq", maxSeq, "conversationID", conversationID, "currentMaxSeq", currentMaxSeq)
+			// Use >= to prevent the currentMaxSeq from being updated too slowly,
+			// which could lead to misjudgments and cause repeated message fetching."
+			if maxSeq >= currentMaxSeq { // todo Replace `1` with the minimum sequence value as defined by the user or system
 				messageListCallback.IsEnd = true
 			} else {
 				lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(conversationID)
 				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastEndSeq", lastEndSeq, "conversationID", conversationID)
 				// If `maxSeq` is zero and `lastEndSeq` is at the maximum server sequence, this batch is fully local
-				if maxSeq == 0 && lastEndSeq == c.maxSeqRecorder.Get(conversationID) { // All messages in this batch are local messages,
+				if maxSeq == 0 && lastEndSeq >= currentMaxSeq { // All messages in this batch are local messages,
 					// and the maximum seq of the last batch of valid messages has already reached the maximum pullable seq from the server.
 					messageListCallback.IsEnd = true
 				} else {
