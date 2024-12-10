@@ -192,8 +192,10 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	// continue fetching recursively until the valid messages are sufficient or all messages have been fetched.
 	missingCount := shouldFetchMoreMessagesNum(list)
 	if missingCount > 0 && !messageListCallback.IsEnd {
-		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID", conversationID)
-		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, getNewStartTime(list), isReverse, messageListCallback, depth+1)
+		newStartTime := getNewStartTime(list)
+		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID",
+			conversationID, "newStartTime", newStartTime)
+		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, isReverse, messageListCallback, depth+1)
 		if err != nil {
 			return nil, err
 		}
