@@ -141,7 +141,6 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 			}
 			return isShouldFetchMessage, seqList
 		}
-		return isShouldFetchMessage, seqList
 
 	} else {
 		messageListCallback.IsEnd = false
