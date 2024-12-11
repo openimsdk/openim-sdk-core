@@ -25,6 +25,13 @@ func (c *Cache[K, V]) Store(key K, value V) {
 	c.m.Store(key, value)
 }
 
+// StoreWithFunc stores the value for a key only if the provided condition function returns true.
+func (c *Cache[K, V]) StoreWithFunc(key K, value V, condition func(key K, value V) bool) {
+	if condition(key, value) {
+		c.m.Store(key, value)
+	}
+}
+
 // StoreAll sets all value by f's key.
 func (c *Cache[K, V]) StoreAll(f func(value V) K, values []V) {
 	for _, v := range values {
