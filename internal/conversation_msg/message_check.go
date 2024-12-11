@@ -86,22 +86,25 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 	// Perform an end-of-block check if the retrieved message count is less than requested
 	if len(*list) < count {
 		if isReverse {
+			currentMaxSeq := c.getConversationMaxSeq(ctx, conversationID)
 			maxSeq, _, _ := c.getMaxAndMinHaveSeqList(*list)
-			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "maxSeq", maxSeq, "conversationID", conversationID)
-			if maxSeq == c.maxSeqRecorder.Get(conversationID) { // todo Replace `1` with the minimum sequence value as defined by the user or system
+			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "maxSeq", maxSeq, "conversationID", conversationID, "currentMaxSeq", currentMaxSeq)
+			// Use >= to prevent the currentMaxSeq from being updated too slowly,
+			// which could lead to misjudgments and cause repeated message fetching."
+			if maxSeq >= currentMaxSeq {
 				messageListCallback.IsEnd = true
 			} else {
 				lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(conversationID)
 				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastEndSeq", lastEndSeq, "conversationID", conversationID)
 				// If `maxSeq` is zero and `lastEndSeq` is at the maximum server sequence, this batch is fully local
-				if maxSeq == 0 && lastEndSeq == c.maxSeqRecorder.Get(conversationID) { // All messages in this batch are local messages,
+				if maxSeq == 0 && lastEndSeq >= currentMaxSeq { // All messages in this batch are local messages,
 					// and the maximum seq of the last batch of valid messages has already reached the maximum pullable seq from the server.
 					messageListCallback.IsEnd = true
 				} else {
 					// The batch includes sequences but has not reached the maximum value,
 					// This condition indicates local-only messages, with `maxSeq < maxSeqRecorderMaxSeq` as the only case,
 					// since `lastEndSeq < maxSeqRecorderMaxSeq` is handled in inter-block continuity.
-					lostSeqList := getLostSeqListWithLimitLength(maxSeq+1, c.maxSeqRecorder.Get(conversationID), []int64{})
+					lostSeqList := getLostSeqListWithLimitLength(maxSeq+1, currentMaxSeq, []int64{})
 					if len(lostSeqList) > 0 {
 						isShouldFetchMessage = true
 						seqList = lostSeqList
@@ -112,22 +115,24 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 			}
 			return isShouldFetchMessage, seqList
 		} else {
+			userCanPullMinSeq := c.getConversationMinSeq(ctx, conversationID)
 			_, minSeq, _ := c.getMaxAndMinHaveSeqList(*list)
-			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "minSeq", minSeq, "conversationID", conversationID)
-			if minSeq == 1 { // todo Replace `1` with the minimum sequence value as defined by the user or system
+			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "minSeq", minSeq,
+				"conversationID", conversationID, "userCanPullMinSeq", userCanPullMinSeq)
+			if minSeq == userCanPullMinSeq {
 				messageListCallback.IsEnd = true
 			} else {
 				lastMinSeq, _ := c.messagePullForwardEndSeqMap.Load(conversationID)
 				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastMinSeq", lastMinSeq, "conversationID", conversationID)
 				// If `minSeq` is zero and `lastMinSeq` is at the minimum server sequence, this batch is fully local
-				if minSeq == 0 && lastMinSeq == 1 { // All messages in this batch are local messages,
+				if minSeq == 0 && lastMinSeq == userCanPullMinSeq { // All messages in this batch are local messages,
 					// and the minimum seq of the last batch of valid messages has already reached the minimum pullable seq from the server.
 					messageListCallback.IsEnd = true
 				} else {
 					// The batch includes sequences but has not reached the minimum value,
 					// This condition indicates local-only messages, with `minSeq > 1` as the only case,
 					// since `lastMinSeq > 1` is handled in inter-block continuity.
-					lostSeqList := getLostSeqListWithLimitLength(1, minSeq-1, []int64{})
+					lostSeqList := getLostSeqListWithLimitLength(userCanPullMinSeq, minSeq-1, []int64{})
 					if len(lostSeqList) > 0 {
 						isShouldFetchMessage = true
 						seqList = lostSeqList
@@ -138,7 +143,6 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 			}
 			return isShouldFetchMessage, seqList
 		}
-		return isShouldFetchMessage, seqList
 
 	} else {
 		messageListCallback.IsEnd = false
@@ -197,6 +201,11 @@ func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, convers
 	conversationSeqs.ConversationID = conversationID
 	conversationSeqs.Seqs = seqList
 	getSeqMessageReq.Conversations = append(getSeqMessageReq.Conversations, &conversationSeqs)
+	if isReverse {
+		getSeqMessageReq.Order = sdkws.PullOrder_PullOrderAsc
+	} else {
+		getSeqMessageReq.Order = sdkws.PullOrder_PullOrderDesc
+	}
 	log.ZDebug(ctx, "conversation pull message,  ", "req", getSeqMessageReq)
 	if startTime == 0 && !c.LongConnMgr.IsConnected() {
 		return
@@ -216,6 +225,9 @@ func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, convers
 			c.pullMessageIntoTable(ctx, getSeqMessageResp.Msgs)
 			log.ZDebug(ctx, "syncMsgFromServerSplit pull msg success",
 				"conversationID", conversationID, "count", count, "len", len(*list), "msgLen", len(v.Msgs))
+			if v.IsEnd {
+				c.setConversationMinSeq(ctx, isReverse, conversationID, v.EndSeq)
+			}
 			localMessage := datautil.Batch(MsgDataToLocalChatLog, v.Msgs)
 			if !isReverse {
 				reverse(localMessage)
@@ -223,6 +235,56 @@ func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, convers
 			*list = mergeSortedArrays(*list, localMessage, count, !isReverse)
 		}
 
+	}
+}
+
+func (c *Conversation) getConversationMaxSeq(ctx context.Context, conversationID string) int64 {
+	conversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "Failed to get conversation", err)
+		return c.maxSeqRecorder.Get(conversationID)
+	}
+	if conversation.MaxSeq == 0 {
+		return c.maxSeqRecorder.Get(conversationID)
+
+	}
+	return conversation.MaxSeq
+}
+func (c *Conversation) getConversationMinSeq(ctx context.Context, conversationID string) int64 {
+	conversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "Failed to get conversation", err)
+		return 1
+	}
+	if conversation.MinSeq == 0 {
+		return 1
+
+	}
+	return conversation.MinSeq
+}
+func (c *Conversation) setConversationMinSeq(ctx context.Context, isReverse bool, conversationID string, endSeq int64) {
+	conversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "Failed to get conversation", err)
+		return
+	}
+	if !isReverse {
+		if conversation.MinSeq == 0 || endSeq > conversation.MinSeq {
+			conversation.MinSeq = endSeq
+		}
+	} else {
+		if conversation.MaxSeq == 0 || endSeq < conversation.MaxSeq {
+			conversation.MaxSeq = endSeq
+			err = c.db.UpdateConversation(ctx, conversation)
+			if err != nil {
+				log.ZWarn(ctx, "Failed to update conversation", err)
+			}
+		}
+
+	}
+	err = c.db.UpdateConversation(ctx, conversation)
+	if err != nil {
+		log.ZWarn(ctx, "Failed to update conversation", err)
 	}
 }
 func errHandle(seqList []int64, list *[]*model_struct.LocalChatLog, err error, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
