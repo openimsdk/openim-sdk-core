@@ -17,6 +17,8 @@ package user
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/tools/log"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
@@ -38,7 +40,7 @@ func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh 
 		func(value *model_struct.LocalUser) string { return value.UserID },
 		nil,
 		user.GetLoginUser,
-		user.GetUserInfoFromServer,
+		user.GetUsersInfoFromServer,
 	)
 	return user
 }
@@ -141,9 +143,38 @@ func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*mode
 }
 
 func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([]*model_struct.LocalUser, error) {
-	m, err := u.UserCache.BatchFetchGet(ctx, cacheKeys)
+	m, err := u.UserCache.BatchFetch(ctx, cacheKeys)
 	if err != nil {
 		return nil, err
 	}
 	return datautil.Values(m), nil
+}
+
+// GetSingleUserFromServer retrieves user information from the server.
+func (u *User) GetSingleUserFromServer(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
+	users, err := u.getUsersInfo(ctx, []string{userID})
+	if err != nil {
+		return nil, err
+	}
+	if len(users) > 0 {
+		return ServerUserToLocalUser(users[0]), nil
+	}
+	return nil, sdkerrs.ErrUserIDNotFound.WrapMsg(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
+}
+
+// GetUsersInfoFromServer retrieves user information from the server.
+func (u *User) GetUsersInfoFromServer(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
+	var err error
+
+	serverUsersInfo, err := u.getUsersInfo(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(serverUsersInfo) == 0 {
+		log.ZError(ctx, "serverUsersInfo is empty", err, "userIDs", userIDs)
+		return nil, err
+	}
+
+	return datautil.Batch(ServerUserToLocalUser, serverUsersInfo), nil
 }

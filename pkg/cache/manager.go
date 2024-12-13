@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
@@ -28,7 +29,7 @@ type Manager[K comparable, V any] struct {
 	queryFunc    func(ctx context.Context, keys []K) ([]V, error)
 }
 
-func (m *Manager[K, V]) BatchFetchGet(ctx context.Context, keys []K) (map[K]V, error) {
+func (m *Manager[K, V]) BatchFetch(ctx context.Context, keys []K) (map[K]V, error) {
 	var (
 		res       = make(map[K]V)
 		queryKeys []K
@@ -97,6 +98,9 @@ func (m *Manager[K, V]) batchFetch(ctx context.Context, keys []K) ([]V, error) {
 		if err != nil {
 			return nil, err
 		}
+		if len(queryData) == 0 {
+			return writeData, sdkerrs.ErrUserIDNotFound.WrapMsg("fetch data not found", "keys", keys)
+		}
 		writeData = append(writeData, queryData...)
 	}
 
@@ -118,7 +122,7 @@ func (m *Manager[K, V]) fetch(ctx context.Context, key K) (V, error) {
 		if len(queryData) > 0 {
 			return queryData[0], nil
 		}
-		return writeData, nil
+		return writeData, sdkerrs.ErrUserIDNotFound.WrapMsg("fetch data not found", "key", key)
 	}
 	return writeData, nil
 }
