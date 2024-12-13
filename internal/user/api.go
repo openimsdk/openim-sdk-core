@@ -2,12 +2,9 @@ package user
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/protocol/sdkws"
@@ -15,18 +12,6 @@ import (
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 )
-
-// GetSingleUserFromServer retrieves user information from the server.
-func (u *User) GetSingleUserFromServer(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
-	users, err := u.GetUsersInfoFromServer(ctx, []string{userID})
-	if err != nil {
-		return nil, err
-	}
-	if len(users) > 0 {
-		return users[0], nil
-	}
-	return nil, sdkerrs.ErrUserIDNotFound.WrapMsg(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
-}
 
 // ProcessUserCommandGetAll get user's choice
 func (u *User) ProcessUserCommandGetAll(ctx context.Context) ([]*userPb.CommandInfoResp, error) {
@@ -62,25 +47,7 @@ func (u *User) UserOnlineStatusChange(users map[string][]int32) {
 }
 
 func (u *User) GetSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
-	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
-	if errLocal == nil {
-		return userInfo, nil
-	}
-
-	userInfoFromServer, errServer := u.GetUserInfoFromServer(ctx, []string{u.loginUserID})
-	if errServer != nil {
-		return nil, errServer
-	}
-
-	if len(userInfoFromServer) == 0 {
-		return nil, sdkerrs.ErrUserIDNotFound
-	}
-
-	if err := u.InsertLoginUser(ctx, userInfoFromServer[0]); err != nil {
-		return nil, err
-	}
-
-	return userInfoFromServer[0], nil
+	return u.GetUserInfoWithCache(ctx, u.loginUserID)
 }
 
 func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfoWithEx) error {
@@ -123,23 +90,6 @@ func (u *User) ProcessUserCommandUpdate(ctx context.Context, userCommand *userPb
 	return u.SyncAllCommand(ctx)
 }
 
-// GetUserInfoFromServer retrieves user information from the server.
-func (u *User) GetUserInfoFromServer(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
-	var err error
-
-	serverUsersInfo, err := u.getUsersInfo(ctx, userIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(serverUsersInfo) == 0 {
-		log.ZError(ctx, "serverUsersInfo is empty", err, "userIDs", userIDs)
-		return nil, err
-	}
-
-	return datautil.Batch(ServerUserToLocalUser, serverUsersInfo), nil
-}
-
 func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struct.PublicUser, error) {
 	usersInfo, err := u.GetUsersInfoWithCache(ctx, userIDs)
 	if err != nil {
@@ -177,13 +127,4 @@ func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struc
 		}
 	}
 	return res, nil
-}
-
-// GetUsersInfoFromServer retrieves user information from the server.
-func (u *User) GetUsersInfoFromServer(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
-	users, err := u.getUsersInfo(ctx, userIDs)
-	if err != nil {
-		return nil, sdkerrs.WrapMsg(err, "GetUsersInfoFromServer failed")
-	}
-	return datautil.Batch(ServerUserToLocalUser, users), nil
 }
