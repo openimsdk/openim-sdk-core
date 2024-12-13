@@ -37,6 +37,7 @@ func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh 
 	user.UserCache = cache.NewManager[string, *model_struct.LocalUser](
 		func(value *model_struct.LocalUser) string { return value.UserID },
 		nil,
+		user.GetLoginUser,
 		user.GetUserInfoFromServer,
 	)
 	return user
@@ -136,25 +137,11 @@ func (u *User) initSyncer() {
 }
 
 func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*model_struct.LocalUser, error) {
-	return u.UserCache.FetchGet(ctx, cacheKey)
-}
-
-func (u *User) GetUserInfoWithCacheFunc(ctx context.Context, cacheKey string, fetchFunc func(ctx context.Context, key string) (*model_struct.LocalUser, error)) (*model_struct.LocalUser, error) {
-	if userInfo, ok := u.UserCache.Load(cacheKey); ok {
-		return userInfo, nil
-	}
-
-	fetchedData, err := fetchFunc(ctx, cacheKey)
-	if err != nil {
-		return nil, err
-	}
-
-	u.UserCache.Store(cacheKey, fetchedData)
-	return fetchedData, nil
+	return u.UserCache.Fetch(ctx, cacheKey)
 }
 
 func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([]*model_struct.LocalUser, error) {
-	m, err := u.UserCache.MultiFetchGet(ctx, cacheKeys)
+	m, err := u.UserCache.BatchFetchGet(ctx, cacheKeys)
 	if err != nil {
 		return nil, err
 	}

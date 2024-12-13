@@ -946,7 +946,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, err := c.user.GetUserInfoWithCacheFunc(ctx, c.loginUserID, c.db.GetLoginUser)
+	userInfo, err := c.user.GetUserInfoWithCache(ctx, c.loginUserID)
 	if err != nil {
 		return err
 	}
