@@ -119,19 +119,21 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 			_, minSeq, _ := c.getMaxAndMinHaveSeqList(*list)
 			log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "minSeq", minSeq,
 				"conversationID", conversationID, "userCanPullMinSeq", userCanPullMinSeq)
-			if minSeq == userCanPullMinSeq {
+			// The reason for being less than is that in cases of poor network conditions,
+			// minSeq may be 0, but in fact, the server's sequence has not yet synchronized to the local.
+			if minSeq <= userCanPullMinSeq {
 				messageListCallback.IsEnd = true
 			} else {
 				lastMinSeq, _ := c.messagePullForwardEndSeqMap.Load(conversationID)
 				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastMinSeq", lastMinSeq, "conversationID", conversationID)
 				// If `minSeq` is zero and `lastMinSeq` is at the minimum server sequence, this batch is fully local
-				if minSeq == 0 && lastMinSeq == userCanPullMinSeq { // All messages in this batch are local messages,
+				if minSeq == 0 && lastMinSeq <= userCanPullMinSeq { // All messages in this batch are local messages,
 					// and the minimum seq of the last batch of valid messages has already reached the minimum pullable seq from the server.
 					messageListCallback.IsEnd = true
 				} else {
 					// The batch includes sequences but has not reached the minimum value,
-					// This condition indicates local-only messages, with `minSeq > 1` as the only case,
-					// since `lastMinSeq > 1` is handled in inter-block continuity.
+					// This condition indicates local-only messages, with `minSeq > userCanPullMinSeq` as the only case,
+					// since `lastMinSeq > userCanPullMinSeq` is handled in inter-block continuity.
 					lostSeqList := getLostSeqListWithLimitLength(userCanPullMinSeq, minSeq-1, []int64{})
 					if len(lostSeqList) > 0 {
 						isShouldFetchMessage = true
