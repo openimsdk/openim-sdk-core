@@ -76,7 +76,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 	if err != nil {
 		return nil, err
 	}
-	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t))
+	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t).Milliseconds())
 	t = time.Now()
 
 	messageList = c.LocalChatLog2MsgStruct(list)
