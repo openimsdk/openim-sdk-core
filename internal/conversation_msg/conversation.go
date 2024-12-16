@@ -357,7 +357,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
 	// log.Debug("", "get raw data length is", len(list))
-	log.ZDebug(ctx, "get raw data length is", len(list))
+	log.ZDebug(ctx, "get raw data length is", "len", len(list))
 
 	for _, v := range list {
 		temp := LocalChatLogToMsgStruct(v)
