@@ -496,6 +496,8 @@ func (c *Conversation) filterMsg(temp *sdk_struct.MsgStruct, searchParam *sdk.Se
 		}
 	case constant.Picture:
 		fallthrough
+	case constant.Sound:
+		fallthrough
 	case constant.Video:
 		if len(searchParam.KeywordList) == 0 {
 			return false
