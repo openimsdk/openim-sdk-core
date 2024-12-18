@@ -364,11 +364,11 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 			log.ZDebug(ctx, "msg detail", "msg", v, "conversationID", conversationID)
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally
 			//without any conversation and message update.
+			msg := MsgDataToLocalChatLog(v)
 			if v.Status == constant.MsgStatusHasDeleted {
-				insertMessage = append(insertMessage, MsgDataToLocalChatLog(v))
+				insertMessage = append(insertMessage, msg)
 				continue
 			}
-			msg := MsgDataToLocalChatLog(v)
 			// The message might be a filler provided by the server due to a gap in the sequence.
 			if msg.ClientMsgID == "" {
 				msg.ClientMsgID = utils.GetMsgID(c.loginUserID) + utils.Int64ToString(msg.Seq)
