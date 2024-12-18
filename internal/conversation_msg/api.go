@@ -507,6 +507,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	case constant.Merger:
 		s.Content = utils.StructToJsonString(s.MergeElem)
 	case constant.Quote:
+		quoteMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.QuoteElem.QuoteMessage.ClientMsgID)
+		if err != nil {
+			log.ZWarn(ctx, "quote message not found", err)
+		}
+		s.QuoteElem.QuoteMessage.Seq = quoteMessage.Seq
 		s.Content = utils.StructToJsonString(s.QuoteElem)
 	case constant.Card:
 		s.Content = utils.StructToJsonString(s.CardElem)

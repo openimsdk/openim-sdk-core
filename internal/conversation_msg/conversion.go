@@ -78,13 +78,19 @@ func MsgDataToLocalChatLog(serverMessage *sdkws.MsgData) *model_struct.LocalChat
 		ContentType:      serverMessage.ContentType,
 		Content:          string(serverMessage.Content),
 		IsRead:           serverMessage.IsRead,
-		Status:           constant.MsgStatusSendSuccess,
 		Seq:              serverMessage.Seq,
 		SendTime:         serverMessage.SendTime,
 		CreateTime:       serverMessage.CreateTime,
 		AttachedInfo:     serverMessage.AttachedInfo,
 		Ex:               serverMessage.Ex,
 	}
+
+	if serverMessage.Status >= constant.MsgStatusHasDeleted {
+		localMessage.Status = serverMessage.Status
+	} else {
+		localMessage.Status = constant.MsgStatusSendSuccess
+	}
+
 	if serverMessage.SessionType == constant.WriteGroupChatType || serverMessage.SessionType == constant.ReadGroupChatType {
 		localMessage.RecvID = serverMessage.GroupID
 	}
