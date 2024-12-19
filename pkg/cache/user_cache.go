@@ -2,18 +2,19 @@ package cache
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
-func NewManager[K comparable, V any](
+func NewUserCache[K comparable, V any](
 	getKeyFunc func(value V) K,
 	batchDBFunc func(ctx context.Context, keys []K) ([]V, error),
 	singleDBFunc func(ctx context.Context, keys K) (V, error),
 	queryFunc func(ctx context.Context, keys []K) ([]V, error),
-) *Manager[K, V] {
-	return &Manager[K, V]{
-		Cache:        Cache[K, V]{},
+) *UserCache[K, V] {
+	return &UserCache[K, V]{
+		Cache:        NewCache[K, V](),
 		getKeyFunc:   getKeyFunc,
 		batchDBFunc:  batchDBFunc,
 		singleDBFunc: singleDBFunc,
@@ -21,15 +22,15 @@ func NewManager[K comparable, V any](
 	}
 }
 
-type Manager[K comparable, V any] struct {
-	Cache[K, V]
+type UserCache[K comparable, V any] struct {
+	*Cache[K, V]
 	getKeyFunc   func(value V) K
 	batchDBFunc  func(ctx context.Context, keys []K) ([]V, error)
 	singleDBFunc func(ctx context.Context, keys K) (V, error)
 	queryFunc    func(ctx context.Context, keys []K) ([]V, error)
 }
 
-func (m *Manager[K, V]) BatchFetch(ctx context.Context, keys []K) (map[K]V, error) {
+func (m *UserCache[K, V]) BatchFetch(ctx context.Context, keys []K) (map[K]V, error) {
 	var (
 		res       = make(map[K]V)
 		queryKeys []K
@@ -56,7 +57,7 @@ func (m *Manager[K, V]) BatchFetch(ctx context.Context, keys []K) (map[K]V, erro
 	return res, nil
 }
 
-func (m *Manager[K, V]) Fetch(ctx context.Context, key K) (V, error) {
+func (m *UserCache[K, V]) Fetch(ctx context.Context, key K) (V, error) {
 	var nilData V
 
 	if data, ok := m.Load(key); ok {
@@ -71,7 +72,7 @@ func (m *Manager[K, V]) Fetch(ctx context.Context, key K) (V, error) {
 	return fetchedData, nil
 }
 
-func (m *Manager[K, V]) batchFetch(ctx context.Context, keys []K) ([]V, error) {
+func (m *UserCache[K, V]) batchFetch(ctx context.Context, keys []K) ([]V, error) {
 	if len(keys) == 0 {
 		return nil, nil
 	}
@@ -106,7 +107,7 @@ func (m *Manager[K, V]) batchFetch(ctx context.Context, keys []K) ([]V, error) {
 
 	return writeData, nil
 }
-func (m *Manager[K, V]) fetch(ctx context.Context, key K) (V, error) {
+func (m *UserCache[K, V]) fetch(ctx context.Context, key K) (V, error) {
 	var writeData V
 	if m.singleDBFunc != nil {
 		dbData, err := m.singleDBFunc(ctx, key)
