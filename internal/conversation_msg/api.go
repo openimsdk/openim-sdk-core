@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
@@ -20,6 +21,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/content_type"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -997,4 +999,61 @@ func (c *Conversation) SearchConversation(ctx context.Context, searchParam strin
 	}
 	// Return the list of conversations
 	return apiConversations, nil
+}
+func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {
+	return c.typing.GetInputStates(conversationID, userID), nil
+}
+
+func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
+	return c.typing.ChangeInputStates(ctx, conversationID, focus)
+}
+
+func (c *Conversation) FetchSurroundingMessages(ctx context.Context, s *sdk_struct.MsgStruct, before int, after int) ([]*sdk_struct.MsgStruct, error) {
+	conversationID := utils.GetConversationIDByMsg(s)
+	var message *model_struct.LocalChatLog
+	message, err := c.db.GetMessage(ctx, conversationID, s.ClientMsgID)
+	if err == nil {
+		if message.Status >= constant.MsgStatusHasDeleted {
+			return nil, sdkerrs.ErrMsgHasDeleted
+		}
+	} else {
+		if s.Seq == 0 {
+			return nil, sdkerrs.ErrMsgHasDeleted
+		}
+		var messages []*model_struct.LocalChatLog
+		c.fetchAndMergeMissingMessages(ctx, conversationID, []int64{s.Seq}, false, 1, 0, &messages, &sdk.GetAdvancedHistoryMessageListCallback{})
+		if len(messages) < 1 {
+			return nil, sdkerrs.ErrMsgHasDeleted
+		}
+		message = messages[0]
+	}
+
+	result := make([]*sdk_struct.MsgStruct, 0, before+after+1)
+	if before > 0 {
+		req := sdk.GetAdvancedHistoryMessageListParams{
+			ConversationID:   conversationID,
+			Count:            before,
+			StartClientMsgID: s.ClientMsgID,
+			ViewType:         cache.ViewSearch,
+		}
+		val, err := c.getAdvancedHistoryMessageList(ctx, req, false)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, val.MessageList...)
+	}
+	result = append(result, LocalChatLogToMsgStruct(message))
+	if after > 0 {
+		req := sdk.GetAdvancedHistoryMessageListParams{
+			ConversationID:   conversationID,
+			Count:            after,
+			StartClientMsgID: s.ClientMsgID,
+		}
+		val, err := c.getAdvancedHistoryMessageList(ctx, req, true)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, val.MessageList...)
+	}
+	return result, nil
 }

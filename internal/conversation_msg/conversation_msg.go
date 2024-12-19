@@ -8,8 +8,6 @@ import (
 	"math"
 	"sync"
 
-	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
-
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/utils/stringutil"
@@ -68,8 +66,8 @@ type Conversation struct {
 	file                        *file.File
 	cache                       *cache.Cache[string, *model_struct.LocalConversation]
 	maxSeqRecorder              MaxSeqRecorder
-	messagePullForwardEndSeqMap *cache.Cache[string, int64]
-	messagePullReverseEndSeqMap *cache.Cache[string, int64]
+	messagePullForwardEndSeqMap *cache.ConversationSeqContextCache
+	messagePullReverseEndSeqMap *cache.ConversationSeqContextCache
 	IsExternalExtensions        bool
 	msgOffset                   int
 	progress                    int
@@ -112,8 +110,8 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		file:                        file,
 		IsExternalExtensions:        info.IsExternalExtensions(),
 		maxSeqRecorder:              NewMaxSeqRecorder(),
-		messagePullForwardEndSeqMap: cache.NewCache[string, int64](),
-		messagePullReverseEndSeqMap: cache.NewCache[string, int64](),
+		messagePullForwardEndSeqMap: cache.NewConversationSeqContextCache(),
+		messagePullReverseEndSeqMap: cache.NewConversationSeqContextCache(),
 		msgOffset:                   0,
 		progress:                    0,
 	}
@@ -912,56 +910,4 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 		return "", "", nil
 	}
 	return userInfo.FaceURL, userInfo.Nickname, nil
-}
-
-func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {
-	return c.typing.GetInputStates(conversationID, userID), nil
-}
-
-func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
-	return c.typing.ChangeInputStates(ctx, conversationID, focus)
-}
-
-func (c *Conversation) FetchSurroundingMessages(ctx context.Context, conversationID string, seq int64, before int64, after int64) ([]*sdk_struct.MsgStruct, error) {
-	c.fetchAndMergeMissingMessages(ctx, conversationID, []int64{seq}, false, 0, 0, &[]*model_struct.LocalChatLog{}, &sdk.GetAdvancedHistoryMessageListCallback{})
-	res, err := c.db.GetMessagesBySeqs(ctx, conversationID, []int64{seq})
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return []*sdk_struct.MsgStruct{}, nil
-	}
-	//_, msgList := c.LocalChatLog2MsgStruct []*model_struct.LocalChatLog{res[0]})
-	//if len(msgList) == 0 {
-	//	return []*sdk_struct.MsgStruct{}, nil
-	//}
-	//msg := msgList[0]
-	result := make([]*sdk_struct.MsgStruct, 0, before+after+1)
-	//if before > 0 {
-	//	req := sdk.GetAdvancedHistoryMessageListParams{
-	//		ConversationID:   conversationID,
-	//		Count:            int(before),
-	//		StartClientMsgID: msg.ClientMsgID,
-	//	}
-	//	val, err := c.getAdvancedHistoryMessageList(ctx, req, false)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	result = append(result, val.MessageList...)
-	//}
-	//result = append(result, msg)
-	//if after > 0 {
-	//	req := sdk.GetAdvancedHistoryMessageListParams{
-	//		ConversationID:   conversationID,
-	//		Count:            int(after),
-	//		StartClientMsgID: msg.ClientMsgID,
-	//	}
-	//	val, err := c.getAdvancedHistoryMessageList(ctx, req, true)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	result = append(result, val.MessageList...)
-	//}
-	//sort.Sort(sdk_struct.NewMsgList(result))
-	return result, nil
 }

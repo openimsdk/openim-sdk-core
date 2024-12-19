@@ -186,7 +186,7 @@ func Test_CreateForwardMessage(t *testing.T) {
 }
 
 func Test_FetchSurroundingMessages(t *testing.T) {
-	msgs, err := open_im_sdk.UserForSDK.Conversation().FetchSurroundingMessages(ctx, "sg_3559850526", 15, 14, 8)
+	msgs, err := open_im_sdk.UserForSDK.Conversation().FetchSurroundingMessages(ctx, &sdk_struct.MsgStruct{}, 15, 14)
 	if err != nil {
 		t.Error(err)
 		return

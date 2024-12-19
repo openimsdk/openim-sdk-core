@@ -43,17 +43,17 @@ func (c *Conversation) validateAndFillInternalGaps(ctx context.Context, conversa
 // validateAndFillInterBlockGaps checks for continuity between blocks of messages. If a gap is identified, it retrieves the missing messages
 // to bridge the gap. The function returns a boolean indicating whether the blocks are continuous.
 func (c *Conversation) validateAndFillInterBlockGaps(ctx context.Context, thisStartSeq int64, conversationID string,
-	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
+	isReverse bool, viewType, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 
 	var lastEndSeq, startSeq, endSeq int64
 	var isLostSeq bool
 	if isReverse {
-		lastEndSeq, _ = c.messagePullReverseEndSeqMap.Load(conversationID)
+		lastEndSeq, _ = c.messagePullReverseEndSeqMap.Load(conversationID, viewType)
 		isLostSeq = lastEndSeq+1 != thisStartSeq
 		startSeq = lastEndSeq + 1
 		endSeq = thisStartSeq - 1
 	} else {
-		lastEndSeq, _ = c.messagePullForwardEndSeqMap.Load(conversationID)
+		lastEndSeq, _ = c.messagePullForwardEndSeqMap.Load(conversationID, viewType)
 		isLostSeq = thisStartSeq+1 != lastEndSeq
 		startSeq = thisStartSeq + 1
 		endSeq = lastEndSeq - 1
@@ -73,15 +73,15 @@ func (c *Conversation) validateAndFillInterBlockGaps(ctx context.Context, thisSt
 // internal and inter-block continuity checks but contains fewer messages than `count`, this function verifies if the end
 // of the message history has been reached. If not, it attempts to retrieve any missing messages to ensure continuity.
 func (c *Conversation) validateAndFillEndBlockContinuity(ctx context.Context, conversationID string,
-	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
-	isShouldFetchMessage, lostSeqList := c.checkEndBlock(ctx, conversationID, isReverse, count, list, messageListCallback)
+	isReverse bool, viewType, count int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
+	isShouldFetchMessage, lostSeqList := c.checkEndBlock(ctx, conversationID, isReverse, viewType, count, list, messageListCallback)
 	if isShouldFetchMessage {
 		c.fetchAndMergeMissingMessages(ctx, conversationID, lostSeqList, isReverse, count, startTime, list, messageListCallback)
-		_, _ = c.checkEndBlock(ctx, conversationID, isReverse, count, list, messageListCallback)
+		_, _ = c.checkEndBlock(ctx, conversationID, isReverse, viewType, count, list, messageListCallback)
 	}
 
 }
-func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string, isReverse bool, count int,
+func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string, isReverse bool, viewType, count int,
 	list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) (isShouldFetchMessage bool, seqList []int64) {
 	// Perform an end-of-block check if the retrieved message count is less than requested
 	if len(*list) < count {
@@ -94,7 +94,7 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 			if maxSeq >= currentMaxSeq {
 				messageListCallback.IsEnd = true
 			} else {
-				lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(conversationID)
+				lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(conversationID, viewType)
 				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastEndSeq", lastEndSeq, "conversationID", conversationID)
 				// If `maxSeq` is zero and `lastEndSeq` is at the maximum server sequence, this batch is fully local
 				if maxSeq == 0 && lastEndSeq >= currentMaxSeq { // All messages in this batch are local messages,
@@ -124,7 +124,7 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 			if minSeq <= userCanPullMinSeq {
 				messageListCallback.IsEnd = true
 			} else {
-				lastMinSeq, _ := c.messagePullForwardEndSeqMap.Load(conversationID)
+				lastMinSeq, _ := c.messagePullForwardEndSeqMap.Load(conversationID, viewType)
 				log.ZDebug(ctx, "validateAndFillEndBlockContinuity", "lastMinSeq", lastMinSeq, "conversationID", conversationID)
 				// If `minSeq` is zero and `lastMinSeq` is at the minimum server sequence, this batch is fully local
 				if minSeq == 0 && lastMinSeq <= userCanPullMinSeq { // All messages in this batch are local messages,
