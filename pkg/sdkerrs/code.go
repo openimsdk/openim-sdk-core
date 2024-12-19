@@ -39,6 +39,7 @@ const (
 	MsgRepeatError                = 10204 // Message repeated
 	MsgContentTypeNotSupportError = 10205 // Message content type not supported
 	MsgHasNoSeqError              = 10206 // Message does not have a sequence number
+	MsgHasDeletedError            = 10207 // Message has been deleted
 
 	// Conversation-related errors
 	NotSupportOptError  = 10301 // Operation not supported

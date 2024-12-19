@@ -32,6 +32,7 @@ type GetAdvancedHistoryMessageListParams struct {
 	ConversationID   string `json:"conversationID"`
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
+	ViewType         int    `json:"viewType"`
 }
 
 type GetAdvancedHistoryMessageListCallback struct {

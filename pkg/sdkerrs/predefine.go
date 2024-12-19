@@ -37,6 +37,7 @@ var (
 	ErrMsgRepeated              = errs.NewCodeError(MsgRepeatError, "Only failed messages can be resent")
 	ErrMsgContentTypeNotSupport = errs.NewCodeError(MsgContentTypeNotSupportError, "Message content type not supported")
 	ErrMsgHasNoSeq              = errs.NewCodeError(MsgHasNoSeqError, "Message has no sequence number")
+	ErrMsgHasDeleted            = errs.NewCodeError(MsgHasDeletedError, "Message has been deleted")
 
 	// Conversation-related errors
 	ErrNotSupportOpt  = errs.NewCodeError(NotSupportOptError, "Operation not supported for supergroup")

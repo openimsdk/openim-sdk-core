@@ -17,6 +17,7 @@ package user
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/tools/log"
 
@@ -36,7 +37,7 @@ func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh 
 	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
 	user.initSyncer()
 	//user.OnlineStatusCache = cache.NewCache[string, *userPb.OnlineStatus]()
-	user.UserCache = cache.NewManager[string, *model_struct.LocalUser](
+	user.UserCache = cache.NewUserCache[string, *model_struct.LocalUser](
 		func(value *model_struct.LocalUser) string { return value.UserID },
 		nil,
 		user.GetLoginUser,
@@ -53,7 +54,7 @@ type User struct {
 	userSyncer     *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
 	commandSyncer  *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
 	conversationCh chan common.Cmd2Value
-	UserCache      *cache.Manager[string, *model_struct.LocalUser]
+	UserCache      *cache.UserCache[string, *model_struct.LocalUser]
 
 	//OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
