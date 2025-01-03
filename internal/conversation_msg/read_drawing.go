@@ -22,7 +22,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/errs"
@@ -52,7 +51,8 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		return err
 	}
 	if conversation.UnreadCount == 0 {
-		return sdkerrs.ErrUnreadCount
+		log.ZWarn(ctx, "unread count is 0", nil, "conversationID", conversationID)
+		return nil
 	}
 	// get the maximum sequence number of messages in the table that are not sent by oneself
 	peerUserMaxSeq, err := c.db.GetConversationPeerNormalMsgSeq(ctx, conversationID)

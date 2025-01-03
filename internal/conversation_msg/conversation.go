@@ -65,12 +65,12 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 		startTime = m.SendTime
 	} else {
 		// Clear both maps when the user enters the conversation
-		c.messagePullForwardEndSeqMap.Delete(conversationID)
-		c.messagePullReverseEndSeqMap.Delete(conversationID)
+		c.messagePullForwardEndSeqMap.Delete(conversationID, req.ViewType)
+		c.messagePullReverseEndSeqMap.Delete(conversationID, req.ViewType)
 	}
 	log.ZDebug(ctx, "Assembly conversation parameters", "cost time", time.Since(t), "conversationID",
 		conversationID, "startTime:", startTime, "count:", req.Count, "startTime", startTime)
-	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, isReverse, &messageListCallback)
+	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, isReverse, req.ViewType, &messageListCallback)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 }
 
 func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversationID string,
-	count int, startTime int64, isReverse bool, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
+	count int, startTime int64, isReverse bool, viewType int, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
 
 	var list, validMessages []*model_struct.LocalChatLog
 
@@ -125,8 +125,8 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 		}
 		if !isReverse {
 			if thisEndSeq != 0 {
-				c.messagePullForwardEndSeqMap.StoreWithFunc(conversationID, thisEndSeq, func(key string, value int64) bool {
-					lastEndSeq, _ := c.messagePullForwardEndSeqMap.Load(key)
+				c.messagePullForwardEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(key string, value int64) bool {
+					lastEndSeq, _ := c.messagePullForwardEndSeqMap.Load(key, viewType)
 					if value < lastEndSeq || lastEndSeq == 0 {
 						log.ZDebug(ctx, "update the end sequence of the message", "lastEndSeq", lastEndSeq, "thisEndSeq", value)
 						return true
@@ -138,8 +138,8 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 			}
 		} else {
 			if thisEndSeq != 0 {
-				c.messagePullReverseEndSeqMap.StoreWithFunc(conversationID, thisEndSeq, func(key string, value int64) bool {
-					lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(key)
+				c.messagePullReverseEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(key string, value int64) bool {
+					lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(key, viewType)
 					if value > lastEndSeq || lastEndSeq == 0 {
 						log.ZDebug(ctx, "update the end sequence of the message", "lastEndSeq", lastEndSeq, "thisEndSeq", value)
 						return true
@@ -175,10 +175,10 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	log.ZDebug(ctx, "internal continuity check", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
 	t = time.Now()
 	c.validateAndFillInterBlockGaps(ctx, thisStartSeq, conversationID,
-		isReverse, count, startTime, &list, messageListCallback)
+		isReverse, viewType, count, startTime, &list, messageListCallback)
 	log.ZDebug(ctx, "between continuity check", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
 	t = time.Now()
-	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse,
+	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse, viewType,
 		count, startTime, &list, messageListCallback)
 	log.ZDebug(ctx, "end continuity check", "cost time", time.Since(t))
 	// If the number of valid messages retrieved is less than the count,
@@ -188,7 +188,7 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 		newStartTime := getNewStartTime(list)
 		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID",
 			conversationID, "newStartTime", newStartTime)
-		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, isReverse, messageListCallback)
+		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, isReverse, viewType, messageListCallback)
 		if err != nil {
 			return nil, err
 		}
