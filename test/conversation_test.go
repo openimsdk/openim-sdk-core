@@ -17,6 +17,7 @@ package test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
@@ -32,6 +33,8 @@ func Test_GetAllConversationList(t *testing.T) {
 	for _, conversation := range conversations {
 		t.Log(conversation)
 	}
+	t.Log(len(conversations))
+	time.Sleep(time.Second * 100)
 }
 
 func Test_GetConversationListSplit(t *testing.T) {

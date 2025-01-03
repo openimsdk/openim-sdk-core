@@ -30,6 +30,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/protocol/sdkws"
@@ -100,7 +101,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		}
 	}
 
-	// TODO With a large number of sessions, this could potentially cause blocking and needs optimization.
+	// TODO With a large number of sessions(10w), this could potentially cause blocking and needs optimization.
 
 	type SyncedSeq struct {
 		ConversationID string
@@ -476,6 +477,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 						log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tpSeqMap)
 						return err
 					}
+					m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
 					_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
 					for conversationID, seqs := range tpSeqMap {
 						m.syncedMaxSeqsLock.Lock()
@@ -495,6 +497,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				log.ZError(ctx, "syncMsgFromServer err", err, "seqMap", seqMap)
 				return err
 			}
+			m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
 			_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
 			for conversationID, seqs := range seqMap {
 				m.syncedMaxSeqsLock.Lock()
@@ -511,6 +514,33 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 		log.ZDebug(ctx, "noting conversation to sync", "syncMsgNum", syncMsgNum)
 	}
 	return nil
+}
+func (m *MsgSyncer) checkMessagesAndGetLastMessage(ctx context.Context, messages map[string]*sdkws.PullMsgs) {
+	var conversationIDs []string
+
+	for conversationID, message := range messages {
+		allInValid := true
+		for _, data := range message.Msgs {
+			if data.Status < constant.MsgStatusHasDeleted {
+				allInValid = false
+				break
+			}
+		}
+		if allInValid {
+			conversationIDs = append(conversationIDs, conversationID)
+		}
+	}
+	if len(conversationIDs) > 0 {
+		resp, err := m.fetchLatestValidMessages(ctx, conversationIDs)
+		if err != nil {
+			log.ZError(ctx, "fetchLatestValidMessages", err, "conversationIDs", conversationIDs)
+			return
+		}
+		for conversationID, message := range resp.Msgs {
+			messages[conversationID] = &sdkws.PullMsgs{Msgs: []*sdkws.MsgData{message}}
+		}
+	}
+
 }
 
 func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]int64) {
@@ -542,6 +572,20 @@ func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]
 	}
 	resp = &sdkws.PullMessageBySeqsResp{}
 	if err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.PullMsgByRange, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (m *MsgSyncer) fetchLatestValidMessages(ctx context.Context, conversationID []string) (resp *msg.GetLastMessageResp, err error) {
+	log.ZDebug(ctx, "fetchLatestValidMessages", "conversationID", conversationID)
+
+	req := msg.GetLastMessageReq{
+		UserID:          m.loginUserID,
+		ConversationIDs: conversationID,
+	}
+	resp = &msg.GetLastMessageResp{}
+	if err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.PullConvLastMessage, resp); err != nil {
 		return nil, err
 	}
 	return resp, nil
