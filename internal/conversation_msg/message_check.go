@@ -25,7 +25,7 @@ func (c *Conversation) validateAndFillInternalGaps(ctx context.Context, conversa
 	maxSeq, minSeq, haveSeqList := c.getMaxAndMinHaveSeqList(*list)
 	log.ZDebug(ctx, "getMaxAndMinHaveSeqList is:", "maxSeq", maxSeq, "minSeq", minSeq, "haveSeqList", haveSeqList)
 	if maxSeq != 0 && minSeq != 0 {
-		lostSeqList := getLostSeqListWithLimitLength(minSeq, maxSeq, haveSeqList)
+		lostSeqList := getLostSeqListWithLimitLength(minSeq, maxSeq, haveSeqList, isReverse)
 		lostSeqListLength = len(lostSeqList)
 		log.ZDebug(ctx, "get lost seqList is :", "maxSeq", maxSeq, "minSeq", minSeq, "lostSeqList", lostSeqList, "length:", lostSeqListLength)
 		if lostSeqListLength > 0 {
@@ -60,7 +60,7 @@ func (c *Conversation) validateAndFillInterBlockGaps(ctx context.Context, thisSt
 	}
 	if isLostSeq && lastEndSeq != 0 {
 		log.ZDebug(ctx, "get lost LastMinSeq is :", "lastEndSeq", lastEndSeq, "thisStartSeq", thisStartSeq, "startSeq", startSeq, "endSeq", endSeq)
-		lostSeqList := getLostSeqListWithLimitLength(startSeq, endSeq, []int64{})
+		lostSeqList := getLostSeqListWithLimitLength(startSeq, endSeq, []int64{}, isReverse)
 		log.ZDebug(ctx, "get lost lostSeqList is :", "lostSeqList", lostSeqList, "length:", len(lostSeqList))
 		if len(lostSeqList) > 0 {
 			log.ZDebug(ctx, "messageBlocksBetweenContinuityCheck", "lostSeqList", lostSeqList)
@@ -104,7 +104,7 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 					// The batch includes sequences but has not reached the maximum value,
 					// This condition indicates local-only messages, with `maxSeq < maxSeqRecorderMaxSeq` as the only case,
 					// since `lastEndSeq < maxSeqRecorderMaxSeq` is handled in inter-block continuity.
-					lostSeqList := getLostSeqListWithLimitLength(maxSeq+1, currentMaxSeq, []int64{})
+					lostSeqList := getLostSeqListWithLimitLength(maxSeq+1, currentMaxSeq, []int64{}, isReverse)
 					if len(lostSeqList) > 0 {
 						isShouldFetchMessage = true
 						seqList = lostSeqList
@@ -134,7 +134,7 @@ func (c *Conversation) checkEndBlock(ctx context.Context, conversationID string,
 					// The batch includes sequences but has not reached the minimum value,
 					// This condition indicates local-only messages, with `minSeq > userCanPullMinSeq` as the only case,
 					// since `lastMinSeq > userCanPullMinSeq` is handled in inter-block continuity.
-					lostSeqList := getLostSeqListWithLimitLength(userCanPullMinSeq, minSeq-1, []int64{})
+					lostSeqList := getLostSeqListWithLimitLength(userCanPullMinSeq, minSeq-1, []int64{}, isReverse)
 					if len(lostSeqList) > 0 {
 						isShouldFetchMessage = true
 						seqList = lostSeqList
@@ -171,19 +171,30 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 	return max, min, seqList
 }
 
-func getLostSeqListWithLimitLength(minSeq, maxSeq int64, haveSeqList []int64) []int64 {
+func getLostSeqListWithLimitLength(minSeq, maxSeq int64, haveSeqList []int64, isReverse bool) []int64 {
 	var lostSeqList []int64
 	haveSeqSet := datautil.SliceSetAny(haveSeqList, func(e int64) int64 {
 		return e
 	})
+
 	for i := minSeq; i <= maxSeq; i++ {
 		if _, found := haveSeqSet[i]; !found {
 			lostSeqList = append(lostSeqList, i)
 		}
 	}
+
+	// If the lostSeqList exceeds the max limit, trim the list
 	if len(lostSeqList) > constant.PullMsgNumForReadDiffusion {
-		return lostSeqList[len(lostSeqList)-constant.PullMsgNumForReadDiffusion:]
+		if isReverse {
+			// If isReverse is true, take the first constant.PullMsgNumForReadDiffusion sequences
+			return lostSeqList[:constant.PullMsgNumForReadDiffusion]
+		} else {
+			// If isReverse is false, take the last constant.PullMsgNumForReadDiffusion sequences
+			return lostSeqList[len(lostSeqList)-constant.PullMsgNumForReadDiffusion:]
+		}
 	}
+
+	// Return the entire lostSeqList if it's within the limit
 	return lostSeqList
 }
 

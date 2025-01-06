@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
@@ -1008,33 +1007,35 @@ func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID str
 	return c.typing.ChangeInputStates(ctx, conversationID, focus)
 }
 
-func (c *Conversation) FetchSurroundingMessages(ctx context.Context, s *sdk_struct.MsgStruct, before int, after int) ([]*sdk_struct.MsgStruct, error) {
-	conversationID := utils.GetConversationIDByMsg(s)
+func (c *Conversation) FetchSurroundingMessages(ctx context.Context, req *sdk_params_callback.FetchSurroundingMessagesReq) (*sdk_params_callback.FetchSurroundingMessagesResp, error) {
+	conversationID := utils.GetConversationIDByMsg(req.StartMessage)
 	var message *model_struct.LocalChatLog
-	message, err := c.db.GetMessage(ctx, conversationID, s.ClientMsgID)
+	message, err := c.db.GetMessage(ctx, conversationID, req.StartMessage.ClientMsgID)
 	if err == nil {
 		if message.Status >= constant.MsgStatusHasDeleted {
 			return nil, sdkerrs.ErrMsgHasDeleted
 		}
 	} else {
-		if s.Seq == 0 {
+		if req.StartMessage.Seq == 0 {
 			return nil, sdkerrs.ErrMsgHasDeleted
 		}
 		var messages []*model_struct.LocalChatLog
-		c.fetchAndMergeMissingMessages(ctx, conversationID, []int64{s.Seq}, false, 1, 0, &messages, &sdk.GetAdvancedHistoryMessageListCallback{})
+		c.fetchAndMergeMissingMessages(ctx, conversationID, []int64{req.StartMessage.Seq}, false, 1, 0, &messages, &sdk.GetAdvancedHistoryMessageListCallback{})
 		if len(messages) < 1 {
 			return nil, sdkerrs.ErrMsgHasDeleted
 		}
 		message = messages[0]
 	}
+	c.messagePullForwardEndSeqMap.Delete(conversationID, req.ViewType)
+	c.messagePullReverseEndSeqMap.Delete(conversationID, req.ViewType)
 
-	result := make([]*sdk_struct.MsgStruct, 0, before+after+1)
-	if before > 0 {
+	result := make([]*sdk_struct.MsgStruct, 0, req.Before+req.After+1)
+	if req.Before > 0 {
 		req := sdk.GetAdvancedHistoryMessageListParams{
 			ConversationID:   conversationID,
-			Count:            before,
-			StartClientMsgID: s.ClientMsgID,
-			ViewType:         cache.ViewSearch,
+			Count:            req.Before,
+			StartClientMsgID: req.StartMessage.ClientMsgID,
+			ViewType:         req.ViewType,
 		}
 		val, err := c.getAdvancedHistoryMessageList(ctx, req, false)
 		if err != nil {
@@ -1043,11 +1044,12 @@ func (c *Conversation) FetchSurroundingMessages(ctx context.Context, s *sdk_stru
 		result = append(result, val.MessageList...)
 	}
 	result = append(result, LocalChatLogToMsgStruct(message))
-	if after > 0 {
+	if req.After > 0 {
 		req := sdk.GetAdvancedHistoryMessageListParams{
 			ConversationID:   conversationID,
-			Count:            after,
-			StartClientMsgID: s.ClientMsgID,
+			Count:            req.After,
+			StartClientMsgID: req.StartMessage.ClientMsgID,
+			ViewType:         req.ViewType,
 		}
 		val, err := c.getAdvancedHistoryMessageList(ctx, req, true)
 		if err != nil {
@@ -1055,5 +1057,5 @@ func (c *Conversation) FetchSurroundingMessages(ctx context.Context, s *sdk_stru
 		}
 		result = append(result, val.MessageList...)
 	}
-	return result, nil
+	return &sdk_params_callback.FetchSurroundingMessagesResp{MessageList: result}, nil
 }

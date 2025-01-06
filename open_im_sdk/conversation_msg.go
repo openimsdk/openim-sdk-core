@@ -223,6 +223,6 @@ func GetInputStates(callback open_im_sdk_callback.Base, operationID string, conv
 	call(callback, operationID, UserForSDK.Conversation().GetInputStates, conversationID, userID)
 }
 
-func FetchSurroundingMessages(callback open_im_sdk_callback.Base, operationID string, message string, before int, after int) {
-	call(callback, operationID, UserForSDK.Conversation().FetchSurroundingMessages, message, before, after)
+func FetchSurroundingMessages(callback open_im_sdk_callback.Base, operationID string, req string) {
+	call(callback, operationID, UserForSDK.Conversation().FetchSurroundingMessages, req)
 }

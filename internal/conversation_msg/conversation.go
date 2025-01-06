@@ -65,11 +65,16 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			return nil, err
 		}
 		startTime = m.SendTime
+		err = c.handleEndSeq(ctx, req, isReverse, m)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Clear both maps when the user enters the conversation
 		c.messagePullForwardEndSeqMap.Delete(conversationID, req.ViewType)
 		c.messagePullReverseEndSeqMap.Delete(conversationID, req.ViewType)
 	}
+
 	log.ZDebug(ctx, "Assembly conversation parameters", "cost time", time.Since(t), "conversationID",
 		conversationID, "startTime:", startTime, "count:", req.Count, "startTime", startTime)
 	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, isReverse, req.ViewType, &messageListCallback)
@@ -84,12 +89,49 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 	t = time.Now()
 	if !isReverse {
 		sort.Sort(messageList)
-
 	}
 	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
 	messageListCallback.MessageList = messageList
 
 	return &messageListCallback, nil
+}
+func (c *Conversation) handleEndSeq(ctx context.Context, req sdk.GetAdvancedHistoryMessageListParams, isReverse bool, startMessage *model_struct.LocalChatLog) error {
+	if isReverse {
+		if _, ok := c.messagePullReverseEndSeqMap.Load(req.ConversationID, req.ViewType); !ok {
+			if startMessage.Seq != 0 {
+				c.messagePullReverseEndSeqMap.Store(req.ConversationID, req.ViewType, startMessage.Seq)
+			} else {
+				validServerMessage, err := c.db.GetLatestValidServerMessage(ctx, req.ConversationID, startMessage.SendTime, isReverse)
+				if err != nil {
+					return err
+				}
+				if validServerMessage != nil {
+					c.messagePullReverseEndSeqMap.Store(req.ConversationID, req.ViewType, validServerMessage.Seq)
+				} else {
+					log.ZDebug(ctx, "no valid server message", "conversationID", req.ConversationID, "startTime", startMessage.SendTime)
+				}
+			}
+		}
+
+	} else {
+		if _, ok := c.messagePullForwardEndSeqMap.Load(req.ConversationID, req.ViewType); !ok {
+			if startMessage.Seq != 0 {
+				c.messagePullForwardEndSeqMap.Store(req.ConversationID, req.ViewType, startMessage.Seq)
+			} else {
+				validServerMessage, err := c.db.GetLatestValidServerMessage(ctx, req.ConversationID, startMessage.SendTime, isReverse)
+				if err != nil {
+					return err
+				}
+				if validServerMessage != nil {
+					c.messagePullForwardEndSeqMap.Store(req.ConversationID, req.ViewType, validServerMessage.Seq)
+				} else {
+					log.ZDebug(ctx, "no valid server message", "conversationID", req.ConversationID, "startTime", startMessage.SendTime)
+				}
+			}
+
+		}
+	}
+	return nil
 }
 
 func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversationID string,
@@ -127,27 +169,27 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 		}
 		if !isReverse {
 			if thisEndSeq != 0 {
-				c.messagePullForwardEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(key string, value int64) bool {
-					lastEndSeq, _ := c.messagePullForwardEndSeqMap.Load(key, viewType)
+				c.messagePullForwardEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(_ string, value int64) bool {
+					lastEndSeq, _ := c.messagePullForwardEndSeqMap.Load(conversationID, viewType)
 					if value < lastEndSeq || lastEndSeq == 0 {
 						log.ZDebug(ctx, "update the end sequence of the message", "lastEndSeq", lastEndSeq, "thisEndSeq", value)
 						return true
 					}
 					log.ZWarn(ctx, "The end sequence number of the message is more than the last end sequence number",
-						nil, "conversationID", key, "value", value, "lastEndSeq", lastEndSeq)
+						nil, "conversationID", conversationID, "value", value, "lastEndSeq", lastEndSeq)
 					return false
 				})
 			}
 		} else {
 			if thisEndSeq != 0 {
-				c.messagePullReverseEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(key string, value int64) bool {
-					lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(key, viewType)
+				c.messagePullReverseEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(_ string, value int64) bool {
+					lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(conversationID, viewType)
 					if value > lastEndSeq || lastEndSeq == 0 {
 						log.ZDebug(ctx, "update the end sequence of the message", "lastEndSeq", lastEndSeq, "thisEndSeq", value)
 						return true
 					}
 					log.ZWarn(ctx, "The end sequence number of the message is less than the last end sequence number",
-						nil, "conversationID", key, "value", value, "lastEndSeq", lastEndSeq)
+						nil, "conversationID", conversationID, "value", value, "lastEndSeq", lastEndSeq)
 					return false
 				})
 			}
