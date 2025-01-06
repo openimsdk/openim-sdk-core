@@ -78,6 +78,7 @@ type MessageModel interface {
 	CheckConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 	GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 	GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error)
+	GetLatestValidServerMessage(ctx context.Context, conversationID string, startTime int64, isReverse bool) (*model_struct.LocalChatLog, error)
 
 	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error
 	GetAbnormalMsgSeq(ctx context.Context) (int64, error)
