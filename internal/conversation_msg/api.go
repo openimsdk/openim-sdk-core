@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	pconstant "github.com/openimsdk/protocol/constant"
 
 	"github.com/openimsdk/tools/errs"
