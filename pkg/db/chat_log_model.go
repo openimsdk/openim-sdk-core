@@ -22,6 +22,8 @@ import (
 	"errors"
 	"fmt"
 
+	"gorm.io/gorm"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -452,10 +454,42 @@ func (d *DataBase) GetLatestActiveMessage(ctx context.Context, conversationID st
 	}
 
 	// only get status < 4(NotHasDeleted) Msg
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("status < ?", constant.MsgStatusHasDeleted).Order(timeOrder).Offset(0).Limit(1).Find(&result).Error, "GetMessageList failed")
+	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("status < ?", constant.MsgStatusHasDeleted).Order(timeOrder).Offset(0).Limit(1).Find(&result).Error, "GetLatestActiveMessage failed")
 	if err != nil {
 		return nil, err
 	}
 
 	return result, err
+}
+func (d *DataBase) GetLatestValidServerMessage(ctx context.Context, conversationID string, startTime int64, isReverse bool) (*model_struct.LocalChatLog, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	var condition, timeOrder, timeSymbol string
+	var result model_struct.LocalChatLog
+
+	if isReverse {
+		timeOrder = "send_time DESC"
+		timeSymbol = "<"
+	} else {
+		timeOrder = "send_time ASC"
+		timeSymbol = ">"
+	}
+
+	condition = "send_time " + timeSymbol + " ? AND seq != ?"
+
+	err := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where(condition, startTime, 0).
+		Order(timeOrder).
+		Limit(1).
+		First(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, errs.WrapMsg(err, "GetLatestValidServerMessage failed")
+	}
+
+	return &result, nil
 }

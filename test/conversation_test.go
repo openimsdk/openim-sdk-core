@@ -17,11 +17,14 @@ package test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/tools/log"
 )
 
 func Test_GetAllConversationList(t *testing.T) {
@@ -32,6 +35,8 @@ func Test_GetAllConversationList(t *testing.T) {
 	for _, conversation := range conversations {
 		t.Log(conversation)
 	}
+	t.Log(len(conversations))
+	time.Sleep(time.Second * 100)
 }
 
 func Test_GetConversationListSplit(t *testing.T) {
@@ -141,12 +146,44 @@ func Test_GetAdvancedHistoryMessageList(t *testing.T) {
 }
 
 func Test_GetAdvancedHistoryMessageListReverse(t *testing.T) {
-	msgs, err := open_im_sdk.UserForSDK.Conversation().GetAdvancedHistoryMessageListReverse(ctx, sdk_params_callback.GetAdvancedHistoryMessageListParams{})
+	msgs, err := open_im_sdk.UserForSDK.Conversation().GetAdvancedHistoryMessageListReverse(ctx, sdk_params_callback.GetAdvancedHistoryMessageListParams{
+		ConversationID:   "si_3325086438_5054969402",
+		StartClientMsgID: "91e40552a05a60494a56e86d36c497ce",
+		Count:            20,
+		ViewType:         cache.ViewHistory,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	log.ZDebug(context.Background(), "GetAdvancedHistoryMessageListReverse Resp", "resp", msgs)
 	for _, v := range msgs.MessageList {
 		t.Log(v)
+	}
+}
+
+func Test_FetchSurroundingMessages(t *testing.T) {
+	req := &sdk_params_callback.FetchSurroundingMessagesReq{
+		StartMessage: &sdk_struct.MsgStruct{
+			ClientMsgID: "62519d0d87c72fd71247424534e535f0",
+			SessionType: 1,
+			SendID:      "3325086438",
+			RecvID:      "5054969402",
+			Seq:         613,
+		},
+		ViewType: cache.ViewSearch,
+		Before:   20,
+		After:    20,
+	}
+
+	resp, err := open_im_sdk.UserForSDK.Conversation().FetchSurroundingMessages(ctx, req)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	log.ZDebug(context.Background(), "FetchSurroundingMessages Resp", "resp", resp)
+	t.Log(len(resp.MessageList))
+	for _, msg := range resp.MessageList {
+		t.Logf("[%d] %#v", msg.Seq, msg.ClientMsgID)
 	}
 }
 

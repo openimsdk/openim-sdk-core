@@ -23,6 +23,11 @@ func (c ConversationSeqContextCache) Delete(conversationID string, viewType int)
 	c.Cache.Delete(c.getConversationViewTypeKey(conversationID, viewType))
 
 }
+
+func (c ConversationSeqContextCache) Store(conversationID string, viewType int, thisEndSeq int64) {
+	c.Cache.Store(c.getConversationViewTypeKey(conversationID, viewType), thisEndSeq)
+
+}
 func (c ConversationSeqContextCache) StoreWithFunc(conversationID string, viewType int, thisEndSeq int64, fn func(key string, value int64) bool) {
 
 	c.Cache.StoreWithFunc(c.getConversationViewTypeKey(conversationID, viewType), thisEndSeq, fn)

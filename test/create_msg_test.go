@@ -184,16 +184,3 @@ func Test_CreateForwardMessage(t *testing.T) {
 	}
 	t.Log(message)
 }
-
-func Test_FetchSurroundingMessages(t *testing.T) {
-	msgs, err := open_im_sdk.UserForSDK.Conversation().FetchSurroundingMessages(ctx, &sdk_struct.MsgStruct{}, 15, 14)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(len(msgs))
-	for _, msg := range msgs {
-		t.Logf("[%d] %#v", msg.Seq, msg.TextElem)
-	}
-	t.Log(msgs)
-}

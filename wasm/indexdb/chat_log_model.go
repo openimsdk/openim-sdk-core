@@ -24,6 +24,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/indexdb/temp_struct"
+	"github.com/openimsdk/tools/errs"
 )
 
 type LocalChatLogs struct {
@@ -159,6 +160,27 @@ func (i *LocalChatLogs) GetLatestActiveMessage(ctx context.Context, conversation
 			}
 
 			return result, err
+		} else {
+			return nil, exec.ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetLatestValidServerMessage(ctx context.Context, conversationID string, startTime int64, isReverse bool) (*model_struct.LocalChatLog, error) {
+	msg, err := exec.Exec(conversationID, startTime, isReverse)
+	if err != nil {
+		if errs.ErrRecordNotFound.Is(err) {
+			return nil, nil
+		}
+		return nil, err
+	} else {
+		if v, ok := msg.(string); ok {
+			result := model_struct.LocalChatLog{}
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return &result, err
 		} else {
 			return nil, exec.ErrType
 		}
