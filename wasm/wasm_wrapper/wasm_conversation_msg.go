@@ -301,8 +301,3 @@ func (w *WrapperConMsg) GetInputStates(_ js.Value, args []js.Value) interface{} 
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetInputStates, callback, &args).AsyncCallWithCallback()
 }
-
-func (w *WrapperConMsg) FetchSurroundingMessages(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.FetchSurroundingMessages, callback, &args).AsyncCallWithCallback()
-}

@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
@@ -327,6 +328,11 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10) // Map to store results grouped by conversation, with initial capacity of 10
 	var err error                                                           // Variable to store any errors encountered
 	var conversationID string                                               // Variable to store the current conversation ID
+
+	// Clear the sequence cache for pull-up and pull-down operations in the search view,
+	// to prevent the completion operations from the previous round from affecting the next round
+	c.messagePullForwardEndSeqMap.DeleteByViewType(cache.ViewSearch)
+	c.messagePullReverseEndSeqMap.DeleteByViewType(cache.ViewSearch)
 
 	// Set the end time for the search; if SearchTimePosition is 0, use the current timestamp
 	if searchParam.SearchTimePosition == 0 {
