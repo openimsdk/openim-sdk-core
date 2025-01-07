@@ -1,6 +1,10 @@
 package cache
 
-import "github.com/openimsdk/tools/utils/stringutil"
+import (
+	"strings"
+
+	"github.com/openimsdk/tools/utils/stringutil"
+)
 
 const (
 	ViewHistory = iota
@@ -28,10 +32,18 @@ func (c ConversationSeqContextCache) Store(conversationID string, viewType int, 
 	c.Cache.Store(c.getConversationViewTypeKey(conversationID, viewType), thisEndSeq)
 
 }
+
 func (c ConversationSeqContextCache) StoreWithFunc(conversationID string, viewType int, thisEndSeq int64, fn func(key string, value int64) bool) {
 
 	c.Cache.StoreWithFunc(c.getConversationViewTypeKey(conversationID, viewType), thisEndSeq, fn)
 }
+
 func (c ConversationSeqContextCache) getConversationViewTypeKey(conversationID string, viewType int) string {
-	return conversationID + "_" + stringutil.IntToString(viewType)
+	return conversationID + "::viewType::" + stringutil.IntToString(viewType)
+}
+
+func (c ConversationSeqContextCache) DeleteByViewType(viewType int) {
+	c.Cache.DeleteCon(func(key string, value int64) bool {
+		return strings.Contains(key, "::viewType::"+stringutil.IntToString(viewType))
+	})
 }
