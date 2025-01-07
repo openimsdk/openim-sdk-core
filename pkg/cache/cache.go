@@ -58,6 +58,16 @@ func (c *Cache[K, V]) DeleteAll() {
 	})
 }
 
+// DeleteCon deletes the value for a key only if the provided condition function returns true.
+func (c *Cache[K, V]) DeleteCon(condition func(key K, value V) bool) {
+	c.m.Range(func(rawKey, rawValue interface{}) bool {
+		if condition(rawKey.(K), rawValue.(V)) {
+			c.m.Delete(rawKey)
+		}
+		return true // Continue iteration
+	})
+}
+
 // RangeAll returns all values in the map.
 func (c *Cache[K, V]) RangeAll() (values []V) {
 	c.m.Range(func(rawKey, rawValue interface{}) bool {
