@@ -506,6 +506,8 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		fallthrough
 	case constant.GetConvMaxReadSeq:
 		fallthrough
+	case constant.PullConvLastMessage:
+		fallthrough
 	case constant.SendMsg:
 		fallthrough
 	case constant.SendSignalMsg:

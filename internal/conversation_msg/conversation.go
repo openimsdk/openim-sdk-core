@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
@@ -63,61 +64,136 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			return nil, err
 		}
 		startTime = m.SendTime
+		err = c.handleEndSeq(ctx, req, isReverse, m)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Clear both maps when the user enters the conversation
-		c.messagePullForwardEndSeqMap.Delete(conversationID)
-		c.messagePullReverseEndSeqMap.Delete(conversationID)
+		c.messagePullForwardEndSeqMap.Delete(conversationID, req.ViewType)
+		c.messagePullReverseEndSeqMap.Delete(conversationID, req.ViewType)
 	}
+
 	log.ZDebug(ctx, "Assembly conversation parameters", "cost time", time.Since(t), "conversationID",
 		conversationID, "startTime:", startTime, "count:", req.Count, "startTime", startTime)
-	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, isReverse, &messageListCallback)
+	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, isReverse, req.ViewType, &messageListCallback)
 	if err != nil {
 		return nil, err
 	}
-	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t))
+	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t).Milliseconds())
 	t = time.Now()
 
-	var thisEndSeq int64
-	thisEndSeq, messageList = c.LocalChatLog2MsgStruct(list, isReverse)
+	messageList = c.LocalChatLog2MsgStruct(list)
 	log.ZDebug(ctx, "message convert and unmarshal", "unmarshal cost time", time.Since(t))
 	t = time.Now()
 	if !isReverse {
 		sort.Sort(messageList)
-		if thisEndSeq != 0 {
-			c.messagePullForwardEndSeqMap.Store(conversationID, thisEndSeq)
-		}
-	} else {
-		if thisEndSeq != 0 {
-			c.messagePullReverseEndSeqMap.Store(conversationID, thisEndSeq)
-		}
 	}
 	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
 	messageListCallback.MessageList = messageList
 
 	return &messageListCallback, nil
 }
+func (c *Conversation) handleEndSeq(ctx context.Context, req sdk.GetAdvancedHistoryMessageListParams, isReverse bool, startMessage *model_struct.LocalChatLog) error {
+	if isReverse {
+		if _, ok := c.messagePullReverseEndSeqMap.Load(req.ConversationID, req.ViewType); !ok {
+			if startMessage.Seq != 0 {
+				c.messagePullReverseEndSeqMap.Store(req.ConversationID, req.ViewType, startMessage.Seq)
+			} else {
+				validServerMessage, err := c.db.GetLatestValidServerMessage(ctx, req.ConversationID, startMessage.SendTime, isReverse)
+				if err != nil {
+					return err
+				}
+				if validServerMessage != nil {
+					c.messagePullReverseEndSeqMap.Store(req.ConversationID, req.ViewType, validServerMessage.Seq)
+				} else {
+					log.ZDebug(ctx, "no valid server message", "conversationID", req.ConversationID, "startTime", startMessage.SendTime)
+				}
+			}
+		}
+
+	} else {
+		if _, ok := c.messagePullForwardEndSeqMap.Load(req.ConversationID, req.ViewType); !ok {
+			if startMessage.Seq != 0 {
+				c.messagePullForwardEndSeqMap.Store(req.ConversationID, req.ViewType, startMessage.Seq)
+			} else {
+				validServerMessage, err := c.db.GetLatestValidServerMessage(ctx, req.ConversationID, startMessage.SendTime, isReverse)
+				if err != nil {
+					return err
+				}
+				if validServerMessage != nil {
+					c.messagePullForwardEndSeqMap.Store(req.ConversationID, req.ViewType, validServerMessage.Seq)
+				} else {
+					log.ZDebug(ctx, "no valid server message", "conversationID", req.ConversationID, "startTime", startMessage.SendTime)
+				}
+			}
+
+		}
+	}
+	return nil
+}
 
 func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversationID string,
-	count int, startTime int64, isReverse bool, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
+	count int, startTime int64, isReverse bool, viewType int, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
 
 	var list, validMessages []*model_struct.LocalChatLog
 
 	// Get the number of invalid messages in this batch to recursive fetching from earlier points.
 	shouldFetchMoreMessagesNum := func(messages []*model_struct.LocalChatLog) int {
-		if len(messages) == 0 {
-			return count
-		}
-
+		var thisEndSeq int64
 		// Represents the number of valid messages in the batch
 		validateMessageNum := 0
 		for _, msg := range messages {
-			if msg.Status < constant.MsgStatusHasDeleted {
-				validateMessageNum++
-				validMessages = append(validMessages, msg)
+			if msg.Seq != 0 && thisEndSeq == 0 {
+				thisEndSeq = msg.Seq
+			}
+			if isReverse {
+				if msg.Seq > thisEndSeq && thisEndSeq != 0 {
+					thisEndSeq = msg.Seq
+				}
+
 			} else {
+				if msg.Seq < thisEndSeq && msg.Seq != 0 {
+					thisEndSeq = msg.Seq
+				}
+			}
+			if msg.Status >= constant.MsgStatusHasDeleted {
 				log.ZDebug(ctx, "this message has been deleted or exception message", "msg", msg)
+				continue
+			}
+
+			validateMessageNum++
+			validMessages = append(validMessages, msg)
+
+		}
+		if !isReverse {
+			if thisEndSeq != 0 {
+				c.messagePullForwardEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(_ string, value int64) bool {
+					lastEndSeq, _ := c.messagePullForwardEndSeqMap.Load(conversationID, viewType)
+					if value < lastEndSeq || lastEndSeq == 0 {
+						log.ZDebug(ctx, "update the end sequence of the message", "lastEndSeq", lastEndSeq, "thisEndSeq", value)
+						return true
+					}
+					log.ZWarn(ctx, "The end sequence number of the message is more than the last end sequence number",
+						nil, "conversationID", conversationID, "value", value, "lastEndSeq", lastEndSeq)
+					return false
+				})
+			}
+		} else {
+			if thisEndSeq != 0 {
+				c.messagePullReverseEndSeqMap.StoreWithFunc(conversationID, viewType, thisEndSeq, func(_ string, value int64) bool {
+					lastEndSeq, _ := c.messagePullReverseEndSeqMap.Load(conversationID, viewType)
+					if value > lastEndSeq || lastEndSeq == 0 {
+						log.ZDebug(ctx, "update the end sequence of the message", "lastEndSeq", lastEndSeq, "thisEndSeq", value)
+						return true
+					}
+					log.ZWarn(ctx, "The end sequence number of the message is less than the last end sequence number",
+						nil, "conversationID", conversationID, "value", value, "lastEndSeq", lastEndSeq)
+					return false
+				})
 			}
 		}
+
 		return count - validateMessageNum
 	}
 	getNewStartTime := func(messages []*model_struct.LocalChatLog) int64 {
@@ -139,21 +215,23 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	t = time.Now()
 	thisStartSeq := c.validateAndFillInternalGaps(ctx, conversationID, isReverse,
 		count, startTime, &list, messageListCallback)
-	log.ZDebug(ctx, "internal continuity check", "cost time", time.Since(t))
+	log.ZDebug(ctx, "internal continuity check", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
 	t = time.Now()
 	c.validateAndFillInterBlockGaps(ctx, thisStartSeq, conversationID,
-		isReverse, count, startTime, &list, messageListCallback)
-	log.ZDebug(ctx, "between continuity check", "cost time", time.Since(t))
+		isReverse, viewType, count, startTime, &list, messageListCallback)
+	log.ZDebug(ctx, "between continuity check", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
 	t = time.Now()
-	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse,
+	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse, viewType,
 		count, startTime, &list, messageListCallback)
 	log.ZDebug(ctx, "end continuity check", "cost time", time.Since(t))
 	// If the number of valid messages retrieved is less than the count,
 	// continue fetching recursively until the valid messages are sufficient or all messages have been fetched.
 	missingCount := shouldFetchMoreMessagesNum(list)
 	if missingCount > 0 && !messageListCallback.IsEnd {
-		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID", conversationID)
-		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, getNewStartTime(list), isReverse, messageListCallback)
+		newStartTime := getNewStartTime(list)
+		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID",
+			conversationID, "newStartTime", newStartTime)
+		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, isReverse, viewType, messageListCallback)
 		if err != nil {
 			return nil, err
 		}
@@ -164,23 +242,9 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	return validMessages, nil
 }
 
-func (c *Conversation) LocalChatLog2MsgStruct(list []*model_struct.LocalChatLog, isReverse bool) (int64, []*sdk_struct.MsgStruct) {
+func (c *Conversation) LocalChatLog2MsgStruct(list []*model_struct.LocalChatLog) []*sdk_struct.MsgStruct {
 	messageList := make([]*sdk_struct.MsgStruct, 0, len(list))
-	var thisEndSeq int64
 	for _, v := range list {
-		if v.Seq != 0 && thisEndSeq == 0 {
-			thisEndSeq = v.Seq
-		}
-		if isReverse {
-			if v.Seq > thisEndSeq && thisEndSeq != 0 {
-				thisEndSeq = v.Seq
-			}
-
-		} else {
-			if v.Seq < thisEndSeq && v.Seq != 0 {
-				thisEndSeq = v.Seq
-			}
-		}
 		temp := LocalChatLogToMsgStruct(v)
 
 		if temp.AttachedInfoElem.IsPrivateChat && temp.SendTime+int64(temp.AttachedInfoElem.BurnDuration) < time.Now().Unix() {
@@ -188,7 +252,7 @@ func (c *Conversation) LocalChatLog2MsgStruct(list []*model_struct.LocalChatLog,
 		}
 		messageList = append(messageList, temp)
 	}
-	return thisEndSeq, messageList
+	return messageList
 }
 
 func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
@@ -262,6 +326,11 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10) // Map to store results grouped by conversation, with initial capacity of 10
 	var err error                                                           // Variable to store any errors encountered
 	var conversationID string                                               // Variable to store the current conversation ID
+
+	// Clear the sequence cache for pull-up and pull-down operations in the search view,
+	// to prevent the completion operations from the previous round from affecting the next round
+	c.messagePullForwardEndSeqMap.DeleteByViewType(cache.ViewSearch)
+	c.messagePullReverseEndSeqMap.DeleteByViewType(cache.ViewSearch)
 
 	// Set the end time for the search; if SearchTimePosition is 0, use the current timestamp
 	if searchParam.SearchTimePosition == 0 {
@@ -474,6 +543,8 @@ func (c *Conversation) filterMsg(temp *sdk_struct.MsgStruct, searchParam *sdk.Se
 			return c.filterMsg(temp.QuoteElem.QuoteMessage, searchParam)
 		}
 	case constant.Picture:
+		fallthrough
+	case constant.Sound:
 		fallthrough
 	case constant.Video:
 		if len(searchParam.KeywordList) == 0 {

@@ -82,14 +82,10 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
-		time.Sleep(time.Millisecond * 500)
-		lc, errTemp := c.db.GetConversation(ctx, conversationID)
-		if errTemp == nil {
+		//double check if the conversation exists
+		lc, err := c.db.GetConversation(ctx, conversationID)
+		if err == nil {
 			return lc, nil
-		}
-		err := c.db.InsertConversation(ctx, &newConversation)
-		if err != nil {
-			return nil, err
 		}
 		return &newConversation, nil
 	}
@@ -521,6 +517,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	case constant.Merger:
 		s.Content = utils.StructToJsonString(s.MergeElem)
 	case constant.Quote:
+		quoteMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.QuoteElem.QuoteMessage.ClientMsgID)
+		if err != nil {
+			log.ZWarn(ctx, "quote message not found", err)
+		}
+		s.QuoteElem.QuoteMessage.Seq = quoteMessage.Seq
 		s.Content = utils.StructToJsonString(s.QuoteElem)
 	case constant.Card:
 		s.Content = utils.StructToJsonString(s.CardElem)
@@ -946,7 +947,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, err := c.user.GetUserInfoWithCacheFunc(ctx, c.loginUserID, c.db.GetLoginUser)
+	userInfo, err := c.user.GetUserInfoWithCache(ctx, c.loginUserID)
 	if err != nil {
 		return err
 	}
@@ -1012,4 +1013,11 @@ func (c *Conversation) SearchConversation(ctx context.Context, searchParam strin
 	}
 	// Return the list of conversations
 	return apiConversations, nil
+}
+func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {
+	return c.typing.GetInputStates(conversationID, userID), nil
+}
+
+func (c *Conversation) ChangeInputStates(ctx context.Context, conversationID string, focus bool) error {
+	return c.typing.ChangeInputStates(ctx, conversationID, focus)
 }

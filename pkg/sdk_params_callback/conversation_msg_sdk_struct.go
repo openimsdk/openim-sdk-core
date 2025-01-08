@@ -32,6 +32,7 @@ type GetAdvancedHistoryMessageListParams struct {
 	ConversationID   string `json:"conversationID"`
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
+	ViewType         int    `json:"viewType"`
 }
 
 type GetAdvancedHistoryMessageListCallback struct {
@@ -39,6 +40,16 @@ type GetAdvancedHistoryMessageListCallback struct {
 	IsEnd       bool                    `json:"isEnd"`
 	ErrCode     int32                   `json:"errCode"`
 	ErrMsg      string                  `json:"errMsg"`
+}
+
+type FetchSurroundingMessagesReq struct {
+	StartMessage *sdk_struct.MsgStruct `json:"startMessage"`
+	ViewType     int                   `json:"viewType"`
+	Before       int                   `json:"before"`
+	After        int                   `json:"after"`
+}
+type FetchSurroundingMessagesResp struct {
+	MessageList []*sdk_struct.MsgStruct `json:"messageList"`
 }
 
 type SearchLocalMessagesParams struct {
