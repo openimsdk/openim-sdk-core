@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 
@@ -113,11 +114,11 @@ func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Pr
 	}
 	ccontext.Info(ctx)
 	reqLog := &third.UploadLogsReq{
-		Platform:   c.platformID,
-		SystemType: c.systemType,
-		Version:    version.Version,
-		FileURLs:   []*third.FileURL{{Filename: zippath, URL: resp.URL}},
-		Ex:         ex,
+		Platform:     c.platformID,
+		AppFramework: c.systemType,
+		Version:      version.Version,
+		FileURLs:     []*third.FileURL{{Filename: zippath, URL: resp.URL}},
+		Ex:           ex,
 	}
 	return api.UploadLogs.Execute(ctx, reqLog)
 }
