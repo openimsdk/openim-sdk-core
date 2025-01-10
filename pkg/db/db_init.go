@@ -48,6 +48,7 @@ func (tc *TableChecker) HasTable(tableName string) bool {
 	defer tc.mu.RUnlock()
 	return tc.tableCache[tableName]
 }
+
 func (tc *TableChecker) UpdateTable(tableName string) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
@@ -60,27 +61,6 @@ type DataBase struct {
 	conn         *gorm.DB
 	tableChecker *TableChecker
 	mRWMutex     sync.RWMutex
-}
-
-func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (d *DataBase) InitSuperLocalErrChatLog(ctx context.Context, groupID string) {
-	panic("implement me")
-}
-
-func (d *DataBase) InitSuperLocalChatLog(ctx context.Context, groupID string) {
-	panic("implement me")
-}
-
-func (d *DataBase) SetChatLogFailedStatus(ctx context.Context) {
-	panic("implement me")
-}
-
-func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) error {
-	panic("implement me")
 }
 
 func (d *DataBase) Close(ctx context.Context) error {
@@ -158,15 +138,9 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	if err = db.AutoMigrate(&model_struct.LocalAppSDKVersion{}); err != nil {
 		return err
 	}
-
 	if err = d.versionDataMigrate(ctx); err != nil {
 		return err
 	}
-
-	//if err := db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup); err != nil {
-	//	return err
-	//}
-
 	return nil
 }
 

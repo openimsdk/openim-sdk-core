@@ -16,11 +16,13 @@ func (d *DataBase) InsertGroupRequest(ctx context.Context, groupRequest *model_s
 	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Create(groupRequest).Error, "InsertGroupRequest failed")
 }
+
 func (d *DataBase) DeleteGroupRequest(ctx context.Context, groupID, userID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Where("group_id=? and user_id=?", groupID, userID).Delete(&model_struct.LocalGroupRequest{}).Error, "DeleteGroupRequest failed")
 }
+
 func (d *DataBase) UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

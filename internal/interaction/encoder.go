@@ -3,6 +3,7 @@ package interaction
 import (
 	"bytes"
 	"encoding/gob"
+
 	"github.com/openimsdk/tools/errs"
 )
 

@@ -26,13 +26,6 @@ func (d *DataBase) DeleteFriendDB(ctx context.Context, friendUserID string) erro
 	return errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&model_struct.LocalFriend{}).Error, "DeleteFriend failed")
 }
 
-func (d *DataBase) GetFriendListCount(ctx context.Context) (int64, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var count int64
-	return count, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalFriend{}).Count(&count).Error, "GetFriendListCount failed")
-}
-
 func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -44,21 +37,13 @@ func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalF
 	return errs.Wrap(t.Error)
 
 }
+
 func (d *DataBase) GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var friendList []*model_struct.LocalFriend
 	return friendList, errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Find(&friendList).Error,
 		"GetFriendList failed")
-}
-
-func (d *DataBase) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var friendList []*model_struct.LocalFriend
-	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Offset(offset).Limit(count).Order("name").Find(&friendList).Error,
-		"GetFriendList failed")
-	return friendList, err
 }
 
 func (d *DataBase) BatchInsertFriend(ctx context.Context, friendList []*model_struct.LocalFriend) error {
@@ -117,9 +102,4 @@ func (d *DataBase) GetFriendInfoList(ctx context.Context, friendUserIDList []str
 	var friendList []*model_struct.LocalFriend
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
 	return friendList, err
-}
-func (d *DataBase) UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]interface{}) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	return errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalFriend{}).Where("friend_user_id IN ?", friendIDs).Updates(args).Error, "UpdateColumnsFriend failed")
 }

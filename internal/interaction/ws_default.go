@@ -61,7 +61,6 @@ func (d *Default) Dial(urlStr string, requestHeader http.Header) (*http.Response
 		d.conn = conn
 	}
 	return httpResp, err
-
 }
 
 func (d *Default) IsNil() bool {

@@ -88,6 +88,7 @@ func CreateSoundMessageFromFullPath(operationID string, soundPath string, durati
 func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateFileMessageFromFullPath, fileFullPath, fileName)
 }
+
 func CreateImageMessage(operationID string, imagePath string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateImageMessage, imagePath)
 }

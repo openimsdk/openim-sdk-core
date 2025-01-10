@@ -25,6 +25,7 @@ type LocalChatLog struct {
 	IsExternalExtensions bool   ` json:"isExternalExtensions,omitempty"`
 	MsgFirstModifyTime   int64  ` json:"msgFirstModifyTime,omitempty"`
 }
+
 type LocalConversation struct {
 	ConversationID        string ` json:"conversationID,omitempty"`
 	ConversationType      int32  ` json:"conversationType,omitempty"`
@@ -47,6 +48,7 @@ type LocalConversation struct {
 	AttachedInfo          string ` json:"attachedInfo,omitempty"`
 	Ex                    string ` json:"ex,omitempty"`
 }
+
 type LocalPartConversation struct {
 	RecvMsgOpt            int32  ` json:"recvMsgOpt"`
 	GroupAtType           int32  ` json:"groupAtType"`

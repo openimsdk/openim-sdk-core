@@ -48,13 +48,6 @@ func (d *DataBase) GetSendFriendApplication(ctx context.Context) ([]*model_struc
 	return friendRequestList, errs.WrapMsg(d.conn.WithContext(ctx).Where("from_user_id = ?", d.loginUserID).Order("create_time DESC").Find(&friendRequestList).Error, "GetSendFriendApplication failed")
 }
 
-func (d *DataBase) GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var friendRequest model_struct.LocalFriendRequest
-	return &friendRequest, errs.WrapMsg(d.conn.WithContext(ctx).Where("from_user_id = ? AND to_user_id = ?", fromUserID, toUserID).Take(&friendRequest).Error, "GetFriendApplicationByBothID failed")
-}
-
 func (d *DataBase) GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) (friendRequests []*model_struct.LocalFriendRequest, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

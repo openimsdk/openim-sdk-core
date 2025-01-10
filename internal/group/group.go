@@ -49,7 +49,6 @@ type Group struct {
 	groupAdminRequestSyncer *syncer.Syncer[*model_struct.LocalAdminGroupRequest, syncer.NoResp, [2]string]
 
 	conversationCh chan common.Cmd2Value
-	//	memberSyncMutex sync.RWMutex
 
 	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService

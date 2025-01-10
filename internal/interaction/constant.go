@@ -2,7 +2,6 @@ package interaction
 
 const (
 	WebSocket = iota
-	Tcp
 )
 
 const (

@@ -26,7 +26,6 @@ func (g *Group) SyncAllSelfGroupApplication(ctx context.Context) error {
 	if err := g.groupRequestSyncer.Sync(ctx, datautil.Batch(ServerGroupRequestToLocalGroupRequest, list), localData, nil); err != nil {
 		return err
 	}
-	// todo
 	return nil
 }
 

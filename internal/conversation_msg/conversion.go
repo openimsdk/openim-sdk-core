@@ -32,24 +32,6 @@ func ServerConversationToLocal(conversation *pbConversation.Conversation) *model
 	}
 }
 
-func LocalConversationToServer(conversation *model_struct.LocalConversation) *pbConversation.Conversation {
-	return &pbConversation.Conversation{
-		ConversationID:   conversation.ConversationID,
-		ConversationType: conversation.ConversationType,
-		UserID:           conversation.UserID,
-		GroupID:          conversation.GroupID,
-		RecvMsgOpt:       conversation.RecvMsgOpt,
-		GroupAtType:      conversation.GroupAtType,
-		IsPinned:         conversation.IsPinned,
-		BurnDuration:     conversation.BurnDuration,
-		IsPrivateChat:    conversation.IsPrivateChat,
-		AttachedInfo:     conversation.AttachedInfo,
-		MsgDestructTime:  conversation.MsgDestructTime,
-		Ex:               conversation.Ex,
-		IsMsgDestruct:    conversation.IsMsgDestruct,
-	}
-}
-
 func MsgDataToLocalChatLog(serverMessage *sdkws.MsgData) *model_struct.LocalChatLog {
 	localMessage := &model_struct.LocalChatLog{
 		ClientMsgID:      serverMessage.ClientMsgID,

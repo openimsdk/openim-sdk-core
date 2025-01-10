@@ -18,20 +18,6 @@ func (d *DataBase) GetBlackListDB(ctx context.Context) ([]*model_struct.LocalBla
 	return blackList, errs.Wrap(d.conn.WithContext(ctx).Find(&blackList).Error)
 }
 
-func (d *DataBase) GetBlackListUserID(ctx context.Context) (blackListUid []string, err error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	return blackListUid, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "GetBlackList failed")
-}
-
-func (d *DataBase) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string) (*model_struct.LocalBlack, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var black model_struct.LocalBlack
-	return &black, errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id = ? AND block_user_id = ? ",
-		d.loginUserID, blockUserID).Take(&black).Error, "GetBlackInfoByBlockUserID failed")
-}
-
 func (d *DataBase) GetBlackInfoList(ctx context.Context, blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

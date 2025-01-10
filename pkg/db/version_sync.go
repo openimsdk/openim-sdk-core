@@ -46,7 +46,6 @@ func (d *DataBase) SetVersionSync(ctx context.Context, lv *model_struct.LocalVer
 	if updateErr := d.conn.WithContext(ctx).Model(&existing).Updates(lv).Error; updateErr != nil {
 		return errs.Wrap(updateErr)
 	}
-
 	return nil
 }
 

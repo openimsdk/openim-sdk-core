@@ -21,21 +21,6 @@ func (d *DataBase) GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupI
 		groupID, userID).Take(&groupMember).Error, "GetGroupMemberInfoByGroupIDUserID failed")
 }
 
-func (d *DataBase) GetAllGroupMemberList(ctx context.Context) ([]model_struct.LocalGroupMember, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var groupMemberList []model_struct.LocalGroupMember
-	return groupMemberList, errs.WrapMsg(d.conn.WithContext(ctx).Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
-}
-
-func (d *DataBase) GetGroupMemberCount(ctx context.Context, groupID string) (int32, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var count int64
-	err := d.conn.WithContext(ctx).Model(&model_struct.LocalGroupMember{}).Where("group_id = ? ", groupID).Count(&count).Error
-	return int32(count), errs.WrapMsg(err, "GetGroupMemberCount failed")
-}
-
 func (d *DataBase) GetGroupSomeMemberInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
