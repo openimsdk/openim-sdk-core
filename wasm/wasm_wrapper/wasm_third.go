@@ -3,11 +3,12 @@
 package wasm_wrapper
 
 import (
+	"syscall/js"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/event_listener"
-	"syscall/js"
 )
 
 // ------------------------------------third---------------------------

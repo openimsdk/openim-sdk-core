@@ -22,36 +22,47 @@ func NewWrapperConMsg(wrapperCommon *WrapperCommon) *WrapperConMsg {
 func (w *WrapperConMsg) CreateTextMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateTextMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateImageMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateImageMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateImageMessageByURL(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateImageMessageByURL, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateSoundMessageByURL(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateSoundMessageByURL, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateVideoMessageByURL(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateVideoMessageByURL, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateFileMessageByURL(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateFileMessageByURL, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateCustomMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateCustomMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateQuoteMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateQuoteMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateAdvancedQuoteMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateAdvancedQuoteMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateAdvancedTextMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateAdvancedTextMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateCardMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateCardMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateTextAtMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateTextAtMessage, nil, &args).AsyncCallWithOutCallback()
 }
@@ -87,6 +98,7 @@ func (w *WrapperConMsg) CreateVideoMessageFromFullPath(_ js.Value, args []js.Val
 func (w *WrapperConMsg) CreateImageMessageFromFullPath(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateImageMessageFromFullPath, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateSoundMessageFromFullPath(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateSoundMessageFromFullPath, nil, &args).AsyncCallWithOutCallback()
 }
@@ -117,10 +129,12 @@ func (w *WrapperConMsg) MarkMessagesAsReadByMsgID(_ js.Value, args []js.Value) i
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.MarkMessagesAsReadByMsgID, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperConMsg) SendMessage(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return event_listener.NewCaller(open_im_sdk.SendMessage, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return event_listener.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
@@ -146,6 +160,7 @@ func (w *WrapperConMsg) GetAdvancedHistoryMessageList(_ js.Value, args []js.Valu
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetAdvancedHistoryMessageList, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperConMsg) GetAdvancedHistoryMessageListReverse(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetAdvancedHistoryMessageListReverse, callback, &args).AsyncCallWithCallback()
@@ -215,6 +230,7 @@ func (w *WrapperConMsg) SearchLocalMessages(_ js.Value, args []js.Value) interfa
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SearchLocalMessages, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperConMsg) SetMessageLocalEx(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetMessageLocalEx, callback, &args).AsyncCallWithCallback()
@@ -234,10 +250,12 @@ func (w *WrapperConMsg) HideConversation(_ js.Value, args []js.Value) interface{
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.HideConversation, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperConMsg) SetConversation(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversation, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperConMsg) SetConversationDraft(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversationDraft, callback, &args).AsyncCallWithCallback()
