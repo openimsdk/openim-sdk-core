@@ -1,18 +1,19 @@
 //go:build js && wasm
-// +build js,wasm
 
 package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
 import (
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/indexdb/temp_struct"
-	"time"
 )
 
 type LocalUsers struct {

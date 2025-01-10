@@ -1,10 +1,10 @@
 //go:build js && wasm
-// +build js,wasm
 
 package indexdb
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/exec"
 )
 
