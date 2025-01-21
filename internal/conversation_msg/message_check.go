@@ -8,7 +8,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -354,12 +353,54 @@ func reverse[T any](arr []T) {
 	}
 }
 
+// handleExceptionMessages handles the insertion of exception messages into the local chat log.
+// It identifies and marks messages that fall into the following categories:
+// 1. Messages pulled but marked as deleted, with non-repeating seq, requiring placeholders.
+// 2. Seq jump caused by server downtime, with non-repeating seq, requiring placeholders.
+// 3. Messages sent by the sender with a duplicate ClientMsgID but unique seq.
+// This can occur due to either client-side message duplication or server-side
+// message re-consumption, where the same ClientMsgID is sent again with a different Seq.
+// 4. Concurrent message filling with both duplicate ClientMsgID and seq.
+func (c *Conversation) handleExceptionMessages(ctx context.Context, existingMessage, message *model_struct.LocalChatLog) {
+	var prefix string
+
+	if existingMessage == nil {
+		// Case: The message is marked as deleted
+		if message.Status == constant.MsgStatusHasDeleted {
+			// If ClientMsgID is empty, it's a placeholder for seq gap
+			if message.ClientMsgID == "" {
+				prefix = "[SEQ_GAP]" // Placeholder for sequence gap
+			} else {
+				prefix = "[DELETED]" // Mark as a deleted message
+			}
+		} else {
+			// For messages that don't fall under known exceptional cases, log as normal
+			prefix = "[UNKNOWN]"
+			log.ZWarn(ctx, "Message is normal, no need to handle", nil, "message", message)
+		}
+	} else {
+		// Case: The message has a duplicate ClientMsgID
+		if existingMessage.Seq == message.Seq {
+			// Case: Both ClientMsgID and Seq are duplicated, it's a concurrent message filling
+			prefix = "[SEQ_DUP]" // Duplicate sequence message, likely caused by concurrent message handling
+		} else {
+			// Case: ClientMsgID is duplicated, but Seq is different, indicating a client-side duplication
+			prefix = "[CLIENT_DUP]" // Client-side resend or server-side consume messages duplication
+		}
+	}
+
+	// Mark the message as deleted
+	message.Status = constant.MsgStatusHasDeleted
+	// Add the exception prefix to the ClientMsgID for identification
+	message.ClientMsgID = prefix + message.ClientMsgID
+}
+
 func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map[string]*sdkws.PullMsgs) {
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 20)
 	updateMsg := make(map[string][]*model_struct.LocalChatLog, 30)
 	var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
 	var updateMessage []*model_struct.LocalChatLog
-	var exceptionMsg []*model_struct.LocalErrChatLog
+	var exceptionMsg []*model_struct.LocalChatLog
 
 	log.ZDebug(ctx, "do Msg come here, len: ", "msg length", len(pullMsgData))
 	for conversationID, msgs := range pullMsgData {
@@ -377,13 +418,8 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 			//without any conversation and message update.
 			msg := MsgDataToLocalChatLog(v)
 			if v.Status == constant.MsgStatusHasDeleted {
-				insertMessage = append(insertMessage, msg)
-				continue
-			}
-			// The message might be a filler provided by the server due to a gap in the sequence.
-			if msg.ClientMsgID == "" {
-				msg.ClientMsgID = utils.GetMsgID(c.loginUserID) + utils.Int64ToString(msg.Seq)
-				exceptionMsg = append(exceptionMsg, c.msgDataToLocalErrChatLog(msg))
+				c.handleExceptionMessages(ctx, nil, msg)
+				exceptionMsg = append(exceptionMsg, msg)
 				insertMessage = append(insertMessage, msg)
 				continue
 			}
@@ -398,8 +434,8 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 					} else {
 						// The message you sent is duplicated, possibly due to a resend or the server consuming
 						// the message multiple times.
-						msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(msg.Seq)
-						exceptionMsg = append(exceptionMsg, c.msgDataToLocalErrChatLog(msg))
+						c.handleExceptionMessages(ctx, existingMsg, msg)
+						exceptionMsg = append(exceptionMsg, msg)
 						insertMessage = append(insertMessage, msg)
 					}
 				} else { //      send through  other terminal
@@ -413,8 +449,8 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 				} else {
 					// The message sent by others is duplicated, possibly due to a resend or the server consuming
 					// the message multiple times.
-					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(msg.Seq)
-					exceptionMsg = append(exceptionMsg, c.msgDataToLocalErrChatLog(msg))
+					c.handleExceptionMessages(ctx, existingMsg, msg)
+					exceptionMsg = append(exceptionMsg, msg)
 					insertMessage = append(insertMessage, msg)
 				}
 			}
