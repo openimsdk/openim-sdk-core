@@ -146,13 +146,6 @@ func (c *Conversation) SetConversationListener(listener func() open_im_sdk_callb
 	c.ConversationListener = listener
 }
 
-func (c *Conversation) msgDataToLocalErrChatLog(src *model_struct.LocalChatLog) *model_struct.LocalErrChatLog {
-	var lc model_struct.LocalErrChatLog
-	copier.Copy(&lc, src)
-	return &lc
-
-}
-
 func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct,
 	lc *model_struct.LocalConversation, isOnlineOnly bool) {
 	log.ZDebug(ctx, "this is test send message ", "sendTime", sendTime, "status", status, "clientMsgID", clientMsgID, "serverMsgID", serverMsgID)
