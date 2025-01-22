@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	sdk "github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -369,7 +370,10 @@ func (c *Conversation) handleExceptionMessages(ctx context.Context, existingMess
 		if message.Status == constant.MsgStatusHasDeleted {
 			// If ClientMsgID is empty, it's a placeholder for seq gap
 			if message.ClientMsgID == "" {
-				prefix = "[SEQ_GAP]" // Placeholder for sequence gap
+				// Gap messages are typically caused by server downtime or prolonged periods of inactivity.
+				// These messages usually lack a message ID, so a message ID needs to be generated to prevent primary key conflicts.
+				message.ClientMsgID = utils.GetMsgID(c.loginUserID)
+				prefix = "[SEQ_GAP_+" + utils.Int64ToString(message.Seq) + "]" // Placeholder for sequence gap
 			} else {
 				prefix = "[DELETED]" // Mark as a deleted message
 			}
