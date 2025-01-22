@@ -437,7 +437,8 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 				if exists {
 					log.ZDebug(ctx, "have message", "msg", msg)
 					if existingMsg.Seq == 0 {
-						//如果自己发送的消息没有及时同步seq到本地，下次的补齐中，本地消息中实际存在seq为0的消息，需要更新seq，同时需要去重
+						//If the message sent by the user hasn't synchronized the seq to the local storage in time,
+						//during the next sync, there will be local messages with seq as 0. These messages need to be updated with the correct seq and deduplicated.
 						updateMessage = append(updateMessage, msg)
 
 					} else {
