@@ -11,19 +11,19 @@ on:
       milestone_name:
         description: "Milestone name to collect closed PRs from"
         required: true
-        default: "v3.8.3"
+        default: "v3.8.4"
       target_branch:
         description: "Target branch to merge the consolidated PR"
         required: true
-        default: "pre-release-v3.8.3"
+        default: "pre-release-v3.8.4"
 
 env:
-  MILESTONE_NAME: ${{ github.event.inputs.milestone_name || 'v3.8.3' }}
-  TARGET_BRANCH: ${{ github.event.inputs.target_branch || 'pre-release-v3.8.3' }}
+  MILESTONE_NAME: ${{ github.event.inputs.milestone_name || 'v3.8.4' }}
+  TARGET_BRANCH: ${{ github.event.inputs.target_branch || 'pre-release-v3.8.4' }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
   LABEL_NAME: cherry-picked
-  TEMP_DIR: /tmp # Using /tmp as the temporary directory
+  TEMP_DIR: /tmp
 
 jobs:
   merge_milestone_prs:
@@ -99,19 +99,32 @@ jobs:
             merge_commit=$(echo "$pr_details" | jq -r '.merge_commit_sha')
             short_commit_hash=$(echo "$merge_commit" | cut -c 1-7)
 
-            if [ "$merge_commit" != "null" ];then
+            if [ "$merge_commit" != "null" ]; then
               git fetch origin
+              
+              echo "Checking out target branch: $TARGET_BRANCH"
               git checkout $TARGET_BRANCH
+
+              echo "Pulling latest changes from target branch: $TARGET_BRANCH"
               git pull origin $TARGET_BRANCH
+              
               cherry_pick_branch="cherry-pick-${short_commit_hash}"
               git checkout -b $cherry_pick_branch
-              git cherry-pick "$merge_commit" --strategy=recursive -X theirs || git cherry-pick --continue
+
+              echo "Cherry-picking commit: $merge_commit"
+              if ! git cherry-pick "$merge_commit" --strategy=recursive -X theirs; then
+                echo "Cherry-pick encountered conflicts, attempting to continue..."
+                git cherry-pick --continue || { echo "Cherry-pick failed"; exit 1; }
+              fi
+
               git remote set-url origin "https://${BOT_TOKEN}@github.com/${{ github.repository }}.git"
-              git push origin $cherry_pick_branch --force
+              
+              echo "Pushing branch: $cherry_pick_branch"
+              git push origin $cherry_pick_branch --force || { echo "Push failed"; exit 1; }
 
               new_pr_title="$pr_title [Created by @$pr_creator from #$pr_number]"
               new_pr_body="$pr_body
-              >This PR is created from original PR #$pr_number."
+              > This PR is created from original PR #$pr_number."
 
               response=$(curl -s -X POST -H "Authorization: token $BOT_TOKEN" \
                 -H "Accept: application/vnd.github+json" \
