@@ -110,6 +110,89 @@ func TestMergeSortedArrays(t *testing.T) {
 				{SendTime: 7, Content: "Message 7"},
 			},
 		},
+		{
+			// Test merging a descending array and an ascending array
+			arr1: []*model_struct.LocalChatLog{
+				{SendTime: 0, Content: "Message 54", Seq: 54},
+				{SendTime: 0, Content: "Message 53", Seq: 53},
+				{SendTime: 0, Content: "Message 52", Seq: 52},
+				{SendTime: 0, Content: "Message 4", Seq: 4},
+			},
+			arr2: []*model_struct.LocalChatLog{
+				{SendTime: 0, Content: "Message 51", Seq: 51},
+				{SendTime: 0, Content: "Message 50", Seq: 50},
+				{SendTime: 0, Content: "Message 49", Seq: 49},
+				{SendTime: 0, Content: "Message 48", Seq: 48},
+				{SendTime: 0, Content: "Message 47", Seq: 47},
+				{SendTime: 0, Content: "Message 46", Seq: 46},
+				{SendTime: 0, Content: "Message 45", Seq: 45},
+				{SendTime: 0, Content: "Message 44", Seq: 44},
+				{SendTime: 0, Content: "Message 43", Seq: 43},
+				{SendTime: 0, Content: "Message 42", Seq: 42},
+				{SendTime: 0, Content: "Message 41", Seq: 41},
+				{SendTime: 0, Content: "Message 40", Seq: 40},
+				{SendTime: 0, Content: "Message 39", Seq: 39},
+				{SendTime: 0, Content: "Message 38", Seq: 38},
+				{SendTime: 0, Content: "Message 37", Seq: 37},
+				{SendTime: 0, Content: "Message 36", Seq: 36},
+				{SendTime: 0, Content: "Message 35", Seq: 35},
+				{SendTime: 0, Content: "Message 34", Seq: 34},
+				{SendTime: 0, Content: "Message 33", Seq: 33},
+				{SendTime: 0, Content: "Message 32", Seq: 32},
+				{SendTime: 0, Content: "Message 31", Seq: 31},
+				{SendTime: 0, Content: "Message 30", Seq: 30},
+				{SendTime: 0, Content: "Message 29", Seq: 29},
+				{SendTime: 0, Content: "Message 28", Seq: 28},
+				{SendTime: 0, Content: "Message 27", Seq: 27},
+				{SendTime: 0, Content: "Message 26", Seq: 26},
+				{SendTime: 0, Content: "Message 25", Seq: 25},
+				{SendTime: 0, Content: "Message 24", Seq: 24},
+				{SendTime: 0, Content: "Message 23", Seq: 23},
+				{SendTime: 0, Content: "Message 22", Seq: 22},
+				{SendTime: 0, Content: "Message 21", Seq: 21},
+				{SendTime: 0, Content: "Message 20", Seq: 20},
+				{SendTime: 0, Content: "Message 19", Seq: 19},
+				{SendTime: 0, Content: "Message 18", Seq: 18},
+				{SendTime: 0, Content: "Message 17", Seq: 17},
+				{SendTime: 0, Content: "Message 16", Seq: 16},
+				{SendTime: 0, Content: "Message 15", Seq: 15},
+				{SendTime: 0, Content: "Message 14", Seq: 14},
+				{SendTime: 0, Content: "Message 13", Seq: 13},
+				{SendTime: 0, Content: "Message 12", Seq: 12},
+				{SendTime: 0, Content: "Message 11", Seq: 11},
+				{SendTime: 0, Content: "Message 10", Seq: 10},
+				{SendTime: 0, Content: "Message 9", Seq: 9},
+				{SendTime: 0, Content: "Message 8", Seq: 8},
+				{SendTime: 0, Content: "Message 7", Seq: 7},
+				{SendTime: 0, Content: "Message 6", Seq: 6},
+				{SendTime: 0, Content: "Message 5", Seq: 5},
+			},
+			n:            20, // Limit result to first 5 elements
+			isDescending: true,
+			// Expected result: merged in descending order
+			expected: []*model_struct.LocalChatLog{
+				{SendTime: 0, Content: "Message 54", Seq: 54},
+				{SendTime: 0, Content: "Message 53", Seq: 53},
+				{SendTime: 0, Content: "Message 52", Seq: 52},
+				{SendTime: 0, Content: "Message 51", Seq: 51},
+				{SendTime: 0, Content: "Message 50", Seq: 50},
+				{SendTime: 0, Content: "Message 49", Seq: 49},
+				{SendTime: 0, Content: "Message 48", Seq: 48},
+				{SendTime: 0, Content: "Message 47", Seq: 47},
+				{SendTime: 0, Content: "Message 46", Seq: 46},
+				{SendTime: 0, Content: "Message 45", Seq: 45},
+				{SendTime: 0, Content: "Message 44", Seq: 44},
+				{SendTime: 0, Content: "Message 43", Seq: 43},
+				{SendTime: 0, Content: "Message 42", Seq: 42},
+				{SendTime: 0, Content: "Message 41", Seq: 41},
+				{SendTime: 0, Content: "Message 40", Seq: 40},
+				{SendTime: 0, Content: "Message 39", Seq: 39},
+				{SendTime: 0, Content: "Message 38", Seq: 38},
+				{SendTime: 0, Content: "Message 37", Seq: 37},
+				{SendTime: 0, Content: "Message 36", Seq: 36},
+				{SendTime: 0, Content: "Message 35", Seq: 35},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -117,19 +200,19 @@ func TestMergeSortedArrays(t *testing.T) {
 		if !reflect.DeepEqual(result, tt.expected) {
 			t.Errorf(
 				"mergeSortedArrays(%v, %v, %d) = %v; want %v",
-				extractSendTimes(tt.arr1),
-				extractSendTimes(tt.arr2),
+				extractSendSeqs(tt.arr1),
+				extractSendSeqs(tt.arr2),
 				tt.n,
-				extractSendTimes(result),
-				extractSendTimes(tt.expected),
+				extractSendSeqs(result),
+				extractSendSeqs(tt.expected),
 			)
 		} else {
 			fmt.Printf(
 				"PASS: mergeSortedArrays(%v, %v, %d) = %v\n",
-				extractSendTimes(tt.arr1),
-				extractSendTimes(tt.arr2),
+				extractSendSeqs(tt.arr1),
+				extractSendSeqs(tt.arr2),
 				tt.n,
-				extractSendTimes(result),
+				extractSendSeqs(result),
 			)
 		}
 	}
@@ -163,6 +246,13 @@ func extractSendTimes(arr []*model_struct.LocalChatLog) []int64 {
 	sendTimes := make([]int64, len(arr))
 	for i, log := range arr {
 		sendTimes[i] = log.SendTime
+	}
+	return sendTimes
+}
+func extractSendSeqs(arr []*model_struct.LocalChatLog) []int64 {
+	sendTimes := make([]int64, len(arr))
+	for i, log := range arr {
+		sendTimes[i] = log.Seq
 	}
 	return sendTimes
 }
