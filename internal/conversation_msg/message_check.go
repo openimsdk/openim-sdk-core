@@ -235,7 +235,7 @@ func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, convers
 			return
 		}
 		if v, ok := getSeqMessageResp.Msgs[conversationID]; ok {
-			c.pullMessageIntoTable(ctx, getSeqMessageResp.Msgs)
+			c.pullMessageIntoTable(ctx, getSeqMessageResp.Msgs, list)
 			log.ZDebug(ctx, "syncMsgFromServerSplit pull msg success",
 				"conversationID", conversationID, "count", count, "len", len(*list), "msgLen", len(v.Msgs))
 			if v.IsEnd {
@@ -326,7 +326,10 @@ func mergeSortedArrays(arr1, arr2 []*model_struct.LocalChatLog, n int, isDescend
 	i, j := 0, 0
 
 	for i < len1 && j < len2 && len(result) < n {
-		if (isDescending && arr1[i].SendTime >= arr2[j].SendTime) || (!isDescending && arr1[i].SendTime <= arr2[j].SendTime) {
+		//In descending order, when pulling forward, sort by sendTime. If sendTime is the same, sort by seq.
+		//In ascending order,  when pulling backward, sort by sendTime. If sendTime is the same, sort by seq.
+		if (isDescending && (arr1[i].SendTime > arr2[j].SendTime || (arr1[i].SendTime == arr2[j].SendTime && arr1[i].Seq > arr2[j].Seq))) ||
+			(!isDescending && (arr1[i].SendTime < arr2[j].SendTime || (arr1[i].SendTime == arr2[j].SendTime && arr1[i].Seq < arr2[j].Seq))) {
 			result = append(result, arr1[i])
 			i++
 		} else {
@@ -399,7 +402,7 @@ func (c *Conversation) handleExceptionMessages(ctx context.Context, existingMess
 	message.ClientMsgID = prefix + message.ClientMsgID
 }
 
-func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map[string]*sdkws.PullMsgs) {
+func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map[string]*sdkws.PullMsgs, list *[]*model_struct.LocalChatLog) {
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 20)
 	updateMsg := make(map[string][]*model_struct.LocalChatLog, 30)
 	var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
@@ -423,6 +426,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 			msg := MsgDataToLocalChatLog(v)
 			if v.Status == constant.MsgStatusHasDeleted {
 				c.handleExceptionMessages(ctx, nil, msg)
+				v.ClientMsgID = msg.ClientMsgID
 				exceptionMsg = append(exceptionMsg, msg)
 				insertMessage = append(insertMessage, msg)
 				continue
@@ -433,6 +437,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 				if exists {
 					log.ZDebug(ctx, "have message", "msg", msg)
 					if existingMsg.Seq == 0 {
+						//如果自己发送的消息没有及时同步seq到本地，下次的补齐中，本地消息中实际存在seq为0的消息，需要更新seq，同时需要去重
 						updateMessage = append(updateMessage, msg)
 
 					} else {
@@ -470,6 +475,21 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 		if err6 := c.batchUpdateMessageList(ctx, updateMsg); err6 != nil {
 			log.ZError(ctx, "sync seq normal message err  :", err6)
 		}
+		if len(updateMessage) > 0 {
+			updateMessageMap := datautil.SliceToMap(updateMessage, func(message *model_struct.LocalChatLog) string {
+				return message.ClientMsgID
+			})
+
+			filteredList := make([]*model_struct.LocalChatLog, 0, len(*list))
+			for _, v := range *list {
+				if _, ok := updateMessageMap[v.ClientMsgID]; !ok {
+					filteredList = append(filteredList, v)
+				}
+			}
+
+			*list = filteredList
+		}
+
 		timeNow = time.Now()
 		//Normal message storage
 		_ = c.batchInsertMessageList(ctx, insertMsg)
