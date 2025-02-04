@@ -2,9 +2,10 @@
 
 OpenIM is licensed under the Apache License 2.0, with the following additional conditions:
 
-1. OpenIM may be utilized commercially, including as a backend service for other applications or as an application development platform for enterprises. A commercial license must be obtained from the producer if:
-
-   - Multi-tenant or multi-business operation: Unless explicitly authorized by OpenIM in writing, you may not use the OpenIM source code to operate a multi-tenant or multi-business environment. A single instance of OpenIM must not simultaneously serve multiple tenants, multiple businesses, or multiple independent workspaces.
+1. OpenIM may be utilized commercially, including as a backend service for other applications or as an application development platform for enterprises. 
+A commercial license must be obtained from the producer if:
+    - Under no circumstances may you operate a multi-tenant or multi-business environment using the OpenIM source code, whether or not you have modified the repository code. In other words, a single instance of OpenIM may not simultaneously serve multiple enterprises, nor may it serve multiple lines of business within the same enterprise.
+   - If you intend to operate in such a multi-tenant or multi-business manner, you must obtain a commercial license from the producer in advance.
 
 2. As a contributor, you should agree that:
 
