@@ -155,7 +155,7 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 		Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, startClientMsgID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	if err = d.initChatLog(ctx, conversationID); err != nil {
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
@@ -164,15 +164,15 @@ func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, co
 	defer d.mRWMutex.RUnlock()
 	var condition, timeOrder, timeSymbol string
 	if isReverse {
-		timeOrder = "send_time ASC"
-		timeSymbol = ">"
+		timeOrder = "send_time ASC,seq ASC"
+		timeSymbol = ">="
 	} else {
-		timeOrder = "send_time DESC"
-		timeSymbol = "<"
+		timeOrder = "send_time DESC,seq DESC"
+		timeSymbol = "<="
 	}
 	if startTime > 0 {
-		condition = "send_time " + timeSymbol + " ?"
-		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime).
+		condition = "send_time " + timeSymbol + " ? AND client_msg_id != ?"
+		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime, startClientMsgID).
 			Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
 		if err != nil {
 			return nil, err
