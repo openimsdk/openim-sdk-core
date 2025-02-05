@@ -225,7 +225,7 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 		res, err := call_(operationID, fn, args...)
 		if err != nil {
 			if code, ok := errs.Unwrap(err).(errs.CodeError); ok {
-				callback.OnError(int32(code.Code()), code.Error())
+				callback.OnError(int32(code.Code()), err.Error())
 			} else {
 				callback.OnError(sdkerrs.UnknownCode, fmt.Sprintf("error %T not implement CodeError: %s", err, err))
 			}
@@ -446,7 +446,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 	if lastErr {
 		if last := outVals[len(outVals)-1]; last != nil {
 			if code, ok := errs.Unwrap(last.(error)).(errs.CodeError); ok {
-				callback.OnError(int32(code.Code()), code.Error())
+				callback.OnError(int32(code.Code()), last.(error).Error())
 			} else {
 				callback.OnError(sdkerrs.UnknownCode, fmt.Sprintf("error %T not implement CodeError: %s", last.(error), last.(error).Error()))
 			}
