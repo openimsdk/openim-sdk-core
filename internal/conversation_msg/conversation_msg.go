@@ -673,7 +673,7 @@ func (c *Conversation) batchInsertMessageList(ctx context.Context, insertMsg map
 		}
 		err := c.db.BatchInsertMessageList(ctx, conversationID, messages)
 		if err != nil {
-			log.ZError(ctx, "insert GetMessage detail err:", err, "conversationID", conversationID, "messages", messages)
+			log.ZError(ctx, "BatchInsertMessageList detail err:", err, "conversationID", conversationID, "messages", messages)
 			for _, v := range messages {
 				e := c.db.InsertMessage(ctx, conversationID, v)
 				if e != nil {

@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -395,11 +396,24 @@ func (c *Conversation) handleExceptionMessages(ctx context.Context, existingMess
 			prefix = "[CLIENT_DUP]" // Client-side resend or server-side consume messages duplication
 		}
 	}
+	getRandomString := func(length int) string {
+		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		var seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+		b := make([]byte, length)
+		for i := range b {
+			b[i] = charset[seededRand.Intn(len(charset))]
+		}
+		return string(b)
+	}
+	// Generate a random suffix to ensure uniqueness
+	randomSuffix := "_" + getRandomString(8)
 
 	// Mark the message as deleted
 	message.Status = constant.MsgStatusHasDeleted
-	// Add the exception prefix to the ClientMsgID for identification
-	message.ClientMsgID = prefix + message.ClientMsgID
+
+	// Add the exception prefix and random suffix to the ClientMsgID for identification
+	message.ClientMsgID = prefix + message.ClientMsgID + randomSuffix
 }
 
 func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map[string]*sdkws.PullMsgs, list *[]*model_struct.LocalChatLog) {
@@ -445,6 +459,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 						// The message you sent is duplicated, possibly due to a resend or the server consuming
 						// the message multiple times.
 						c.handleExceptionMessages(ctx, existingMsg, msg)
+						v.Status = msg.Status
 						exceptionMsg = append(exceptionMsg, msg)
 						insertMessage = append(insertMessage, msg)
 					}
@@ -460,6 +475,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 					// The message sent by others is duplicated, possibly due to a resend or the server consuming
 					// the message multiple times.
 					c.handleExceptionMessages(ctx, existingMsg, msg)
+					v.Status = msg.Status
 					exceptionMsg = append(exceptionMsg, msg)
 					insertMessage = append(insertMessage, msg)
 				}
