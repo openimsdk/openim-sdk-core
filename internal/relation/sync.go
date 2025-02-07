@@ -13,6 +13,17 @@ import (
 )
 
 func (r *Relation) SyncBothFriendRequest(ctx context.Context, fromUserID, toUserID string) error {
+	if toUserID == r.loginUserID {
+		if !r.requestRecvSyncerLock.TryLock() {
+			return nil
+		}
+		defer r.requestRecvSyncerLock.Unlock()
+	} else {
+		if !r.requestSendSyncerLock.TryLock() {
+			return nil
+		}
+		defer r.requestSendSyncerLock.Unlock()
+	}
 	req := &relation.GetDesignatedFriendsApplyReq{FromUserID: fromUserID, ToUserID: toUserID}
 	friendRequests, err := r.getDesignatedFriendsApply(ctx, req)
 	if err != nil {
@@ -32,6 +43,10 @@ func (r *Relation) SyncBothFriendRequest(ctx context.Context, fromUserID, toUser
 
 // SyncAllSelfFriendApplication send
 func (r *Relation) SyncAllSelfFriendApplication(ctx context.Context) error {
+	if !r.requestSendSyncerLock.TryLock() {
+		return nil
+	}
+	defer r.requestSendSyncerLock.Unlock()
 	req := &relation.GetPaginationFriendsApplyFromReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	requests, err := r.getSelfFriendApplicationList(ctx, req)
 	if err != nil {
@@ -45,6 +60,10 @@ func (r *Relation) SyncAllSelfFriendApplication(ctx context.Context) error {
 }
 
 func (r *Relation) SyncAllSelfFriendApplicationWithoutNotice(ctx context.Context) error {
+	if !r.requestSendSyncerLock.TryLock() {
+		return nil
+	}
+	defer r.requestSendSyncerLock.Unlock()
 	req := &relation.GetPaginationFriendsApplyFromReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	requests, err := r.getSelfFriendApplicationList(ctx, req)
 	if err != nil {
@@ -59,6 +78,10 @@ func (r *Relation) SyncAllSelfFriendApplicationWithoutNotice(ctx context.Context
 
 // SyncAllFriendApplication recv
 func (r *Relation) SyncAllFriendApplication(ctx context.Context) error {
+	if !r.requestRecvSyncerLock.TryLock() {
+		return nil
+	}
+	defer r.requestRecvSyncerLock.Unlock()
 	req := &relation.GetPaginationFriendsApplyToReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	requests, err := r.getFriendApplicationList(ctx, req)
 	if err != nil {
@@ -71,6 +94,10 @@ func (r *Relation) SyncAllFriendApplication(ctx context.Context) error {
 	return r.requestRecvSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 func (r *Relation) SyncAllFriendApplicationWithoutNotice(ctx context.Context) error {
+	if !r.requestRecvSyncerLock.TryLock() {
+		return nil
+	}
+	defer r.requestRecvSyncerLock.Unlock()
 	req := &relation.GetPaginationFriendsApplyToReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	requests, err := r.getFriendApplicationList(ctx, req)
 	if err != nil {
