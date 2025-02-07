@@ -69,6 +69,9 @@ type Group struct {
 	listenerForService open_im_sdk_callback.OnListenerForService
 
 	groupMemberCache *cache.Cache[string, *model_struct.LocalGroupMember]
+
+	groupRequestSyncerLock      sync.Mutex
+	groupAdminRequestSyncerLock sync.Mutex
 }
 
 func (g *Group) initSyncer() {
