@@ -56,6 +56,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 	t := time.Now()
 	var messageListCallback sdk.GetAdvancedHistoryMessageListCallback
 	var conversationID string
+	var startClientMsgID string
 	var startTime int64
 	var err error
 	var messageList sdk_struct.NewMsgList
@@ -77,8 +78,8 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 	}
 
 	log.ZDebug(ctx, "Assembly conversation parameters", "cost time", time.Since(t), "conversationID",
-		conversationID, "startTime:", startTime, "count:", req.Count, "startTime", startTime)
-	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, isReverse, req.ViewType, &messageListCallback)
+		conversationID, "startTime:", startTime, "count:", req.Count)
+	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, startClientMsgID, isReverse, req.ViewType, &messageListCallback)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +137,7 @@ func (c *Conversation) handleEndSeq(ctx context.Context, req sdk.GetAdvancedHist
 }
 
 func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversationID string,
-	count int, startTime int64, isReverse bool, viewType int, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
+	count int, startTime int64, startClientMsgID string, isReverse bool, viewType int, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
 
 	var list, validMessages []*model_struct.LocalChatLog
 
@@ -198,16 +199,16 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 
 		return count - validateMessageNum
 	}
-	getNewStartTime := func(messages []*model_struct.LocalChatLog) int64 {
+	getNewStartMessageInfo := func(messages []*model_struct.LocalChatLog) (int64, string) {
 		if len(messages) == 0 {
-			return 0
+			return 0, ""
 		}
-		// Returns the SendTime of the last element in the message list
-		return messages[len(messages)-1].SendTime
+		// Returns the SendTime and ClientMsgID of the last element in the message list
+		return messages[len(messages)-1].SendTime, messages[len(messages)-1].ClientMsgID
 	}
 
 	t := time.Now()
-	list, err := c.db.GetMessageList(ctx, conversationID, count, startTime, isReverse)
+	list, err := c.db.GetMessageList(ctx, conversationID, count, startTime, startClientMsgID, isReverse)
 	log.ZDebug(ctx, "db get messageList", "cost time", time.Since(t), "len", len(list), "err",
 		err, "conversationID", conversationID)
 
@@ -217,23 +218,23 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	t = time.Now()
 	thisStartSeq := c.validateAndFillInternalGaps(ctx, conversationID, isReverse,
 		count, startTime, &list, messageListCallback)
-	log.ZDebug(ctx, "internal continuity check", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
+	log.ZDebug(ctx, "internal continuity check over", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
 	t = time.Now()
 	c.validateAndFillInterBlockGaps(ctx, thisStartSeq, conversationID,
 		isReverse, viewType, count, startTime, &list, messageListCallback)
-	log.ZDebug(ctx, "between continuity check", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
+	log.ZDebug(ctx, "between continuity check over", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
 	t = time.Now()
 	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse, viewType,
 		count, startTime, &list, messageListCallback)
-	log.ZDebug(ctx, "end continuity check", "cost time", time.Since(t))
+	log.ZDebug(ctx, "end continuity check over", "cost time", time.Since(t))
 	// If the number of valid messages retrieved is less than the count,
 	// continue fetching recursively until the valid messages are sufficient or all messages have been fetched.
 	missingCount := shouldFetchMoreMessagesNum(list)
 	if missingCount > 0 && !messageListCallback.IsEnd {
-		newStartTime := getNewStartTime(list)
+		newStartTime, newStartClientMsgID := getNewStartMessageInfo(list)
 		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID",
 			conversationID, "newStartTime", newStartTime)
-		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, isReverse, viewType, messageListCallback)
+		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, newStartClientMsgID, isReverse, viewType, messageListCallback)
 		if err != nil {
 			return nil, err
 		}

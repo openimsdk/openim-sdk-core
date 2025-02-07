@@ -51,7 +51,6 @@ type IndexDB struct {
 	*FriendRequest
 	*Black
 	*Friend
-	LocalChatLogReactionExtensions
 	loginUserID string
 }
 
