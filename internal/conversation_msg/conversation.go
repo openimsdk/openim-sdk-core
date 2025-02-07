@@ -67,6 +67,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			return nil, err
 		}
 		startTime = m.SendTime
+		startClientMsgID = req.StartClientMsgID
 		err = c.handleEndSeq(ctx, req, isReverse, m)
 		if err != nil {
 			return nil, err

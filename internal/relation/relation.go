@@ -42,6 +42,9 @@ type Relation struct {
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
 	relationSyncMutex  sync.Mutex
+
+	requestRecvSyncerLock sync.Mutex
+	requestSendSyncerLock sync.Mutex
 }
 
 func (r *Relation) initSyncer() {

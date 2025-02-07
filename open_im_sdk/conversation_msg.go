@@ -15,6 +15,8 @@
 package open_im_sdk
 
 import (
+	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 )
 
@@ -126,7 +128,7 @@ func CreateForwardMessage(operationID string, m string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateForwardMessage, m)
 }
 func GetConversationIDBySessionType(operationID string, sourceID string, sessionType int) string {
-	return syncCall(operationID, UserForSDK.Conversation().GetConversationIDBySessionType, sourceID, sessionType)
+	return UserForSDK.Conversation().GetConversationIDBySessionType(context.Background(), sourceID, sessionType)
 }
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string, isOnlineOnly bool) {
 	messageCall(callback, operationID, UserForSDK.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
