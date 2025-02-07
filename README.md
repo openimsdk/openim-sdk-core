@@ -94,7 +94,7 @@ Once the SDK is tested successfully, you can build and package it for various pl
 
 - **Android/iOS**
 
-Refer to [this guide](./docs/CHANGELOG.md) for detailed instructions on building and packaging for Android and iOS.
+Refer to [this guide](./docs/gomobile-android-ios-setup-cn.md) for detailed instructions on building and packaging for Android and iOS.
 - **WebAssembly**
 
 Navigate to the `wasm/cmd` directory and run the following command to build the WebAssembly package:
