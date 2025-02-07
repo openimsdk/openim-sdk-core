@@ -135,7 +135,8 @@ Please leave your use cases in the comments [here](https://github.com/openimsdk/
 
 ## License
 
-[openim-sdk-core](https://github.com/openimsdk/openim-sdk-core) is licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/openimsdk/openim-sdk-core/tree/main/LICENSE) for the full license text.
+For more details, please refer to [here](./LICENSE).
+
 
 ## Thanks to our contributors!
 
