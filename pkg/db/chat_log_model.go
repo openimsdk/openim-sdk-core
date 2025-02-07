@@ -154,7 +154,7 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 		Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, startClientMsgID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	if err = d.initChatLog(ctx, conversationID); err != nil {
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
@@ -163,15 +163,15 @@ func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, co
 	defer d.mRWMutex.RUnlock()
 	var condition, timeOrder, timeSymbol string
 	if isReverse {
-		timeOrder = "send_time ASC"
-		timeSymbol = ">"
+		timeOrder = "send_time ASC,seq ASC"
+		timeSymbol = ">="
 	} else {
-		timeOrder = "send_time DESC"
-		timeSymbol = "<"
+		timeOrder = "send_time DESC,seq DESC"
+		timeSymbol = "<="
 	}
 	if startTime > 0 {
-		condition = "send_time " + timeSymbol + " ?"
-		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime).
+		condition = "send_time " + timeSymbol + " ? AND client_msg_id != ?"
+		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime, startClientMsgID).
 			Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
 		if err != nil {
 			return nil, err
@@ -304,16 +304,6 @@ func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, 
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 
-func (d *DataBase) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (seqList []int64, err error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("seq IN ?", lostSeqList).Pluck("seq", &seqList).Error, utils.GetSelfFuncName()+" failed")
-	if err != nil {
-		return nil, err
-	}
-	return seqList, nil
-}
-
 func (d *DataBase) UpdateColumnsMessage(ctx context.Context, conversationID, ClientMsgID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -366,10 +356,6 @@ func (d *DataBase) MarkConversationMessageAsReadDB(ctx context.Context, conversa
 			rowsAffected++
 		}
 	}
-	// t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Update("is_read", constant.HasRead)
-	// if t.RowsAffected == 0 {
-	// 	return 0, errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
-	// }
 	return rowsAffected, nil
 }
 

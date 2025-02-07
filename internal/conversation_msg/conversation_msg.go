@@ -207,10 +207,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var isTriggerUnReadCount bool
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	updateMsg := make(map[string][]*model_struct.LocalChatLog, 10)
-	var exceptionMsg []*model_struct.LocalErrChatLog
-	//var unreadMessages []*model_struct.LocalConversationUnreadMessage
+	var exceptionMsg []*model_struct.LocalChatLog
 	var newMessages sdk_struct.NewMsgList
-	// var reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
 
@@ -253,7 +251,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
 			if msg.Status == constant.MsgStatusHasDeleted {
-				insertMessage = append(insertMessage, MsgStructToLocalChatLog(msg))
+				dbMessage := MsgStructToLocalChatLog(msg)
+				c.handleExceptionMessages(ctx, nil, dbMessage)
+				exceptionMsg = append(exceptionMsg, dbMessage)
+				insertMessage = append(insertMessage, dbMessage)
 				continue
 			}
 
@@ -269,10 +270,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			if !isNotPrivate {
 				msg.AttachedInfoElem.IsPrivateChat = true
 			}
-			if msg.ClientMsgID == "" {
-				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-				continue
-			}
 			if conversationID == "" {
 				log.ZError(ctx, "conversationID is empty", errors.New("conversationID is empty"), "msg", msg)
 				continue
@@ -285,16 +282,19 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			log.ZDebug(ctx, "decode message", "msg", msg)
 			if v.SendID == c.loginUserID { //seq
 				// Messages sent by myself  //if  sent through  this terminal
-				m, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID)
+				existingMsg, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID)
 				if err == nil {
 					log.ZInfo(ctx, "have message", "msg", msg)
-					if m.Seq == 0 {
+					if existingMsg.Seq == 0 {
 						if !isConversationUpdate {
 							msg.Status = constant.MsgStatusFiltered
 						}
 						updateMessage = append(updateMessage, MsgStructToLocalChatLog(msg))
 					} else {
-						exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+						dbMessage := MsgStructToLocalChatLog(msg)
+						c.handleExceptionMessages(ctx, existingMsg, dbMessage)
+						insertMessage = append(insertMessage, dbMessage)
+						exceptionMsg = append(exceptionMsg, dbMessage)
 					}
 				} else {
 					log.ZInfo(ctx, "sync message", "msg", msg)
@@ -322,7 +322,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					}
 				}
 			} else { //Sent by others
-				if _, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil { //Deduplication operation
+				if existingMsg, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil {
 					lc := model_struct.LocalConversation{
 						ConversationType:  v.SessionType,
 						LatestMsg:         utils.StructToJsonString(msg),
@@ -356,11 +356,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					}
 
 				} else {
-					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-					log.ZWarn(ctx, "Deduplication operation ", nil, "msg", *c.msgStructToLocalErrChatLog(msg))
-					msg.Status = constant.MsgStatusFiltered
-					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(msg.Seq)
-					othersInsertMessage = append(othersInsertMessage, MsgStructToLocalChatLog(msg))
+					dbMessage := MsgStructToLocalChatLog(msg)
+					c.handleExceptionMessages(ctx, existingMsg, dbMessage)
+					insertMessage = append(insertMessage, dbMessage)
+					exceptionMsg = append(exceptionMsg, dbMessage)
 				}
 			}
 		}
@@ -458,6 +457,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
+	//Exception message storage
+	for _, v := range exceptionMsg {
+		log.ZWarn(ctx, "exceptionMsg show: ", nil, "msg", *v)
+	}
 
 	log.ZDebug(ctx, "insert msg", "duration", fmt.Sprintf("%dms", time.Since(b)), "len", len(allMsg))
 }
@@ -471,6 +474,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	conversationList := make([]*model_struct.LocalConversation, 0)
+	var exceptionMsg []*model_struct.LocalChatLog
 
 	log.ZDebug(ctx, "message come here conversation ch in reinstalled", "conversation length", msgLen)
 	b := time.Now()
@@ -497,7 +501,10 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
 			if msg.Status == constant.MsgStatusHasDeleted {
-				insertMessage = append(insertMessage, MsgStructToLocalChatLog(msg))
+				dbMessage := MsgStructToLocalChatLog(msg)
+				c.handleExceptionMessages(ctx, nil, dbMessage)
+				exceptionMsg = append(exceptionMsg, dbMessage)
+				insertMessage = append(insertMessage, dbMessage)
 				continue
 			}
 			msg.Status = constant.MsgStatusSendSuccess
@@ -552,6 +559,10 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 
 	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
 	c.ConversationListener().OnSyncServerProgress((c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
+	//Exception message storage
+	for _, v := range exceptionMsg {
+		log.ZWarn(ctx, "exceptionMsg show: ", nil, "msg", *v)
+	}
 }
 
 func (c *Conversation) addInitProgress(progress int) {
@@ -613,15 +624,6 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 	}
 }
 
-func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
-	var lc model_struct.LocalErrChatLog
-	copier.Copy(&lc, m)
-	if m.SessionType == constant.WriteGroupChatType || m.SessionType == constant.ReadGroupChatType {
-		lc.RecvID = m.GroupID
-	}
-	return &lc
-}
-
 func (c *Conversation) batchUpdateMessageList(ctx context.Context, updateMsg map[string][]*model_struct.LocalChatLog) error {
 	if updateMsg == nil {
 		return nil
@@ -678,7 +680,7 @@ func (c *Conversation) batchInsertMessageList(ctx context.Context, insertMsg map
 		}
 		err := c.db.BatchInsertMessageList(ctx, conversationID, messages)
 		if err != nil {
-			log.ZError(ctx, "insert GetMessage detail err:", err, "conversationID", conversationID, "messages", messages)
+			log.ZError(ctx, "BatchInsertMessageList detail err:", err, "conversationID", conversationID, "messages", messages)
 			for _, v := range messages {
 				e := c.db.InsertMessage(ctx, conversationID, v)
 				if e != nil {

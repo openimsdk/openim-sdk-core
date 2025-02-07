@@ -161,32 +161,6 @@ func Test_GetAdvancedHistoryMessageListReverse(t *testing.T) {
 	}
 }
 
-func Test_FetchSurroundingMessages(t *testing.T) {
-	req := &sdk_params_callback.FetchSurroundingMessagesReq{
-		StartMessage: &sdk_struct.MsgStruct{
-			ClientMsgID: "62519d0d87c72fd71247424534e535f0",
-			SessionType: 1,
-			SendID:      "3325086438",
-			RecvID:      "5054969402",
-			Seq:         613,
-		},
-		ViewType: cache.ViewSearch,
-		Before:   20,
-		After:    20,
-	}
-
-	resp, err := open_im_sdk.UserForSDK.Conversation().FetchSurroundingMessages(ctx, req)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	log.ZDebug(context.Background(), "FetchSurroundingMessages Resp", "resp", resp)
-	t.Log(len(resp.MessageList))
-	for _, msg := range resp.MessageList {
-		t.Logf("[%d] %#v", msg.Seq, msg.ClientMsgID)
-	}
-}
-
 func Test_InsertSingleMessageToLocalStorage(t *testing.T) {
 	_, err := open_im_sdk.UserForSDK.Conversation().InsertSingleMessageToLocalStorage(ctx, &sdk_struct.MsgStruct{}, "3411008330", "")
 	if err != nil {
