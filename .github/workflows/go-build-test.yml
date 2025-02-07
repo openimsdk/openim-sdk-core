@@ -15,7 +15,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
-    #   pull-requests: write
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -36,7 +35,6 @@ jobs:
           go generate ./...
           cd wasm/cmd && make wasm
 
-
   # TODO: add coverage test
   go-test:
     name: Benchmark Test with go ${{ matrix.go_version }} on ${{ matrix.os }}
@@ -49,8 +47,8 @@ jobs:
     #   pull-requests: write
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-        go_version: [ "1.22.x" ]
+        os: [ubuntu-latest]
+        go_version: ["1.22.x"]
 
     steps:
       - name: Checkout SDK repository
@@ -59,7 +57,7 @@ jobs:
       - name: Checkout Server repository
         uses: actions/checkout@v4
         with:
-          repository: 'openimsdk/open-im-server'
+          repository: "openimsdk/open-im-server"
           path: ${{ env.SERVER_DIR }}
 
       - name: Set up Go ${{ matrix.go_version }}
@@ -81,8 +79,8 @@ jobs:
       - name: Modify Server Configuration
         run: |
           cd ${{ env.SERVER_DIR }}
-          yq e '.groupCreated.unreadCount = true' -i ${{ env.CONFIG_PATH }}
-          yq e '.friendApplicationApproved.unreadCount = true' -i ${{ env.CONFIG_PATH }}
+          yq e '.groupCreated.isSendMsg = true' -i ${{ env.CONFIG_PATH }}
+          yq e '.friendApplicationApproved.isSendMsg = true' -i ${{ env.CONFIG_PATH }}
 
       - name: Start Server Services
         run: |
