@@ -108,7 +108,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	log.ZDebug(ctx, "latestMsg", "latestMsg", &latestMsg, "seq", tips.Seq)
 	if latestMsg.Seq <= tips.Seq {
 		var newLatestMsg sdk_struct.MsgStruct
-		msgs, err := c.db.GetMessageList(ctx, tips.ConversationID, 1, 0, "", false)
+		msgs, err := c.db.GetMessageList(ctx, tips.ConversationID, 1, 0, 0, "", false)
 		if err != nil || len(msgs) == 0 {
 			log.ZError(ctx, "GetMessageListNoTime failed", err, "tips", &tips)
 			return errs.Wrap(err)
