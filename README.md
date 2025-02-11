@@ -4,7 +4,7 @@
     </b>
 </h1>
 <h3 align="center" style="border-bottom: none">
-      ⭐️  Used in IOS, Android, PC and other platforms  ⭐️ <br>
+      ⭐️  Used in iOS, Android, PC, Web (WebAssembly) and other platforms  ⭐️ <br>
 <h3>
 
 <p align=center>
@@ -27,61 +27,87 @@
 
 ----
 
-## 🧩 Awesome features
+## 🧩 Features
+<!--BEGIN_DESCRIPTION-->
+OpenIM-SDK-core is the core SDK of OpenIM, serving as the cross-platform foundation for all open-source OpenIM SDKs (excluding mini web).
+All open-source OpenIM SDKs (except mini web) are built upon this core layer, ensuring consistency, stability, and seamless cross-platform integration.
+<!--END_DESCRIPTION-->
 
-OpenIM-SDK-core is a core SDK of OpenIM. 
+- [x] Network management with intelligent heartbeat
+- [x] Message encoding and decoding
+- [x] Local message storage
+- [x] Relationship data synchronization
+- [x] IM message synchronization
+- [x] Cross-platform communication and callback management
 
-1. Manage WebSocket long connections, responsible for creating, closing and reconnecting connections. 
-2. Encoding and decoding. Encode and decode messages in binary format to achieve cross-language compatibility.
-3. Implement basic protocols of OpenIM, such as login, push, etc. 
-4. Provide an event handling mechanism to convert received messages into corresponding events and pass them to upper layer applications for processing.
-5. Cache management. Manage user, group, blacklists, and other cache information. 
-6. Provide basic IM function APIs such as sending messages, creating groups, etc. Hide the underlying implementation details from the upper layer application.
+- Supported Platforms
+    - [x] Windows
+    - [x] MacOS
+    - [x] Linux
+    - [x] iOS
+    - [x] Android
+    - [x] Web (WebAssembly)
+    - [ ] Mini Web
 
 
 ## Quickstart
 
-> **Note**: You can get started quickly with openim-sdk-core.
+> **Note**: This section guides you on how to quickly connect to the server and get OpenIM-SDK-core running.
 
-<details>
-  <summary>Work with Makefile</summary>
+### 🚀 Connect to the Server and Run
 
-```bash
-❯ make help    # show help
-❯ make build   # build binary
-```
+Follow these steps to quickly set up and run OpenIM-SDK-core by simulating an app environment using test files.
 
-</details>
-<details>
-  <summary>Work with actions</summary>
+1. **Enter the `test` directory**
+   ```bash
+    # This folder contains unit test files for all interface functions of OpenIM-SDK-core,  
+    # used to simulate an app connecting to the server for login testing.  
+   cd test
+   ```
+2. **Modify the configuration file**
+   > [Set up your own server beforehand.](https://github.com/openimsdk/open-im-server.git)
+- Open the config file in the test directory.
+- Update the following fields with your server information:
+  ```json
+   {
+   "APIADDR": "http://your-server-api-address",
+   "WSADDR": "ws://your-server-websocket-address",
+   "UserID": "your-test-user-id"
+   }
 
-Actions provide handling of PR and issue.
-We used the bot @kubbot, It can detect issues in Chinese and translate them to English, and you can interact with it using the command `/comment`.
+  ```
+3. **Run test functions to simulate an app using the SDK**
+- Identify the test function you want to execute (The `init` file has already completed the SDK initialization and login logic. You can now call other functions).
+  ```bash
+  go test -run TestFunctionName
+  ```
+- Example: Running the login test
+   ```bash
+   go test -run Test_GetAllConversationList
+   ```
+Now, you can use the test cases to simulate real SDK usage, just like an actual app.
 
-Comment in an issue:
 
-```bash
-❯ /intive
-```
+## 📦 Build and Package for Different Platforms
 
-</details>
-<details>
-  <summary>Work with Tools</summary>
+Once the SDK is tested successfully, you can build and package it for various platforms:
 
-```bash
-❯ make tools
-```
+- **Android/iOS**
 
-</details>
-<details>
-  <summary>Work with Docker</summary>
+Refer to [this guide](./docs/gomobile-android-ios-setup-cn.md) for detailed instructions on building and packaging for Android and iOS.
+- **WebAssembly**
 
-```bash
-$ make deploy
-```
+Navigate to the `wasm/cmd` directory and run the following command to build the WebAssembly package:
+  ```bash
+  make wasm  # Ensure Go is installed
+  ```
+If you are on Windows, use the following command instead:
+  ```bash
+  mingw32-make wasm  # Ensure MinGW64 is installed
+  ```
+- **Windows, MacOS, Linux**
 
-</details>
-
+Refer to [this repository](https://github.com/openimsdk/openim-sdk-cpp.git) for platform-specific build instructions.
 
 ## Contributing & Development
 
@@ -109,13 +135,13 @@ openim-sdk-core maintains a [public roadmap](https://github.com/openimsdk/commun
 Contains some common parts of the OpenIM community.
 
 + https://github.com/openimsdk/automation: OpenIM Automation, cicd, and actions, Robotics.
-+ https://github.com/openimsdk/openim-sdk-core: The IMSDK implemented by golang can be used in IOS, Android, PC and other platforms.
++ https://github.com/openimsdk/openim-sdk-core: The IMSDK implemented by golang can be used in iOS, Android, PC and other platforms.
 + https://github.com/openimsdk/openim-sdk-core: Instant messaging IM server.
 + https://github.com/openimsdk/community: Community Management for OpenIM.
 
 ### SDKs
 
-+ [openim-sdk-core](https://github.com/openimsdk/openim-sdk-core): A cross-platform SDK implemented in golang that can be used in IOS, Android, PC, and other platforms.
++ [openim-sdk-core](https://github.com/openimsdk/openim-sdk-core): A cross-platform SDK implemented in golang that can be used in iOS, Android, PC, and other platforms.
 + [Open-IM-SDK-iOS](https://github.com/openimsdk/Open-IM-SDK-iOS): An iOS SDK generated based on openim-sdk-core, available for developers to reference.
 + [Open-IM-SDK-Android](https://github.com/openimsdk/Open-IM-SDK-Android): An Android SDK generated based on openim-sdk-core, available for developers to reference.
 + [Open-IM-SDK-Flutter](https://github.com/openimsdk/Open-IM-SDK-Flutter): A Flutter SDK generated based on Open-IM-SDK-iOS and Open-IM-SDK-Android, available for developers to reference.
