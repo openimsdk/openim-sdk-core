@@ -57,7 +57,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 	var messageListCallback sdk.GetAdvancedHistoryMessageListCallback
 	var conversationID string
 	var startClientMsgID string
-	var startTime int64
+	var startTime, startSeq int64
 	var err error
 	var messageList sdk_struct.NewMsgList
 	conversationID = req.ConversationID
@@ -68,6 +68,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 		}
 		startTime = m.SendTime
 		startClientMsgID = req.StartClientMsgID
+		startSeq = m.Seq
 		err = c.handleEndSeq(ctx, req, isReverse, m)
 		if err != nil {
 			return nil, err
@@ -80,7 +81,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 
 	log.ZDebug(ctx, "Assembly conversation parameters", "cost time", time.Since(t), "conversationID",
 		conversationID, "startTime:", startTime, "count:", req.Count)
-	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, startClientMsgID, isReverse, req.ViewType, &messageListCallback)
+	list, err := c.fetchMessagesWithGapCheck(ctx, conversationID, req.Count, startTime, startSeq, startClientMsgID, isReverse, req.ViewType, &messageListCallback)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (c *Conversation) handleEndSeq(ctx context.Context, req sdk.GetAdvancedHist
 }
 
 func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversationID string,
-	count int, startTime int64, startClientMsgID string, isReverse bool, viewType int, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
+	count int, startTime, startSeq int64, startClientMsgID string, isReverse bool, viewType int, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) ([]*model_struct.LocalChatLog, error) {
 
 	var list, validMessages []*model_struct.LocalChatLog
 
@@ -200,16 +201,16 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 
 		return count - validateMessageNum
 	}
-	getNewStartMessageInfo := func(messages []*model_struct.LocalChatLog) (int64, string) {
+	getNewStartMessageInfo := func(messages []*model_struct.LocalChatLog) (int64, int64, string) {
 		if len(messages) == 0 {
-			return 0, ""
+			return 0, 0, ""
 		}
 		// Returns the SendTime and ClientMsgID of the last element in the message list
-		return messages[len(messages)-1].SendTime, messages[len(messages)-1].ClientMsgID
+		return messages[len(messages)-1].SendTime, messages[len(messages)-1].Seq, messages[len(messages)-1].ClientMsgID
 	}
 
 	t := time.Now()
-	list, err := c.db.GetMessageList(ctx, conversationID, count, startTime, startClientMsgID, isReverse)
+	list, err := c.db.GetMessageList(ctx, conversationID, count, startTime, startSeq, startClientMsgID, isReverse)
 	log.ZDebug(ctx, "db get messageList", "cost time", time.Since(t), "len", len(list), "err",
 		err, "conversationID", conversationID)
 
@@ -232,10 +233,10 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	// continue fetching recursively until the valid messages are sufficient or all messages have been fetched.
 	missingCount := shouldFetchMoreMessagesNum(list)
 	if missingCount > 0 && !messageListCallback.IsEnd {
-		newStartTime, newStartClientMsgID := getNewStartMessageInfo(list)
+		newStartTime, newStartSeq, newStartClientMsgID := getNewStartMessageInfo(list)
 		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID",
-			conversationID, "newStartTime", newStartTime)
-		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, newStartClientMsgID, isReverse, viewType, messageListCallback)
+			conversationID, "newStartTime", newStartTime, "newStartSeq", newStartSeq, "newStartClientMsgID", newStartClientMsgID)
+		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, newStartSeq, newStartClientMsgID, isReverse, viewType, messageListCallback)
 		if err != nil {
 			return nil, err
 		}

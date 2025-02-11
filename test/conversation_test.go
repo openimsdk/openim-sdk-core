@@ -136,7 +136,12 @@ func Test_FindMessageList(t *testing.T) {
 }
 
 func Test_GetAdvancedHistoryMessageList(t *testing.T) {
-	msgs, err := open_im_sdk.UserForSDK.Conversation().GetAdvancedHistoryMessageList(ctx, sdk_params_callback.GetAdvancedHistoryMessageListParams{})
+	msgs, err := open_im_sdk.UserForSDK.Conversation().GetAdvancedHistoryMessageList(ctx, sdk_params_callback.GetAdvancedHistoryMessageListParams{
+		ConversationID:   "si_5318543822_9511766539",
+		StartClientMsgID: "",
+		Count:            40,
+		ViewType:         0,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

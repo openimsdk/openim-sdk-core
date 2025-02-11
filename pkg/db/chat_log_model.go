@@ -154,7 +154,7 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 		Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, startClientMsgID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime, startSeq int64, startClientMsgID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	if err = d.initChatLog(ctx, conversationID); err != nil {
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
@@ -164,14 +164,16 @@ func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, co
 	var condition, timeOrder, timeSymbol string
 	if isReverse {
 		timeOrder = "send_time ASC,seq ASC"
-		timeSymbol = ">="
+		timeSymbol = ">"
 	} else {
 		timeOrder = "send_time DESC,seq DESC"
-		timeSymbol = "<="
+		timeSymbol = "<"
 	}
 	if startTime > 0 {
-		condition = "send_time " + timeSymbol + " ? AND client_msg_id != ?"
-		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime, startClientMsgID).
+		condition = "send_time " + timeSymbol + " ? " +
+			"OR (send_time = ? AND (seq " + timeSymbol + " ? OR (seq = 0 AND client_msg_id != ?)))"
+		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+			Where(condition, startTime, startTime, startSeq, startClientMsgID).
 			Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
 		if err != nil {
 			return nil, err

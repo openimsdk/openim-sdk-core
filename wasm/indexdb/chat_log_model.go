@@ -126,8 +126,8 @@ func (i *LocalChatLogs) UpdateMessageTimeAndStatus(ctx context.Context, conversa
 }
 
 // GetMessageList retrieves a list of messages from the local chat log.
-func (i *LocalChatLogs) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, startClientMsgID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := exec.Exec(conversationID, count, startTime, startClientMsgID, isReverse, i.loginUserID)
+func (i *LocalChatLogs) GetMessageList(ctx context.Context, conversationID string, count int, startTime, startSeq int64, startClientMsgID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := exec.Exec(conversationID, count, startTime, startSeq, startClientMsgID, isReverse, i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
