@@ -11,7 +11,7 @@
 <a href="https://goreportcard.com/report/github.com/openimsdk/openim-sdk-core"><img src="https://goreportcard.com/badge/github.com/openimsdk/openim-sdk-core" alt="A+"></a>
 <a href="https://github.com/openimsdk/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22good+first+issue%22"><img src="https://img.shields.io/github/issues/OpenIMSDK/Open-IM-Server/good%20first%20issue?logo=%22github%22" alt="good first"></a>
 <a href="https://github.com/openimsdk/openim-sdk-core"><img src="https://img.shields.io/github/stars/OpenIMSDK/openim-sdk-core.svg?style=flat&logo=github&colorB=deeppink&label=stars"></a>
-<a href="https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg"><img src="https://img.shields.io/badge/Slack-100%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
+<a href="https://join.slack.com/t/openimsdk/shared_invite/zt-2ijy1ys1f-O0aEDCr7ExRZ7mwsHAVg9A"><img src="https://img.shields.io/badge/Slack-100%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
 <a href="https://github.com/openimsdk/openim-sdk-core/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
 <a href="https://golang.org/"><img src="https://img.shields.io/badge/Language-Go-blue.svg"></a>
 </p>
@@ -25,12 +25,15 @@
 
 </p>
 
-----
+---
 
 ## 🧩 Features
+
 <!--BEGIN_DESCRIPTION-->
+
 OpenIM-SDK-core is the core SDK of OpenIM, serving as the cross-platform foundation for all open-source OpenIM SDKs (excluding mini web).
 All open-source OpenIM SDKs (except mini web) are built upon this core layer, ensuring consistency, stability, and seamless cross-platform integration.
+
 <!--END_DESCRIPTION-->
 
 - [x] Network management with intelligent heartbeat
@@ -41,14 +44,13 @@ All open-source OpenIM SDKs (except mini web) are built upon this core layer, en
 - [x] Cross-platform communication and callback management
 
 - Supported Platforms
-    - [x] Windows
-    - [x] MacOS
-    - [x] Linux
-    - [x] iOS
-    - [x] Android
-    - [x] Web (WebAssembly)
-    - [ ] Mini Web
-
+  - [x] Windows
+  - [x] MacOS
+  - [x] Linux
+  - [x] iOS
+  - [x] Android
+  - [x] Web (WebAssembly)
+  - [ ] Mini Web
 
 ## Quickstart
 
@@ -60,33 +62,35 @@ Follow these steps to quickly set up and run OpenIM-SDK-core by simulating an ap
 
 1. **Enter the `test` directory**
    ```bash
-    # This folder contains unit test files for all interface functions of OpenIM-SDK-core,  
-    # used to simulate an app connecting to the server for login testing.  
+    # This folder contains unit test files for all interface functions of OpenIM-SDK-core,
+    # used to simulate an app connecting to the server for login testing.
    cd test
    ```
 2. **Modify the configuration file**
    > [Set up your own server beforehand.](https://github.com/openimsdk/open-im-server.git)
+
 - Open the config file in the test directory.
 - Update the following fields with your server information:
-  ```json
-   {
-   "APIADDR": "http://your-server-api-address",
-   "WSADDR": "ws://your-server-websocket-address",
-   "UserID": "your-test-user-id"
-   }
 
+  ```json
+  {
+    "APIADDR": "http://your-server-api-address",
+    "WSADDR": "ws://your-server-websocket-address",
+    "UserID": "your-test-user-id"
+  }
   ```
+
 3. **Run test functions to simulate an app using the SDK**
+
 - Identify the test function you want to execute (The `init` file has already completed the SDK initialization and login logic. You can now call other functions).
   ```bash
   go test -run TestFunctionName
   ```
 - Example: Running the login test
-   ```bash
-   go test -run Test_GetAllConversationList
-   ```
-Now, you can use the test cases to simulate real SDK usage, just like an actual app.
-
+  ```bash
+  go test -run Test_GetAllConversationList
+  ```
+  Now, you can use the test cases to simulate real SDK usage, just like an actual app.
 
 ## 📦 Build and Package for Different Platforms
 
@@ -95,16 +99,21 @@ Once the SDK is tested successfully, you can build and package it for various pl
 - **Android/iOS**
 
 Refer to [this guide](./docs/gomobile-android-ios-setup-cn.md) for detailed instructions on building and packaging for Android and iOS.
+
 - **WebAssembly**
 
 Navigate to the `wasm/cmd` directory and run the following command to build the WebAssembly package:
-  ```bash
-  make wasm  # Ensure Go is installed
-  ```
+
+```bash
+make wasm  # Ensure Go is installed
+```
+
 If you are on Windows, use the following command instead:
-  ```bash
-  mingw32-make wasm  # Ensure MinGW64 is installed
-  ```
+
+```bash
+mingw32-make wasm  # Ensure MinGW64 is installed
+```
+
 - **Windows, MacOS, Linux**
 
 Refer to [this repository](https://github.com/openimsdk/openim-sdk-cpp.git) for platform-specific build instructions.
@@ -127,31 +136,31 @@ openim-sdk-core maintains a [public roadmap](https://github.com/openimsdk/commun
 
 ### common
 
-+ https://github.com/openimsdk/automation: OpenIM Automation, cicd, and actions, Robotics.
-+ https://github.com/openimsdk/community: Community Management for OpenIM
+- https://github.com/openimsdk/automation: OpenIM Automation, cicd, and actions, Robotics.
+- https://github.com/openimsdk/community: Community Management for OpenIM
 
 ### OpenIM **Links**
 
 Contains some common parts of the OpenIM community.
 
-+ https://github.com/openimsdk/automation: OpenIM Automation, cicd, and actions, Robotics.
-+ https://github.com/openimsdk/openim-sdk-core: The IMSDK implemented by golang can be used in iOS, Android, PC and other platforms.
-+ https://github.com/openimsdk/openim-sdk-core: Instant messaging IM server.
-+ https://github.com/openimsdk/community: Community Management for OpenIM.
+- https://github.com/openimsdk/automation: OpenIM Automation, cicd, and actions, Robotics.
+- https://github.com/openimsdk/openim-sdk-core: The IMSDK implemented by golang can be used in iOS, Android, PC and other platforms.
+- https://github.com/openimsdk/openim-sdk-core: Instant messaging IM server.
+- https://github.com/openimsdk/community: Community Management for OpenIM.
 
 ### SDKs
 
-+ [openim-sdk-core](https://github.com/openimsdk/openim-sdk-core): A cross-platform SDK implemented in golang that can be used in iOS, Android, PC, and other platforms.
-+ [Open-IM-SDK-iOS](https://github.com/openimsdk/Open-IM-SDK-iOS): An iOS SDK generated based on openim-sdk-core, available for developers to reference.
-+ [Open-IM-SDK-Android](https://github.com/openimsdk/Open-IM-SDK-Android): An Android SDK generated based on openim-sdk-core, available for developers to reference.
-+ [Open-IM-SDK-Flutter](https://github.com/openimsdk/Open-IM-SDK-Flutter): A Flutter SDK generated based on Open-IM-SDK-iOS and Open-IM-SDK-Android, available for developers to reference.
-+ [Open-IM-SDK-Uniapp](https://github.com/openimsdk/Open-IM-SDK-Uniapp): A uni-app SDK generated based on Open-IM-SDK-iOS and Open-IM-SDK-Android, available for developers to reference.
+- [openim-sdk-core](https://github.com/openimsdk/openim-sdk-core): A cross-platform SDK implemented in golang that can be used in iOS, Android, PC, and other platforms.
+- [Open-IM-SDK-iOS](https://github.com/openimsdk/Open-IM-SDK-iOS): An iOS SDK generated based on openim-sdk-core, available for developers to reference.
+- [Open-IM-SDK-Android](https://github.com/openimsdk/Open-IM-SDK-Android): An Android SDK generated based on openim-sdk-core, available for developers to reference.
+- [Open-IM-SDK-Flutter](https://github.com/openimsdk/Open-IM-SDK-Flutter): A Flutter SDK generated based on Open-IM-SDK-iOS and Open-IM-SDK-Android, available for developers to reference.
+- [Open-IM-SDK-Uniapp](https://github.com/openimsdk/Open-IM-SDK-Uniapp): A uni-app SDK generated based on Open-IM-SDK-iOS and Open-IM-SDK-Android, available for developers to reference.
 
 ### Demos
 
-+ [Open-IM-iOS-Demo](https://github.com/openimsdk/Open-IM-iOS-Demo): An iOS demo based on Open-IM-SDK-iOS, available for developers to reference.
-+ [Open-IM-Android-Demo](https://github.com/openimsdk/Open-IM-Android-Demo): An Android demo based on Open-IM-SDK-Android, available for developers to reference.
-+ [Open-IM-Flutter-Demo](https://github.com/openimsdk/Open-IM-Flutter-Demo): A Flutter demo based on Open-IM-SDK-Flutter, available for developers to reference.
+- [Open-IM-iOS-Demo](https://github.com/openimsdk/Open-IM-iOS-Demo): An iOS demo based on Open-IM-SDK-iOS, available for developers to reference.
+- [Open-IM-Android-Demo](https://github.com/openimsdk/Open-IM-Android-Demo): An Android demo based on Open-IM-SDK-Android, available for developers to reference.
+- [Open-IM-Flutter-Demo](https://github.com/openimsdk/Open-IM-Flutter-Demo): A Flutter demo based on Open-IM-SDK-Flutter, available for developers to reference.
 
 ## Used By
 
@@ -162,7 +171,6 @@ Please leave your use cases in the comments [here](https://github.com/openimsdk/
 ## License
 
 For more details, please refer to [here](./LICENSE).
-
 
 ## Thanks to our contributors!
 
