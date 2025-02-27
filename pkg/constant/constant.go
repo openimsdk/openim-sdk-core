@@ -43,6 +43,7 @@ const (
 	CmdPushMsg        = "pushMsg"
 	CmdConnSuccesss   = "connSuccess"
 	CmdWakeUpDataSync = "wakeUpDataSync"
+	CmdIMMessageSync  = "imMessageSync"
 	CmdLogOut         = "loginOut"
 )
 

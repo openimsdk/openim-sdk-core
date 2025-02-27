@@ -55,7 +55,8 @@ type Conversation struct {
 	msgListener                 func() open_im_sdk_callback.OnAdvancedMsgListener
 	msgKvListener               func() open_im_sdk_callback.OnMessageKvInfoListener
 	businessListener            func() open_im_sdk_callback.OnCustomBusinessListener
-	recvCH                      chan common.Cmd2Value
+	recvCh                      chan common.Cmd2Value
+	msgSyncerCh                 chan common.Cmd2Value
 	loginUserID                 string
 	platformID                  int32
 	DataDir                     string
@@ -91,12 +92,13 @@ func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_c
 }
 
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	ch chan common.Cmd2Value, relation *relation.Relation, group *group.Group, user *user.User,
+	recvCh, msgSyncerCh chan common.Cmd2Value, relation *relation.Relation, group *group.Group, user *user.User,
 	file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:                 longConnMgr,
-		recvCH:                      ch,
+		recvCh:                      recvCh,
+		msgSyncerCh:                 msgSyncerCh,
 		loginUserID:                 info.UserID(),
 		platformID:                  info.PlatformID(),
 		DataDir:                     info.DataDir(),
@@ -189,7 +191,7 @@ func (c *Conversation) initSyncer() {
 }
 
 func (c *Conversation) GetCh() chan common.Cmd2Value {
-	return c.recvCH
+	return c.recvCh
 }
 
 type onlineMsgKey struct {
