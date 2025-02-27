@@ -77,6 +77,14 @@ func TriggerCmdWakeUpDataSync(ctx context.Context, ch chan Cmd2Value) error {
 	return sendCmd(ch, c2v, timeout)
 }
 
+func TriggerCmdIMMessageSync(ctx context.Context, ch chan Cmd2Value) error {
+	if ch == nil {
+		return errs.Wrap(ErrChanNil)
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdIMMessageSync, Value: nil, Ctx: ctx}
+	return sendCmd(ch, c2v, timeout)
+}
+
 func TriggerCmdSyncData(ctx context.Context, ch chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdSyncData, Value: nil, Ctx: ctx}
 	err := sendCmd(ch, c2v, timeout)
