@@ -113,10 +113,10 @@ type LoginMgr struct {
 	businessListener     open_im_sdk_callback.OnCustomBusinessListener
 	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
 
-	conversationCh     chan common.Cmd2Value
-	cmdWsCh            chan common.Cmd2Value
-	pushMsgAndMaxSeqCh chan common.Cmd2Value
-	loginMgrCh         chan common.Cmd2Value
+	conversationCh chan common.Cmd2Value
+	cmdWsCh        chan common.Cmd2Value
+	msgSyncerCh    chan common.Cmd2Value
+	loginMgrCh     chan common.Cmd2Value
 
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -347,8 +347,8 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.third = third.NewThird(u.info.PlatformID, u.loginUserID, u.info.SystemType, u.info.LogFilePath, u.file)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 
-	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
-	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
+	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.msgSyncerCh, u.loginUserID, u.longConnMgr, u.db, 0)
+	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh, u.msgSyncerCh,
 		u.relation, u.group, u.user, u.file)
 	u.setListener(ctx)
 
@@ -407,9 +407,9 @@ func (u *LoginMgr) initResources() {
 		convChanLen = 1000
 	}
 	u.conversationCh = make(chan common.Cmd2Value, convChanLen)
-	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
+	u.msgSyncerCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
-	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.msgSyncerCh, u.loginMgrCh)
 	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
 	u.setLoginStatus(LogoutStatus)
 }
@@ -466,7 +466,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 	} else {
 		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
-			_ = common.TriggerCmdWakeUpDataSync(ctx, u.pushMsgAndMaxSeqCh)
+			_ = common.TriggerCmdWakeUpDataSync(ctx, u.msgSyncerCh)
 		}
 
 		return nil
