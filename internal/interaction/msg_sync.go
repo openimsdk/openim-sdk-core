@@ -48,33 +48,33 @@ const (
 // MsgSyncer is a central hub for message relay, responsible for sequential message gap pulling,
 // handling network events, and managing app foreground and background events.
 type MsgSyncer struct {
-	loginUserID        string                // login user ID
-	longConnMgr        *LongConnMgr          // long connection manager
-	PushMsgAndMaxSeqCh chan common.Cmd2Value // channel for receiving push messages and the maximum SEQ number
-	conversationCh     chan common.Cmd2Value // storage and session triggering
-	syncedMaxSeqs      map[string]int64      // map of the maximum synced SEQ numbers for all group IDs
-	syncedMaxSeqsLock  sync.RWMutex          // syncedMaxSeqs map lock
-	db                 db_interface.DataBase // data store
-	syncTimes          int                   // times of sync
-	ctx                context.Context       // context
-	reinstalled        bool                  //true if the app was uninstalled and reinstalled
-	isSyncing          bool                  // indicates whether data is being synced
-	isSyncingLock      sync.Mutex            // lock for syncing state
+	loginUserID       string                // login user ID
+	longConnMgr       *LongConnMgr          // long connection manager
+	recvCh            chan common.Cmd2Value // channel for receiving push messages and the maximum SEQ number
+	conversationCh    chan common.Cmd2Value // storage and session triggering
+	syncedMaxSeqs     map[string]int64      // map of the maximum synced SEQ numbers for all group IDs
+	syncedMaxSeqsLock sync.RWMutex          // syncedMaxSeqs map lock
+	db                db_interface.DataBase // data store
+	syncTimes         int                   // times of sync
+	ctx               context.Context       // context
+	reinstalled       bool                  //true if the app was uninstalled and reinstalled
+	isSyncing         bool                  // indicates whether data is being synced
+	isSyncingLock     sync.Mutex            // lock for syncing state
 
 }
 
 // NewMsgSyncer creates a new instance of the message synchronizer.
-func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan common.Cmd2Value,
+func NewMsgSyncer(ctx context.Context, conversationCh, recvCh chan common.Cmd2Value,
 	loginUserID string, longConnMgr *LongConnMgr, db db_interface.DataBase, syncTimes int) (*MsgSyncer, error) {
 	m := &MsgSyncer{
-		loginUserID:        loginUserID,
-		longConnMgr:        longConnMgr,
-		PushMsgAndMaxSeqCh: PushMsgAndMaxSeqCh,
-		conversationCh:     conversationCh,
-		ctx:                ctx,
-		syncedMaxSeqs:      make(map[string]int64),
-		db:                 db,
-		syncTimes:          syncTimes,
+		loginUserID:    loginUserID,
+		longConnMgr:    longConnMgr,
+		recvCh:         recvCh,
+		conversationCh: conversationCh,
+		ctx:            ctx,
+		syncedMaxSeqs:  make(map[string]int64),
+		db:             db,
+		syncTimes:      syncTimes,
 	}
 	if err := m.loadSeq(ctx); err != nil {
 		log.ZError(ctx, "loadSeq err", err)
@@ -176,7 +176,7 @@ func (m *MsgSyncer) DoListener(ctx context.Context) {
 	}()
 	for {
 		select {
-		case cmd := <-m.PushMsgAndMaxSeqCh:
+		case cmd := <-m.recvCh:
 			m.handlePushMsgAndEvent(cmd)
 		case <-ctx.Done():
 			log.ZInfo(m.ctx, "msg syncer done, sdk logout.....")
@@ -212,6 +212,10 @@ func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 			log.ZWarn(cmd.Ctx, "syncing, ignore wake up event", nil, "cmd", cmd.Cmd, "value", cmd.Value)
 
 		}
+	case constant.CmdIMMessageSync:
+		log.ZInfo(cmd.Ctx, "manually trigger IM message synchronization", "cmd", cmd.Cmd, "value", cmd.Value)
+		m.doIMMessageSync(cmd.Ctx)
+
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))
 	}
@@ -369,6 +373,17 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 
 func (m *MsgSyncer) doWakeupDataSync(ctx context.Context) {
 	common.TriggerCmdSyncData(ctx, m.conversationCh)
+	var resp sdkws.GetMaxSeqResp
+	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
+		log.ZError(m.ctx, "get max seq error", err)
+		return
+	} else {
+		log.ZDebug(m.ctx, "get max seq success", "resp", resp.MaxSeqs)
+	}
+	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, defaultPullNums)
+}
+
+func (m *MsgSyncer) doIMMessageSync(ctx context.Context) {
 	var resp sdkws.GetMaxSeqResp
 	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(m.ctx, "get max seq error", err)
