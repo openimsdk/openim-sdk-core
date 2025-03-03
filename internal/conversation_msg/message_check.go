@@ -432,12 +432,20 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 		if err != nil {
 			log.ZWarn(ctx, "Failed to get messages by ClientMsgIDs", err)
 		}
+		processedMsgIDs := make(map[string]*model_struct.LocalChatLog, len(msgs.Msgs))
 		localMessagesMap := datautil.SliceToMap(localMessages, func(msg *model_struct.LocalChatLog) string { return msg.ClientMsgID })
 		for _, v := range msgs.Msgs {
 			log.ZDebug(ctx, "msg detail", "msg", v, "conversationID", conversationID)
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally
 			//without any conversation and message update.
 			msg := MsgDataToLocalChatLog(v)
+			if existingMessage, ok := processedMsgIDs[v.ClientMsgID]; ok {
+				c.handleExceptionMessages(ctx, existingMessage, msg)
+				v.Status = msg.Status
+				exceptionMsg = append(exceptionMsg, msg)
+				insertMessage = append(insertMessage, msg)
+				continue
+			}
 			if v.Status == constant.MsgStatusHasDeleted {
 				c.handleExceptionMessages(ctx, nil, msg)
 				v.ClientMsgID = msg.ClientMsgID
@@ -480,7 +488,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 					insertMessage = append(insertMessage, msg)
 				}
 			}
-
+			processedMsgIDs[msg.ClientMsgID] = msg
 		}
 		timeNow := time.Now()
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
