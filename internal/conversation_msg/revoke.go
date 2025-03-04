@@ -17,6 +17,7 @@ package conversation_msg
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -108,7 +109,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	log.ZDebug(ctx, "latestMsg", "latestMsg", &latestMsg, "seq", tips.Seq)
 	if latestMsg.Seq <= tips.Seq {
 		var newLatestMsg sdk_struct.MsgStruct
-		msgs, err := c.db.GetMessageList(ctx, tips.ConversationID, 1, 0, "", false)
+		msgs, err := c.db.GetMessageList(ctx, tips.ConversationID, 1, 0, 0, "", false)
 		if err != nil || len(msgs) == 0 {
 			log.ZError(ctx, "GetMessageListNoTime failed", err, "tips", &tips)
 			return errs.Wrap(err)
@@ -167,12 +168,34 @@ func (c *Conversation) quoteMsgRevokeHandle(ctx context.Context, conversationID 
 	return nil
 }
 
+func (c *Conversation) waitForMessageSyncSeq(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error) {
+	maxRetries := 5
+	for retries := 0; retries < maxRetries; retries++ {
+		message, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
+		if err != nil {
+			return nil, err
+		}
+
+		if message.Seq == 0 {
+
+			log.ZInfo(ctx, "Message seq is 0, waiting for retry", "conversationID", conversationID, "clientMsgID", clientMsgID)
+			_ = common.TriggerCmdIMMessageSync(ctx, c.msgSyncerCh)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+
+		return message, nil
+	}
+
+	return nil, errs.New("message.seq is still 0 after maximum retries").Wrap()
+}
+
 func (c *Conversation) revokeOneMessage(ctx context.Context, conversationID, clientMsgID string) error {
 	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
-	message, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
+	message, err := c.waitForMessageSyncSeq(ctx, conversationID, clientMsgID)
 	if err != nil {
 		return err
 	}
