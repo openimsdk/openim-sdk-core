@@ -10,7 +10,7 @@ const (
 	APIAddr             = "http://" + TestIP + ":10002"
 	WsAddr              = "ws://" + TestIP + ":10001"
 	AdminUserID         = "imAdmin"
-	Secret              = "openIM123"
+	Secret              = "123456"
 	PlatformID          = constant.AndroidPlatformID
 	LogLevel            = 3
 	DataDir             = "./data/"
