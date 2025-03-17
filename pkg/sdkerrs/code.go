@@ -25,7 +25,9 @@ const (
 	UnknownCode                  = 10005 // Unrecognized code
 	SdkInternalError             = 10006 // SDK internal error
 
-	NoUpdateError = 10007 // No updates available
+	NoUpdateError   = 10007 // No updates available
+	SDKNotInitError = 10008 // SDK not init
+	NotLoginError   = 10009 // SDK not login
 
 	UserIDNotFoundError = 10100 // UserID not found or not registered
 	LoginOutError       = 10101 // User has logged out

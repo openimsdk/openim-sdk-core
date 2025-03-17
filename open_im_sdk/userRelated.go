@@ -68,7 +68,7 @@ var (
 // CheckResourceLoad checks the SDK is resource load status.
 func CheckResourceLoad(uSDK *LoginMgr, funcName string) error {
 	if uSDK == nil {
-		return errs.New("SDK not initialized,userForSDK is nil", "funcName", funcName).Wrap()
+		return errs.NewCodeError(sdkerrs.SDKNotInitError, fmt.Sprintf("SDK not initialized,userForSDK is nil, funcName: %s", funcName)).Wrap()
 	}
 	if funcName == "" {
 		return nil
@@ -78,7 +78,7 @@ func CheckResourceLoad(uSDK *LoginMgr, funcName string) error {
 		return nil
 	}
 	if uSDK.getLoginStatus(context.Background()) != Logged {
-		return errs.New("SDK not logged in", "funcName", funcName).Wrap()
+		return errs.NewCodeError(sdkerrs.NotLoginError, fmt.Sprintf("SDK not logged in, funcName: %s", funcName)).Wrap()
 	}
 	return nil
 }
