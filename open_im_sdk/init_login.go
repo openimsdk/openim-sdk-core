@@ -24,7 +24,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	pbConstant "github.com/openimsdk/protocol/constant"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
 
@@ -37,15 +36,10 @@ func GetSdkVersion() string {
 }
 
 const (
-	rotateCount  uint = 1
 	rotationTime uint = 24
 )
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
-	if UserForSDK != nil {
-		fmt.Println(operationID, "Initialize multiple times, use the existing ", UserForSDK, " Previous configuration ", UserForSDK.ImConfig(), " now configuration: ", config)
-		return true
-	}
 	var configArgs sdk_struct.IMConfig
 	if err := json.Unmarshal([]byte(config), &configArgs); err != nil {
 		fmt.Println(operationID, "Unmarshal failed ", err.Error(), config)
@@ -54,11 +48,16 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	if configArgs.PlatformID == 0 {
 		return false
 	}
-	if err := log.InitLoggerFromConfig("open-im-sdk-core", "", configArgs.SystemType, pbConstant.PlatformID2Name[int(configArgs.PlatformID)], int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, rotateCount, rotationTime, version.Version, true); err != nil {
+	var logRemainCount uint32
+	if configArgs.LogRemainCount > 0 {
+		logRemainCount = configArgs.LogRemainCount
+	} else {
+		logRemainCount = 1
+	}
+	if err := log.InitLoggerFromConfig("open-im-sdk-core", "", configArgs.SystemType, pbConstant.PlatformID2Name[int(configArgs.PlatformID)], int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, uint(logRemainCount), rotationTime, version.Version, true); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 	}
 	fmt.Println("init log success")
-	// localLog.NewPrivateLog("", configArgs.LogLevel)
 	ctx := mcontext.NewCtx(operationID)
 	if !strings.Contains(configArgs.ApiAddr, "http") {
 		log.ZError(ctx, "api is http protocol, api format is invalid", nil)
@@ -74,62 +73,45 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
 	}
-	UserForSDK = new(LoginMgr)
-	return UserForSDK.InitSDK(configArgs, listener)
+	return IMUserContext.InitSDK(&configArgs, listener)
 }
-func UnInitSDK(operationID string) {
-	if UserForSDK == nil {
-		fmt.Println(operationID, "UserForSDK is nil,")
-		return
-	}
-	UserForSDK.UnInitSDK()
-	UserForSDK = nil
-
+func UnInitSDK(_ string) {
+	IMUserContext.UnInitSDK()
 }
 
 func Login(callback open_im_sdk_callback.Base, operationID string, userID, token string) {
-	call(callback, operationID, UserForSDK.Login, userID, token)
+	call(callback, operationID, IMUserContext.Login, userID, token)
 }
 
 func Logout(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Logout)
+	call(callback, operationID, IMUserContext.Logout)
 }
 
 func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID string, isBackground bool) {
-	call(callback, operationID, UserForSDK.SetAppBackgroundStatus, isBackground)
+	call(callback, operationID, IMUserContext.SetAppBackgroundStatus, isBackground)
 }
 func NetworkStatusChanged(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.NetworkStatusChanged)
+	call(callback, operationID, IMUserContext.NetworkStatusChanged)
 }
 
 func GetLoginStatus(operationID string) int {
-	if UserForSDK == nil {
-		return constant.Uninitialized
-	}
-	return UserForSDK.GetLoginStatus(ccontext.WithOperationID(context.Background(), operationID))
+	return IMUserContext.GetLoginStatus(ccontext.WithOperationID(context.Background(), operationID))
 }
 
-func GetLoginUserID() string {
-	if UserForSDK == nil {
-		return ""
-	}
-	return UserForSDK.GetLoginUserID()
-}
-
-func (u *LoginMgr) Login(ctx context.Context, userID, token string) error {
+func (u *UserContext) Login(ctx context.Context, userID, token string) error {
 	return u.login(ctx, userID, token)
 }
 
-func (u *LoginMgr) Logout(ctx context.Context) error {
+func (u *UserContext) Logout(ctx context.Context) error {
 	return u.logout(ctx, false)
 }
 
-func (u *LoginMgr) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {
+func (u *UserContext) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {
 	return u.setAppBackgroundStatus(ctx, isBackground)
 }
-func (u *LoginMgr) NetworkStatusChanged(ctx context.Context) {
+func (u *UserContext) NetworkStatusChanged(ctx context.Context) {
 	u.longConnMgr.Close(ctx)
 }
-func (u *LoginMgr) GetLoginStatus(ctx context.Context) int {
+func (u *UserContext) GetLoginStatus(ctx context.Context) int {
 	return u.getLoginStatus(ctx)
 }

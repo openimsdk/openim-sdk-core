@@ -19,35 +19,35 @@ import (
 )
 
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
-	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDs)
+	call(callback, operationID, IMUserContext.User().GetUsersInfo, userIDs)
 }
 
 // SetSelfInfo sets the user's own information.
 func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
-	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
+	call(callback, operationID, IMUserContext.User().SetSelfInfo, userInfo)
 }
 
 //// SetSelfInfo sets the user's own information with Ex field.
 //func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
-//	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
+//	call(callback, operationID, IMUserContext.User().SetSelfInfo, userInfo)
 //}
 
 // GetSelfUserInfo obtains the user's own information.
 func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.User().GetSelfUserInfo)
+	call(callback, operationID, IMUserContext.User().GetSelfUserInfo)
 }
 
 // AddUserCommand add to user's favorite
 func AddUserCommand(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string, value string) {
-	call(callback, operationID, UserForSDK.User().ProcessUserCommandAdd, Type, uuid, value)
+	call(callback, operationID, IMUserContext.User().ProcessUserCommandAdd, Type, uuid, value)
 }
 
 // DeleteUserCommand delete from user's favorite
 func DeleteUserCommand(callback open_im_sdk_callback.Base, operationID string, Type int32, uuid string) {
-	call(callback, operationID, UserForSDK.User().ProcessUserCommandDelete, Type, uuid)
+	call(callback, operationID, IMUserContext.User().ProcessUserCommandDelete, Type, uuid)
 }
 
 // GetAllUserCommands get user's favorite
 func GetAllUserCommands(callback open_im_sdk_callback.Base, operationID string, Type int32) {
-	call(callback, operationID, UserForSDK.User().ProcessUserCommandGetAll, Type)
+	call(callback, operationID, IMUserContext.User().ProcessUserCommandGetAll, Type)
 }

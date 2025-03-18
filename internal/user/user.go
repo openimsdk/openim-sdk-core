@@ -17,6 +17,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/tools/log"
@@ -33,16 +34,9 @@ import (
 )
 
 // NewUser creates a new User object.
-func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
-	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
+func NewUser(conversationCh chan common.Cmd2Value) *User {
+	user := &User{conversationCh: conversationCh}
 	user.initSyncer()
-	//user.OnlineStatusCache = cache.NewCache[string, *userPb.OnlineStatus]()
-	user.UserCache = cache.NewUserCache[string, *model_struct.LocalUser](
-		func(value *model_struct.LocalUser) string { return value.UserID },
-		nil,
-		user.GetLoginUser,
-		user.GetUsersInfoFromServer,
-	)
 	return user
 }
 
@@ -54,9 +48,32 @@ type User struct {
 	userSyncer     *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
 	commandSyncer  *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
 	conversationCh chan common.Cmd2Value
-	UserCache      *cache.UserCache[string, *model_struct.LocalUser]
+	userCache      *cache.UserCache[string, *model_struct.LocalUser]
+	once           sync.Once
 
 	//OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
+}
+
+func (u *User) UserCache() *cache.UserCache[string, *model_struct.LocalUser] {
+	u.once.Do(func() {
+		u.userCache = cache.NewUserCache[string, *model_struct.LocalUser](
+			func(value *model_struct.LocalUser) string { return value.UserID },
+			nil,
+			u.GetLoginUser,
+			u.GetUsersInfoFromServer,
+		)
+	})
+	return u.userCache
+}
+
+// SetDataBase sets the DataBase field in User struct
+func (u *User) SetDataBase(db db_interface.DataBase) {
+	u.DataBase = db
+}
+
+// SetLoginUserID sets the loginUserID field in User struct
+func (u *User) SetLoginUserID(loginUserID string) {
+	u.loginUserID = loginUserID
 }
 
 // SetListener sets the user's listener.
@@ -73,7 +90,7 @@ func (u *User) initSyncer() {
 			return fmt.Errorf("not support delete user %s", value.UserID)
 		},
 		func(ctx context.Context, serverUser, localUser *model_struct.LocalUser) error {
-			u.UserCache.Delete(localUser.UserID)
+			u.UserCache().Delete(localUser.UserID)
 			return u.DataBase.UpdateLoginUser(context.Background(), serverUser)
 		},
 		func(user *model_struct.LocalUser) string {
@@ -142,11 +159,11 @@ func (u *User) initSyncer() {
 }
 
 func (u *User) GetUserInfoWithCache(ctx context.Context, cacheKey string) (*model_struct.LocalUser, error) {
-	return u.UserCache.Fetch(ctx, cacheKey)
+	return u.UserCache().Fetch(ctx, cacheKey)
 }
 
 func (u *User) GetUsersInfoWithCache(ctx context.Context, cacheKeys []string) ([]*model_struct.LocalUser, error) {
-	m, err := u.UserCache.BatchFetch(ctx, cacheKeys)
+	m, err := u.UserCache().BatchFetch(ctx, cacheKeys)
 	if err != nil {
 		return nil, err
 	}

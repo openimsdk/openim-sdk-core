@@ -21,13 +21,12 @@ const (
 	ArgsError                = 10002 // Invalid input parameters
 	CtxDeadlineExceededError = 10003 // Context deadline exceeded
 
-	ResourceLoadNotCompleteError = 10004 // Resource initialization incomplete
-	UnknownCode                  = 10005 // Unrecognized code
-	SdkInternalError             = 10006 // SDK internal error
+	UnknownCode      = 10005 // Unrecognized code
+	SdkInternalError = 10006 // SDK internal error
 
-	NoUpdateError   = 10007 // No updates available
-	SDKNotInitError = 10008 // SDK not init
-	NotLoginError   = 10009 // SDK not login
+	NoUpdateError    = 10007 // No updates available
+	SDKNotInitError  = 10008 // SDK not init
+	SDKNotLoginError = 10009 // SDK not login
 
 	UserIDNotFoundError = 10100 // UserID not found or not registered
 	LoginOutError       = 10101 // User has logged out

@@ -28,7 +28,7 @@ import (
 )
 
 func Test_GetSelfUserInfo(t *testing.T) {
-	userInfo, err := open_im_sdk.UserForSDK.User().GetSelfUserInfo(ctx)
+	userInfo, err := open_im_sdk.IMUserContext.User().GetSelfUserInfo(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -39,7 +39,7 @@ func Test_GetSelfUserInfo(t *testing.T) {
 func Test_SetSelfInfoEx(t *testing.T) {
 	newNickName := "test"
 	//newFaceURL := "http://test.com"
-	err := open_im_sdk.UserForSDK.User().SetSelfInfo(ctx, &sdkws.UserInfoWithEx{
+	err := open_im_sdk.IMUserContext.User().SetSelfInfo(ctx, &sdkws.UserInfoWithEx{
 		Nickname: &wrapperspb.StringValue{
 			Value: newNickName,
 		},
@@ -53,7 +53,7 @@ func Test_SetSelfInfoEx(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	userInfo, err := open_im_sdk.UserForSDK.User().GetSelfUserInfo(ctx)
+	userInfo, err := open_im_sdk.IMUserContext.User().GetSelfUserInfo(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,7 +79,7 @@ func Test_UserCommandAdd(t *testing.T) {
 	}
 
 	// Passing the pointer to the function
-	err := open_im_sdk.UserForSDK.User().ProcessUserCommandAdd(ctx, req)
+	err := open_im_sdk.IMUserContext.User().ProcessUserCommandAdd(ctx, req)
 	if err != nil {
 		// Handle the error
 		t.Errorf("Failed to add favorite: %v", err)
@@ -89,7 +89,7 @@ func Test_UserCommandGet(t *testing.T) {
 	// Creating a request with a pointer
 
 	// Passing the pointer to the function
-	result, err := open_im_sdk.UserForSDK.User().ProcessUserCommandGetAll(ctx)
+	result, err := open_im_sdk.IMUserContext.User().ProcessUserCommandGetAll(ctx)
 	if err != nil {
 		// Handle the error
 		t.Errorf("Failed to add favorite: %v", err)
@@ -105,7 +105,7 @@ func Test_UserCommandDelete(t *testing.T) {
 	}
 
 	// Passing the pointer to the function
-	err := open_im_sdk.UserForSDK.User().ProcessUserCommandDelete(ctx, req)
+	err := open_im_sdk.IMUserContext.User().ProcessUserCommandDelete(ctx, req)
 	if err != nil {
 		// Handle the error
 		t.Errorf("Failed to add favorite: %v", err)
