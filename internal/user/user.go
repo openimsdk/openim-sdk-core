@@ -46,7 +46,6 @@ type User struct {
 	loginUserID    string
 	listener       func() open_im_sdk_callback.OnUserListener
 	userSyncer     *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
-	commandSyncer  *syncer.Syncer[*model_struct.LocalUserCommand, syncer.NoResp, string]
 	conversationCh chan common.Cmd2Value
 	userCache      *cache.UserCache[string, *model_struct.LocalUser]
 	once           sync.Once
@@ -107,51 +106,6 @@ func (u *User) initSyncer() {
 					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
 						Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
 				}
-			}
-			return nil
-		},
-	)
-	u.commandSyncer = syncer.New[*model_struct.LocalUserCommand, syncer.NoResp, string](
-		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
-			// Logic to insert a command
-			return u.DataBase.ProcessUserCommandAdd(ctx, command)
-		},
-		func(ctx context.Context, command *model_struct.LocalUserCommand) error {
-			// Logic to delete a command
-			return u.DataBase.ProcessUserCommandDelete(ctx, command)
-		},
-		func(ctx context.Context, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
-			// Logic to update a command
-			if serverCommand == nil || localCommand == nil {
-				return fmt.Errorf("nil command reference")
-			}
-			return u.DataBase.ProcessUserCommandUpdate(ctx, serverCommand)
-		},
-		func(command *model_struct.LocalUserCommand) string {
-			// Return a unique identifier for the command
-			if command == nil {
-				return ""
-			}
-			return command.Uuid
-		},
-		func(a *model_struct.LocalUserCommand, b *model_struct.LocalUserCommand) bool {
-			// Compare two commands to check if they are equal
-			if a == nil || b == nil {
-				return false
-			}
-			return a.Uuid == b.Uuid && a.Type == b.Type && a.Value == b.Value
-		},
-		func(ctx context.Context, state int, serverCommand *model_struct.LocalUserCommand, localCommand *model_struct.LocalUserCommand) error {
-			if u.listener == nil {
-				return nil
-			}
-			switch state {
-			case syncer.Delete:
-				u.listener().OnUserCommandDelete(utils.StructToJsonString(serverCommand))
-			case syncer.Update:
-				u.listener().OnUserCommandUpdate(utils.StructToJsonString(serverCommand))
-			case syncer.Insert:
-				u.listener().OnUserCommandAdd(utils.StructToJsonString(serverCommand))
 			}
 			return nil
 		},

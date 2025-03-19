@@ -32,18 +32,6 @@ func DismissGroup(callback open_im_sdk_callback.Base, operationID string, groupI
 	call(callback, operationID, IMUserContext.Group().DismissGroup, groupID)
 }
 
-//func SetGroupVerification(callback open_im_sdk_callback.Base, operationID string, groupID string, verification int32) {
-//	call(callback, operationID, IMUserContext.Group().SetGroupVerification, groupID, verification)
-//}
-//
-//func SetGroupApplyMemberFriend(callback open_im_sdk_callback.Base, operationID string, groupID string, rule int32) {
-//	call(callback, operationID, IMUserContext.Group().SetGroupApplyMemberFriend, groupID, rule)
-//}
-//
-//func SetGroupLookMemberInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, rule int32) {
-//	call(callback, operationID, IMUserContext.Group().SetGroupLookMemberInfo, groupID, rule)
-//}
-
 func ChangeGroupMute(callback open_im_sdk_callback.Base, operationID string, groupID string, isMute bool) {
 	call(callback, operationID, IMUserContext.Group().ChangeGroupMute, groupID, isMute)
 }
@@ -67,14 +55,6 @@ func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupI
 func SetGroupMemberInfo(callback open_im_sdk_callback.Base, operationID string, groupMemberInfo string) {
 	call(callback, operationID, IMUserContext.Group().SetGroupMemberInfo, groupMemberInfo)
 }
-
-//func SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, roleLevel int) {
-//	call(callback, operationID, IMUserContext.Group().SetGroupMemberRoleLevel, groupID, userID, roleLevel)
-//}
-//
-//func SetGroupMemberNickname(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, groupMemberNickname string) {
-//	call(callback, operationID, IMUserContext.Group().SetGroupMemberNickname, groupID, userID, groupMemberNickname)
-//}
 
 func GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, IMUserContext.Group().GetJoinedGroupList)

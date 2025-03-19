@@ -44,13 +44,6 @@ func UpdateFriends(callback open_im_sdk_callback.Base, operationID string, req s
 	call(callback, operationID, IMUserContext.Relation().UpdateFriends, req)
 }
 
-//func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, userIDRemark string) {
-//	call(callback, operationID, IMUserContext.Relation().SetFriendRemark, userIDRemark)
-//}
-//func PinFriends(callback open_im_sdk_callback.Base, operationID string, pinFriendsParams string) {
-//	call(callback, operationID, IMUserContext.Relation().PinFriends, pinFriendsParams)
-//}
-
 func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friendUserID string) {
 	call(callback, operationID, IMUserContext.Relation().DeleteFriend, friendUserID)
 }
@@ -82,7 +75,3 @@ func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
 func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeUserID string) {
 	call(callback, operationID, IMUserContext.Relation().RemoveBlack, removeUserID)
 }
-
-//func SetFriendsEx(callback open_im_sdk_callback.Base, operationID string, friendIDs string, ex string) {
-//	call(callback, operationID, IMUserContext.Relation().SetFriendsEx, friendIDs, ex)
-//}

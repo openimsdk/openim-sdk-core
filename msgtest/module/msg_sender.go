@@ -345,18 +345,3 @@ func (u *UserListener) OnUserStatusChanged(userOnlineStatus string) {
 	//TODO implement me
 	panic("implement me")
 }
-
-func (u *UserListener) OnUserCommandAdd(userCommand string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserListener) OnUserCommandDelete(userCommand string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserListener) OnUserCommandUpdate(userCommand string) {
-	//TODO implement me
-	panic("implement me")
-}

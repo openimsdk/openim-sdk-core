@@ -18,11 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	pconstant "github.com/openimsdk/protocol/constant"
 	"reflect"
 	"runtime"
 	"sync"
 	"time"
+
+	pconstant "github.com/openimsdk/protocol/constant"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -99,7 +100,6 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.relation.SyncAllSelfFriendApplicationWithoutNotice,
 			c.group.SyncAllAdminGroupApplicationWithoutNotice,
 			c.group.SyncAllSelfGroupApplicationWithoutNotice,
-			c.user.SyncAllCommandWithoutNotice,
 		}
 		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
@@ -443,7 +443,6 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 		c.relation.SyncAllSelfFriendApplication,
 		c.group.SyncAllAdminGroupApplication,
 		c.group.SyncAllSelfGroupApplication,
-		c.user.SyncAllCommand,
 		c.group.SyncAllJoinedGroupsAndMembers,
 		c.relation.IncrSyncFriends,
 		c.IncrSyncConversations,
