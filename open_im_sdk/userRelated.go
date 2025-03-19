@@ -70,6 +70,10 @@ func init() {
 
 }
 
+func (u *UserContext) InitResources() {
+	u.initResources()
+}
+
 func (u *UserContext) initResources() {
 	ctx := ccontext.WithInfo(context.Background(), u.info)
 	u.ctx, u.cancel = context.WithCancel(ctx)
