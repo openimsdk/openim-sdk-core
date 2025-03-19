@@ -27,6 +27,7 @@ func InitSDK(userID string, cf sdk_struct.IMConfig) (*open_im_sdk.UserContext, e
 	if !isInit {
 		return nil, errs.New("sdk init failed").Wrap()
 	}
+	userForSDK.InitResources()
 
 	SetListener(userForSDK, userID)
 
