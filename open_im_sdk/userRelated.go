@@ -352,11 +352,7 @@ func (u *UserContext) login(ctx context.Context, userID, token string) error {
 
 	u.info.UserID = userID
 	u.info.Token = token
-	var err error
-	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir, int(u.info.LogLevel))
-	if err != nil {
-		return sdkerrs.ErrSdkInternal.WrapMsg("init database " + err.Error())
-	}
+
 	if err := u.initialize(ctx, userID); err != nil {
 		return err
 	}

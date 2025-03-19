@@ -24,7 +24,6 @@ func GetConf() sdk_struct.IMConfig {
 	cf.WsAddr = WsAddr
 	cf.DataDir = DataDir
 	cf.LogLevel = LogLevel
-	cf.IsExternalExtensions = true
 	cf.PlatformID = int32(PlatformID)
 	cf.LogFilePath = LogFilePath
 	cf.IsLogStandardOutput = IsLogStandardOutput
