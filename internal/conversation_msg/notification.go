@@ -98,7 +98,6 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.relation.SyncAllSelfFriendApplicationWithoutNotice,
 			c.group.SyncAllAdminGroupApplicationWithoutNotice,
 			c.group.SyncAllSelfGroupApplicationWithoutNotice,
-			c.user.SyncAllCommandWithoutNotice,
 		}
 		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
@@ -440,7 +439,6 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 		c.relation.SyncAllSelfFriendApplication,
 		c.group.SyncAllAdminGroupApplication,
 		c.group.SyncAllSelfGroupApplication,
-		c.user.SyncAllCommand,
 		c.group.SyncAllJoinedGroupsAndMembers,
 		c.relation.IncrSyncFriends,
 		c.IncrSyncConversations,

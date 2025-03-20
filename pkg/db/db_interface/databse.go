@@ -133,10 +133,6 @@ type UserModel interface {
 	UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error
 	UpdateLoginUserByMap(ctx context.Context, user *model_struct.LocalUser, args map[string]interface{}) error
 	InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error
-	ProcessUserCommandAdd(ctx context.Context, command *model_struct.LocalUserCommand) error
-	ProcessUserCommandUpdate(ctx context.Context, command *model_struct.LocalUserCommand) error
-	ProcessUserCommandDelete(ctx context.Context, command *model_struct.LocalUserCommand) error
-	ProcessUserCommandGetAll(ctx context.Context) ([]*model_struct.LocalUserCommand, error)
 }
 
 type FriendModel interface {

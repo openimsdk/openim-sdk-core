@@ -41,11 +41,9 @@ const (
 	groupMemberSyncLimit = 1000
 )
 
-func NewGroup(loginUserID string, db db_interface.DataBase,
+func NewGroup(
 	conversationCh chan common.Cmd2Value) *Group {
 	g := &Group{
-		loginUserID:    loginUserID,
-		db:             db,
 		conversationCh: conversationCh,
 	}
 	g.initSyncer()
@@ -310,4 +308,14 @@ func (g *Group) FetchGroupOrError(ctx context.Context, groupID string) (*model_s
 
 func (g *Group) delLocalGroupRequest(ctx context.Context, groupID, userID string) error {
 	return g.db.DeleteGroupRequest(ctx, groupID, userID)
+}
+
+// SetDataBase sets the DataBase field in Group struct
+func (g *Group) SetDataBase(db db_interface.DataBase) {
+	g.db = db
+}
+
+// SetLoginUserID sets the loginUserID field in Group struct
+func (g *Group) SetLoginUserID(loginUserID string) {
+	g.loginUserID = loginUserID
 }
