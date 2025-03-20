@@ -24,8 +24,8 @@ const (
 	friendSyncLimit int64 = 10000
 )
 
-func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Relation {
-	r := &Relation{loginUserID: loginUserID, db: db, user: user, conversationCh: conversationCh}
+func NewRelation(conversationCh chan common.Cmd2Value, user *user.User) *Relation {
+	r := &Relation{conversationCh: conversationCh, user: user}
 	r.initSyncer()
 	return r
 }
@@ -56,7 +56,7 @@ func (r *Relation) initSyncer() {
 			return r.db.DeleteFriendDB(ctx, value.FriendUserID)
 		}),
 		syncer.WithUpdate[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, server, local *model_struct.LocalFriend) error {
-			r.user.UserCache.Delete(server.FriendUserID)
+			r.user.UserCache().Delete(server.FriendUserID)
 			return r.db.UpdateFriend(ctx, server)
 		}),
 		syncer.WithUUID[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(value *model_struct.LocalFriend) [2]string {
@@ -215,4 +215,14 @@ func (r *Relation) SetListener(listener func() open_im_sdk_callback.OnFriendship
 
 func (r *Relation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
 	r.listenerForService = listener
+}
+
+// SetDataBase sets the DataBase field in Relation struct
+func (r *Relation) SetDataBase(db db_interface.DataBase) {
+	r.db = db
+}
+
+// SetLoginUserID sets the loginUserID field in Relation struct
+func (r *Relation) SetLoginUserID(loginUserID string) {
+	r.loginUserID = loginUserID
 }

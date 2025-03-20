@@ -96,10 +96,10 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	if operationID == "" {
 		return nil, sdkerrs.ErrArgs.WrapMsg("call function operationID is empty")
 	}
-	if err := CheckResourceLoad(UserForSDK, funcName); err != nil {
-		return nil, sdkerrs.ErrResourceLoad.WrapMsg("not load resource")
+	if err := CheckResourceLoad(IMUserContext, funcName); err != nil {
+		return nil, err
 	}
-	ctx := ccontext.WithOperationID(UserForSDK.Context(), operationID)
+	ctx := ccontext.WithOperationID(IMUserContext.Context(), operationID)
 
 	defer func(start time.Time) {
 		if r := recover(); r != nil {
@@ -252,7 +252,7 @@ func syncCall(operationID string, fn any, args ...any) (res string) {
 	}
 	funcPtr := reflect.ValueOf(fn).Pointer()
 	funcName := runtime.FuncForPC(funcPtr).Name()
-	if err = CheckResourceLoad(UserForSDK, funcName); err != nil {
+	if err = CheckResourceLoad(IMUserContext, funcName); err != nil {
 		return ""
 	}
 	fnt := fnv.Type()
@@ -263,7 +263,7 @@ func syncCall(operationID string, fn any, args ...any) (res string) {
 	}
 	ins := make([]reflect.Value, 0, numIn)
 
-	ctx := ccontext.WithOperationID(UserForSDK.Context(), operationID)
+	ctx := ccontext.WithOperationID(IMUserContext.Context(), operationID)
 	t := time.Now()
 	defer func(start time.Time) {
 		if r := recover(); r != nil {
@@ -379,8 +379,10 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 		callback.OnError(sdkerrs.ArgsError, sdkerrs.ErrArgs.WrapMsg("operationID is empty").Error())
 		return
 	}
-	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
-		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "resource load error: "+err.Error())
+	if err := CheckResourceLoad(IMUserContext, ""); err != nil {
+		if code, ok := errs.Unwrap(err).(errs.CodeError); ok {
+			callback.OnError(int32(code.Code()), err.Error())
+		}
 		return
 	}
 	fnv := reflect.ValueOf(fn)
@@ -397,7 +399,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 
 	t := time.Now()
 	ins := make([]reflect.Value, 0, numIn)
-	ctx := ccontext.WithOperationID(UserForSDK.Context(), operationID)
+	ctx := ccontext.WithOperationID(IMUserContext.Context(), operationID)
 	ctx = ccontext.WithSendMessageCallback(ctx, callback)
 	funcPtr := reflect.ValueOf(fn).Pointer()
 	funcName := runtime.FuncForPC(funcPtr).Name()
@@ -485,8 +487,8 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 
 func listenerCall(fn any, listener any) {
 	ctx := context.Background()
-	if UserForSDK == nil {
-		log.ZWarn(ctx, "UserForSDK is nil,set listener is invalid", nil)
+	if IMUserContext == nil {
+		log.ZWarn(ctx, "IMUserContext is nil,set listener is invalid", nil)
 		return
 	}
 	fnv := reflect.ValueOf(fn)
