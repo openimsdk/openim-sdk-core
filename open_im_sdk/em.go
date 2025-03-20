@@ -243,18 +243,6 @@ func newEmptyBatchMsgListener() *emptyBatchMsgListener {
 	return &emptyBatchMsgListener{}
 }
 
-func (e *emptyBatchMsgListener) OnRecvNewMessages(messageList string) {
-
-}
-
-func (e *emptyBatchMsgListener) OnRecvOfflineNewMessages(messageList string) {
-
-}
-
-type emptyUserListener struct {
-	ctx context.Context
-}
-
 func newEmptyUserListener(ctx context.Context) open_im_sdk_callback.OnUserListener {
 	return &emptyUserListener{ctx: ctx}
 }

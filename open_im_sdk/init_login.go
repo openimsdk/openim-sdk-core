@@ -100,7 +100,6 @@ func GetLoginStatus(operationID string) int {
 }
 
 func (u *UserContext) Login(ctx context.Context, userID, token string) error {
-	cliconf.SetLoginUserID(u.loginUserID)
 	return u.login(ctx, userID, token)
 }
 

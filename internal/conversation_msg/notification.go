@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	pconstant "github.com/openimsdk/protocol/constant"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"

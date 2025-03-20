@@ -97,18 +97,8 @@ func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName st
 func CreateImageMessage(operationID string, imageSourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessage, imageSourcePath, sourcePicture, bigPicture, snapshotPicture)
 }
-func CreateImageMessageByURL(operationID string, sourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
-	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessageByURL, sourcePath, sourcePicture, bigPicture, snapshotPicture)
-}
-
-func CreateSoundMessageByURL(operationID string, soundBaseInfo string) string {
-	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessageByURL, soundBaseInfo)
-}
 func CreateSoundMessage(operationID string, soundPath string, duration int64, soundBaseInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessage, soundPath, duration, soundBaseInfo)
-}
-func CreateVideoMessageByURL(operationID string, videoBaseInfo string) string {
-	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessageByURL, videoBaseInfo)
 }
 
 func CreateVideoMessage(operationID string, videoSourcePath string, videoType string, duration int64, snapshotSourcePath string, videoBaseInfo string) string {
@@ -136,9 +126,6 @@ func GetConversationIDBySessionType(operationID string, sourceID string, session
 }
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string, isOnlineOnly bool) {
 	messageCall(callback, operationID, IMUserContext.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
-}
-func SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, operationID string, message, recvID, groupID string, offlinePushInfo string, isOnlineOnly bool) {
-	messageCall(callback, operationID, IMUserContext.Conversation().SendMessageNotOss, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
 }
 
 func FindMessageList(callback open_im_sdk_callback.Base, operationID string, findMessageOptions string) {

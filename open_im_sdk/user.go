@@ -31,7 +31,3 @@ func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInf
 func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, IMUserContext.User().GetSelfUserInfo)
 }
-
-func GetUserClientConfig(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.User().GetUserClientConfig)
-}

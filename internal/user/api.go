@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"

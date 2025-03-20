@@ -20,7 +20,6 @@ var (
 	UpdateUserInfo   = newApi[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
 	UpdateUserInfoEx = newApi[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
 	UserRegister     = newApi[user.UserRegisterReq, user.UserRegisterResp]("/user/user_register")
-	UserClientConfig = newApi[user.GetUserClientConfigReq, user.GetUserClientConfigResp]("/user/get_user_client_config")
 )
 
 var (
