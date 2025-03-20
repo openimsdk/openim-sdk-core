@@ -26,7 +26,7 @@ func TestUploadFile(t *testing.T) {
 
 	fp := `C:\Users\openIM\Desktop\dist.zip`
 
-	resp, err := open_im_sdk.UserForSDK.File().UploadFile(ctx, &file.UploadFileReq{
+	resp, err := open_im_sdk.IMUserContext.File().UploadFile(ctx, &file.UploadFileReq{
 		Filepath: fp,
 		Name:     filepath.Base(fp),
 		Cause:    "test",

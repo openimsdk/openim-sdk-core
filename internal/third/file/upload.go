@@ -21,10 +21,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/tools/errs"
 	"io"
 	"net/http"
 	"net/url"
@@ -32,6 +28,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/protocol/third"
 	"github.com/openimsdk/tools/log"
@@ -59,8 +60,8 @@ type partInfo struct {
 	PartMd5s    []string
 }
 
-func NewFile(database db_interface.DataBase, loginUserID string) *File {
-	return &File{database: database, loginUserID: loginUserID, confLock: &sync.Mutex{}, mapLocker: &sync.Mutex{}, uploading: make(map[string]*lockInfo)}
+func NewFile() *File {
+	return &File{confLock: &sync.Mutex{}, mapLocker: &sync.Mutex{}, uploading: make(map[string]*lockInfo)}
 }
 
 type File struct {
@@ -70,6 +71,16 @@ type File struct {
 	partLimit   *third.PartLimitResp
 	mapLocker   sync.Locker
 	uploading   map[string]*lockInfo
+}
+
+// SetDataBase sets the DataBase field in File struct
+func (f *File) SetDataBase(db db_interface.DataBase) {
+	f.database = db
+}
+
+// SetLoginUserID sets the loginUserID field in File struct
+func (f *File) SetLoginUserID(loginUserID string) {
+	f.loginUserID = loginUserID
 }
 
 type lockInfo struct {

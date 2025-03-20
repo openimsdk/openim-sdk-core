@@ -31,7 +31,7 @@ type GlobalConfig struct {
 	UserID string
 	Token  string
 
-	sdk_struct.IMConfig
+	*sdk_struct.IMConfig
 }
 
 type ContextInfo interface {
@@ -43,7 +43,6 @@ type ContextInfo interface {
 	DataDir() string
 	LogLevel() uint32
 	OperationID() string
-	IsExternalExtensions() bool
 }
 
 func Info(ctx context.Context) ContextInfo {
@@ -114,10 +113,6 @@ func (i *info) LogLevel() uint32 {
 
 func (i *info) OperationID() string {
 	return mcontext.GetOperationID(i.ctx)
-}
-
-func (i *info) IsExternalExtensions() bool {
-	return i.conf.IsExternalExtensions
 }
 
 type apiErrCode struct{}

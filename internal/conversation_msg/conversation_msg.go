@@ -18,7 +18,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
@@ -59,7 +58,7 @@ type Conversation struct {
 	recvCh                      chan common.Cmd2Value
 	msgSyncerCh                 chan common.Cmd2Value
 	loginUserID                 string
-	platformID                  int32
+	platform                    int32
 	DataDir                     string
 	relation                    *relation.Relation
 	group                       *group.Group
@@ -79,6 +78,22 @@ type Conversation struct {
 	typing *typing
 }
 
+func (c *Conversation) SetDataBase(db db_interface.DataBase) {
+	c.db = db
+}
+
+func (c *Conversation) SetLoginUserID(loginUserID string) {
+	c.loginUserID = loginUserID
+}
+
+func (c *Conversation) SetPlatform(platform int32) {
+	c.platform = platform
+}
+
+func (c *Conversation) SetDataDir(DataDir string) {
+	c.DataDir = DataDir
+}
+
 func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
@@ -95,22 +110,17 @@ func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_c
 	c.businessListener = businessListener
 }
 
-func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
+func NewConversation(longConnMgr *interaction.LongConnMgr,
 	recvCh, msgSyncerCh chan common.Cmd2Value, relation *relation.Relation, group *group.Group, user *user.User,
 	file *file.File) *Conversation {
-	info := ccontext.Info(ctx)
-	n := &Conversation{db: db,
+	n := &Conversation{
 		LongConnMgr:                 longConnMgr,
 		recvCh:                      recvCh,
 		msgSyncerCh:                 msgSyncerCh,
-		loginUserID:                 info.UserID(),
-		platformID:                  info.PlatformID(),
-		DataDir:                     info.DataDir(),
 		relation:                    relation,
 		group:                       group,
 		user:                        user,
 		file:                        file,
-		IsExternalExtensions:        info.IsExternalExtensions(),
 		maxSeqRecorder:              NewMaxSeqRecorder(),
 		messagePullForwardEndSeqMap: cache.NewConversationSeqContextCache(),
 		messagePullReverseEndSeqMap: cache.NewConversationSeqContextCache(),

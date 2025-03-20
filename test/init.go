@@ -46,21 +46,21 @@ func init() {
 	if !isInit {
 		panic("init sdk failed")
 	}
-	ctx = open_im_sdk.UserForSDK.Context()
+	ctx = open_im_sdk.IMUserContext.Context()
 	ctx = ccontext.WithOperationID(ctx, "initOperationID_"+strconv.Itoa(int(time.Now().UnixMilli())))
 	token, err := GetUserToken(ctx, UserID, PlatformID, Secret, config)
 	if err != nil {
 		panic(err)
 	}
-	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
+	if err := open_im_sdk.IMUserContext.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
 	ch := make(chan error)
-	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx, ch: ch})
-	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
-	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
-	open_im_sdk.UserForSDK.SetFriendshipListener(&onFriendshipListener{ctx: ctx})
-	open_im_sdk.UserForSDK.SetUserListener(&onUserListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetConversationListener(&onConversationListener{ctx: ctx, ch: ch})
+	open_im_sdk.IMUserContext.SetGroupListener(&onGroupListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetFriendshipListener(&onFriendshipListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetUserListener(&onUserListener{ctx: ctx})
 	if err := <-ch; err != nil {
 		panic(err)
 	}
@@ -72,7 +72,6 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.WsAddr = WSADDR
 	cf.DataDir = "./"
 	cf.LogLevel = 6
-	cf.IsExternalExtensions = true
 	cf.PlatformID = PlatformID
 	cf.LogFilePath = "./"
 	cf.IsLogStandardOutput = true
@@ -95,7 +94,7 @@ func GetUserToken(ctx context.Context, userID string, platformID int32, secret s
 	ctx = ccontext.WithInfo(ctx, &ccontext.GlobalConfig{
 		UserID:   userID,
 		Token:    adminToken,
-		IMConfig: imConf,
+		IMConfig: &imConf,
 	})
 	return api.ExtractField(ctx, api.GetUsersToken.Invoke, userReq, (*auth.GetUserTokenResp).GetToken)
 }

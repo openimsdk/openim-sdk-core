@@ -42,11 +42,10 @@ func InitSDKAndLogin(userID, token string) error {
 	cf.WsAddr = WSADDR
 	cf.DataDir = "./"
 	cf.LogLevel = LogLevel
-	cf.IsExternalExtensions = true
 	cf.IsLogStandardOutput = true
 	cf.LogFilePath = ""
 	var testConnListener testConnListener
-	userForSDK.InitSDK(cf, &testConnListener)
+	userForSDK.InitSDK(&cf, &testConnListener)
 	if err := log.InitLoggerFromConfig(userID+"_open-im-sdk-core", "", cf.SystemType, constant.PlatformID2Name[int(cf.PlatformID)], int(LogLevel), true, false, cf.DataDir, 0, 24, version.Version, false); err != nil {
 		return err
 	}
@@ -60,7 +59,7 @@ func InitSDKAndLogin(userID, token string) error {
 	return nil
 }
 
-func SetListener(userForSDK *open_im_sdk.LoginMgr, userID string) {
+func SetListener(userForSDK *open_im_sdk.UserContext, userID string) {
 	var testConversation conversationCallBack
 	userForSDK.SetConversationListener(&testConversation)
 

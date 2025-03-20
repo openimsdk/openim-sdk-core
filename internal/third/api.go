@@ -10,7 +10,7 @@ import (
 
 func (c *Third) UpdateFcmToken(ctx context.Context, fcmToken string, expireTime int64) error {
 	return api.FcmUpdateToken.Execute(ctx, &third.FcmUpdateTokenReq{
-		PlatformID: c.platformID,
+		PlatformID: c.platform,
 		FcmToken:   fcmToken,
 		Account:    c.loginUserID,
 		ExpireTime: expireTime,

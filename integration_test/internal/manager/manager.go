@@ -45,7 +45,7 @@ func (m *MetaManager) BuildCtx(ctx context.Context) context.Context {
 	}
 	ctx = ccontext.WithInfo(ctx, &ccontext.GlobalConfig{
 		Token:    m.token,
-		IMConfig: m.IMConfig,
+		IMConfig: &m.IMConfig,
 	})
 	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 	ctx = mcontext.SetOpUserID(ctx, "admin")

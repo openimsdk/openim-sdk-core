@@ -123,7 +123,7 @@ func newUserCtx(userID, token string, imConfig sdk_struct.IMConfig) context.Cont
 	return ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
 		UserID:   userID,
 		Token:    token,
-		IMConfig: imConfig})
+		IMConfig: &imConfig})
 }
 
 func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
@@ -342,21 +342,6 @@ func (u *UserListener) OnSelfInfoUpdated(userInfo string) {
 }
 
 func (u *UserListener) OnUserStatusChanged(userOnlineStatus string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserListener) OnUserCommandAdd(userCommand string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserListener) OnUserCommandDelete(userCommand string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserListener) OnUserCommandUpdate(userCommand string) {
 	//TODO implement me
 	panic("implement me")
 }

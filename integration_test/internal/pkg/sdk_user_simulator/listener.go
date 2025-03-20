@@ -59,15 +59,6 @@ func (c userCallback) OnUserStatusChanged(statusMap string) {
 func (userCallback) OnSelfInfoUpdated(callbackData string) {
 
 }
-func (userCallback) OnUserCommandAdd(callbackData string) {
-
-}
-func (userCallback) OnUserCommandUpdate(callbackData string) {
-
-}
-func (userCallback) OnUserCommandDelete(callbackData string) {
-
-}
 
 type SingleMessage struct {
 	SendID      string

@@ -38,7 +38,6 @@ type IndexDB struct {
 	*indexdb.NotificationSeqs
 	*indexdb.LocalUpload
 	*indexdb.LocalSendingMessages
-	*indexdb.LocalUserCommand
 	*indexdb.LocalVersionSync
 	*indexdb.LocalAppSDKVersion
 	*indexdb.LocalTableMaster
@@ -70,7 +69,6 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 		NotificationSeqs:                indexdb.NewNotificationSeqs(),
 		LocalUpload:                     indexdb.NewLocalUpload(),
 		LocalSendingMessages:            indexdb.NewLocalSendingMessages(),
-		LocalUserCommand:                indexdb.NewLocalUserCommand(),
 		LocalVersionSync:                indexdb.NewLocalVersionSync(),
 		LocalAppSDKVersion:              indexdb.NewLocalAppSDKVersion(),
 		LocalTableMaster:                indexdb.NewLocalTableMaster(),

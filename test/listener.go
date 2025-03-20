@@ -17,6 +17,7 @@ package test
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/tools/log"
 )
 
@@ -231,15 +232,7 @@ type onUserListener struct {
 func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
 	log.ZDebug(context.Background(), "OnSelfInfoUpdated", "userInfo", userInfo)
 }
-func (o *onUserListener) OnUserCommandAdd(userInfo string) {
-	log.ZDebug(context.Background(), "OnUserCommandAdd", "blackInfo", userInfo)
-}
-func (o *onUserListener) OnUserCommandDelete(userInfo string) {
-	log.ZDebug(context.Background(), "OnUserCommandDelete", "blackInfo", userInfo)
-}
-func (o *onUserListener) OnUserCommandUpdate(userInfo string) {
-	log.ZDebug(context.Background(), "OnUserCommandUpdate", "blackInfo", userInfo)
-}
+
 func (o *onUserListener) OnUserStatusChanged(statusMap string) {
 	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)
 }

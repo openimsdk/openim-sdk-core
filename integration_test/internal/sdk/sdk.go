@@ -12,10 +12,10 @@ var (
 type TestSDK struct {
 	UserID string
 	Num    int
-	SDK    *open_im_sdk.LoginMgr
+	SDK    *open_im_sdk.UserContext
 }
 
-func NewTestSDK(userID string, num int, loginMgr *open_im_sdk.LoginMgr) *TestSDK {
+func NewTestSDK(userID string, num int, loginMgr *open_im_sdk.UserContext) *TestSDK {
 	return &TestSDK{
 		UserID: userID,
 		Num:    num,
