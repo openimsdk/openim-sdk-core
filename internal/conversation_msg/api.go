@@ -54,6 +54,8 @@ func (c *Conversation) GetAtAllTag(_ context.Context) string {
 }
 
 func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
 	conversationID := c.getConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err == nil {
@@ -80,10 +82,9 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
-		//double check if the conversation exists
-		lc, err := c.db.GetConversation(ctx, conversationID)
-		if err == nil {
-			return lc, nil
+		err := c.db.InsertConversation(ctx, &newConversation)
+		if err != nil {
+			return nil, err
 		}
 		return &newConversation, nil
 	}
