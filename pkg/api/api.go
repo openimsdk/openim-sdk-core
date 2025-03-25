@@ -15,15 +15,10 @@ var (
 )
 
 var (
-	GetUsersInfo             = newApi[user.GetDesignateUsersReq, user.GetDesignateUsersResp]("/user/get_users_info")
-	UpdateUserInfo           = newApi[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
-	UpdateUserInfoEx         = newApi[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
-	ProcessUserCommandAdd    = newApi[user.ProcessUserCommandAddReq, user.ProcessUserCommandAddResp]("/user/process_user_command_add")
-	ProcessUserCommandDelete = newApi[user.ProcessUserCommandDeleteReq, user.ProcessUserCommandDeleteResp]("/user/process_user_command_delete")
-	ProcessUserCommandUpdate = newApi[user.ProcessUserCommandUpdateReq, user.ProcessUserCommandUpdateResp]("/user/process_user_command_update")
-	ProcessUserCommandGet    = newApi[user.ProcessUserCommandGetReq, user.ProcessUserCommandGetResp]("/user/process_user_command_get")
-	ProcessUserCommandGetAll = newApi[user.ProcessUserCommandGetAllReq, user.ProcessUserCommandGetAllResp]("/user/process_user_command_get_all")
-	UserRegister             = newApi[user.UserRegisterReq, user.UserRegisterResp]("/user/user_register")
+	GetUsersInfo     = newApi[user.GetDesignateUsersReq, user.GetDesignateUsersResp]("/user/get_users_info")
+	UpdateUserInfo   = newApi[user.UpdateUserInfoReq, user.UpdateUserInfoResp]("/user/update_user_info")
+	UpdateUserInfoEx = newApi[user.UpdateUserInfoExReq, user.UpdateUserInfoExResp]("/user/update_user_info_ex")
+	UserRegister     = newApi[user.UserRegisterReq, user.UserRegisterResp]("/user/user_register")
 )
 
 var (
@@ -36,7 +31,6 @@ var (
 	GetFriendList                = newApi[relation.GetPaginationFriendsReq, relation.GetPaginationFriendsResp]("/friend/get_friend_list")
 	GetDesignatedFriends         = newApi[relation.GetDesignatedFriendsReq, relation.GetDesignatedFriendsResp]("/friend/get_designated_friends")
 	AddFriendResponse            = newApi[relation.RespondFriendApplyReq, relation.RespondFriendApplyResp]("/friend/add_friend_response")
-	SetFriendRemark              = newApi[relation.SetFriendRemarkReq, relation.SetFriendRemarkResp]("/friend/set_friend_remark")
 	UpdateFriends                = newApi[relation.UpdateFriendsReq, relation.UpdateFriendsResp]("/friend/update_friends")
 	GetIncrementalFriends        = newApi[relation.GetIncrementalFriendsReq, relation.GetIncrementalFriendsResp]("/friend/get_incremental_friends")
 	GetFullFriendUserIDs         = newApi[relation.GetFullFriendUserIDsReq, relation.GetFullFriendUserIDsResp]("/friend/get_full_friend_user_ids")

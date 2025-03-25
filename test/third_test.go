@@ -16,7 +16,7 @@ func (s SProgress) OnProgress(current int64, size int64) {
 
 func Test_UploadLog(t *testing.T) {
 	tm := time.Now()
-	err := open_im_sdk.UserForSDK.Third().UploadLogs(ctx, 2000, "it is ex", SProgress{})
+	err := open_im_sdk.IMUserContext.Third().UploadLogs(ctx, 2000, "it is ex", SProgress{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -24,5 +24,5 @@ func Test_UploadLog(t *testing.T) {
 
 }
 func Test_SDKLogs(t *testing.T) {
-	open_im_sdk.UserForSDK.Third().Log(ctx, 4, "cmd/abc.go", 666, "This is a test message", "", []any{"key", "value"})
+	open_im_sdk.IMUserContext.Third().Log(ctx, 4, "cmd/abc.go", 666, "This is a test message", "", []any{"key", "value"})
 }

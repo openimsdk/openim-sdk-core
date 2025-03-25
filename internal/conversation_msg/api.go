@@ -179,7 +179,7 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 		return nil, sdkerrs.ErrArgs
 	}
 	s.SendID = c.loginUserID
-	s.SenderPlatformID = c.platformID
+	s.SenderPlatformID = c.platform
 	lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 	//assemble messages and conversations based on single or group chat types
 	if recvID == "" {
@@ -934,7 +934,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.ClientMsgID = ClientMsgID
 	message.MsgFrom = msgFrom
 	message.ContentType = contentType
-	message.SenderPlatformID = c.platformID
+	message.SenderPlatformID = c.platform
 	return nil
 }
 
