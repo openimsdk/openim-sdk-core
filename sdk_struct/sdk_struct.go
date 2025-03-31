@@ -314,15 +314,15 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
-	SystemType           string `json:"systemType"`
-	PlatformID           int32  `json:"platformID"`
-	ApiAddr              string `json:"apiAddr"`
-	WsAddr               string `json:"wsAddr"`
-	DataDir              string `json:"dataDir"`
-	LogLevel             uint32 `json:"logLevel"`
-	IsLogStandardOutput  bool   `json:"isLogStandardOutput"`
-	LogFilePath          string `json:"logFilePath"`
-	IsExternalExtensions bool   `json:"isExternalExtensions"`
+	SystemType          string `json:"systemType"`
+	PlatformID          int32  `json:"platformID"`
+	ApiAddr             string `json:"apiAddr"`
+	WsAddr              string `json:"wsAddr"`
+	DataDir             string `json:"dataDir"`
+	LogLevel            uint32 `json:"logLevel"`
+	IsLogStandardOutput bool   `json:"isLogStandardOutput"`
+	LogFilePath         string `json:"logFilePath"`
+	LogRemainCount      uint32 `json:"logRemainCount"`
 }
 
 type CmdNewMsgComeToConversation struct {

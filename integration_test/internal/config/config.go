@@ -10,7 +10,7 @@ const (
 	APIAddr             = "http://" + TestIP + ":10002"
 	WsAddr              = "ws://" + TestIP + ":10001"
 	AdminUserID         = "imAdmin"
-	Secret              = "openIM123"
+	Secret              = "123456"
 	PlatformID          = constant.AndroidPlatformID
 	LogLevel            = 3
 	DataDir             = "./data/"
@@ -24,7 +24,6 @@ func GetConf() sdk_struct.IMConfig {
 	cf.WsAddr = WsAddr
 	cf.DataDir = DataDir
 	cf.LogLevel = LogLevel
-	cf.IsExternalExtensions = true
 	cf.PlatformID = int32(PlatformID)
 	cf.LogFilePath = LogFilePath
 	cf.IsLogStandardOutput = IsLogStandardOutput
