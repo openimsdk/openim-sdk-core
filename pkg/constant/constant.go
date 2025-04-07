@@ -63,6 +63,7 @@ const (
 	Quote                           = 114
 	Face                            = 115
 	AdvancedText                    = 117
+	MarkdownText                    = 118
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
 
