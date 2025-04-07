@@ -29,6 +29,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -219,6 +220,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		if err != nil {
 			log.ZError(c.ctx, "readMessage err", err, "goroutine ID:", getGoroutineID())
 			_ = c.close()
+			cliconf.ClearConfig()
 			c.sub.onConnClosed(err)
 			continue
 		}
