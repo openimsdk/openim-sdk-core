@@ -80,7 +80,7 @@ func (u *UserContext) initResources() {
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.msgSyncerCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
-	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.msgSyncerCh, u.loginMgrCh)
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.userOnlineStatusChange, u.msgSyncerCh, u.loginMgrCh)
 	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
 	u.setLoginStatus(LogoutStatus)
 	u.user = user.NewUser(u.conversationCh)
@@ -154,6 +154,10 @@ type UserContext struct {
 
 func (u *UserContext) Info() *ccontext.GlobalConfig {
 	return u.info
+}
+
+func (u *UserContext) ConnListener() open_im_sdk_callback.OnConnListener {
+	return u.connListener
 }
 
 func (u *UserContext) GroupListener() open_im_sdk_callback.OnGroupListener {
@@ -400,6 +404,7 @@ func (u *UserContext) initialize(ctx context.Context, userID string) error {
 }
 
 func (u *UserContext) setListener(ctx context.Context) {
+	setListener(ctx, &u.connListener, u.ConnListener, u.longConnMgr.SetListener, nil)
 	setListener(ctx, &u.userListener, u.UserListener, u.user.SetListener, newEmptyUserListener)
 	setListener(ctx, &u.friendshipListener, u.FriendshipListener, u.relation.SetListener, newEmptyFriendshipListener)
 	setListener(ctx, &u.groupListener, u.GroupListener, u.group.SetGroupListener, newEmptyGroupListener)

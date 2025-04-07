@@ -239,6 +239,7 @@ type MsgStruct struct {
 	AdvancedTextElem *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
 	TypingElem       *TypingElem            `json:"typingElem,omitempty"`
 	AttachedInfoElem *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
+	MarkdownTextElem *MarkdownTextElem      `json:"markdownTextElem,omitempty"`
 }
 
 type AtInfo struct {
@@ -338,4 +339,8 @@ type PublicUser struct {
 	FaceURL    string `json:"faceURL"`
 	Ex         string `json:"ex"`
 	CreateTime int64  `json:"createTime"`
+}
+
+type MarkdownTextElem struct {
+	Content string `json:"content"`
 }

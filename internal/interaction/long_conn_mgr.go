@@ -82,7 +82,7 @@ type LongConnMgr struct {
 	connStatus int
 	// The long connection,can be set tcp or websocket.
 	conn       LongConn
-	listener   open_im_sdk_callback.OnConnListener
+	listener   func() open_im_sdk_callback.OnConnListener
 	userOnline func(map[string][]int32)
 	// Buffered channel of outbound messages.
 	send               chan Message
@@ -110,9 +110,8 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, userOnline func(map[string][]int32), pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, userOnline func(map[string][]int32), pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{
-		listener:           listener,
 		userOnline:         userOnline,
 		pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		loginMgrCh:         loginMgrCh,
@@ -129,6 +128,12 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.ctx = ctx
 	return l
 }
+
+// SetListener sets the user's listener.
+func (l *LongConnMgr) SetListener(listener func() open_im_sdk_callback.OnConnListener) {
+	l.listener = listener
+}
+
 func (c *LongConnMgr) Run(ctx context.Context) {
 	go c.readPump(ctx)
 	go c.writePump(ctx)
@@ -632,7 +637,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	}
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
-	c.listener.OnConnecting()
+	c.listener().OnConnecting()
 	c.SetConnectionStatus(Connecting)
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t",
 		ccontext.Info(ctx).WsAddr(), ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(),
@@ -674,17 +679,17 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 				return true, err
 			}
 		}
-		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
+		c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return true, err
 	}
 	if err := c.writeConnFirstSubMsg(ctx); err != nil {
 		log.ZError(ctx, "first write user online sub info error", err)
 		ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
-		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
+		c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		c.conn.Close()
 		return true, err
 	}
-	c.listener.OnConnectSuccess()
+	c.listener().OnConnectSuccess()
 	c.sub.onConnSuccess()
 	c.ctx = newContext(c.conn.LocalAddr())
 	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)

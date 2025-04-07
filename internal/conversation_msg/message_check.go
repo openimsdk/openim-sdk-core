@@ -590,11 +590,15 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 	allSenders := datautil.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
 		return e.SendID
 	})
-	groupMap, err := c.group.GetGroupMemberNameAndFaceURL(ctx, lc.GroupID, datautil.Distinct(allSenders))
+	userIDs := datautil.Distinct(allSenders)
+	specialUsersInfo, missKeys := c.user.UserCache().BatchGetSpecialUser(ctx, userIDs)
+
+	groupMap, err := c.group.GetGroupMemberNameAndFaceURL(ctx, lc.GroupID, missKeys)
 	if err != nil {
 		log.ZError(ctx, "get group member info err", err)
 		return
 	}
+	specialUsers := make(map[string]*model_struct.LocalUser)
 	for _, chatLog := range allMessage {
 		if g, ok := groupMap[chatLog.SendID]; ok { // If group member info is successfully retrieved
 			log.ZDebug(ctx, "find in GetGroupMemberNameAndFaceURL", "sendID", chatLog.SendID, "faceURL", g.FaceURL, "nickName", g.Nickname)
@@ -602,15 +606,27 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 				chatLog.SenderFaceURL = g.FaceURL
 				chatLog.SenderNickname = g.Nickname
 			}
-		} else { // Otherwise, retrieve from local temporary cache
-			faceURL, name, err := c.getUserNameAndFaceURL(ctx, chatLog.SendID)
-			if err != nil {
-				log.ZWarn(ctx, "getUserNameAndFaceURL error", err, "senderID", chatLog.SendID)
-			} else if faceURL != "" && name != "" {
-				log.ZDebug(ctx, "find in getUserNameAndFaceURL", "sendID", chatLog.SendID, "faceURL", faceURL, "nickName", name)
-				chatLog.SenderFaceURL = faceURL
-				chatLog.SenderNickname = name
+		} else if u, ok := specialUsersInfo[chatLog.SendID]; ok {
+			if u.FaceURL != "" && u.Nickname != "" {
+				chatLog.SenderFaceURL = u.FaceURL
+				chatLog.SenderNickname = u.Nickname
 			}
+		} else { // Otherwise, retrieve from local temporary cache
+			// Maybe it's a user information that doesn't exist on the server, but has sent a message before or admin user.
+			userInfo, err := c.user.GetUserInfoWithCache(ctx, chatLog.SendID)
+			if err != nil {
+				userInfo = &model_struct.LocalUser{UserID: chatLog.SendID}
+			}
+			if userInfo.FaceURL != "" && userInfo.Nickname != "" {
+				log.ZDebug(ctx, "find in getUserNameAndFaceURL", "sendID", chatLog.SendID)
+				chatLog.SenderFaceURL = userInfo.FaceURL
+				chatLog.SenderNickname = userInfo.Nickname
+			}
+			specialUsers[chatLog.SendID] = userInfo
 		}
 	}
+	if len(specialUsers) > 0 {
+		c.user.UserCache().BatchAddSpecialUser(specialUsers)
+	}
+
 }
