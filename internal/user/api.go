@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -82,4 +83,12 @@ func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struc
 		}
 	}
 	return res, nil
+}
+
+func (u *User) GetUserClientConfig(ctx context.Context) (map[string]string, error) {
+	res, err := cliconf.GetClientConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res.RawConfig, nil
 }

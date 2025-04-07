@@ -236,3 +236,19 @@ func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
 func (o *onUserListener) OnUserStatusChanged(statusMap string) {
 	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)
 }
+
+type onMessageKvInfoListener struct {
+	ctx context.Context
+}
+
+func (o *onMessageKvInfoListener) OnMessageKvInfoChanged(messageChangedList string) {
+	log.ZDebug(o.ctx, "OnMessageKvInfoChanged", "messageChangedList", messageChangedList)
+}
+
+type onCustomBusinessListener struct {
+	ctx context.Context
+}
+
+func (o *onCustomBusinessListener) OnRecvCustomBusinessMessage(businessMessage string) {
+	log.ZDebug(o.ctx, "OnRecvCustomBusinessMessage", "businessMessage", businessMessage)
+}

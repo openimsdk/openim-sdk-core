@@ -446,11 +446,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	if c.batchMsgListener() != nil {
-		c.batchNewMessages(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	} else {
-		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	}
+	c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
+
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
 	}

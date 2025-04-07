@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
 	pbConversation "github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/protocol/jssdk"
 	pbMsg "github.com/openimsdk/protocol/msg"
 )
 
@@ -70,4 +72,13 @@ func (c *Conversation) getAllConversationIDsFromServer(ctx context.Context) (*pb
 func (c *Conversation) getIncrementalConversationFromServer(ctx context.Context, version uint64, versionID string) (*pbConversation.GetIncrementalConversationResp, error) {
 	req := &pbConversation.GetIncrementalConversationReq{UserID: c.loginUserID, Version: version, VersionID: versionID}
 	return api.GetIncrementalConversation.Invoke(ctx, req)
+}
+
+func (c *Conversation) GetActiveConversations(ctx context.Context) ([]*jssdk.ConversationMsg, error) {
+	conf, err := cliconf.GetClientConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req := &jssdk.GetActiveConversationsReq{OwnerUserID: c.loginUserID, Count: int64(conf.ConversationActiveNum)}
+	return api.ExtractField(ctx, api.GetActiveConversation.Invoke, req, (*jssdk.GetActiveConversationsResp).GetConversations)
 }

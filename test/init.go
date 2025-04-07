@@ -57,10 +57,12 @@ func init() {
 	}
 	ch := make(chan error)
 	open_im_sdk.IMUserContext.SetConversationListener(&onConversationListener{ctx: ctx, ch: ch})
-	open_im_sdk.IMUserContext.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.IMUserContext.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetMessageKvInfoListener(&onMessageKvInfoListener{})
 	open_im_sdk.IMUserContext.SetFriendshipListener(&onFriendshipListener{ctx: ctx})
-	open_im_sdk.IMUserContext.SetUserListener(&onUserListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetGroupListener(&onGroupListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetCustomBusinessListener(&onCustomBusinessListener{ctx: ctx})
+
 	if err := <-ch; err != nil {
 		panic(err)
 	}
