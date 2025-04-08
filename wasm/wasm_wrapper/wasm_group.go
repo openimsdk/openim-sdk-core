@@ -144,6 +144,16 @@ func (w *WrapperGroup) RefuseGroupApplication(_ js.Value, args []js.Value) inter
 	return event_listener.NewCaller(open_im_sdk.RefuseGroupApplication, callback, &args).AsyncCallWithCallback()
 }
 
+func (w *WrapperGroup) CheckLocalGroupFullSync(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.CheckLocalGroupFullSync, callback, &args).AsyncCallWithCallback()
+}
+
+func (w *WrapperGroup) CheckGroupMemberFullSync(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.CheckGroupMemberFullSync, callback, &args).AsyncCallWithCallback()
+}
+
 func (w *WrapperGroup) SearchGroupMembers(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SearchGroupMembers, callback, &args).AsyncCallWithCallback()
