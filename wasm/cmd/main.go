@@ -21,10 +21,9 @@ import (
 	"fmt"
 	"runtime"
 	"runtime/debug"
+	"syscall/js"
 
 	"github.com/openimsdk/openim-sdk-core/v3/wasm/wasm_wrapper"
-
-	"syscall/js"
 )
 
 func main() {
@@ -131,6 +130,8 @@ func registerFunc() {
 	js.Global().Set("getGroupApplicationListAsApplicant", js.FuncOf(wrapperGroup.GetGroupApplicationListAsApplicant))
 	js.Global().Set("acceptGroupApplication", js.FuncOf(wrapperGroup.AcceptGroupApplication))
 	js.Global().Set("refuseGroupApplication", js.FuncOf(wrapperGroup.RefuseGroupApplication))
+	js.Global().Set("checkLocalGroupFullSync", js.FuncOf(wrapperGroup.CheckLocalGroupFullSync))
+	js.Global().Set("checkGroupMemberFullSync", js.FuncOf(wrapperGroup.CheckGroupMemberFullSync))
 	js.Global().Set("searchGroupMembers", js.FuncOf(wrapperGroup.SearchGroupMembers))
 	js.Global().Set("isJoinGroup", js.FuncOf(wrapperGroup.IsJoinGroup))
 	js.Global().Set("getUsersInGroup", js.FuncOf(wrapperGroup.GetUsersInGroup))
