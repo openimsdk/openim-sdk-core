@@ -269,14 +269,6 @@ func (c *Conversation) GetConversationIDBySessionType(_ context.Context, sourceI
 }
 
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
-	// Message is created by URL
-	if (s.FileElem != nil && s.FileElem.SourceURL != "") ||
-		(s.SoundElem != nil && s.SoundElem.SourceURL != "") ||
-		(s.VideoElem != nil && s.VideoElem.VideoURL != "") ||
-		(s.PictureElem != nil && (s.PictureElem.SourcePicture.Url != "" || s.PictureElem.BigPicture.Url != "" || s.PictureElem.SnapshotPicture.Url != "")) {
-		return c.sendMessageNotOss(ctx, s, recvID, groupID, p, isOnlineOnly)
-	}
-
 	filepathExt := func(name ...string) string {
 		for _, path := range name {
 			if ext := filepath.Ext(path); ext != "" {
@@ -542,7 +534,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options, isOnlineOnly)
 }
 
-func (c *Conversation) sendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
+func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
 	p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
 	options := make(map[string]bool, 2)
 	lc, err := c.checkID(ctx, s, recvID, groupID, options)
