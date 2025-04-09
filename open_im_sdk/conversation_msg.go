@@ -79,8 +79,33 @@ func CreateAdvancedQuoteMessage(operationID string, text string, message, messag
 }
 func CreateCardMessage(operationID string, cardInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateCardMessage, cardInfo)
-
 }
+
+func CreateVideoMessageFromFullPath(operationID string, videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessageFromFullPath, videoFullPath, videoType, duration, snapshotFullPath)
+}
+func CreateImageMessageFromFullPath(operationID string, imageFullPath string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessageFromFullPath, imageFullPath)
+}
+func CreateSoundMessageFromFullPath(operationID string, soundPath string, duration int64) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessageFromFullPath, soundPath, duration)
+}
+func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessageFromFullPath, fileFullPath, fileName)
+}
+func CreateImageMessageByURL(operationID string, sourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessageByURL, sourcePath, sourcePicture, bigPicture, snapshotPicture)
+}
+func CreateSoundMessageByURL(operationID string, soundBaseInfo string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessageByURL, soundBaseInfo)
+}
+func CreateVideoMessageByURL(operationID string, videoBaseInfo string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessageByURL, videoBaseInfo)
+}
+func CreateFileMessageByURL(operationID string, fileBaseInfo string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessageByURL, fileBaseInfo)
+}
+
 func CreateImageMessage(operationID string, imageSourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessage, imageSourcePath, sourcePicture, bigPicture, snapshotPicture)
 }
@@ -107,6 +132,10 @@ func GetConversationIDBySessionType(operationID string, sourceID string, session
 }
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string, isOnlineOnly bool) {
 	messageCall(callback, operationID, IMUserContext.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
+}
+
+func SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, operationID string, message, recvID, groupID string, offlinePushInfo string, isOnlineOnly bool) {
+	messageCall(callback, operationID, IMUserContext.Conversation().SendMessageNotOss, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
 }
 
 func FindMessageList(callback open_im_sdk_callback.Base, operationID string, findMessageOptions string) {
