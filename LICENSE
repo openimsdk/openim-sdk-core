@@ -1,27 +1,3 @@
-# Open Source License
-
-OpenIM is licensed under the Apache License 2.0, with the following additional conditions:
-
-1. OpenIM may be utilized commercially, including as a backend service for other applications or as an application development platform for enterprises. 
-A commercial license must be obtained from the producer if:
-    - Under no circumstances may you operate a multi-tenant or multi-business environment using the OpenIM source code, whether or not you have modified the repository code. In other words, a single instance of OpenIM may not simultaneously serve multiple enterprises, nor may it serve multiple lines of business within the same enterprise.
-   - If you intend to operate in such a multi-tenant or multi-business manner, you must obtain a commercial license from the producer in advance.
-
-2. As a contributor, you should agree that:
-
-   a. The producer can adjust the open-source agreement to be more strict or more relaxed as deemed necessary.  
-   b. Your contributed code may be used for commercial purposes, including but not limited to its cloud business operations.
-
-Apart from the specific conditions mentioned above, all other rights and restrictions follow the Apache License 2.0. Detailed information about the Apache License 2.0 can be found at http://www.apache.org/licenses/LICENSE-2.0.
-
-
-For any licensing-related questions or to obtain a commercial license, please contact contact@openim.io.
-
-
-© 2024 OpenIMSDK
-
-----------
-
 Licensed under the Apache License, Version 2.0 (the "License");  
 you may not use this file except in compliance with the License.  
 You may obtain a copy of the License at
