@@ -16,7 +16,6 @@ require (
 require golang.org/x/net v0.29.0 // indirect
 
 require (
-	github.com/coder/websocket v1.8.13
 	github.com/google/go-cmp v0.6.0
 	github.com/openimsdk/protocol v0.0.72-alpha.70
 	github.com/openimsdk/tools v0.0.50-alpha.21

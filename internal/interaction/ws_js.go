@@ -13,8 +13,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/coder/websocket"
-
+	"github.com/gorilla/websocket"
 	"github.com/openimsdk/tools/log"
 )
 
