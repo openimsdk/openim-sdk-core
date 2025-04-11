@@ -32,7 +32,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
   LABEL_NEW: "milestone-merge"
-  LABEL_ORIGIN: "merged-to-prerelease"
+  LABEL_FILTER: "cherry-picked"
 
 jobs:
   migrate_milestone_prs:
@@ -101,10 +101,10 @@ jobs:
               pr_number=$(echo "$issue" | jq -r '.number')
               
               # Check if PR has cherry-picked label
-              has_cherry_picked=$(echo "$issue" | jq -r '.labels | map(.name) | contains(["cherry-picked"])')
+              has_cherry_picked=$(echo "$issue" | jq -r --arg LABEL "$LABEL_FILTER" '.labels | map(.name) | contains([$LABEL])')
               
               if [ "$has_cherry_picked" = "true" ]; then
-                echo "Skipping PR #$pr_number: already has cherry-picked label"
+                echo "Skipping PR #$pr_number: already has $LABEL_FILTER label"
                 continue
               fi
               
