@@ -56,7 +56,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Delete branch after PR close
-      if: steps.extract_pr_numbers.outputs.proceed == 'true' || contains(github.event.pull_request.labels.*.name, 'milestone-merge')
+      if: steps.extract_pr_numbers.outputs.proceed == 'true' || contains(github.event.pull_request.labels.*.name, 'milestone-merge') || contains(github.event.pull_request.labels.*.name, 'changelog')
       continue-on-error: true
       run: |
         BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
