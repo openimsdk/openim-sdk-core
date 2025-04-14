@@ -348,48 +348,48 @@ jobs:
             git checkout $TARGET_BRANCH
           done
 
-      - name: Create results report
-        run: |
-          echo "Generating results report..."
+      # - name: Create results report
+      #   run: |
+      #     echo "Generating results report..."
 
-          # Extract successful, failed and skipped PRs
-          success_count=$(jq '[.[] | select(.status == "success")] | length' /tmp/milestone_migration/results.json)
-          failure_count=$(jq '[.[] | select(.status == "failure")] | length' /tmp/milestone_migration/results.json)
-          skipped_count=$(jq '[.[] | select(.status == "skipped")] | length' /tmp/milestone_migration/results.json)
-          total_count=$(jq '. | length' /tmp/milestone_migration/results.json)
+      #     # Extract successful, failed and skipped PRs
+      #     success_count=$(jq '[.[] | select(.status == "success")] | length' /tmp/milestone_migration/results.json)
+      #     failure_count=$(jq '[.[] | select(.status == "failure")] | length' /tmp/milestone_migration/results.json)
+      #     skipped_count=$(jq '[.[] | select(.status == "skipped")] | length' /tmp/milestone_migration/results.json)
+      #     total_count=$(jq '. | length' /tmp/milestone_migration/results.json)
 
-          # Create report Markdown
-          report_title="Milestone $MILESTONE_NAME migration to $TARGET_BRANCH results"
-          report_body="## Milestone $MILESTONE_NAME Migration Report\n\n"
-          report_body+="- Total processed: $total_count PRs\n"
-          report_body+="- Success: $success_count PRs\n"
-          report_body+="- Failed: $failure_count PRs\n"
-          report_body+="- Skipped: $skipped_count PRs (no actual changes)\n\n"
+      #     # Create report Markdown
+      #     report_title="Milestone $MILESTONE_NAME migration to $TARGET_BRANCH results"
+      #     report_body="## Milestone $MILESTONE_NAME Migration Report\n\n"
+      #     report_body+="- Total processed: $total_count PRs\n"
+      #     report_body+="- Success: $success_count PRs\n"
+      #     report_body+="- Failed: $failure_count PRs\n"
+      #     report_body+="- Skipped: $skipped_count PRs (no actual changes)\n\n"
 
-          if [ "$success_count" -gt 0 ]; then
-            report_body+="### Successfully processed PRs:\n\n"
-            success_prs=$(jq -r '.[] | select(.status == "success") | "- PR #\(.original_pr) → New PR #\(.new_pr)"' /tmp/milestone_migration/results.json)
-            report_body+="$success_prs\n\n"
-          fi
+      #     if [ "$success_count" -gt 0 ]; then
+      #       report_body+="### Successfully processed PRs:\n\n"
+      #       success_prs=$(jq -r '.[] | select(.status == "success") | "- PR #\(.original_pr) → New PR #\(.new_pr)"' /tmp/milestone_migration/results.json)
+      #       report_body+="$success_prs\n\n"
+      #     fi
 
-          if [ "$failure_count" -gt 0 ]; then
-            report_body+="### Failed PRs:\n\n"
-            failure_prs=$(jq -r '.[] | select(.status == "failure") | "- PR #\(.original_pr): \(.message)"' /tmp/milestone_migration/results.json)
-            report_body+="$failure_prs\n\n"
-          fi
+      #     if [ "$failure_count" -gt 0 ]; then
+      #       report_body+="### Failed PRs:\n\n"
+      #       failure_prs=$(jq -r '.[] | select(.status == "failure") | "- PR #\(.original_pr): \(.message)"' /tmp/milestone_migration/results.json)
+      #       report_body+="$failure_prs\n\n"
+      #     fi
 
-          if [ "$skipped_count" -gt 0 ]; then
-            report_body+="### Skipped PRs:\n\n"
-            skipped_prs=$(jq -r '.[] | select(.status == "skipped") | "- PR #\(.original_pr): \(.message)"' /tmp/milestone_migration/results.json)
-            report_body+="$skipped_prs\n\n"
-          fi
+      #     if [ "$skipped_count" -gt 0 ]; then
+      #       report_body+="### Skipped PRs:\n\n"
+      #       skipped_prs=$(jq -r '.[] | select(.status == "skipped") | "- PR #\(.original_pr): \(.message)"' /tmp/milestone_migration/results.json)
+      #       report_body+="$skipped_prs\n\n"
+      #     fi
 
-          # Create issue
-          issue_response=$(curl -s -X POST -H "Authorization: token $BOT_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/issues" \
-            -d "{\"title\":\"$report_title\", \"body\":\"$report_body\", \"labels\":[\"report\"]}")
+      #     # Create issue
+      #     issue_response=$(curl -s -X POST -H "Authorization: token $BOT_TOKEN" \
+      #       -H "Accept: application/vnd.github+json" \
+      #       "https://api.github.com/repos/${{ github.repository }}/issues" \
+      #       -d "{\"title\":\"$report_title\", \"body\":\"$report_body\", \"labels\":[\"report\"]}")
 
-          issue_number=$(echo "$issue_response" | jq -r '.number')
+      #     issue_number=$(echo "$issue_response" | jq -r '.number')
 
-          echo "Created results report issue #$issue_number"
+      #     echo "Created results report issue #$issue_number"
