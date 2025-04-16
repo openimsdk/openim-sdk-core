@@ -500,3 +500,34 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	// SyncAdminGroupApplication todo
 	return nil
 }
+
+
+func (g *Group) CheckLocalGroupFullSync(ctx context.Context) (bool, error) {
+	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	if err != nil {
+		return false, err
+	}
+	groups, err := g.db.GetGroups(ctx, lvs.UIDList)
+	if err != nil {
+		return false, err
+	}
+	if len(groups) != len(lvs.UIDList) {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (g *Group) CheckGroupMemberFullSync(ctx context.Context, groupID string) (bool, error) {
+	lvs, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
+	if err != nil {
+		return false, err
+	}
+	members, err := g.db.GetGroupMemberListByGroupID(ctx, groupID)
+	if err != nil {
+		return false, err
+	}
+	if len(members) != len(lvs.UIDList) {
+		return false, nil
+	}
+	return true, nil
+}
