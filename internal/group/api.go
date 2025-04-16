@@ -500,7 +500,3 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	// SyncAdminGroupApplication todo
 	return nil
 }
-
-func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string, userIDs []string) (map[string]*model_struct.LocalGroupMember, error) {
-	return g.GetGroupMembersInfo(ctx, groupID, userIDs)
-}

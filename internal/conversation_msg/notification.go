@@ -68,9 +68,11 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
+	seqs := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Seqs
 	switch syncFlag {
-	case constant.AppDataSyncStart:
-		log.ZDebug(ctx, "AppDataSyncStart")
+	case constant.AppDataSyncBegin, constant.LargeDataSyncBegin:
+		log.ZDebug(ctx, "AppDataSyncBegin")
+		c.seqs = seqs
 		c.startTime = time.Now()
 		c.ConversationListener().OnSyncServerStart(true)
 		c.ConversationListener().OnSyncServerProgress(1)
@@ -83,8 +85,9 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		c.ConversationListener().OnSyncServerProgress(c.progress) // notify server current Progress
 
 		syncWaitFunctions := []func(c context.Context) error{
+
 			c.IncrSyncConversations,
-			c.SyncAllConversationHashReadSeqs,
+			c.SyncAllConUnreadAndCreateNewCon,
 		}
 		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
 		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
@@ -101,12 +104,13 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		}
 		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
-	case constant.AppDataSyncFinish:
-		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).Milliseconds())
+	case constant.AppDataSyncEnd, constant.LargeDataSyncEnd:
+		log.ZDebug(ctx, "AppDataSyncEnd", "time", time.Since(c.startTime).Milliseconds())
 		c.progress = 100
 		c.ConversationListener().OnSyncServerProgress(c.progress)
 		c.ConversationListener().OnSyncServerFinish(true)
 	case constant.MsgSyncBegin:
+		c.seqs = seqs
 		log.ZDebug(ctx, "MsgSyncBegin")
 		c.ConversationListener().OnSyncServerStart(false)
 		c.syncData(c2v)
@@ -426,7 +430,7 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 
 	// Synchronous sync functions
 	syncFuncs := []func(c context.Context) error{
-		c.SyncAllConversationHashReadSeqs,
+		c.SyncAllConUnreadAndCreateNewCon,
 	}
 
 	runSyncFunctions(ctx, syncFuncs, syncWait)

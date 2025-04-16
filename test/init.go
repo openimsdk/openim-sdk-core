@@ -73,7 +73,7 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.ApiAddr = APIADDR
 	cf.WsAddr = WSADDR
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = 5
 	cf.PlatformID = PlatformID
 	cf.LogFilePath = "./"
 	cf.IsLogStandardOutput = true

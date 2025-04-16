@@ -15,6 +15,7 @@
 package sdk_struct
 
 import (
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
 )
 
@@ -320,6 +321,7 @@ type IMConfig struct {
 
 type CmdNewMsgComeToConversation struct {
 	Msgs     map[string]*sdkws.PullMsgs
+	Seqs     map[string]*msg.Seqs
 	SyncFlag int
 }
 

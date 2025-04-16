@@ -119,7 +119,7 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 			return err
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ConversationEventQueue())
 	return nil
 }
 
@@ -167,7 +167,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ConversationEventQueue())
 }
 
 func (c *Conversation) fileName(ftype string, id string) string {
@@ -313,7 +313,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		lc.LatestMsg = utils.StructToJsonString(s)
 		log.ZDebug(ctx, "send message come here", "conversion", *lc)
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ConversationEventQueue())
 	}
 
 	var delFile []string
@@ -845,7 +845,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ConversationEventQueue())
 	return s, nil
 
 }
@@ -886,7 +886,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ConversationEventQueue())
 	return s, nil
 
 }

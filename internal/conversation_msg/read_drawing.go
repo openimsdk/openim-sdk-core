@@ -268,7 +268,7 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) er
 					if latestMsg.ClientMsgID == message.ClientMsgID {
 						latestMsg.IsRead = message.IsRead
 						conversation.LatestMsg = utils.StructToJsonString(latestMsg)
-						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.GetCh())
+						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *conversation}, c.ConversationEventQueue())
 
 					}
 					successMsgIDs = append(successMsgIDs, message.ClientMsgID)

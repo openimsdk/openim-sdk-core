@@ -37,14 +37,14 @@ import (
 )
 
 const (
-	groupSyncLimit       = 1000
+	groupSyncLimit       = 1047
 	groupMemberSyncLimit = 1000
 )
 
 func NewGroup(
-	conversationCh chan common.Cmd2Value) *Group {
+	conversationEventQueue *common.EventQueue) *Group {
 	g := &Group{
-		conversationCh: conversationCh,
+		conversationEventQueue: conversationEventQueue,
 	}
 	g.initSyncer()
 	g.groupMemberCache = cache.NewCache[string, *model_struct.LocalGroupMember]()
@@ -60,7 +60,7 @@ type Group struct {
 	groupRequestSyncer      *syncer.Syncer[*model_struct.LocalGroupRequest, syncer.NoResp, [2]string]
 	groupAdminRequestSyncer *syncer.Syncer[*model_struct.LocalAdminGroupRequest, syncer.NoResp, [2]string]
 
-	conversationCh chan common.Cmd2Value
+	conversationEventQueue *common.EventQueue
 	//	memberSyncMutex sync.RWMutex
 
 	groupSyncMutex     sync.Mutex
@@ -105,7 +105,7 @@ func (g *Group) initSyncer() {
 						SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
 						FaceURL: server.FaceURL, Nickname: server.GroupName,
 					},
-				}, g.conversationCh)
+				}, g.conversationEventQueue)
 			case syncer.Delete:
 				local.MemberCount = 0
 				g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(local))
@@ -126,7 +126,7 @@ func (g *Group) initSyncer() {
 								SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
 								FaceURL: server.FaceURL, Nickname: server.GroupName,
 							},
-						}, g.conversationCh)
+						}, g.conversationEventQueue)
 					}
 				}
 			}
@@ -175,7 +175,7 @@ func (g *Group) initSyncer() {
 							SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 							Nickname: server.Nickname, GroupID: server.GroupID,
 						},
-					}, g.conversationCh)
+					}, g.conversationEventQueue)
 			case syncer.Delete:
 				g.listener().OnGroupMemberDeleted(utils.StructToJsonString(local))
 			case syncer.Update:
@@ -188,11 +188,11 @@ func (g *Group) initSyncer() {
 								SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 								Nickname: server.Nickname, GroupID: server.GroupID,
 							},
-						}, g.conversationCh)
+						}, g.conversationEventQueue)
 					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateLatestMessageFaceUrlAndNickName, Args: common.UpdateMessageInfo{
 						SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 						Nickname: server.Nickname, GroupID: server.GroupID,
-					}}, g.conversationCh)
+					}}, g.conversationEventQueue)
 				}
 			}
 			return nil

@@ -548,9 +548,14 @@ func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, other
 	if err != nil {
 		return append(self, others...)
 	}
+	userInfo, err := c.db.GetLoginUser(ctx, c.loginUserID)
+	if err != nil {
+		log.ZError(ctx, "GetLoginUser failed", err)
+		return append(self, others...)
+	}
 	switch lc.ConversationType {
 	case constant.SingleChatType:
-		c.singleHandle(ctx, self, others, lc)
+		c.singleHandle(ctx, self, others, lc, userInfo)
 	case constant.ReadGroupChatType:
 		c.groupHandle(ctx, self, others, lc)
 	}
@@ -561,11 +566,10 @@ func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, other
 // It updates the SenderFaceURL and SenderNickname fields for messages in the `self` list
 // using the logged-in user's information, and for messages in the `others` list
 // using the other party's information if available in the conversation.
-func (c *Conversation) singleHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation) {
-	if len(self) > 0 {
-		userInfo, err := c.db.GetLoginUser(ctx, c.loginUserID)
-		if err == nil {
-			for _, chatLog := range self {
+func (c *Conversation) singleHandle(_ context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation, userInfo *model_struct.LocalUser) {
+	if len(self) > 0 && userInfo != nil {
+		for _, chatLog := range self {
+			if chatLog.Status != constant.MsgStatusHasDeleted {
 				chatLog.SenderFaceURL = userInfo.FaceURL
 				chatLog.SenderNickname = userInfo.Nickname
 			}
@@ -593,7 +597,7 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 	userIDs := datautil.Distinct(allSenders)
 	specialUsersInfo, missKeys := c.user.UserCache().BatchGetSpecialUser(ctx, userIDs)
 
-	groupMap, err := c.group.GetGroupMemberNameAndFaceURL(ctx, lc.GroupID, missKeys)
+	groupMap, err := c.group.GetGroupMembersInfo(ctx, lc.GroupID, missKeys)
 	if err != nil {
 		log.ZError(ctx, "get group member info err", err)
 		return
@@ -629,4 +633,57 @@ func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_st
 		c.user.UserCache().BatchAddSpecialUser(specialUsers)
 	}
 
+}
+
+func (c *Conversation) FillSenderProfileBatch(ctx context.Context, insertMsg map[string][2][]*model_struct.LocalChatLog) map[string][]*model_struct.LocalChatLog {
+	if len(insertMsg) == 0 {
+		return map[string][]*model_struct.LocalChatLog{}
+	}
+
+	conversationIDs := datautil.Keys(insertMsg)
+
+	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDs)
+	if err != nil {
+		log.ZError(ctx, "GetMultipleConversationDB failed", err)
+		return mergeInsertMsg(insertMsg)
+	}
+
+	conversationMap := datautil.SliceToMap(conversations, func(c *model_struct.LocalConversation) string {
+		return c.ConversationID
+	})
+
+	userInfo, err := c.db.GetLoginUser(ctx, c.loginUserID)
+	if err != nil {
+		log.ZError(ctx, "GetLoginUser failed", err)
+		return mergeInsertMsg(insertMsg)
+	}
+
+	merged := make(map[string][]*model_struct.LocalChatLog, len(insertMsg))
+	for conversationID, pair := range insertMsg {
+		if len(pair[0]) == 0 && len(pair[1]) == 0 {
+			continue
+		}
+		lc, ok := conversationMap[conversationID]
+		if !ok {
+			merged[conversationID] = append(pair[0], pair[1]...)
+			continue
+		}
+		switch lc.ConversationType {
+		case constant.SingleChatType:
+			c.singleHandle(ctx, pair[0], pair[1], lc, userInfo)
+		case constant.ReadGroupChatType:
+			c.groupHandle(ctx, pair[0], pair[1], lc)
+		}
+		merged[conversationID] = append(pair[0], pair[1]...)
+	}
+
+	return merged
+}
+
+func mergeInsertMsg(input map[string][2][]*model_struct.LocalChatLog) map[string][]*model_struct.LocalChatLog {
+	result := make(map[string][]*model_struct.LocalChatLog, len(input))
+	for convID, pair := range input {
+		result[convID] = append(pair[0], pair[1]...)
+	}
+	return result
 }
