@@ -54,6 +54,8 @@ func (c *Conversation) GetAtAllTag(_ context.Context) string {
 }
 
 func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
 	conversationID := c.getConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err == nil {
@@ -80,10 +82,9 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
-		//double check if the conversation exists
-		lc, err := c.db.GetConversation(ctx, conversationID)
-		if err == nil {
-			return lc, nil
+		err := c.db.InsertConversation(ctx, &newConversation)
+		if err != nil {
+			return nil, err
 		}
 		return &newConversation, nil
 	}
@@ -118,7 +119,7 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 			return err
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ConversationEventQueue())
 	return nil
 }
 
@@ -166,7 +167,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ConversationEventQueue())
 }
 
 func (c *Conversation) fileName(ftype string, id string) string {
@@ -179,7 +180,7 @@ func (c *Conversation) checkID(ctx context.Context, s *sdk_struct.MsgStruct,
 		return nil, sdkerrs.ErrArgs
 	}
 	s.SendID = c.loginUserID
-	s.SenderPlatformID = c.platformID
+	s.SenderPlatformID = c.platform
 	lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 	//assemble messages and conversations based on single or group chat types
 	if recvID == "" {
@@ -312,7 +313,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		lc.LatestMsg = utils.StructToJsonString(s)
 		log.ZDebug(ctx, "send message come here", "conversion", *lc)
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+		_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ConversationEventQueue())
 	}
 
 	var delFile []string
@@ -844,7 +845,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ConversationEventQueue())
 	return s, nil
 
 }
@@ -885,7 +886,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ConversationEventQueue())
 	return s, nil
 
 }
@@ -934,7 +935,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.ClientMsgID = ClientMsgID
 	message.MsgFrom = msgFrom
 	message.ContentType = contentType
-	message.SenderPlatformID = c.platformID
+	message.SenderPlatformID = c.platform
 	return nil
 }
 

@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"runtime/debug"
 	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cache"
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/tools/utils/stringutil"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
@@ -18,7 +20,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/user"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
@@ -56,10 +57,10 @@ type Conversation struct {
 	msgKvListener               func() open_im_sdk_callback.OnMessageKvInfoListener
 	batchMsgListener            func() open_im_sdk_callback.OnBatchMsgListener
 	businessListener            func() open_im_sdk_callback.OnCustomBusinessListener
-	recvCh                      chan common.Cmd2Value
 	msgSyncerCh                 chan common.Cmd2Value
+	conversationEventQueue      *common.EventQueue
 	loginUserID                 string
-	platformID                  int32
+	platform                    int32
 	DataDir                     string
 	relation                    *relation.Relation
 	group                       *group.Group
@@ -73,10 +74,31 @@ type Conversation struct {
 	msgOffset                   int
 	progress                    int
 	conversationSyncMutex       sync.Mutex
+	seqs                        map[string]*msg.Seqs
 
 	startTime time.Time
 
 	typing *typing
+}
+
+func (c *Conversation) ConversationEventQueue() *common.EventQueue {
+	return c.conversationEventQueue
+}
+
+func (c *Conversation) SetDataBase(db db_interface.DataBase) {
+	c.db = db
+}
+
+func (c *Conversation) SetLoginUserID(loginUserID string) {
+	c.loginUserID = loginUserID
+}
+
+func (c *Conversation) SetPlatform(platform int32) {
+	c.platform = platform
+}
+
+func (c *Conversation) SetDataDir(DataDir string) {
+	c.DataDir = DataDir
 }
 
 func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
@@ -95,22 +117,20 @@ func (c *Conversation) SetBusinessListener(businessListener func() open_im_sdk_c
 	c.businessListener = businessListener
 }
 
-func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
-	recvCh, msgSyncerCh chan common.Cmd2Value, relation *relation.Relation, group *group.Group, user *user.User,
+func NewConversation(
+	longConnMgr *interaction.LongConnMgr,
+	msgSyncerCh chan common.Cmd2Value, conversationEventQueue *common.EventQueue,
+	relation *relation.Relation,
+	group *group.Group, user *user.User,
 	file *file.File) *Conversation {
-	info := ccontext.Info(ctx)
-	n := &Conversation{db: db,
+	n := &Conversation{
 		LongConnMgr:                 longConnMgr,
-		recvCh:                      recvCh,
 		msgSyncerCh:                 msgSyncerCh,
-		loginUserID:                 info.UserID(),
-		platformID:                  info.PlatformID(),
-		DataDir:                     info.DataDir(),
+		conversationEventQueue:      conversationEventQueue,
 		relation:                    relation,
 		group:                       group,
 		user:                        user,
 		file:                        file,
-		IsExternalExtensions:        info.IsExternalExtensions(),
 		maxSeqRecorder:              NewMaxSeqRecorder(),
 		messagePullForwardEndSeqMap: cache.NewConversationSeqContextCache(),
 		messagePullReverseEndSeqMap: cache.NewConversationSeqContextCache(),
@@ -192,10 +212,6 @@ func (c *Conversation) initSyncer() {
 		syncer.WithFullSyncLimit[*model_struct.LocalConversation, pbConversation.GetOwnerConversationResp, string](conversationSyncLimit),
 	)
 
-}
-
-func (c *Conversation) GetCh() chan common.Cmd2Value {
-	return c.recvCh
 }
 
 type onlineMsgKey struct {
@@ -436,11 +452,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
-	if c.batchMsgListener() != nil {
-		c.batchNewMessages(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	} else {
-		c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
-	}
+	c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
+
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
 	}
@@ -474,12 +487,14 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	c.msgOffset += msgLen
 	total := c2v.Value.(sdk_struct.CmdMsgSyncInReinstall).Total
 
-	insertMsg := make(map[string][]*model_struct.LocalChatLog, 10)
+	insertMsg := make(map[string][2][]*model_struct.LocalChatLog, 10)
 	conversationList := make([]*model_struct.LocalConversation, 0)
 	var exceptionMsg []*model_struct.LocalChatLog
 
 	log.ZDebug(ctx, "message come here conversation ch in reinstalled", "conversation length", msgLen)
 	b := time.Now()
+
+	groupMemberMap := make(map[string][]string, 10)
 
 	for conversationID, msgs := range allMsg {
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
@@ -491,6 +506,9 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 			continue
 		}
 		for _, v := range msgs.Msgs {
+			if v.SessionType == constant.ReadGroupChatType {
+				groupMemberMap[v.GroupID] = append(groupMemberMap[v.GroupID], v.SendID)
+			}
 
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			msg := &sdk_struct.MsgStruct{}
@@ -547,11 +565,26 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 			log.ZWarn(ctx, "latestMsg is nil", errs.New("latestMsg is nil"), "conversationID", conversationID)
 		}
 
-		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
-	}
+		insertMsg[conversationID] = [2][]*model_struct.LocalChatLog{
+			append(insertMessage, selfInsertMessage...),
+			othersInsertMessage,
+		}
 
+	}
+	b1 := time.Now()
+	// Synchronize the group members for this batch of messages
+	groupIDs := datautil.Keys(groupMemberMap)
+	err := c.group.IncrSyncGroupAndMember(ctx, groupIDs...)
+	if err != nil {
+		log.ZError(ctx, "IncrSyncGroupAndMember", err)
+	}
+	log.ZDebug(ctx, "IncrSyncGroupAndMember", "cost time", time.Since(b1).Seconds(), "len", len(allMsg))
+	b2 := time.Now()
+	// Use the latest group member or user information to fill in the profile pictures and nicknames of the messages
+	mergedInsertMsg := c.FillSenderProfileBatch(ctx, insertMsg)
+	log.ZDebug(ctx, "FillSenderProfileBatch", "cost time", time.Since(b2).Seconds(), "len", len(allMsg))
 	// message storage
-	_ = c.batchInsertMessageList(ctx, insertMsg)
+	_ = c.batchInsertMessageList(ctx, mergedInsertMsg)
 
 	// conversation storage
 	if err := c.db.BatchUpdateConversationList(ctx, conversationList); err != nil {
@@ -560,7 +593,9 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
 
 	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
-	c.ConversationListener().OnSyncServerProgress((c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
+	if total > 0 {
+		c.ConversationListener().OnSyncServerProgress((c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
+	}
 	//Exception message storage
 	for _, v := range exceptionMsg {
 		log.ZWarn(ctx, "exceptionMsg show: ", nil, "msg", *v)
@@ -914,4 +949,26 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 		return "", "", nil
 	}
 	return userInfo.FaceURL, userInfo.Nickname, nil
+}
+
+func (c *Conversation) ConsumeConversationEventLoop(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			log.ZWarn(ctx, "DoListener panic", nil, "panic info", err)
+		}
+	}()
+	c.conversationEventQueue.ConsumeLoop(ctx, func(ctx context.Context, event *common.Event) {
+		cmd, ok := event.Data.(common.Cmd2Value)
+		if !ok {
+			log.ZWarn(ctx, "invalid event data in conversationEventQueue", nil)
+			return
+		}
+
+		log.ZInfo(cmd.Ctx, "recv cmd", "caller", cmd.Caller, "cmd", cmd.Cmd, "value", cmd.Value)
+		c.Work(cmd)
+		log.ZInfo(cmd.Ctx, "done cmd", "caller", cmd.Caller, "cmd", cmd.Cmd, "value", cmd.Value)
+	}, func(msg string, fields ...any) {
+		log.ZError(ctx, msg, nil, fields...)
+	})
 }

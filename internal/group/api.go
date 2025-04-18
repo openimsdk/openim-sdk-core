@@ -95,18 +95,6 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	return nil
 }
 
-//func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, groupID string, rule int32) error {
-//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
-//}
-//
-//func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule int32) error {
-//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
-//}
-//
-//func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
-//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
-//}
-
 func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
 	if isMute {
 		err = g.muteGroup(ctx, groupID)
@@ -182,14 +170,6 @@ func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.S
 
 	return g.IncrSyncGroupAndMember(ctx, groupMemberInfo.GroupID)
 }
-
-//func (g *Group) SetGroupMemberRoleLevel(ctx context.Context, groupID, userID string, roleLevel int) error {
-//	return g.SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{GroupID: groupID, UserID: userID, RoleLevel: wrapperspb.Int32(int32(roleLevel))})
-//}
-//
-//func (g *Group) SetGroupMemberNickname(ctx context.Context, groupID, userID string, groupMemberNickname string) error {
-//	return g.SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{GroupID: groupID, UserID: userID, Nickname: wrapperspb.String(groupMemberNickname)})
-//}
 
 func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
 	return g.db.GetJoinedGroupListDB(ctx)
@@ -521,25 +501,33 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	return nil
 }
 
-func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string, userIDs []string) (map[string]*model_struct.LocalGroupMember, error) {
-	return g.GetGroupMembersInfo(ctx, groupID, userIDs)
+
+func (g *Group) CheckLocalGroupFullSync(ctx context.Context) (bool, error) {
+	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	if err != nil {
+		return false, err
+	}
+	groups, err := g.db.GetGroups(ctx, lvs.UIDList)
+	if err != nil {
+		return false, err
+	}
+	if len(groups) != len(lvs.UIDList) {
+		return false, nil
+	}
+	return true, nil
 }
 
-//func (g *Group) SearchGroupMembersV2(ctx context.Context, req *group.SearchGroupMemberReq) ([]*model_struct.LocalGroupMember, error) {
-//	if err := req.Check(); err != nil {
-//		return nil, err
-//	}
-//	info, err := g.db.GetGroupInfoByGroupID(ctx, req.GroupID)
-//	if err != nil {
-//		return nil, err
-//	}
-//	if info.MemberCount <= pconstant.MaxSyncPullNumber {
-//		return g.db.SearchGroupMembersDB(ctx, req.Keyword, req.GroupID, true, false,
-//			int((req.Pagination.PageNumber-1)*req.Pagination.ShowNumber), int(req.Pagination.ShowNumber))
-//	}
-//	resp, err := util.CallApi[group.SearchGroupMemberResp](ctx, constant.SearchGroupMember, req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return datautil.Slice(resp.Members, g.pbGroupMemberToLocal), nil
-//}
+func (g *Group) CheckGroupMemberFullSync(ctx context.Context, groupID string) (bool, error) {
+	lvs, err := g.db.GetVersionSync(ctx, g.groupAndMemberVersionTableName(), groupID)
+	if err != nil {
+		return false, err
+	}
+	members, err := g.db.GetGroupMemberListByGroupID(ctx, groupID)
+	if err != nil {
+		return false, err
+	}
+	if len(members) != len(lvs.UIDList) {
+		return false, nil
+	}
+	return true, nil
+}

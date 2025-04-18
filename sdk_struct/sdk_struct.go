@@ -15,6 +15,7 @@
 package sdk_struct
 
 import (
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
 )
 
@@ -238,7 +239,8 @@ type MsgStruct struct {
 	NotificationElem *NotificationElem      `json:"notificationElem,omitempty"`
 	AdvancedTextElem *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
 	TypingElem       *TypingElem            `json:"typingElem,omitempty"`
-	AttachedInfoElem *AttachedInfoElem `json:"attachedInfoElem,omitempty"`
+	AttachedInfoElem *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
+	MarkdownTextElem *MarkdownTextElem      `json:"markdownTextElem,omitempty"`
 }
 
 type AtInfo struct {
@@ -306,19 +308,20 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
-	SystemType           string `json:"systemType"`
-	PlatformID           int32  `json:"platformID"`
-	ApiAddr              string `json:"apiAddr"`
-	WsAddr               string `json:"wsAddr"`
-	DataDir              string `json:"dataDir"`
-	LogLevel             uint32 `json:"logLevel"`
-	IsLogStandardOutput  bool   `json:"isLogStandardOutput"`
-	LogFilePath          string `json:"logFilePath"`
-	IsExternalExtensions bool   `json:"isExternalExtensions"`
+	SystemType          string `json:"systemType"`
+	PlatformID          int32  `json:"platformID"`
+	ApiAddr             string `json:"apiAddr"`
+	WsAddr              string `json:"wsAddr"`
+	DataDir             string `json:"dataDir"`
+	LogLevel            uint32 `json:"logLevel"`
+	IsLogStandardOutput bool   `json:"isLogStandardOutput"`
+	LogFilePath         string `json:"logFilePath"`
+	LogRemainCount      uint32 `json:"logRemainCount"`
 }
 
 type CmdNewMsgComeToConversation struct {
 	Msgs     map[string]*sdkws.PullMsgs
+	Seqs     map[string]*msg.Seqs
 	SyncFlag int
 }
 
@@ -338,4 +341,8 @@ type PublicUser struct {
 	FaceURL    string `json:"faceURL"`
 	Ex         string `json:"ex"`
 	CreateTime int64  `json:"createTime"`
+}
+
+type MarkdownTextElem struct {
+	Content string `json:"content"`
 }
