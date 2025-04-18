@@ -22,7 +22,7 @@ func TestEventQueue_ProduceAndConsume(t *testing.T) {
 	}
 
 	logCallback := func(msg string, fields ...any) {
-		// 可以添加日志输出调试，如：fmt.Println(msg, fields...)
+
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -38,9 +38,8 @@ func TestEventQueue_ProduceAndConsume(t *testing.T) {
 	go eq.ConsumeLoop(ctx, handler, logCallback)
 
 	time.Sleep(500 * time.Millisecond)
-	cancel() // 取消上下文让 worker 退出
+	cancel()
 
-	// 校验顺序
 	mu.Lock()
 	defer mu.Unlock()
 	assert.Equal(t, []string{"high", "medium", "low1", "low2"}, handledOrder)
@@ -60,7 +59,6 @@ func TestEventQueue_CancelContext(t *testing.T) {
 
 	go eq.ConsumeLoop(ctx, handler, logCallback)
 
-	// 马上 cancel，不让 handler 执行
 	cancel()
 	time.Sleep(100 * time.Millisecond)
 

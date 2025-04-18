@@ -29,6 +29,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -298,7 +299,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			}
 			nErr := c.Syncer.notifyCh(message.Resp, resp, 1)
 			if nErr != nil {
-				log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", nErr, "wsResp", resp)
+				log.ZError(c.ctx, "DispatchNewMessage failed", nErr, "wsResp", resp)
 			}
 		}
 	}
@@ -701,7 +702,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
 	c.reconnectStrategy.Reset()
-	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
+	_ = common.DispatchConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return true, nil
 }
 
@@ -711,7 +712,7 @@ func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error
 	if err != nil {
 		return err
 	}
-	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
+	return common.DispatchPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
 }
 func (c *LongConnMgr) Close(ctx context.Context) {
 	if c.GetConnectionStatus() == Connected {

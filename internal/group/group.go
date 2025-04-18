@@ -99,7 +99,7 @@ func (g *Group) initSyncer() {
 				// when a user kicked to the group and invited to the group again, group info maybe updated,
 				// so conversation info need to be updated
 				g.listener().OnJoinedGroupAdded(utils.StructToJsonString(server))
-				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+				_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{
 					Action: constant.UpdateConFaceUrlAndNickName,
 					Args: common.SourceIDAndSessionType{
 						SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
@@ -120,7 +120,7 @@ func (g *Group) initSyncer() {
 				} else {
 					g.listener().OnGroupInfoChanged(utils.StructToJsonString(server))
 					if server.GroupName != local.GroupName || local.FaceURL != server.FaceURL {
-						_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+						_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{
 							Action: constant.UpdateConFaceUrlAndNickName,
 							Args: common.SourceIDAndSessionType{
 								SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
@@ -168,7 +168,7 @@ func (g *Group) initSyncer() {
 			case syncer.Insert:
 				g.listener().OnGroupMemberAdded(utils.StructToJsonString(server))
 				// When a user is kicked and invited to the group again, group member info will be updated.
-				_ = common.TriggerCmdUpdateMessage(ctx,
+				_ = common.DispatchUpdateMessage(ctx,
 					common.UpdateMessageNode{
 						Action: constant.UpdateMsgFaceUrlAndNickName,
 						Args: common.UpdateMessageInfo{
@@ -181,7 +181,7 @@ func (g *Group) initSyncer() {
 			case syncer.Update:
 				g.listener().OnGroupMemberInfoChanged(utils.StructToJsonString(server))
 				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
-					_ = common.TriggerCmdUpdateMessage(ctx,
+					_ = common.DispatchUpdateMessage(ctx,
 						common.UpdateMessageNode{
 							Action: constant.UpdateMsgFaceUrlAndNickName,
 							Args: common.UpdateMessageInfo{
@@ -189,7 +189,7 @@ func (g *Group) initSyncer() {
 								Nickname: server.Nickname, GroupID: server.GroupID,
 							},
 						}, g.conversationEventQueue)
-					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateLatestMessageFaceUrlAndNickName, Args: common.UpdateMessageInfo{
+					_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateLatestMessageFaceUrlAndNickName, Args: common.UpdateMessageInfo{
 						SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
 						Nickname: server.Nickname, GroupID: server.GroupID,
 					}}, g.conversationEventQueue)

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"runtime/debug"
 	"sync"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
@@ -951,6 +952,12 @@ func (c *Conversation) getUserNameAndFaceURL(ctx context.Context, userID string)
 }
 
 func (c *Conversation) ConsumeConversationEventLoop(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
+			log.ZWarn(ctx, "DoListener panic", nil, "panic info", err)
+		}
+	}()
 	c.conversationEventQueue.ConsumeLoop(ctx, func(ctx context.Context, event *common.Event) {
 		cmd, ok := event.Data.(common.Cmd2Value)
 		if !ok {

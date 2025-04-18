@@ -427,9 +427,7 @@ func setListener[T any](ctx context.Context, listener *T, getter func() T, setFu
 func (u *UserContext) run(ctx context.Context) {
 	u.longConnMgr.Run(ctx)
 	go u.msgSyncer.DoListener(ctx)
-	//go common.DoListener(u.ctx, u.conversation)
 	go u.conversation.ConsumeConversationEventLoop(ctx)
-	//go u.conversationEventQueue.Start(ctx)
 	go u.logoutListener(ctx)
 }
 
@@ -498,7 +496,7 @@ func (u *UserContext) setAppBackgroundStatus(ctx context.Context, isBackground b
 	} else {
 		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
-			_ = common.TriggerCmdWakeUpDataSync(ctx, u.msgSyncerCh)
+			_ = common.DispatchWakeUp(ctx, u.msgSyncerCh)
 		}
 
 		return nil

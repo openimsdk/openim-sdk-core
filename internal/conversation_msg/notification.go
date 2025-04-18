@@ -53,7 +53,6 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		c.doUpdateConversation(c2v)
 	case constant.CmdUpdateMessage:
 		c.doUpdateMessage(c2v)
-	case constant.CmSyncReactionExtensions:
 	case constant.CmdNotification:
 		c.doNotificationManager(c2v)
 	case constant.CmdSyncData:

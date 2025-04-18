@@ -8,12 +8,12 @@ type EventHandler func(ctx context.Context, event *Event)
 
 type LogCallback func(msg string, fields ...any)
 
-// EventQueue 负责并发消费 PriorityQueue 的事件
+// EventQueue is responsible for concurrently consuming events from the PriorityQueue
 type EventQueue struct {
 	queue *PriorityQueue
 }
 
-// NewEventQueue 创建 worker pool 实例
+// NewEventQueue creates a worker pool instance
 func NewEventQueue(capacity int) *EventQueue {
 	return &EventQueue{
 		queue: NewPriorityQueue(capacity),
@@ -24,6 +24,10 @@ func (e *EventQueue) Produce(data any, priority int) (*Event, error) {
 	event := &Event{Data: data, Priority: priority}
 	err := e.queue.Push(event)
 	return event, err
+}
+func (q *EventQueue) ProduceWithContext(ctx context.Context, data any, priority int) (*Event, error) {
+	event := &Event{Data: data, Priority: priority}
+	return event, q.queue.PushWithContext(ctx, event)
 }
 
 func (e *EventQueue) UpdatePriority(event *Event, newPriority int) error {

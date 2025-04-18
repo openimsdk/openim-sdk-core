@@ -36,7 +36,7 @@ func NewSortConversationList(list []*ConversationMetaData, pinnedIDs []string) *
 	return s
 }
 
-// InsertOrUpdate 插入或更新会话 更新会话的 LatestMsgSendTime / DraftTime / 是否置顶（传入全部字段）
+// InsertOrUpdate inserts or updates a conversation, updating its LatestMsgSendTime / DraftTime / pinned status (all fields are passed in)
 func (l *SortConversationList) InsertOrUpdate(c *ConversationMetaData) {
 	if c.IsPinned {
 		l.pinnedConversationIDs[c.ConversationID] = struct{}{}
@@ -53,7 +53,7 @@ func (l *SortConversationList) InsertOrUpdate(c *ConversationMetaData) {
 	l.refreshIndex()
 }
 
-// Delete 删除某个会话
+// Delete removes a conversation
 func (l *SortConversationList) Delete(conversationID string) {
 	idx, exists := l.conversationIndex[conversationID]
 	if !exists {
@@ -64,7 +64,7 @@ func (l *SortConversationList) Delete(conversationID string) {
 	l.refreshIndex()
 }
 
-// Top 返回前 N 个
+// Top returns the top N conversations
 func (l *SortConversationList) Top(limit int) []*ConversationMetaData {
 	if limit > 0 && len(l.conversations) > limit {
 		return l.conversations[:limit]
@@ -72,7 +72,7 @@ func (l *SortConversationList) Top(limit int) []*ConversationMetaData {
 	return l.conversations
 }
 
-// After 获取某会话之后的 N 个
+// After gets the N conversations after a specific conversation
 func (l *SortConversationList) After(conversationID string, n int) []*ConversationMetaData {
 	idx, exists := l.conversationIndex[conversationID]
 	if !exists {
@@ -86,12 +86,12 @@ func (l *SortConversationList) After(conversationID string, n int) []*Conversati
 	return l.conversations[start:end]
 }
 
-// All 返回全部
+// All returns all conversations
 func (l *SortConversationList) All() []*ConversationMetaData {
 	return l.conversations
 }
 
-// 内部函数
+// Internal functions
 
 func (l *SortConversationList) findInsertIndex(c *ConversationMetaData) int {
 	for i, exist := range l.conversations {
@@ -113,7 +113,7 @@ func (l *SortConversationList) compareConversations(a, b *ConversationMetaData) 
 	_, ap := l.pinnedConversationIDs[a.ConversationID]
 	_, bp := l.pinnedConversationIDs[b.ConversationID]
 	if ap != bp {
-		return ap // pinned 的排前面
+		return ap // pinned conversations come first
 	}
 	at, bt := l.getEffectiveTime(a), l.getEffectiveTime(b)
 	return at > bt
@@ -138,7 +138,7 @@ type SortConversationIterator struct {
 	cursor int
 }
 
-// NextTop 返回下一批 size 个会话
+// NextTop returns the next batch of size conversations
 func (it *SortConversationIterator) NextTop(size int) []*ConversationMetaData {
 	if it.cursor >= len(it.list.conversations) {
 		return nil
@@ -173,13 +173,14 @@ func NewConversationBatchProcessor(list *SortConversationList, needSyncSeqMap ma
 }
 
 func (p *ConversationBatchProcessor) Run(ctx context.Context, handler BatchHandler) {
+	result := make(map[string][2]int64)
+
 	for {
 		batch := p.iter.NextTop(p.batchSize)
 		if len(batch) == 0 {
 			break
 		}
 
-		result := make(map[string][2]int64)
 		for _, conv := range batch {
 			if v, ok := p.needSyncSeqMap[conv.ConversationID]; ok {
 				result[conv.ConversationID] = v
@@ -188,12 +189,23 @@ func (p *ConversationBatchProcessor) Run(ctx context.Context, handler BatchHandl
 			if v, ok := p.needSyncSeqMap[notificationID]; ok {
 				result[notificationID] = v
 			}
-		}
 
-		handler(ctx, p.batchID, result, p.isFirst)
-		p.isFirst = false
-		p.batchID++
+			if len(result) >= p.batchSize {
+				p.emitResult(ctx, handler, result)
+				result = make(map[string][2]int64)
+			}
+		}
 	}
+
+	if len(result) > 0 {
+		p.emitResult(ctx, handler, result)
+	}
+}
+
+func (p *ConversationBatchProcessor) emitResult(ctx context.Context, handler BatchHandler, result map[string][2]int64) {
+	handler(ctx, p.batchID, result, p.isFirst)
+	p.batchID++
+	p.isFirst = false
 }
 
 func GetNotificationConversationIDByConversationID(conversationID string) string {

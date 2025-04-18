@@ -15,31 +15,14 @@
 package constant
 
 const (
-	CmdSyncData                   = "syncData"
-	CmdSyncFlag                   = "syncFlag"
-	CmdNotification               = "notification"
-	CmdMsgSyncInReinstall         = "msgSyncInReinstall"
-	CmdNewMsgCome                 = "newMsgCome"
-	CmdSuperGroupMsgCome          = "006"
-	CmdUpdateConversation         = "updateConversation"
-	CmSyncReactionExtensions      = "008"
-	CmdFroceSyncBlackList         = "009"
-	CmdForceSyncFriendApplication = "010"
-	CmdForceSyncMsg               = "011"
-	CmdForceSyncLoginUerInfo      = "012"
-	CmdReLogin                    = "013"
-	CmdUnInit                     = "014"
-	CmdAcceptFriend               = "015"
-	CmdRefuseFriend               = "016"
-	CmdAddFriend                  = "017"
+	CmdSyncData           = "syncData"
+	CmdSyncFlag           = "syncFlag"
+	CmdNotification       = "notification"
+	CmdMsgSyncInReinstall = "msgSyncInReinstall"
+	CmdNewMsgCome         = "newMsgCome"
+	CmdUpdateConversation = "updateConversation"
+	CmdUpdateMessage      = "updateMessage"
 
-	CmdJoinedSuperGroup = "018"
-	CmdUpdateMessage    = "updateMessage"
-
-	CmdReconnect = "020"
-	CmdInit      = "021"
-
-	CmdMaxSeq         = "maxSeq"
 	CmdPushMsg        = "pushMsg"
 	CmdConnSuccesss   = "connSuccess"
 	CmdWakeUpDataSync = "wakeUpDataSync"

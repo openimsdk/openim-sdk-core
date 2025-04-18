@@ -126,9 +126,9 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 	log.ZDebug(ctx, "update conversations", "conversations", conversationChangedIDs)
 	if len(conversationChangedIDs) > 0 {
 		stepStartTime = time.Now()
-		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.ConversationEventQueue())
-		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.ConversationEventQueue())
-		log.ZDebug(ctx, "TriggerCmdUpdateConversation completed", "duration", time.Since(stepStartTime).Seconds())
+		common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.ConversationEventQueue())
+		common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.ConversationEventQueue())
+		log.ZDebug(ctx, "DispatchUpdateConversation completed", "duration", time.Since(stepStartTime).Seconds())
 	}
 
 	log.ZDebug(ctx, "SyncAllConversationHashReadSeqs completed", "totalDuration", time.Since(startTime).Seconds())
@@ -226,9 +226,9 @@ func (c *Conversation) SyncAllConUnreadAndCreateNewCon(ctx context.Context) erro
 	log.ZDebug(ctx, "update conversations", "conversations", conversationChangedIDs)
 	if len(conversationChangedIDs) > 0 {
 		stepStartTime = time.Now()
-		//common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.GetCh())
-		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.ConversationEventQueue())
-		log.ZDebug(ctx, "TriggerCmdUpdateConversation completed", "duration", time.Since(stepStartTime).Seconds())
+		common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.ConversationEventQueue())
+		common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.ConversationEventQueue())
+		log.ZDebug(ctx, "DispatchUpdateConversation completed", "duration", time.Since(stepStartTime).Seconds())
 	}
 
 	log.ZDebug(ctx, "SyncAllConversationHashReadSeqs completed", "totalDuration", time.Since(startTime).Seconds())

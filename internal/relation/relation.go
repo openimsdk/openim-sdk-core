@@ -69,7 +69,7 @@ func (r *Relation) initSyncer() {
 				if server.Remark != "" {
 					server.Nickname = server.Remark
 				}
-				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+				_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{
 					Action: constant.UpdateConFaceUrlAndNickName,
 					Args: common.SourceIDAndSessionType{
 						SourceID:    server.FriendUserID,
@@ -78,7 +78,7 @@ func (r *Relation) initSyncer() {
 						Nickname:    server.Nickname,
 					},
 				}, r.conversationEventQueue)
-				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{
+				_ = common.DispatchUpdateMessage(ctx, common.UpdateMessageNode{
 					Action: constant.UpdateMsgFaceUrlAndNickName,
 					Args: common.UpdateMessageInfo{
 						SessionType: constant.SingleChatType,
@@ -96,7 +96,7 @@ func (r *Relation) initSyncer() {
 					if server.Remark != "" {
 						server.Nickname = server.Remark
 					}
-					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+					_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{
 						Action: constant.UpdateConFaceUrlAndNickName,
 						Args: common.SourceIDAndSessionType{
 							SourceID:    server.FriendUserID,
@@ -105,7 +105,7 @@ func (r *Relation) initSyncer() {
 							Nickname:    server.Nickname,
 						},
 					}, r.conversationEventQueue)
-					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{
+					_ = common.DispatchUpdateMessage(ctx, common.UpdateMessageNode{
 						Action: constant.UpdateMsgFaceUrlAndNickName,
 						Args: common.UpdateMessageInfo{
 							SessionType: constant.SingleChatType,

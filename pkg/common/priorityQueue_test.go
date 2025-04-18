@@ -61,11 +61,11 @@ func TestPriorityQueue_UpdatePriority(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	// 提高低优先级事件的优先级
+	// Increase the priority of a low-priority event
 	err := q.UpdatePriority(e1, 10)
 	assert.NoError(t, err)
 
-	// 现在 e1 应该优先出来
+	// Now e1 should come out first
 	event, _ := q.PopWithContext(ctx)
 	assert.Equal(t, "low", event.Data)
 
@@ -79,7 +79,7 @@ func TestPriorityQueue_ContextCancel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	// 没有数据，应该 ctx 超时退出
+	// No data, should exit on context timeout
 	event, err := q.PopWithContext(ctx)
 	assert.Nil(t, event)
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
@@ -93,11 +93,11 @@ func TestPriorityQueue_Close(t *testing.T) {
 
 	assert.True(t, q.IsClosed())
 
-	// 后续 push 会报错
+	// Subsequent push should fail
 	err := q.Push(&Event{Priority: 2, Data: "should fail"})
 	assert.Error(t, err)
 
-	// Pop 正常拿完后，再 pop 会报错
+	// Pop should work, but after that, it should fail
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
