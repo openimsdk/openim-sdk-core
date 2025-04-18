@@ -99,8 +99,6 @@ type ConversationModel interface {
 	GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetAllSingleConversationIDList(ctx context.Context) (result []string, err error)
-	GetPinnedConversationIDList(ctx context.Context) (result []string, err error)
-	GetDraftConversationIDList(ctx context.Context) (result []string, err error)
 	GetAllConversationIDList(ctx context.Context) (result []string, err error)
 	GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error)
 	BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error

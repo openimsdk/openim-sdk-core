@@ -97,19 +97,6 @@ func (d *DataBase) GetAllSingleConversationIDList(ctx context.Context) (result [
 	return result, errs.WrapMsg(d.conn.WithContext(ctx).Model(&c).Where("conversation_type = ?", constant.SingleChatType).Pluck("conversation_id", &result).Error, "GetAllSingleConversationIDList failed ")
 }
 
-func (d *DataBase) GetPinnedConversationIDList(ctx context.Context) (result []string, err error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var c model_struct.LocalConversation
-	return result, errs.Wrap(d.conn.WithContext(ctx).Model(&c).Where("is_pinned = ?", 1).Pluck("conversation_id", &result).Error)
-}
-func (d *DataBase) GetDraftConversationIDList(ctx context.Context) (result []string, err error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var c model_struct.LocalConversation
-	return result, errs.Wrap(d.conn.WithContext(ctx).Model(&c).Where("draft_text_time > ?", 0).Pluck("conversation_id", &result).Error)
-}
-
 func (d *DataBase) GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

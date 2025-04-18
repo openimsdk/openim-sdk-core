@@ -14,18 +14,18 @@ package conversation_msg
 //	}
 //}
 //
-//// Insert 插入或更新
+// Insert inserts or updates a conversation
 //func (acl *SortConversationList) Insert(c *msg.ActiveConversation) {
 //	acl.Delete(c.ConversationID) // 先删再加，避免重复
 //	acl.list.Set(c, c)
 //}
 //
-//// Update 更新也是 Insert
+// Update updates a conversation (same as Insert)
 //func (acl *SortConversationList) Update(c *msg.ActiveConversation) {
 //	acl.Insert(c)
 //}
 //
-//// Delete 删除
+// Delete removes a conversation by its ID
 //func (acl *SortConversationList) Delete(conversationID string) {
 //	for e := acl.list.Front(); e != nil; e = e.Next() {
 //		if e.Value.(*msg.ActiveConversation).ConversationID == conversationID {
@@ -35,7 +35,7 @@ package conversation_msg
 //	}
 //}
 //
-//// Init 初始化
+// Init initializes the conversation list with the given list of conversations
 //func (acl *SortConversationList) Init(conversations []*msg.ActiveConversation) {
 //	acl.list = skiplist.New(skiplist.GreaterThan(func(a, b interface{}) int {
 //		return compareConversations(a.(*msg.ActiveConversation), b.(*msg.ActiveConversation), acl.pinnedConversationIDs)
@@ -45,7 +45,7 @@ package conversation_msg
 //	}
 //}
 //
-//// Top 获取前 n 条
+// Top returns the top 'limit' conversations
 //func (acl *SortConversationList) Top(limit int) []*msg.ActiveConversation {
 //	res := make([]*msg.ActiveConversation, 0, limit)
 //	for e := acl.list.Front(); e != nil && (limit <= 0 || len(res) < limit); e = e.Next() {
@@ -54,7 +54,7 @@ package conversation_msg
 //	return res
 //}
 //
-//// After 获取某个之后 n 条
+// After returns the next 'n' conversations after the given conversation ID
 //func (acl *SortConversationList) After(conversationID string, n int) []*msg.ActiveConversation {
 //	var start *skiplist.Element
 //	for e := acl.list.Front(); e != nil; e = e.Next() {
@@ -73,7 +73,7 @@ package conversation_msg
 //	return res
 //}
 //
-//// All 返回所有
+// All returns all conversations
 //func (acl *SortConversationList) All() []*msg.ActiveConversation {
 //	res := make([]*msg.ActiveConversation, 0, acl.list.Len())
 //	for e := acl.list.Front(); e != nil; e = e.Next() {
@@ -82,7 +82,7 @@ package conversation_msg
 //	return res
 //}
 //
-//// 比较器
+// Comparator for comparing two conversations
 //func compareConversations(a, b *msg.ActiveConversation, pinned map[string]struct{}) int {
 //	_, ap := pinned[a.ConversationID]
 //	_, bp := pinned[b.ConversationID]
