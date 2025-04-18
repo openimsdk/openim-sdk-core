@@ -572,7 +572,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 
 	}
 	b1 := time.Now()
-	//同步这一批消息的群组成员
+	// Synchronize the group members for this batch of messages
 	groupIDs := datautil.Keys(groupMemberMap)
 	err := c.group.IncrSyncGroupAndMember(ctx, groupIDs...)
 	if err != nil {
@@ -580,7 +580,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	}
 	log.ZDebug(ctx, "IncrSyncGroupAndMember", "cost time", time.Since(b1).Seconds(), "len", len(allMsg))
 	b2 := time.Now()
-	//以最新的群成员信息，或者用户信息填充消息的头像和昵称
+	// Use the latest group member or user information to fill in the profile pictures and nicknames of the messages
 	mergedInsertMsg := c.FillSenderProfileBatch(ctx, insertMsg)
 	log.ZDebug(ctx, "FillSenderProfileBatch", "cost time", time.Since(b2).Seconds(), "len", len(allMsg))
 	// message storage

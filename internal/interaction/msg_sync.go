@@ -425,7 +425,8 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 		log.ZDebug(ctx, "get max seq success", "resp", resp.MaxSeqs)
 	}
 
-	//计算得到需要同步的会话列表，包含起止seq
+	// Calculate the list of conversations that need to be synchronized,
+	// including the start and end sequence (seq)
 	needSyncAllSeqMap := m.getNeedSyncConversations(ctx, resp.MaxSeqs)
 	convCount := len(needSyncAllSeqMap)
 
@@ -434,6 +435,8 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 		return
 	}
 
+	// In cases where there is no uninstall and reinstall,
+	// the amount of conversation data to be synchronized in a single operation is too large
 	if len(needSyncAllSeqMap) >= maxConversations {
 		log.ZDebug(ctx, "large conversations to sync", nil, "length", len(needSyncAllSeqMap))
 		m.isLargeDataSync = true
@@ -446,7 +449,6 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 	if reinstalled {
 		common.DispatchSyncFlagWithMeta(ctx, constant.AppDataSyncBegin, maxSeqs, m.conversationEventQueue)
 	} else {
-		//非卸载重装的情况下，单次同步的会话数据量过大
 		if m.isLargeDataSync {
 			log.ZWarn(ctx, "too many conversations to sync", nil, "maxConversations", maxConversations)
 			common.DispatchSyncFlagWithMeta(ctx, constant.LargeDataSyncBegin, maxSeqs, m.conversationEventQueue)
@@ -485,7 +487,6 @@ func (m *MsgSyncer) handleMessage(ctx context.Context, batchID int, needSyncTopS
 			common.DispatchSyncFlag(ctx, constant.AppDataSyncEnd, m.conversationEventQueue)
 		}
 	} else {
-		//非卸载重装的情况下，单次同步的会话数据量过大
 		if m.isLargeDataSync {
 			log.ZWarn(ctx, "handleMessage large conversations to sync", nil, "length", len(needSyncTopSeqMap), "isFirst", isFirst, "maxConversations", maxConversations)
 			_ = m.syncAndTriggerReinstallMsgs(ctx, needSyncTopSeqMap, isFirst, connectPullNums)
