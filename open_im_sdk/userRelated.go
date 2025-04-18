@@ -77,19 +77,21 @@ func (u *UserContext) InitResources() {
 func (u *UserContext) initResources() {
 	ctx := ccontext.WithInfo(context.Background(), u.info)
 	u.ctx, u.cancel = context.WithCancel(ctx)
-	u.conversationCh = make(chan common.Cmd2Value, 1000)
+	//u.conversationCh = make(chan common.Cmd2Value, 1000)
+	u.conversationEventQueue = common.NewEventQueue(1000)
 	u.msgSyncerCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
-	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.userOnlineStatusChange, u.msgSyncerCh, u.loginMgrCh)
+
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.userOnlineStatusChange, u.msgSyncerCh, u.loginMgrCh)
 	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
 	u.setLoginStatus(LogoutStatus)
-	u.user = user.NewUser(u.conversationCh)
+	u.user = user.NewUser(u.conversationEventQueue)
 	u.file = file.NewFile()
-	u.relation = relation.NewRelation(u.conversationCh, u.user)
-	u.group = group.NewGroup(u.conversationCh)
+	u.relation = relation.NewRelation(u.conversationEventQueue, u.user)
+	u.group = group.NewGroup(u.conversationEventQueue)
 	u.third = third.NewThird(u.file)
-	u.msgSyncer = interaction.NewMsgSyncer(u.conversationCh, u.msgSyncerCh, u.longConnMgr)
-	u.conversation = conv.NewConversation(u.longConnMgr, u.conversationCh, u.msgSyncerCh,
+	u.msgSyncer = interaction.NewMsgSyncer(u.msgSyncerCh, u.conversationEventQueue, u.longConnMgr)
+	u.conversation = conv.NewConversation(u.longConnMgr, u.msgSyncerCh, u.conversationEventQueue,
 		u.relation, u.group, u.user, u.file)
 	u.setListener(ctx)
 }
@@ -141,10 +143,12 @@ type UserContext struct {
 	businessListener     open_im_sdk_callback.OnCustomBusinessListener
 	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
 
-	conversationCh chan common.Cmd2Value
-	cmdWsCh        chan common.Cmd2Value
-	msgSyncerCh    chan common.Cmd2Value
-	loginMgrCh     chan common.Cmd2Value
+	//conversationCh chan common.Cmd2Value
+
+	conversationEventQueue *common.EventQueue
+	cmdWsCh                chan common.Cmd2Value
+	msgSyncerCh            chan common.Cmd2Value
+	loginMgrCh             chan common.Cmd2Value
 
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -154,6 +158,10 @@ type UserContext struct {
 
 func (u *UserContext) Info() *ccontext.GlobalConfig {
 	return u.info
+}
+
+func (u *UserContext) ConnListener() open_im_sdk_callback.OnConnListener {
+	return u.connListener
 }
 
 func (u *UserContext) GroupListener() open_im_sdk_callback.OnGroupListener {
@@ -400,6 +408,7 @@ func (u *UserContext) initialize(ctx context.Context, userID string) error {
 }
 
 func (u *UserContext) setListener(ctx context.Context) {
+	setListener(ctx, &u.connListener, u.ConnListener, u.longConnMgr.SetListener, nil)
 	setListener(ctx, &u.userListener, u.UserListener, u.user.SetListener, newEmptyUserListener)
 	setListener(ctx, &u.friendshipListener, u.FriendshipListener, u.relation.SetListener, newEmptyFriendshipListener)
 	setListener(ctx, &u.groupListener, u.GroupListener, u.group.SetGroupListener, newEmptyGroupListener)
@@ -418,7 +427,7 @@ func setListener[T any](ctx context.Context, listener *T, getter func() T, setFu
 func (u *UserContext) run(ctx context.Context) {
 	u.longConnMgr.Run(ctx)
 	go u.msgSyncer.DoListener(ctx)
-	go common.DoListener(u.ctx, u.conversation)
+	go u.conversation.ConsumeConversationEventLoop(ctx)
 	go u.logoutListener(ctx)
 }
 
@@ -487,7 +496,7 @@ func (u *UserContext) setAppBackgroundStatus(ctx context.Context, isBackground b
 	} else {
 		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
-			_ = common.TriggerCmdWakeUpDataSync(ctx, u.msgSyncerCh)
+			_ = common.DispatchWakeUp(ctx, u.msgSyncerCh)
 		}
 
 		return nil

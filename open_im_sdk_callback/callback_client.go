@@ -74,7 +74,6 @@ type OnAdvancedMsgListener interface {
 	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
 	OnRecvOnlineOnlyMessage(message string)
-	OnMsgEdited(message string)
 }
 
 type OnUserListener interface {
