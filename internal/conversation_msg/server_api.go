@@ -2,8 +2,11 @@ package conversation_msg
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
 	pbConversation "github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/protocol/jssdk"
 	pbMsg "github.com/openimsdk/protocol/msg"
 )
 
@@ -71,6 +74,11 @@ func (c *Conversation) getIncrementalConversationFromServer(ctx context.Context,
 	return api.GetIncrementalConversation.Invoke(ctx, req)
 }
 
-func (c *Conversation) getStreamMsg(ctx context.Context, clientMsgID string) (*pbMsg.GetStreamMsgResp, error) {
-	return api.GetStreamMsg.Invoke(ctx, &pbMsg.GetStreamMsgReq{ClientMsgID: clientMsgID})
+func (c *Conversation) GetActiveConversations(ctx context.Context) ([]*jssdk.ConversationMsg, error) {
+	conf, err := cliconf.GetClientConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req := &jssdk.GetActiveConversationsReq{OwnerUserID: c.loginUserID, Count: int64(conf.ConversationActiveNum)}
+	return api.ExtractField(ctx, api.GetActiveConversation.Invoke, req, (*jssdk.GetActiveConversationsResp).GetConversations)
 }

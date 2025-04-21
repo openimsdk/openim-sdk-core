@@ -15,6 +15,7 @@
 package sdk_struct
 
 import (
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
 )
 
@@ -201,13 +202,6 @@ type TypingElem struct {
 	MsgTips string `json:"msgTips,omitempty"`
 }
 
-type StreamElem struct {
-	Type    string   `json:"type,omitempty"`
-	Content string   `json:"content,omitempty"`
-	Packets []string `json:"packets,omitempty"`
-	End     bool     `json:"end"`
-}
-
 type MsgStruct struct {
 	ClientMsgID      string                 `json:"clientMsgID,omitempty"`
 	ServerMsgID      string                 `json:"serverMsgID,omitempty"`
@@ -245,8 +239,8 @@ type MsgStruct struct {
 	NotificationElem *NotificationElem      `json:"notificationElem,omitempty"`
 	AdvancedTextElem *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
 	TypingElem       *TypingElem            `json:"typingElem,omitempty"`
-	StreamElem       *StreamElem            `json:"streamElem,omitempty"`
 	AttachedInfoElem *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
+	MarkdownTextElem *MarkdownTextElem      `json:"markdownTextElem,omitempty"`
 }
 
 type AtInfo struct {
@@ -327,6 +321,7 @@ type IMConfig struct {
 
 type CmdNewMsgComeToConversation struct {
 	Msgs     map[string]*sdkws.PullMsgs
+	Seqs     map[string]*msg.Seqs
 	SyncFlag int
 }
 
@@ -346,4 +341,8 @@ type PublicUser struct {
 	FaceURL    string `json:"faceURL"`
 	Ex         string `json:"ex"`
 	CreateTime int64  `json:"createTime"`
+}
+
+type MarkdownTextElem struct {
+	Content string `json:"content"`
 }

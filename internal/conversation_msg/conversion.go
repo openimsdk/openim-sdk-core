@@ -21,7 +21,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	pconstant "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -200,10 +199,10 @@ func msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 		t := sdk_struct.CardElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.CardElem = &t
-	case pconstant.Stream:
-		t := sdk_struct.StreamElem{}
+	case constant.MarkdownText:
+		t := sdk_struct.MarkdownTextElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.StreamElem = &t
+		msg.MarkdownTextElem = &t
 	default:
 		t := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
@@ -262,8 +261,8 @@ func MsgStructToLocalChatLog(message *sdk_struct.MsgStruct) *model_struct.LocalC
 		localMessage.Content = utils.StructToJsonString(message.FaceElem)
 	case constant.AdvancedText:
 		localMessage.Content = utils.StructToJsonString(message.AdvancedTextElem)
-	case pconstant.Stream:
-		localMessage.Content = utils.StructToJsonString(message.StreamElem)
+	case constant.MarkdownText:
+		localMessage.Content = utils.StructToJsonString(message.MarkdownTextElem)
 	default:
 		localMessage.Content = utils.StructToJsonString(message.NotificationElem)
 	}

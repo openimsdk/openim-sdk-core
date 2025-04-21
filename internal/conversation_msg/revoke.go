@@ -183,7 +183,7 @@ func (c *Conversation) waitForMessageSyncSeq(ctx context.Context, conversationID
 		if message.Seq == 0 {
 
 			log.ZInfo(ctx, "Message seq is 0, waiting for retry", "conversationID", conversationID, "clientMsgID", clientMsgID)
-			_ = common.TriggerCmdIMMessageSync(ctx, c.msgSyncerCh)
+			_ = common.DispatchIMSync(ctx, []string{conversationID}, c.msgSyncerCh)
 			time.Sleep(2 * time.Second)
 			continue
 		}

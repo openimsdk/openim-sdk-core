@@ -501,10 +501,6 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	return nil
 }
 
-func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string, userIDs []string) (map[string]*model_struct.LocalGroupMember, error) {
-	return g.GetGroupMembersInfo(ctx, groupID, userIDs)
-}
-
 func (g *Group) CheckLocalGroupFullSync(ctx context.Context) (bool, error) {
 	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {

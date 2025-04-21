@@ -123,13 +123,13 @@ func newUserCtx(userID, token string, imConfig sdk_struct.IMConfig) context.Cont
 	return ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
 		UserID:   userID,
 		Token:    token,
-		IMConfig: imConfig})
+		IMConfig: &imConfig})
 }
 
 func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ctx := newUserCtx(userID, token, imConfig)
-	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListener{}, func(m map[string][]int32) {}, pushMsgAndMaxSeqCh, nil)
+	longConnMgr := interaction.NewLongConnMgr(ctx, func(m map[string][]int32) {}, pushMsgAndMaxSeqCh, nil)
 	core := &SendMsgUser{
 		pushMsgAndMaxSeqCh:      pushMsgAndMaxSeqCh,
 		longConnMgr:             longConnMgr,

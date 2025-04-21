@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -74,12 +75,20 @@ func (u *User) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdk_struc
 			}
 			log.ZDebug(ctx, "GetConversationByUserID", "conversation", conversation)
 			if conversation.ShowName != userInfo.Nickname || conversation.FaceURL != userInfo.FaceURL {
-				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
-					Args: common.SourceIDAndSessionType{SourceID: userInfo.UserID, SessionType: conversation.ConversationType, FaceURL: userInfo.FaceURL, Nickname: userInfo.Nickname}}, u.conversationCh)
-				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-					Args: common.UpdateMessageInfo{SessionType: conversation.ConversationType, UserID: userInfo.UserID, FaceURL: userInfo.FaceURL, Nickname: userInfo.Nickname}}, u.conversationCh)
+				_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
+					Args: common.SourceIDAndSessionType{SourceID: userInfo.UserID, SessionType: conversation.ConversationType, FaceURL: userInfo.FaceURL, Nickname: userInfo.Nickname}}, u.conversationEventQueue)
+				_ = common.DispatchUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
+					Args: common.UpdateMessageInfo{SessionType: conversation.ConversationType, UserID: userInfo.UserID, FaceURL: userInfo.FaceURL, Nickname: userInfo.Nickname}}, u.conversationEventQueue)
 			}
 		}
 	}
 	return res, nil
+}
+
+func (u *User) GetUserClientConfig(ctx context.Context) (map[string]string, error) {
+	res, err := cliconf.GetClientConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res.RawConfig, nil
 }

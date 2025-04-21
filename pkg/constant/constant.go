@@ -15,31 +15,14 @@
 package constant
 
 const (
-	CmdSyncData                   = "syncData"
-	CmdSyncFlag                   = "syncFlag"
-	CmdNotification               = "notification"
-	CmdMsgSyncInReinstall         = "msgSyncInReinstall"
-	CmdNewMsgCome                 = "newMsgCome"
-	CmdSuperGroupMsgCome          = "006"
-	CmdUpdateConversation         = "updateConversation"
-	CmSyncReactionExtensions      = "008"
-	CmdFroceSyncBlackList         = "009"
-	CmdForceSyncFriendApplication = "010"
-	CmdForceSyncMsg               = "011"
-	CmdForceSyncLoginUerInfo      = "012"
-	CmdReLogin                    = "013"
-	CmdUnInit                     = "014"
-	CmdAcceptFriend               = "015"
-	CmdRefuseFriend               = "016"
-	CmdAddFriend                  = "017"
+	CmdSyncData           = "syncData"
+	CmdSyncFlag           = "syncFlag"
+	CmdNotification       = "notification"
+	CmdMsgSyncInReinstall = "msgSyncInReinstall"
+	CmdNewMsgCome         = "newMsgCome"
+	CmdUpdateConversation = "updateConversation"
+	CmdUpdateMessage      = "updateMessage"
 
-	CmdJoinedSuperGroup = "018"
-	CmdUpdateMessage    = "updateMessage"
-
-	CmdReconnect = "020"
-	CmdInit      = "021"
-
-	CmdMaxSeq         = "maxSeq"
 	CmdPushMsg        = "pushMsg"
 	CmdConnSuccesss   = "connSuccess"
 	CmdWakeUpDataSync = "wakeUpDataSync"
@@ -63,6 +46,7 @@ const (
 	Quote                           = 114
 	Face                            = 115
 	AdvancedText                    = 117
+	MarkdownText                    = 118
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
 
@@ -257,12 +241,14 @@ const (
 const BigVersion = "v3"
 
 const (
-	MsgSyncBegin      = 1001 //
-	MsgSyncProcessing = 1002 //
-	MsgSyncEnd        = 1003 //
-	MsgSyncFailed     = 1004
-	AppDataSyncStart  = 1005
-	AppDataSyncFinish = 1006
+	MsgSyncBegin       = 1001 //
+	MsgSyncProcessing  = 1002 //
+	MsgSyncEnd         = 1003 //
+	MsgSyncFailed      = 1004
+	AppDataSyncBegin   = 1005
+	AppDataSyncEnd     = 1006
+	LargeDataSyncBegin = 1007
+	LargeDataSyncEnd   = 1008
 )
 
 const (

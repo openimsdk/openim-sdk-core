@@ -57,10 +57,12 @@ func init() {
 	}
 	ch := make(chan error)
 	open_im_sdk.IMUserContext.SetConversationListener(&onConversationListener{ctx: ctx, ch: ch})
-	open_im_sdk.IMUserContext.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.IMUserContext.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetMessageKvInfoListener(&onMessageKvInfoListener{})
 	open_im_sdk.IMUserContext.SetFriendshipListener(&onFriendshipListener{ctx: ctx})
-	open_im_sdk.IMUserContext.SetUserListener(&onUserListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetGroupListener(&onGroupListener{ctx: ctx})
+	open_im_sdk.IMUserContext.SetCustomBusinessListener(&onCustomBusinessListener{ctx: ctx})
+
 	if err := <-ch; err != nil {
 		panic(err)
 	}
@@ -71,7 +73,7 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.ApiAddr = APIADDR
 	cf.WsAddr = WSADDR
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = 5
 	cf.PlatformID = PlatformID
 	cf.LogFilePath = "./"
 	cf.IsLogStandardOutput = true
