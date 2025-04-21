@@ -16,6 +16,7 @@ package conversation_msg
 
 import (
 	"context"
+	"errors"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -25,27 +26,34 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
 	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 )
 
 // Delete the local and server
-// Delete the local, do not change the server data
-// To delete the server, you need to change the local message status to delete
 func (c *Conversation) clearConversationFromLocalAndServer(ctx context.Context, conversationID string, f func(ctx context.Context, conversationID string) error) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
+
 	// Use conversationID to remove conversations and messages from the server first
 	err = c.clearConversationMsgFromServer(ctx, conversationID)
 	if err != nil {
-		return err
+		if errors.Is(errs.Unwrap(err), errs.ErrRecordNotFound) {
+			log.ZWarn(ctx, "clearConversationMsgFromServer err", err, "conversationID", conversationID)
+		} else {
+			return err
+		}
 	}
+
 	if err := c.clearConversationAndDeleteAllMsg(ctx, conversationID, false, f); err != nil {
 		return err
 	}
+
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
+
 	return nil
 }
 

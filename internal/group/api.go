@@ -501,7 +501,6 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	return nil
 }
 
-
 func (g *Group) CheckLocalGroupFullSync(ctx context.Context) (bool, error) {
 	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
 	if err != nil {

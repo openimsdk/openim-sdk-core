@@ -67,6 +67,7 @@ func (w *WrapperConMsg) CreateAdvancedTextMessage(_ js.Value, args []js.Value) i
 func (w *WrapperConMsg) CreateCardMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateCardMessage, nil, &args).AsyncCallWithOutCallback()
 }
+
 func (w *WrapperConMsg) CreateTextAtMessage(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.CreateTextAtMessage, nil, &args).AsyncCallWithOutCallback()
 }
@@ -136,6 +137,7 @@ func (w *WrapperConMsg) SendMessage(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return event_listener.NewCaller(open_im_sdk.SendMessage, callback, &args).AsyncCallWithCallback()
 }
+
 func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return event_listener.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
