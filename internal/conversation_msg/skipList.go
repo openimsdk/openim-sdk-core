@@ -16,7 +16,7 @@ package conversation_msg
 //
 // Insert inserts or updates a conversation
 //func (acl *SortConversationList) Insert(c *msg.ActiveConversation) {
-//	acl.Delete(c.ConversationID) // 先删再加，避免重复
+//	acl.Delete(c.ConversationID)
 //	acl.list.Set(c, c)
 //}
 //
