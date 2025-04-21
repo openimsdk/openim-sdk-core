@@ -8,7 +8,7 @@ jobs:
   update-version:
     runs-on: ubuntu-latest
     env:
-      TAG_VERSION: ${{ github.event.release.tag_name }} 
+      TAG_VERSION: ${{ github.event.release.tag_name }}
     steps:
       # Step 1: Checkout the original repository's code
       - name: Checkout code
@@ -44,15 +44,13 @@ jobs:
           git commit -m "Update version to ${{ env.TAG_VERSION }}"
           git push origin HEAD:${{ github.ref }}
 
-      # Step 6: Create and push tag
-      - name: Create and push tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Step 6: Update tag
+      - name: Update tag
         run: |
-          git tag ${{ env.TAG_VERSION }}
-          git push origin ${{ env.TAG_VERSION }}
+          git tag -fa ${{ env.TAG_VERSION }} -m "Update version to ${{ env.TAG_VERSION }}"
+          git push origin ${{ env.TAG_VERSION }} --force
 
-      # Step 8: Find and Publish Draft Release
+      # Step 7: Find and Publish Draft Release
       - name: Find and Publish Draft Release
         uses: actions/github-script@v6
         with:

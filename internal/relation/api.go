@@ -269,6 +269,10 @@ func (r *Relation) AddBlack(ctx context.Context, blackUserID string, ex string) 
 	if err := r.addBlack(ctx, &relation.AddBlackReq{BlackUserID: blackUserID, Ex: ex}); err != nil {
 		return err
 	}
+
+	r.relationSyncMutex.Lock()
+	defer r.relationSyncMutex.Unlock()
+
 	return r.SyncAllBlackList(ctx)
 }
 

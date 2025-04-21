@@ -73,7 +73,7 @@ func (o *onConversationListener) OnNewConversation(conversationList string) {
 }
 
 func (o *onConversationListener) OnConversationChanged(conversationList string) {
-	log.ZInfo(o.ctx, "OnConversationChanged", "conversationList", conversationList)
+	log.ZInfo(o.ctx, "OnConversationChanged", "####### conversationList", conversationList)
 }
 
 func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {

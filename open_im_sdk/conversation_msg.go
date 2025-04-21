@@ -137,6 +137,7 @@ func GetConversationIDBySessionType(operationID string, sourceID string, session
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string, isOnlineOnly bool) {
 	messageCall(callback, operationID, IMUserContext.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
 }
+
 func SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, operationID string, message, recvID, groupID string, offlinePushInfo string, isOnlineOnly bool) {
 	messageCall(callback, operationID, IMUserContext.Conversation().SendMessageNotOss, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
 }
