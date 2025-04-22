@@ -181,9 +181,9 @@ For more information, see: https://www.openim.io/en/licensing
 
 
 
+
 ## Thanks to our contributors!
 
 <a href="https://github.com/openimsdk/openim-sdk-core/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=OpenIMSDK/openim-sdk-core" />
 </a>
-
