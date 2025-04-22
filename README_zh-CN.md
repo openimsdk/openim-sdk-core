@@ -1,26 +1,36 @@
-<h1 align="center" style="border-bottom: none">
-    <b>
-        <a href="https://doc.rentsoft.cn/">openim-sdk-core</a><br>
-    </b>
-</h1>
-<h3 align="center" style="border-bottom: none">
-      ⭐️  Used in IOS, Android, PC and other platforms  ⭐️ <br>
-<h3>
+关于 OpenIM
+通用模块
+https://github.com/OpenIMSDK/automation: OpenIM 的自动化工具，如 CI/CD 和机器人。
 
-<p align=center>
-<a href="https://goreportcard.com/report/github.com/OpenIMSDK/openim-sdk-core"><img src="https://goreportcard.com/badge/github.com/OpenIMSDK/openim-sdk-core" alt="A+"></a>
-<a href="https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22good+first+issue%22"><img src="https://img.shields.io/github/issues/OpenIMSDK/Open-IM-Server/good%20first%20issue?logo=%22github%22" alt="good first"></a>
-<a href="https://github.com/OpenIMSDK/openim-sdk-core"><img src="https://img.shields.io/github/stars/OpenIMSDK/openim-sdk-core.svg?style=flat&logo=github&colorB=deeppink&label=stars"></a>
-<a href="https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg"><img src="https://img.shields.io/badge/Slack-100%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
-<a href="https://github.com/OpenIMSDK/openim-sdk-core/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
-<a href="https://golang.org/"><img src="https://img.shields.io/badge/Language-Go-blue.svg"></a>
-</p>
+https://github.com/OpenIMSDK/community: OpenIM 的社区管理仓库。
 
-</p>
+SDK 列表
+openim-sdk-core: 核心 SDK，Golang 编写，跨平台。
 
-<p align="center">
-    <a href="./README.md"><b>English</b></a> •
-    <a href="./README_zh-CN.md"><b>中文</b></a>
-</p>
+Open-IM-SDK-iOS: 基于 core SDK 的 iOS 版本。
 
-</p>
+Open-IM-SDK-Android: Android 版本。
+
+Open-IM-SDK-Flutter: Flutter 版本。
+
+Open-IM-SDK-Uniapp: 基于 iOS/Android 封装的 uni-app 版本。
+
+示例项目
+Open-IM-iOS-Demo: iOS 示例。
+
+Open-IM-Android-Demo: Android 示例。
+
+Open-IM-Flutter-Demo: Flutter 示例。
+
+谁在使用
+OpenIM 正被多家公司使用，请前往 ADOPTERS.md 添加你的使用案例，或者在 这个 issue 留言。
+
+许可证
+本软件采用双重授权模型：
+
+GNU Affero 通用公共许可证（AGPL）第 3 版或更高版本；或
+
+来自 OpenIMSDK 的商业授权条款。
+
+如需以商业方式使用，请联系：contact@openim.io
+详细信息见：https://www.openim.io/en/licensing
