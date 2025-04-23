@@ -18,9 +18,8 @@
 package event_listener
 
 import (
-	"syscall/js"
-
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"syscall/js"
 )
 
 type CallbackWriter interface {
@@ -92,27 +91,18 @@ type PromiseHandler struct {
 	OperationID string      `json:"operationID"`
 	resolve     *js.Value
 	reject      *js.Value
-	handlerFunc js.Func
 }
 
 func NewPromiseHandler() *PromiseHandler {
 	return &PromiseHandler{}
 }
 func (p *PromiseHandler) HandlerFunc(fn FuncLogic) interface{} {
-	p.handlerFunc = js.FuncOf(func(_ js.Value, promFn []js.Value) interface{} {
+	handler := js.FuncOf(func(_ js.Value, promFn []js.Value) interface{} {
 		p.resolve, p.reject = &promFn[0], &promFn[1]
 		fn()
 		return nil
 	})
-	return jsPromise.New(p.handlerFunc)
-}
-
-func (p *PromiseHandler) Release() {
-	if !p.handlerFunc.Value.IsUndefined() {
-		p.handlerFunc.Release()
-	}
-	p.resolve = nil
-	p.reject = nil
+	return jsPromise.New(handler)
 }
 
 func (p *PromiseHandler) GetOperationID() string {
@@ -120,10 +110,10 @@ func (p *PromiseHandler) GetOperationID() string {
 }
 
 func (p *PromiseHandler) SendMessage() {
-	defer p.Release()
 	if p.Data != nil {
 		p.resolve.Invoke(p.Data)
 	} else {
+		//p.reject.Invoke(jsErr.New(fmt.Sprintf("erCode:%d,errMsg:%s,operationID:%s", p.ErrCode, p.ErrMsg, p.OperationID)))
 		errInfo := make(map[string]interface{})
 		errInfo["errCode"] = p.ErrCode
 		errInfo["errMsg"] = p.ErrMsg
