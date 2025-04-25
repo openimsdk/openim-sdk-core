@@ -5,13 +5,13 @@ go 1.22.7
 toolchain go1.22.10
 
 require (
+	github.com/coder/websocket v1.8.13
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.4.0
 	github.com/pkg/errors v0.9.1
 	google.golang.org/protobuf v1.35.1 // indirect
 	gorm.io/driver/sqlite v1.5.5
-	nhooyr.io/websocket v1.8.10
 )
 
 require golang.org/x/net v0.29.0 // indirect
@@ -61,5 +61,3 @@ require (
 	google.golang.org/grpc v1.68.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace nhooyr.io/websocket => github.com/coder/websocket v1.8.10
