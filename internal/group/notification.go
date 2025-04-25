@@ -33,11 +33,9 @@ const (
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	go func() {
-		if err := g.doNotification(ctx, msg); err != nil {
-			log.ZError(ctx, "DoGroupNotification failed", err)
-		}
-	}()
+	if err := g.doNotification(ctx, msg); err != nil {
+		log.ZError(ctx, "DoGroupNotification failed", err)
+	}
 }
 
 func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
