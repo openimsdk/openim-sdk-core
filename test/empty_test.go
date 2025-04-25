@@ -22,6 +22,15 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
+func TestName(t *testing.T) {
+	res, err := open_im_sdk.IMUserContext.Conversation().GetActiveConversations(ctx)
+	if err != nil {
+		t.Error("GetActiveConversations", err)
+		return
+	}
+	t.Log("GetActiveConversations", res)
+}
+
 func Test_Empty(t *testing.T) {
 	for {
 		time.Sleep(time.Second * 1)

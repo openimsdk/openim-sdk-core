@@ -2,9 +2,14 @@ package cache
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/tools/utils/datautil"
+)
+
+const (
+	SpecialUserPrefix = "special_"
 )
 
 func NewUserCache[K comparable, V any](
@@ -126,4 +131,31 @@ func (m *UserCache[K, V]) fetch(ctx context.Context, key K) (V, error) {
 		return writeData, sdkerrs.ErrUserIDNotFound.WrapMsg("fetch data not found", "key", key)
 	}
 	return writeData, nil
+}
+
+func (m *UserCache[K, V]) specialUserKey(key K) K {
+	return any(fmt.Sprintf("%s%v", SpecialUserPrefix, key)).(K)
+}
+
+func (m *UserCache[K, V]) BatchAddSpecialUser(items map[K]V) {
+	for key, value := range items {
+		sKey := m.specialUserKey(key)
+		m.Store(sKey, value)
+	}
+}
+
+func (m *UserCache[K, V]) BatchGetSpecialUser(_ context.Context, keys []K) (map[K]V, []K) {
+	result := make(map[K]V)
+	var missingKeys []K
+
+	for _, key := range keys {
+		sKey := m.specialUserKey(key)
+		if val, ok := m.Load(sKey); ok {
+			result[key] = val
+		} else {
+			missingKeys = append(missingKeys, key)
+		}
+	}
+
+	return result, missingKeys
 }

@@ -181,23 +181,13 @@ func Test_InsertGroupMessageToLocalStorage(t *testing.T) {
 }
 
 func Test_SearchLocalMessages(t *testing.T) {
-	// req := &sdk_params_callback.SearchLocalMessagesParams{
-	// 	Count:            20,
-	// 	KeywordList:      []string{"1"},
-	// 	MessageTypeList:  []int{105},
-	// 	PageIndex:        1,
-	// 	SenderUserIDList: []string{},
-	// }
-
 	req := &sdk_params_callback.SearchLocalMessagesParams{
+		Count:            20,
 		KeywordList:      []string{"1"},
-		ConversationID:   "sg_3161900504",
 		MessageTypeList:  []int{105},
 		PageIndex:        1,
-		Count:            20,
-		SenderUserIDList: []string{"1695766238"},
+		SenderUserIDList: []string{},
 	}
-
 	msgs, err := open_im_sdk.IMUserContext.Conversation().SearchLocalMessages(ctx, req)
 	if err != nil {
 		t.Fatal(err)

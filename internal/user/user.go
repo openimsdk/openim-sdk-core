@@ -34,8 +34,8 @@ import (
 )
 
 // NewUser creates a new User object.
-func NewUser(conversationCh chan common.Cmd2Value) *User {
-	user := &User{conversationCh: conversationCh}
+func NewUser(conversationEventQueue *common.EventQueue) *User {
+	user := &User{conversationEventQueue: conversationEventQueue}
 	user.initSyncer()
 	return user
 }
@@ -43,12 +43,12 @@ func NewUser(conversationCh chan common.Cmd2Value) *User {
 // User is a struct that represents a user in the system.
 type User struct {
 	db_interface.DataBase
-	loginUserID    string
-	listener       func() open_im_sdk_callback.OnUserListener
-	userSyncer     *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
-	conversationCh chan common.Cmd2Value
-	userCache      *cache.UserCache[string, *model_struct.LocalUser]
-	once           sync.Once
+	loginUserID            string
+	listener               func() open_im_sdk_callback.OnUserListener
+	userSyncer             *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
+	conversationEventQueue *common.EventQueue
+	userCache              *cache.UserCache[string, *model_struct.LocalUser]
+	once                   sync.Once
 
 	//OnlineStatusCache *cache.Cache[string, *userPb.OnlineStatus]
 }
@@ -101,10 +101,10 @@ func (u *User) initSyncer() {
 			case syncer.Update:
 				u.listener().OnSelfInfoUpdated(utils.StructToJsonString(server))
 				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
-					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
-						Args: common.SourceIDAndSessionType{SourceID: server.UserID, SessionType: constant.SingleChatType, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
-					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
-						Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
+					_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
+						Args: common.SourceIDAndSessionType{SourceID: server.UserID, SessionType: constant.SingleChatType, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationEventQueue)
+					_ = common.DispatchUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
+						Args: common.UpdateMessageInfo{SessionType: constant.SingleChatType, UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationEventQueue)
 				}
 			}
 			return nil

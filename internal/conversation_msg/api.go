@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	pconstant "github.com/openimsdk/protocol/constant"
-
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
@@ -121,7 +119,7 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 			return err
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ConversationEventQueue())
 	return nil
 }
 
@@ -169,7 +167,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ConversationEventQueue())
 }
 
 func (c *Conversation) fileName(ftype string, id string) string {
@@ -315,7 +313,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		lc.LatestMsg = utils.StructToJsonString(s)
 		log.ZDebug(ctx, "send message come here", "conversion", *lc)
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+		_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ConversationEventQueue())
 	}
 
 	var delFile []string
@@ -515,8 +513,6 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		s.Content = utils.StructToJsonString(s.FaceElem)
 	case constant.AdvancedText:
 		s.Content = utils.StructToJsonString(s.AdvancedTextElem)
-	case pconstant.Stream:
-		s.Content = utils.StructToJsonString(s.StreamElem)
 	default:
 		return nil, sdkerrs.ErrMsgContentTypeNotSupport
 	}
@@ -601,8 +597,6 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 		s.Content = utils.StructToJsonString(s.FaceElem)
 	case constant.AdvancedText:
 		s.Content = utils.StructToJsonString(s.AdvancedTextElem)
-	case pconstant.Stream:
-		s.Content = utils.StructToJsonString(s.StreamElem)
 	default:
 		return nil, sdkerrs.ErrMsgContentTypeNotSupport
 	}
@@ -737,7 +731,6 @@ func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sd
 		s := make([]*sdk_struct.MsgStruct, 0)
 		result.MessageList = s
 	}
-	c.streamMsgReplace(ctx, req.ConversationID, result.MessageList)
 	return result, nil
 }
 
@@ -750,7 +743,6 @@ func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context,
 		s := make([]*sdk_struct.MsgStruct, 0)
 		result.MessageList = s
 	}
-	c.streamMsgReplace(ctx, req.ConversationID, result.MessageList)
 	return result, nil
 }
 
@@ -853,7 +845,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ConversationEventQueue())
 	return s, nil
 
 }
@@ -894,7 +886,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.DispatchUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ConversationEventQueue())
 	return s, nil
 
 }

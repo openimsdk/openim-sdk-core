@@ -94,7 +94,7 @@ func (d *DataBase) GetAllSingleConversationIDList(ctx context.Context) (result [
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var c model_struct.LocalConversation
-	return result, errs.WrapMsg(d.conn.WithContext(ctx).Model(&c).Where("conversation_type = ?", constant.SingleChatType).Pluck("conversation_id", &result).Error, "GetAllConversationIDList failed ")
+	return result, errs.WrapMsg(d.conn.WithContext(ctx).Model(&c).Where("conversation_type = ?", constant.SingleChatType).Pluck("conversation_id", &result).Error, "GetAllSingleConversationIDList failed ")
 }
 
 func (d *DataBase) GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {

@@ -149,10 +149,6 @@ func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 }
 
-func (o *onAdvancedMsgListener) OnMsgEdited(message string) {
-	log.ZInfo(o.ctx, "OnMsgEdited", "######## message", message)
-}
-
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
 	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 }
@@ -239,4 +235,20 @@ func (o *onUserListener) OnSelfInfoUpdated(userInfo string) {
 
 func (o *onUserListener) OnUserStatusChanged(statusMap string) {
 	log.ZDebug(context.Background(), "OnUserStatusChanged", "OnUserStatusChanged", statusMap)
+}
+
+type onMessageKvInfoListener struct {
+	ctx context.Context
+}
+
+func (o *onMessageKvInfoListener) OnMessageKvInfoChanged(messageChangedList string) {
+	log.ZDebug(o.ctx, "OnMessageKvInfoChanged", "messageChangedList", messageChangedList)
+}
+
+type onCustomBusinessListener struct {
+	ctx context.Context
+}
+
+func (o *onCustomBusinessListener) OnRecvCustomBusinessMessage(businessMessage string) {
+	log.ZDebug(o.ctx, "OnRecvCustomBusinessMessage", "businessMessage", businessMessage)
 }
