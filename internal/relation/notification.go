@@ -11,11 +11,9 @@ import (
 )
 
 func (r *Relation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	go func() {
-		if err := r.doNotification(ctx, msg); err != nil {
-			log.ZError(ctx, "doNotification error", err, "msg", msg)
-		}
-	}()
+	if err := r.doNotification(ctx, msg); err != nil {
+		log.ZError(ctx, "doNotification error", err, "msg", msg)
+	}
 }
 
 func (r *Relation) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
