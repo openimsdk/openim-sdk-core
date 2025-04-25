@@ -27,15 +27,16 @@ import (
 	"net/url"
 	"time"
 
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 
 	"github.com/openimsdk/tools/log"
 )
 
+const StatusNetWorkChanged websocket.StatusCode = 3001
+
 type JSWebSocket struct {
 	ConnType int
 	conn     *websocket.Conn
-	sendConn *websocket.Conn
 }
 
 func (w *JSWebSocket) SetReadDeadline(timeout time.Duration) error {
@@ -67,7 +68,7 @@ func NewWebSocket(connType int) *JSWebSocket {
 }
 
 func (w *JSWebSocket) Close() error {
-	return w.conn.Close(websocket.StatusGoingAway, "Actively close the conn have old conn")
+	return w.conn.Close(StatusNetWorkChanged, "Actively close the conn have old conn")
 }
 
 func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
@@ -130,16 +131,6 @@ func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error)
 	}
 	return httpResp, err
 }
-
-//func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error) {
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-//	defer cancel()
-//	conn, httpResp, err := websocket.Dial(ctx, urlStr, nil)
-//	if err == nil {
-//		w.conn = conn
-//	}
-//	return httpResp, err
-//}
 
 func (w *JSWebSocket) IsNil() bool {
 	if w.conn != nil {
