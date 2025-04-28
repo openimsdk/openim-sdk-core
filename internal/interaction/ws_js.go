@@ -32,17 +32,33 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
+const (
+	TextPing = "ping"
+	TextPong = "pong"
+)
+
+type TextMessage struct {
+	Type string          `json:"type"`
+	Body json.RawMessage `json:"body"`
+}
+
 type JSWebSocket struct {
-	ConnType int
-	conn     *websocket.Conn
-	sendConn *websocket.Conn
+	ctx           context.Context
+	pingHandler   PingPongHandler
+	pongHandler   PingPongHandler
+	readDeadline  time.Time
+	writeDeadline time.Time
+	ConnType      int
+	conn          *websocket.Conn
 }
 
 func (w *JSWebSocket) SetReadDeadline(timeout time.Duration) error {
+	w.readDeadline = time.Now().Add(timeout)
 	return nil
 }
 
 func (w *JSWebSocket) SetWriteDeadline(timeout time.Duration) error {
+	w.writeDeadline = time.Now().Add(timeout)
 	return nil
 }
 
@@ -51,11 +67,11 @@ func (w *JSWebSocket) SetReadLimit(limit int64) {
 }
 
 func (w *JSWebSocket) SetPingHandler(handler PingPongHandler) {
-
+	w.pingHandler = handler
 }
 
 func (w *JSWebSocket) SetPongHandler(handler PingPongHandler) {
-
+	w.pongHandler = handler
 }
 
 func (w *JSWebSocket) LocalAddr() string {
@@ -63,23 +79,104 @@ func (w *JSWebSocket) LocalAddr() string {
 }
 
 func NewWebSocket(connType int) *JSWebSocket {
-	return &JSWebSocket{ConnType: connType}
+	return &JSWebSocket{
+		ctx:      context.Background(),
+		ConnType: connType,
+	}
 }
 
 func (w *JSWebSocket) Close() error {
 	return w.conn.Close(websocket.StatusGoingAway, "Actively close the conn have old conn")
 }
 
-func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
-	if messageType == PingMessage || messageType == PongMessage {
-		return nil
+func (w *JSWebSocket) sendText(typ string, msg string) error {
+	jsonStr, err := json.Marshal(msg)
+	if err != nil {
+		return err
 	}
-	return w.conn.Write(context.Background(), websocket.MessageType(messageType), message)
+	data, err := json.Marshal(TextMessage{
+		Type: typ,
+		Body: jsonStr,
+	})
+	if err != nil {
+		return err
+	}
+	return w.Write(websocket.MessageText, data)
+}
+
+func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
+	switch messageType {
+	case PingMessage:
+		return w.sendText(TextPing, string(message))
+	case PongMessage:
+		return w.sendText(TextPong, string(message))
+	default:
+		return w.Write(websocket.MessageType(messageType), message)
+	}
+}
+
+func (w *JSWebSocket) handlerText(b []byte) error {
+	var msg TextMessage
+	if err := json.Unmarshal(b, &msg); err != nil {
+		return err
+	}
+	var handler PingPongHandler
+	switch msg.Type {
+	case TextPing:
+		handler = w.pingHandler
+	case TextPong:
+		handler = w.pongHandler
+	default:
+		return fmt.Errorf("wasm ws read text message %s", string(b))
+	}
+	var str string
+	if err := json.Unmarshal(msg.Body, &str); err != nil {
+		return err
+	}
+	if handler != nil {
+		return handler(str)
+	}
+	return nil
+}
+
+func (w *JSWebSocket) Read() (websocket.MessageType, []byte, error) {
+	ctx := w.ctx
+	if deadline := w.readDeadline; !deadline.IsZero() {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, deadline)
+		defer cancel()
+	}
+	return w.conn.Read(ctx)
+}
+
+func (w *JSWebSocket) Write(typ websocket.MessageType, p []byte) error {
+	ctx := w.ctx
+	if deadline := w.writeDeadline; !deadline.IsZero() {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, deadline)
+		defer cancel()
+	}
+	return w.conn.Write(ctx, typ, p)
 }
 
 func (w *JSWebSocket) ReadMessage() (int, []byte, error) {
-	messageType, b, err := w.conn.Read(context.Background())
-	return int(messageType), b, err
+	for {
+		messageType, b, err := w.Read()
+		if err != nil {
+			return 0, nil, err
+		}
+		switch messageType {
+		case websocket.MessageText:
+			if err := w.handlerText(b); err != nil {
+				return 0, nil, err
+			}
+			continue
+		case websocket.MessageBinary:
+			return int(messageType), b, nil
+		default:
+			return 0, nil, fmt.Errorf("wasm ws read type %d msg %v", messageType, b)
+		}
+	}
 }
 
 func (w *JSWebSocket) dial(ctx context.Context, urlStr string) (*websocket.Conn, *http.Response, error) {
@@ -130,16 +227,6 @@ func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error)
 	}
 	return httpResp, err
 }
-
-//func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error) {
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-//	defer cancel()
-//	conn, httpResp, err := websocket.Dial(ctx, urlStr, nil)
-//	if err == nil {
-//		w.conn = conn
-//	}
-//	return httpResp, err
-//}
 
 func (w *JSWebSocket) IsNil() bool {
 	if w.conn != nil {
