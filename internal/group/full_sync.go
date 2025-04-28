@@ -21,14 +21,6 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
-func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
-		return err
-	}
-	//return g.IncrSyncJoinGroupMember(ctx)
-	return nil
-}
-
 func (g *Group) SyncAllSelfGroupApplication(ctx context.Context) error {
 	if !g.groupRequestSyncerLock.TryLock() {
 		return nil
