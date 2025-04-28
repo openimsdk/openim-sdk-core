@@ -14,31 +14,12 @@ import (
 	"github.com/openimsdk/tools/utils/datautil"
 )
 
-//func (g *Group) GetIncrementalGroupMemberBatch(ctx context.Context, groups []*group.GetIncrementalGroupMemberReq) (map[string]*group.GetIncrementalGroupMemberResp, error) {
-//	resp, err := g.getIncrementalGroupMemberBatch(ctx, &group.BatchGetIncrementalGroupMemberReq{UserID: g.loginUserID, ReqList: groups})
-//	if err != nil {
-//		return nil, err
-//	}
-//	return resp.RespList, nil
-//}
-
 func (g *Group) groupAndMemberVersionTableName() string {
 	return "local_group_entities_version"
 }
 
 func (g *Group) groupTableName() string {
 	return model_struct.LocalGroup{}.TableName()
-}
-
-func (g *Group) IncrSyncJoinGroupMember(ctx context.Context) error {
-	groups, err := g.db.GetJoinedGroupListDB(ctx)
-	if err != nil {
-		return err
-	}
-	groupIDs := datautil.Slice(groups, func(e *model_struct.LocalGroup) string {
-		return e.GroupID
-	})
-	return g.IncrSyncGroupAndMember(ctx, groupIDs...)
 }
 
 func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) error {
@@ -351,4 +332,10 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 		},
 	}
 	return joinedGroupSyncer.IncrementalSync()
+}
+
+func (g *Group) IncrSyncJoinGroupWithLock(ctx context.Context) error {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+	return g.IncrSyncJoinGroup(ctx)
 }
