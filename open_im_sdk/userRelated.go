@@ -83,7 +83,7 @@ func (u *UserContext) initResources() {
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
 
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.userOnlineStatusChange, u.msgSyncerCh, u.loginMgrCh)
-	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
+	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.ConnListener})
 	u.setLoginStatus(LogoutStatus)
 	u.user = user.NewUser(u.conversationEventQueue)
 	u.file = file.NewFile()
@@ -121,19 +121,19 @@ type UserContext struct {
 	user         *user.User
 	file         *file.File
 
-	db           db_interface.DataBase
-	longConnMgr  *interaction.LongConnMgr
-	msgSyncer    *interaction.MsgSyncer
-	third        *third.Third
-	token        string
-	loginUserID  string
-	connListener open_im_sdk_callback.OnConnListener
+	db          db_interface.DataBase
+	longConnMgr *interaction.LongConnMgr
+	msgSyncer   *interaction.MsgSyncer
+	third       *third.Third
+	token       string
+	loginUserID string
 
 	justOnceFlag bool
 
 	w           sync.Mutex
 	loginStatus int
 
+	connListener         open_im_sdk_callback.OnConnListener
 	groupListener        open_im_sdk_callback.OnGroupListener
 	friendshipListener   open_im_sdk_callback.OnFriendshipListener
 	conversationListener open_im_sdk_callback.OnConversationListener

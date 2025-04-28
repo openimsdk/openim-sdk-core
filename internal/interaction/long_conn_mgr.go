@@ -718,7 +718,10 @@ func (c *LongConnMgr) Close(ctx context.Context) {
 	if c.GetConnectionStatus() == Connected {
 		log.ZInfo(ctx, "network change conn close")
 		c.closedErr = errors.New("closed by client network change")
-		_ = c.close()
+		err := c.close()
+		if err != nil {
+			log.ZWarn(ctx, "actively close err", err)
+		}
 	} else {
 		log.ZInfo(ctx, "conn already closed")
 	}

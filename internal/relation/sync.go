@@ -2,8 +2,6 @@ package relation
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -108,16 +106,6 @@ func (r *Relation) SyncAllFriendApplicationWithoutNotice(ctx context.Context) er
 		return err
 	}
 	return r.requestRecvSyncer.Sync(ctx, datautil.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil, false, true)
-}
-
-func (r *Relation) SyncAllFriendList(ctx context.Context) error {
-	t := time.Now()
-	defer func(start time.Time) {
-		elapsed := time.Since(start).Milliseconds()
-		log.ZDebug(ctx, "SyncAllFriendList fn call end", "cost time", fmt.Sprintf("%d ms", elapsed))
-
-	}(t)
-	return r.IncrSyncFriends(ctx)
 }
 
 func (r *Relation) SyncAllBlackList(ctx context.Context) error {
