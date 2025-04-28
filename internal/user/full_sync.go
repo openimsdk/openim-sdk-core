@@ -17,7 +17,7 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 		return err
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil && errors.Is(errs.Unwrap(err), errs.ErrRecordNotFound) {
+	if err != nil && (!errs.ErrRecordNotFound.Is(errs.Unwrap(err))) {
 		return err
 	}
 	var localUsers []*model_struct.LocalUser
