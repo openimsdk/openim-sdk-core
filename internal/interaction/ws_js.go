@@ -27,14 +27,15 @@ import (
 	"net/url"
 	"time"
 
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 
 	"github.com/openimsdk/tools/log"
 )
 
 const (
-	TextPing = "ping"
-	TextPong = "pong"
+	TextPing                                  = "ping"
+	TextPong                                  = "pong"
+	StatusNetWorkChanged websocket.StatusCode = 3001
 )
 
 type TextMessage struct {
@@ -86,7 +87,7 @@ func NewWebSocket(connType int) *JSWebSocket {
 }
 
 func (w *JSWebSocket) Close() error {
-	return w.conn.Close(websocket.StatusGoingAway, "Actively close the conn have old conn")
+	return w.conn.Close(StatusNetWorkChanged, "Actively close the conn have old conn")
 }
 
 func (w *JSWebSocket) sendText(typ string, msg string) error {

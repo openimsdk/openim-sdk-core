@@ -79,7 +79,6 @@ func CreateAdvancedQuoteMessage(operationID string, text string, message, messag
 }
 func CreateCardMessage(operationID string, cardInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateCardMessage, cardInfo)
-
 }
 
 func CreateVideoMessageFromFullPath(operationID string, videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
@@ -94,8 +93,8 @@ func CreateSoundMessageFromFullPath(operationID string, soundPath string, durati
 func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessageFromFullPath, fileFullPath, fileName)
 }
-func CreateImageMessage(operationID string, imageSourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
-	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessage, imageSourcePath, sourcePicture, bigPicture, snapshotPicture)
+func CreateImageMessage(operationID string, imagePath string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessage, imagePath)
 }
 func CreateImageMessageByURL(operationID string, sourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessageByURL, sourcePath, sourcePicture, bigPicture, snapshotPicture)
@@ -104,23 +103,23 @@ func CreateImageMessageByURL(operationID string, sourcePath string, sourcePictur
 func CreateSoundMessageByURL(operationID string, soundBaseInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessageByURL, soundBaseInfo)
 }
-func CreateSoundMessage(operationID string, soundPath string, duration int64, soundBaseInfo string) string {
-	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessage, soundPath, duration, soundBaseInfo)
+func CreateSoundMessage(operationID string, soundPath string, duration int64) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessage, soundPath, duration)
 }
 func CreateVideoMessageByURL(operationID string, videoBaseInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessageByURL, videoBaseInfo)
 }
 
-func CreateVideoMessage(operationID string, videoSourcePath string, videoType string, duration int64, snapshotSourcePath string, videoBaseInfo string) string {
-	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessage, videoSourcePath, videoType, duration, snapshotSourcePath, videoBaseInfo)
+func CreateVideoMessage(operationID string, videoPath string, videoType string, duration int64, snapshotPath string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessage, videoPath, videoType, duration, snapshotPath)
 }
 
 func CreateFileMessageByURL(operationID string, fileBaseInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessageByURL, fileBaseInfo)
 }
 
-func CreateFileMessage(operationID string, fileSourcePath string, fileName string, fileBaseInfo string) string {
-	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessage, fileSourcePath, fileName, fileBaseInfo)
+func CreateFileMessage(operationID string, filePath string, fileName string) string {
+	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessage, filePath, fileName)
 }
 func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateMergerMessage, messageList, title, summaryList)
