@@ -317,6 +317,9 @@ type IMConfig struct {
 	IsLogStandardOutput bool   `json:"isLogStandardOutput"`
 	LogFilePath         string `json:"logFilePath"`
 	LogRemainCount      uint32 `json:"logRemainCount"`
+	// StopGoroutineOnBackground
+	// Whether to automatically stop goroutines in the background to prevent iOS watchdog issues
+	StopGoroutineOnBackground bool `json:"stopGoroutineOnBackground"`
 }
 
 type CmdNewMsgComeToConversation struct {
