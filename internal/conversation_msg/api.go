@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
@@ -280,7 +281,10 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	if err != nil {
 		return nil, err
 	}
-	callback, _ := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
+	callback, ok := ctx.Value(ccontext.CtxCallback).(open_im_sdk_callback.SendMsgCallBack)
+	if !ok {
+		return nil, sdkerrs.ErrSdkInternal.WrapMsg("context not found SendMsgCallBack")
+	}
 	log.ZDebug(ctx, "before insert message is", "message", *s)
 	if !isOnlineOnly {
 		oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
@@ -537,7 +541,10 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	if err != nil {
 		return nil, err
 	}
-	callback, _ := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
+	callback, ok := ctx.Value(ccontext.CtxCallback).(open_im_sdk_callback.SendMsgCallBack)
+	if !ok {
+		return nil, sdkerrs.ErrSdkInternal.WrapMsg("context not found SendMsgCallBack")
+	}
 	if !isOnlineOnly {
 		oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
 		if err != nil {
