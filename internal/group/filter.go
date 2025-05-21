@@ -20,7 +20,7 @@ func newNotificationFilter() *notificationFilter {
 	}
 	return &notificationFilter{
 		data:    data,
-		timeout: time.Second * 10,
+		timeout: time.Second * 30,
 	}
 }
 
