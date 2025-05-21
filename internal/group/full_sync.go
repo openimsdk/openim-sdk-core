@@ -29,10 +29,6 @@ func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
 }
 
 func (g *Group) SyncAllSelfGroupApplication(ctx context.Context) error {
-	if !g.groupRequestSyncerLock.TryLock() {
-		return nil
-	}
-	defer g.groupRequestSyncerLock.Unlock()
 	list, err := g.GetServerSelfGroupApplication(ctx)
 	if err != nil {
 		return err
@@ -49,10 +45,6 @@ func (g *Group) SyncAllSelfGroupApplication(ctx context.Context) error {
 }
 
 func (g *Group) SyncAllSelfGroupApplicationWithoutNotice(ctx context.Context) error {
-	if !g.groupRequestSyncerLock.TryLock() {
-		return nil
-	}
-	defer g.groupRequestSyncerLock.Unlock()
 	list, err := g.GetServerSelfGroupApplication(ctx)
 	if err != nil {
 		return err
@@ -72,10 +64,6 @@ func (g *Group) SyncSelfGroupApplications(ctx context.Context, groupIDs ...strin
 }
 
 func (g *Group) SyncAllAdminGroupApplication(ctx context.Context) error {
-	if !g.groupAdminRequestSyncerLock.TryLock() {
-		return nil
-	}
-	defer g.groupAdminRequestSyncerLock.Unlock()
 	requests, err := g.GetServerAdminGroupApplicationList(ctx)
 	if err != nil {
 		return err
@@ -88,10 +76,6 @@ func (g *Group) SyncAllAdminGroupApplication(ctx context.Context) error {
 }
 
 func (g *Group) SyncAllAdminGroupApplicationWithoutNotice(ctx context.Context) error {
-	if !g.groupAdminRequestSyncerLock.TryLock() {
-		return nil
-	}
-	defer g.groupAdminRequestSyncerLock.Unlock()
 	requests, err := g.GetServerAdminGroupApplicationList(ctx)
 	if err != nil {
 		return err

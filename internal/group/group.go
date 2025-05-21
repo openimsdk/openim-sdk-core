@@ -47,6 +47,7 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 		loginUserID:    loginUserID,
 		db:             db,
 		conversationCh: conversationCh,
+		filter:         newNotificationFilter(),
 	}
 	g.initSyncer()
 	g.groupMemberCache = cache.NewCache[string, *model_struct.LocalGroupMember]()
@@ -70,8 +71,7 @@ type Group struct {
 
 	groupMemberCache *cache.Cache[string, *model_struct.LocalGroupMember]
 
-	groupRequestSyncerLock      sync.Mutex
-	groupAdminRequestSyncerLock sync.Mutex
+	filter *notificationFilter
 }
 
 func (g *Group) initSyncer() {

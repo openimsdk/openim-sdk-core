@@ -17,6 +17,7 @@ package group
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/errs"
@@ -32,6 +33,16 @@ const (
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
+	switch msg.ContentType {
+	case
+		constant.JoinGroupApplicationNotification,
+		constant.GroupApplicationAcceptedNotification,
+		constant.GroupApplicationRejectedNotification:
+		if g.filter.AlreadyExecuted(msg.ContentType, msg.Content) {
+			log.ZDebug(ctx, "DoGroupNotification already executed", "msg", msg)
+			return
+		}
+	}
 	go func() {
 		if err := g.doNotification(ctx, msg); err != nil {
 			log.ZError(ctx, "DoGroupNotification failed", err)

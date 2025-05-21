@@ -8,6 +8,7 @@ require (
 	github.com/coder/websocket v1.8.13
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.4.2
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jinzhu/copier v0.4.0
 	github.com/pkg/errors v0.9.1
 	google.golang.org/protobuf v1.35.1 // indirect
