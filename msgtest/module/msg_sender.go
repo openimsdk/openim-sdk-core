@@ -3,13 +3,13 @@ package module
 import (
 	"context"
 	"fmt"
-
 	"sync"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
+	"github.com/openimsdk/openim-sdk-core/v3/msgtest/sdk_user_simulator"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-
-	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -130,6 +130,8 @@ func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ctx := newUserCtx(userID, token, imConfig)
 	longConnMgr := interaction.NewLongConnMgr(ctx, func(m map[string][]int32) {}, pushMsgAndMaxSeqCh, nil)
+	l := sdk_user_simulator.NewTestConnListener()
+	longConnMgr.SetListener(func() open_im_sdk_callback.OnConnListener { return l })
 	core := &SendMsgUser{
 		pushMsgAndMaxSeqCh:      pushMsgAndMaxSeqCh,
 		longConnMgr:             longConnMgr,
