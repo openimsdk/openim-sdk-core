@@ -263,7 +263,22 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateAdminGroupRequest(ctx, server)
 	}, func(value *model_struct.LocalAdminGroupRequest) [2]string {
 		return [...]string{value.GroupID, value.UserID}
-	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalAdminGroupRequest) error {
+	}, func(a *model_struct.LocalAdminGroupRequest, b *model_struct.LocalAdminGroupRequest) bool {
+		return a.GroupID == b.GroupID &&
+			a.UserID == b.UserID &&
+			a.Nickname == b.Nickname &&
+			a.UserFaceURL == b.UserFaceURL &&
+			a.HandleResult == b.HandleResult &&
+			a.ReqMsg == b.ReqMsg &&
+			a.HandledMsg == b.HandledMsg &&
+			a.ReqTime == b.ReqTime &&
+			a.HandleUserID == b.HandleUserID &&
+			a.HandledTime == b.HandledTime &&
+			a.Ex == b.Ex &&
+			a.AttachedInfo == b.AttachedInfo &&
+			a.JoinSource == b.JoinSource &&
+			a.InviterUserID == b.InviterUserID
+	}, func(ctx context.Context, state int, server, local *model_struct.LocalAdminGroupRequest) error {
 		switch state {
 		case syncer.Insert:
 			g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
