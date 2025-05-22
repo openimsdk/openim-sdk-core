@@ -150,7 +150,7 @@ func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig
 	baseCtx, cancel := context.WithCancel(ctx)
 	core.cancelFunc = cancel
 	go core.recvPushMsg(baseCtx)
-	go core.longConnMgr.Run(baseCtx)
+	go core.longConnMgr.Run(baseCtx, baseCtx)
 	return core
 }
 

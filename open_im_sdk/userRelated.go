@@ -25,6 +25,7 @@ import (
 	"unsafe"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
+	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
 
@@ -77,13 +78,13 @@ func (u *UserContext) InitResources() {
 func (u *UserContext) initResources() {
 	ctx := ccontext.WithInfo(context.Background(), u.info)
 	u.ctx, u.cancel = context.WithCancel(ctx)
-	//u.conversationCh = make(chan common.Cmd2Value, 1000)
+	u.setFGCtx()
 	u.conversationEventQueue = common.NewEventQueue(1000)
 	u.msgSyncerCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
 
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.userOnlineStatusChange, u.msgSyncerCh, u.loginMgrCh)
-	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.connListener})
+	u.ctx = ccontext.WithApiErrCode(u.ctx, &apiErrCallback{loginMgrCh: u.loginMgrCh, listener: u.ConnListener})
 	u.setLoginStatus(LogoutStatus)
 	u.user = user.NewUser(u.conversationEventQueue)
 	u.file = file.NewFile()
@@ -121,19 +122,19 @@ type UserContext struct {
 	user         *user.User
 	file         *file.File
 
-	db           db_interface.DataBase
-	longConnMgr  *interaction.LongConnMgr
-	msgSyncer    *interaction.MsgSyncer
-	third        *third.Third
-	token        string
-	loginUserID  string
-	connListener open_im_sdk_callback.OnConnListener
+	db          db_interface.DataBase
+	longConnMgr *interaction.LongConnMgr
+	msgSyncer   *interaction.MsgSyncer
+	third       *third.Third
+	token       string
+	loginUserID string
 
 	justOnceFlag bool
 
 	w           sync.Mutex
 	loginStatus int
 
+	connListener         open_im_sdk_callback.OnConnListener
 	groupListener        open_im_sdk_callback.OnGroupListener
 	friendshipListener   open_im_sdk_callback.OnFriendshipListener
 	conversationListener open_im_sdk_callback.OnConversationListener
@@ -152,6 +153,8 @@ type UserContext struct {
 
 	ctx       context.Context
 	cancel    context.CancelFunc
+	fgCtx     context.Context
+	fgCancel  context.CancelCauseFunc
 	info      *ccontext.GlobalConfig
 	id2MinSeq map[string]int64
 }
@@ -425,10 +428,14 @@ func setListener[T any](ctx context.Context, listener *T, getter func() T, setFu
 }
 
 func (u *UserContext) run(ctx context.Context) {
-	u.longConnMgr.Run(ctx)
+	u.longConnMgr.Run(ctx, u.fgCtx)
 	go u.msgSyncer.DoListener(ctx)
 	go u.conversation.ConsumeConversationEventLoop(ctx)
 	go u.logoutListener(ctx)
+}
+
+func (u *UserContext) setFGCtx() {
+	u.fgCtx, u.fgCancel = context.WithCancelCause(context.Background())
 }
 
 func (u *UserContext) InitSDK(config *sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener) bool {
@@ -485,20 +492,28 @@ func (u *UserContext) logout(ctx context.Context, isTokenValid bool) error {
 }
 
 func (u *UserContext) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	if u.longConnMgr.GetConnectionStatus() == interaction.DefaultNotConnect {
-		u.longConnMgr.SetBackground(isBackground)
-		return nil
+
+	u.longConnMgr.SetBackground(isBackground)
+
+	if !isBackground {
+		if u.info.StopGoroutineOnBackground {
+			u.setFGCtx()
+			u.longConnMgr.ResumeForegroundTasks(u.ctx, u.fgCtx)
+		}
+	} else {
+		if u.info.StopGoroutineOnBackground {
+			u.fgCancel(errs.Wrap(fmt.Errorf("app in background")))
+			u.longConnMgr.Close(ctx)
+		}
 	}
 	var resp sdkws.SetAppBackgroundStatusResp
 	err := u.longConnMgr.SendReqWaitResp(ctx, &sdkws.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, &resp)
 	if err != nil {
 		return err
 	} else {
-		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
 			_ = common.DispatchWakeUp(ctx, u.msgSyncerCh)
 		}
-
 		return nil
 	}
 }

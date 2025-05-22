@@ -12,7 +12,7 @@ import (
 
 type apiErrCallback struct {
 	loginMgrCh         chan common.Cmd2Value
-	listener           open_im_sdk_callback.OnConnListener
+	listener           func() open_im_sdk_callback.OnConnListener
 	tokenExpiredState  int32
 	kickedOfflineState int32
 	tokenInvalidState  int32
@@ -33,7 +33,7 @@ func (c *apiErrCallback) OnError(ctx context.Context, err error) {
 		errs.TokenExpiredError:
 		if atomic.CompareAndSwapInt32(&c.tokenExpiredState, 0, 1) {
 			log.ZError(ctx, "OnUserTokenExpired callback", err)
-			c.listener.OnUserTokenExpired()
+			c.listener().OnUserTokenExpired()
 			_ = common.DispatchLogout(ctx, c.loginMgrCh)
 		}
 	case
@@ -44,14 +44,14 @@ func (c *apiErrCallback) OnError(ctx context.Context, err error) {
 		errs.TokenNotExistError:
 		if atomic.CompareAndSwapInt32(&c.tokenInvalidState, 0, 1) {
 			log.ZError(ctx, "OnUserTokenInvalid callback", err)
-			c.listener.OnUserTokenInvalid(err.Error())
+			c.listener().OnUserTokenInvalid(err.Error())
 			_ = common.DispatchLogout(ctx, c.loginMgrCh)
 		}
 
 	case errs.TokenKickedError:
 		if atomic.CompareAndSwapInt32(&c.kickedOfflineState, 0, 1) {
 			log.ZError(ctx, "OnKickedOffline callback", err)
-			c.listener.OnKickedOffline()
+			c.listener().OnKickedOffline()
 			_ = common.DispatchLogout(ctx, c.loginMgrCh)
 		}
 	}

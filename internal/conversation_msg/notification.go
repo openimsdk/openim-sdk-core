@@ -76,7 +76,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		c.ConversationListener().OnSyncServerStart(true)
 		c.ConversationListener().OnSyncServerProgress(1)
 		asyncWaitFunctions := []func(c context.Context) error{
-			c.group.SyncAllJoinedGroupsAndMembers,
+			c.group.IncrSyncJoinGroup,
 			c.relation.IncrSyncFriends,
 		}
 		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait)
@@ -157,11 +157,9 @@ func (c *Conversation) doNotificationManager(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	go func() {
-		if err := c.doNotification(ctx, msg); err != nil {
-			log.ZWarn(ctx, "DoConversationNotification failed", err)
-		}
-	}()
+	if err := c.doNotification(ctx, msg); err != nil {
+		log.ZWarn(ctx, "DoConversationNotification failed", err)
+	}
 }
 
 func (c *Conversation) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
@@ -424,8 +422,6 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 
 	ctx := c2v.Ctx
 	c.startTime = time.Now()
-	//clear SubscriptionStatusMap
-	//c.user.OnlineStatusCache.DeleteAll()
 
 	// Synchronous sync functions
 	syncFuncs := []func(c context.Context) error{
@@ -442,9 +438,9 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 		c.relation.SyncAllSelfFriendApplication,
 		c.group.SyncAllAdminGroupApplication,
 		c.group.SyncAllSelfGroupApplication,
-		c.group.SyncAllJoinedGroupsAndMembers,
-		c.relation.IncrSyncFriends,
-		c.IncrSyncConversations,
+		c.group.IncrSyncJoinGroupWithLock,
+		c.relation.IncrSyncFriendsWithLock,
+		c.IncrSyncConversationsWithLock,
 	}
 
 	runSyncFunctions(ctx, asyncFuncs, asyncNoWait)

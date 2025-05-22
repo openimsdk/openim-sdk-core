@@ -136,10 +136,15 @@ func (l *LongConnMgr) SetListener(listener func() open_im_sdk_callback.OnConnLis
 	l.listener = listener
 }
 
-func (c *LongConnMgr) Run(ctx context.Context) {
-	go c.readPump(ctx)
+func (c *LongConnMgr) Run(ctx, fgCtx context.Context) {
+	go c.readPump(ctx, fgCtx)
 	go c.writePump(ctx)
-	go c.heartbeat(ctx)
+	go c.heartbeat(ctx, fgCtx)
+}
+
+func (c *LongConnMgr) ResumeForegroundTasks(ctx, fgCtx context.Context) {
+	go c.readPump(ctx, fgCtx)
+	go c.heartbeat(ctx, fgCtx)
 }
 
 func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int, resp proto.Message) error {
@@ -181,7 +186,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
 
-func (c *LongConnMgr) readPump(ctx context.Context) {
+func (c *LongConnMgr) readPump(ctx context.Context, fgCtx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
@@ -201,6 +206,10 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		case <-ctx.Done():
 			c.closedErr = ctx.Err()
 			log.ZInfo(c.ctx, "readPump done, sdk logout.....")
+			return
+		case <-fgCtx.Done():
+			c.closedErr = context.Cause(fgCtx)
+			log.ZInfo(c.ctx, "SDK transitioning from foreground to background, read message goroutine ended.")
 			return
 		default:
 		}
@@ -305,7 +314,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 	}
 }
 
-func (c *LongConnMgr) heartbeat(ctx context.Context) {
+func (c *LongConnMgr) heartbeat(ctx context.Context, fgCtx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
@@ -324,6 +333,10 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
+			return
+		case <-fgCtx.Done():
+			c.closedErr = context.Cause(fgCtx)
+			log.ZInfo(c.ctx, "SDK transitioning from foreground to background, heartbeat goroutine ended.")
 			return
 		case <-ticker.C:
 			log.ZInfo(ctx, "sendPingMessage", "goroutine ID:", getGoroutineID())
@@ -718,7 +731,10 @@ func (c *LongConnMgr) Close(ctx context.Context) {
 	if c.GetConnectionStatus() == Connected {
 		log.ZInfo(ctx, "network change conn close")
 		c.closedErr = errors.New("closed by client network change")
-		_ = c.close()
+		err := c.close()
+		if err != nil {
+			log.ZWarn(ctx, "actively close err", err)
+		}
 	} else {
 		log.ZInfo(ctx, "conn already closed")
 	}

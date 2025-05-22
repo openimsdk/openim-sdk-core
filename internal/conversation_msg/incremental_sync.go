@@ -88,6 +88,12 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 	return conversationSyncer.IncrementalSync()
 }
 
+func (c *Conversation) IncrSyncConversationsWithLock(ctx context.Context) error {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+	return c.IncrSyncConversations(ctx)
+}
+
 func (c *Conversation) conversationTableName() string {
 	return model_struct.LocalConversation{}.TableName()
 }
