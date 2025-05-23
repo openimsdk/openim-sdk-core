@@ -265,6 +265,10 @@ func (u *UserContext) SetCustomBusinessListener(listener open_im_sdk_callback.On
 	u.businessListener = listener
 }
 
+func (u *UserContext) GetLoginUserID() string {
+	return u.loginUserID
+}
+
 func (u *UserContext) logoutListener(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
