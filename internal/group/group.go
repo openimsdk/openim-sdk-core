@@ -17,6 +17,7 @@ package group
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
@@ -37,8 +38,10 @@ import (
 )
 
 const (
-	groupSyncLimit       = 1000
-	groupMemberSyncLimit = 1000
+	groupSyncLimit              = 1000
+	groupMemberSyncLimit        = 1000
+	NotificationFilterCacheSize = 1024
+	NotificationFilterTimeout   = 10 * time.Second
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
@@ -47,7 +50,7 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 		loginUserID:    loginUserID,
 		db:             db,
 		conversationCh: conversationCh,
-		filter:         newNotificationFilter(),
+		filter:         NewNotificationFilter(NotificationFilterCacheSize, NotificationFilterTimeout),
 	}
 	g.initSyncer()
 	g.groupMemberCache = cache.NewCache[string, *model_struct.LocalGroupMember]()
@@ -55,23 +58,16 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 }
 
 type Group struct {
-	listener                func() open_im_sdk_callback.OnGroupListener
-	loginUserID             string
-	db                      db_interface.DataBase
-	groupSyncer             *syncer.Syncer[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string]
-	groupMemberSyncer       *syncer.Syncer[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string]
-	groupRequestSyncer      *syncer.Syncer[*model_struct.LocalGroupRequest, syncer.NoResp, [2]string]
-	groupAdminRequestSyncer *syncer.Syncer[*model_struct.LocalAdminGroupRequest, syncer.NoResp, [2]string]
-
-	conversationCh chan common.Cmd2Value
-	//	memberSyncMutex sync.RWMutex
-
+	listener           func() open_im_sdk_callback.OnGroupListener
+	loginUserID        string
+	db                 db_interface.DataBase
+	groupSyncer        *syncer.Syncer[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string]
+	groupMemberSyncer  *syncer.Syncer[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string]
+	conversationCh     chan common.Cmd2Value
 	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService
-
-	groupMemberCache *cache.Cache[string, *model_struct.LocalGroupMember]
-
-	filter *notificationFilter
+	groupMemberCache   *cache.Cache[string, *model_struct.LocalGroupMember]
+	filter             *NotificationFilter
 }
 
 func (g *Group) initSyncer() {
@@ -215,86 +211,6 @@ func (g *Group) initSyncer() {
 		syncer.WithFullSyncLimit[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](groupMemberSyncLimit),
 	)
 
-	g.groupRequestSyncer = syncer.New[*model_struct.LocalGroupRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalGroupRequest) error {
-		return g.db.InsertGroupRequest(ctx, value)
-	}, func(ctx context.Context, value *model_struct.LocalGroupRequest) error {
-		return g.db.DeleteGroupRequest(ctx, value.GroupID, value.UserID)
-	}, func(ctx context.Context, server, local *model_struct.LocalGroupRequest) error {
-		return g.db.UpdateGroupRequest(ctx, server)
-	}, func(value *model_struct.LocalGroupRequest) [2]string {
-		return [...]string{value.GroupID, value.UserID}
-	}, func(a *model_struct.LocalGroupRequest, b *model_struct.LocalGroupRequest) bool {
-		return a.GroupID == b.GroupID &&
-			a.UserID == b.UserID &&
-			a.Nickname == b.Nickname &&
-			a.UserFaceURL == b.UserFaceURL &&
-			a.HandleResult == b.HandleResult &&
-			a.ReqMsg == b.ReqMsg &&
-			a.HandledMsg == b.HandledMsg &&
-			a.ReqTime == b.ReqTime &&
-			a.HandleUserID == b.HandleUserID &&
-			a.HandledTime == b.HandledTime &&
-			a.Ex == b.Ex &&
-			a.AttachedInfo == b.AttachedInfo &&
-			a.JoinSource == b.JoinSource &&
-			a.InviterUserID == b.InviterUserID
-	}, func(ctx context.Context, state int, server, local *model_struct.LocalGroupRequest) error {
-		switch state {
-		case syncer.Insert:
-			g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
-		case syncer.Update:
-			switch server.HandleResult {
-			case constant.FriendResponseAgree:
-				g.listener().OnGroupApplicationAccepted(utils.StructToJsonString(server))
-			case constant.FriendResponseRefuse:
-				g.listener().OnGroupApplicationRejected(utils.StructToJsonString(server))
-			default:
-				g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
-			}
-		}
-		return nil
-	})
-
-	g.groupAdminRequestSyncer = syncer.New[*model_struct.LocalAdminGroupRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalAdminGroupRequest) error {
-		return g.db.InsertAdminGroupRequest(ctx, value)
-	}, func(ctx context.Context, value *model_struct.LocalAdminGroupRequest) error {
-		return g.db.DeleteAdminGroupRequest(ctx, value.GroupID, value.UserID)
-	}, func(ctx context.Context, server, local *model_struct.LocalAdminGroupRequest) error {
-		return g.db.UpdateAdminGroupRequest(ctx, server)
-	}, func(value *model_struct.LocalAdminGroupRequest) [2]string {
-		return [...]string{value.GroupID, value.UserID}
-	}, func(a *model_struct.LocalAdminGroupRequest, b *model_struct.LocalAdminGroupRequest) bool {
-		return a.GroupID == b.GroupID &&
-			a.UserID == b.UserID &&
-			a.Nickname == b.Nickname &&
-			a.UserFaceURL == b.UserFaceURL &&
-			a.HandleResult == b.HandleResult &&
-			a.ReqMsg == b.ReqMsg &&
-			a.HandledMsg == b.HandledMsg &&
-			a.ReqTime == b.ReqTime &&
-			a.HandleUserID == b.HandleUserID &&
-			a.HandledTime == b.HandledTime &&
-			a.Ex == b.Ex &&
-			a.AttachedInfo == b.AttachedInfo &&
-			a.JoinSource == b.JoinSource &&
-			a.InviterUserID == b.InviterUserID
-	}, func(ctx context.Context, state int, server, local *model_struct.LocalAdminGroupRequest) error {
-		switch state {
-		case syncer.Insert:
-			g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
-		case syncer.Update:
-			switch server.HandleResult {
-			case constant.FriendResponseAgree:
-				g.listener().OnGroupApplicationAccepted(utils.StructToJsonString(server))
-			case constant.FriendResponseRefuse:
-				g.listener().OnGroupApplicationRejected(utils.StructToJsonString(server))
-			default:
-				g.listener().OnGroupApplicationAdded(utils.StructToJsonString(server))
-			}
-		}
-		return nil
-	})
-
 }
 
 func (g *Group) SetGroupListener(listener func() open_im_sdk_callback.OnGroupListener) {
@@ -338,6 +254,12 @@ func (g *Group) FetchGroupOrError(ctx context.Context, groupID string) (*model_s
 	return groups[0], nil
 }
 
-func (g *Group) delLocalGroupRequest(ctx context.Context, groupID, userID string) error {
-	return g.db.DeleteGroupRequest(ctx, groupID, userID)
+// SetDataBase sets the DataBase field in Group struct
+func (g *Group) SetDataBase(db db_interface.DataBase) {
+	g.db = db
+}
+
+// SetLoginUserID sets the loginUserID field in Group struct
+func (g *Group) SetLoginUserID(loginUserID string) {
+	g.loginUserID = loginUserID
 }

@@ -57,13 +57,9 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		switch detail.ReceiverAs {
-		case constant.ApplicantReceiver:
-			return g.SyncAllSelfGroupApplication(ctx)
-		case constant.AdminReceiver:
-			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
-		default:
-			return errs.New(fmt.Sprintf("GroupApplicationAcceptedNotification ReceiverAs unknown %d", detail.ReceiverAs)).Wrap()
+		if g.filter.ShouldExecute(detail.Uuid) {
+			g.listener().OnGroupApplicationAccepted(utils.StructToJsonString(
+				ServerGroupRequestToLocalGroupRequestForNotification(detail.GetGroup(), detail.GetRequest())))
 		}
 
 	case constant.GroupApplicationRejectedNotification: // 1506
@@ -71,15 +67,19 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		switch detail.ReceiverAs {
-		case 0:
-			return g.SyncAllSelfGroupApplication(ctx)
-		case 1:
-			return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
-		default:
-			return errs.New(fmt.Sprintf("GroupApplicationRejectedNotification ReceiverAs unknown %d", detail.ReceiverAs)).Wrap()
+		if g.filter.ShouldExecute(detail.Uuid) {
+			g.listener().OnGroupApplicationRejected(utils.StructToJsonString(
+				ServerGroupRequestToLocalGroupRequestForNotification(detail.GetGroup(), detail.GetRequest())))
 		}
-
+	case constant.JoinGroupApplicationNotification: // 1503
+		var detail sdkws.JoinGroupApplicationTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
+		if g.filter.ShouldExecute(detail.Uuid) {
+			g.listener().OnGroupMemberAdded(utils.StructToJsonString(
+				ServerGroupRequestToLocalGroupRequestForNotification(detail.GetGroup(), detail.GetRequest())))
+		}
 	default:
 		g.groupSyncMutex.Lock()
 		defer g.groupSyncMutex.Unlock()
@@ -102,16 +102,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			}
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 				nil, nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
-		case constant.JoinGroupApplicationNotification: // 1503
-			var detail sdkws.JoinGroupApplicationTips
-			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
-				return err
-			}
-			if detail.Applicant.UserID == g.loginUserID {
-				return g.SyncSelfGroupApplications(ctx, detail.Group.GroupID)
-			} else {
-				return g.SyncAdminGroupApplications(ctx, detail.Group.GroupID)
-			}
+
 		case constant.MemberQuitNotification: // 1504
 			var detail sdkws.MemberQuitTips
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -131,11 +122,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if detail.Group == nil {
 				return errs.New(fmt.Sprintf("group is nil, groupID: %s", detail.Group.GroupID)).Wrap()
 			}
-			if detail.NewGroupOwner.RoleLevel < constant.GroupAdmin && detail.OldGroupOwner == g.loginUserID {
-				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
-					return err
-				}
-			}
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 				[]*sdkws.GroupMemberFullInfo{detail.NewGroupOwner, detail.OldGroupOwnerInfo}, nil,
 				detail.Group, groupSortIDChanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
@@ -152,9 +138,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				}
 			}
 			if self {
-				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
-					return err
-				}
 				return g.IncrSyncJoinGroup(ctx)
 			} else {
 				return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, detail.KickedUserList, nil,
@@ -235,11 +218,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 				return err
 			}
-			if detail.ChangedUser.RoleLevel < constant.GroupAdmin && detail.ChangedUser.UserID == g.loginUserID {
-				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
-					return err
-				}
-			}
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 				[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, nil,
 				detail.GroupSortVersion, detail.GroupMemberVersion, detail.GroupMemberVersionID)
@@ -255,11 +233,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			var detail sdkws.GroupMemberInfoSetTips
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 				return err
-			}
-			if detail.ChangedUser.UserID == g.loginUserID {
-				if err := g.delLocalGroupRequest(ctx, detail.Group.GroupID, g.loginUserID); err != nil {
-					return err
-				}
 			}
 			return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, nil,
 				[]*sdkws.GroupMemberFullInfo{detail.ChangedUser}, nil, nil,
@@ -282,4 +255,5 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return errs.New("unknown tips type", "contentType", msg.ContentType).Wrap()
 		}
 	}
+	return nil
 }

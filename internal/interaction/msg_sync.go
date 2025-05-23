@@ -213,8 +213,12 @@ func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 
 		}
 	case constant.CmdIMMessageSync:
-		log.ZInfo(cmd.Ctx, "manually trigger IM message synchronization", "cmd", cmd.Cmd, "value", cmd.Value)
-		m.doIMMessageSync(cmd.Ctx)
+		if conversationIDs, ok := cmd.Value.([]string); ok {
+			log.ZInfo(cmd.Ctx, "manual trigger IM message synchronization", "cmd", cmd.Cmd, "value", cmd.Value)
+			m.doIMMessageSync(cmd.Ctx, conversationIDs)
+		} else {
+			log.ZWarn(cmd.Ctx, "invalid value type for IMMessageSync", nil, "cmd", cmd.Cmd, "value", cmd.Value)
+		}
 
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))

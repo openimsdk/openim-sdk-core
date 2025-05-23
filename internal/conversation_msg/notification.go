@@ -53,7 +53,6 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		c.doUpdateConversation(c2v)
 	case constant.CmdUpdateMessage:
 		c.doUpdateMessage(c2v)
-	case constant.CmSyncReactionExtensions:
 	case constant.CmdNotification:
 		c.doNotificationManager(c2v)
 	case constant.CmdSyncData:
@@ -94,11 +93,6 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		asyncNoWaitFunctions := []func(c context.Context) error{
 			c.user.SyncLoginUserInfoWithoutNotice,
 			c.relation.SyncAllBlackListWithoutNotice,
-			c.relation.SyncAllFriendApplicationWithoutNotice,
-			c.relation.SyncAllSelfFriendApplicationWithoutNotice,
-			c.group.SyncAllAdminGroupApplicationWithoutNotice,
-			c.group.SyncAllSelfGroupApplicationWithoutNotice,
-			c.user.SyncAllCommandWithoutNotice,
 		}
 		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
@@ -155,11 +149,9 @@ func (c *Conversation) doNotificationManager(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	go func() {
-		if err := c.doNotification(ctx, msg); err != nil {
-			log.ZWarn(ctx, "DoConversationNotification failed", err)
-		}
-	}()
+	if err := c.doNotification(ctx, msg); err != nil {
+		log.ZWarn(ctx, "DoConversationNotification failed", err)
+	}
 }
 
 func (c *Conversation) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
@@ -436,14 +428,9 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 	asyncFuncs := []func(c context.Context) error{
 		c.user.SyncLoginUserInfo,
 		c.relation.SyncAllBlackList,
-		c.relation.SyncAllFriendApplication,
-		c.relation.SyncAllSelfFriendApplication,
-		c.group.SyncAllAdminGroupApplication,
-		c.group.SyncAllSelfGroupApplication,
-		c.user.SyncAllCommand,
-		c.group.SyncAllJoinedGroupsAndMembers,
-		c.relation.IncrSyncFriends,
-		c.IncrSyncConversations,
+		c.group.IncrSyncJoinGroupWithLock,
+		c.relation.IncrSyncFriendsWithLock,
+		c.IncrSyncConversationsWithLock,
 	}
 
 	runSyncFunctions(ctx, asyncFuncs, asyncNoWait)

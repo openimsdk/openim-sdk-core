@@ -32,7 +32,7 @@ func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList
 			return localFriends, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			serverFriend, err := r.GetDesignatedFriends(ctx, userIDs)
+			serverFriend, err := r.getDesignatedFriends(ctx, userIDs)
 			if err != nil {
 				return nil, err
 			}
@@ -69,21 +69,23 @@ func (r *Relation) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList
 }
 
 func (r *Relation) AddFriend(ctx context.Context, req *relation.ApplyToAddFriendReq) error {
-	if err := r.addFriend(ctx, req); err != nil {
-		return err
+	return r.addFriend(ctx, req)
+}
+
+func (r *Relation) GetFriendApplicationListAsRecipient(ctx context.Context, req *sdk.GetFriendApplicationListAsRecipientReq) ([]*model_struct.LocalFriendRequest, error) {
+	friendRequests, err := r.getRecvFriendApplicationList(ctx, req.HandleResults, req.Offset/req.Count+1, req.Count)
+	if err != nil {
+		return nil, err
 	}
-	r.relationSyncMutex.Lock()
-	defer r.relationSyncMutex.Unlock()
-
-	return r.SyncAllSelfFriendApplication(ctx)
+	return datautil.Batch(ServerFriendRequestToLocalFriendRequest, friendRequests), nil
 }
 
-func (r *Relation) GetFriendApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
-	return r.db.GetRecvFriendApplication(ctx)
-}
-
-func (r *Relation) GetFriendApplicationListAsApplicant(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
-	return r.db.GetSendFriendApplication(ctx)
+func (r *Relation) GetFriendApplicationListAsApplicant(ctx context.Context, req *sdk.GetFriendApplicationListAsApplicantReq) ([]*model_struct.LocalFriendRequest, error) {
+	friendRequests, err := r.getSelfFriendApplicationList(ctx, req.Offset/req.Count+1, req.Count)
+	if err != nil {
+		return nil, err
+	}
+	return datautil.Batch(ServerFriendRequestToLocalFriendRequest, friendRequests), nil
 }
 
 func (r *Relation) AcceptFriendApplication(ctx context.Context, userIDHandleMsg *sdk.ProcessFriendApplicationParams) error {
@@ -104,9 +106,7 @@ func (r *Relation) RespondFriendApply(ctx context.Context, req *relation.Respond
 	if req.HandleResult == constant.FriendResponseAgree {
 		_ = r.IncrSyncFriends(ctx)
 	}
-	_ = r.SyncAllFriendApplication(ctx)
 	return nil
-	// return r.SyncFriendApplication(ctx)
 }
 
 func (r *Relation) CheckFriend(ctx context.Context, friendUserIDList []string) ([]*server_api_params.UserIDResult, error) {
@@ -200,7 +200,7 @@ func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int32, f
 			return localFriendList, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalFriend, error) {
-			serverFriend, err := r.GetDesignatedFriends(ctx, userIDs)
+			serverFriend, err := r.getDesignatedFriends(ctx, userIDs)
 			if err != nil {
 				return nil, err
 			}

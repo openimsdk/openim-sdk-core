@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	userPb "github.com/openimsdk/protocol/user"
@@ -34,8 +33,8 @@ func (u *User) SyncLoginUserInfoWithoutNotice(ctx context.Context) error {
 		return err
 	}
 	localUser, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil && errors.Is(errs.Unwrap(err), errs.ErrRecordNotFound) {
-		log.ZError(ctx, "SyncLoginUserInfo", err)
+	if err != nil && (!errs.ErrRecordNotFound.Is(errs.Unwrap(err))) {
+		return err
 	}
 	var localUsers []*model_struct.LocalUser
 	if err == nil {
