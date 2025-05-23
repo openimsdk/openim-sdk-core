@@ -70,10 +70,12 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 	seqs := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Seqs
 	switch syncFlag {
 	case constant.AppDataSyncBegin, constant.LargeDataSyncBegin:
+		c.ConversationListener().OnSyncServerStart(true)
+
+	case constant.AppDataSyncData, constant.LargeDataSyncData:
 		log.ZDebug(ctx, "AppDataSyncBegin")
 		c.seqs = seqs
 		c.startTime = time.Now()
-		c.ConversationListener().OnSyncServerStart(true)
 		c.ConversationListener().OnSyncServerProgress(1)
 		asyncWaitFunctions := []func(c context.Context) error{
 			c.group.IncrSyncJoinGroup,
@@ -96,10 +98,6 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		asyncNoWaitFunctions := []func(c context.Context) error{
 			c.user.SyncLoginUserInfoWithoutNotice,
 			c.relation.SyncAllBlackListWithoutNotice,
-			c.relation.SyncAllFriendApplicationWithoutNotice,
-			c.relation.SyncAllSelfFriendApplicationWithoutNotice,
-			c.group.SyncAllAdminGroupApplicationWithoutNotice,
-			c.group.SyncAllSelfGroupApplicationWithoutNotice,
 		}
 		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
@@ -108,11 +106,14 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		c.progress = 100
 		c.ConversationListener().OnSyncServerProgress(c.progress)
 		c.ConversationListener().OnSyncServerFinish(true)
-	case constant.MsgSyncBegin:
+	case constant.MsgSyncData:
 		c.seqs = seqs
 		log.ZDebug(ctx, "MsgSyncBegin")
-		c.ConversationListener().OnSyncServerStart(false)
 		c.syncData(c2v)
+
+	case constant.MsgSyncBegin:
+		c.ConversationListener().OnSyncServerStart(false)
+
 	case constant.MsgSyncFailed:
 		c.ConversationListener().OnSyncServerFailed(false)
 	case constant.MsgSyncEnd:
@@ -434,10 +435,6 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 	asyncFuncs := []func(c context.Context) error{
 		c.user.SyncLoginUserInfo,
 		c.relation.SyncAllBlackList,
-		c.relation.SyncAllFriendApplication,
-		c.relation.SyncAllSelfFriendApplication,
-		c.group.SyncAllAdminGroupApplication,
-		c.group.SyncAllSelfGroupApplication,
 		c.group.IncrSyncJoinGroupWithLock,
 		c.relation.IncrSyncFriendsWithLock,
 		c.IncrSyncConversationsWithLock,

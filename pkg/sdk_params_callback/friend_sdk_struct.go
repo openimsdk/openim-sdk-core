@@ -44,3 +44,14 @@ type SetFriendPinParams struct {
 	ToUserIDs []string              `json:"toUserIDs" validate:"required"`
 	IsPinned  *wrapperspb.BoolValue `json:"isPinned" validate:"required"`
 }
+
+type GetFriendApplicationListAsRecipientReq struct {
+	HandleResults []int32 `json:"handleResults"`
+	Offset        int32   `json:"offset"`
+	Count         int32   `json:"count"`
+}
+
+type GetFriendApplicationListAsApplicantReq struct {
+	Offset int32 `json:"offset"`
+	Count  int32 `json:"count"`
+}

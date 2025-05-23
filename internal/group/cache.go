@@ -57,7 +57,7 @@ func (g *Group) GetGroupMembersInfo(ctx context.Context, groupID string, userIDs
 			return t.UserID
 		})
 		if len(queryKeys) != 0 {
-			queryData, err := g.GetDesignatedGroupMembers(ctx, groupID, queryKeys)
+			queryData, err := g.getDesignatedGroupMembers(ctx, groupID, queryKeys)
 			if err != nil {
 				return nil, err
 			}

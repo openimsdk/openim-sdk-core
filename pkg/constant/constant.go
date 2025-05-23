@@ -242,13 +242,15 @@ const BigVersion = "v3"
 
 const (
 	MsgSyncBegin       = 1001 //
-	MsgSyncProcessing  = 1002 //
+	MsgSyncData        = 1002 //
 	MsgSyncEnd         = 1003 //
 	MsgSyncFailed      = 1004
 	AppDataSyncBegin   = 1005
-	AppDataSyncEnd     = 1006
-	LargeDataSyncBegin = 1007
-	LargeDataSyncEnd   = 1008
+	AppDataSyncData    = 1006
+	AppDataSyncEnd     = 1007
+	LargeDataSyncBegin = 1008
+	LargeDataSyncData  = 1009
+	LargeDataSyncEnd   = 1010
 )
 
 const (
@@ -258,10 +260,4 @@ const (
 
 const (
 	Uninitialized = -1001
-)
-
-// GroupApplicationReceiver
-const (
-	ApplicantReceiver = iota
-	AdminReceiver
 )
