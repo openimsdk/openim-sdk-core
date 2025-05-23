@@ -331,6 +331,10 @@ jobs:
                 mv /tmp/milestone_migration/results.json.tmp /tmp/milestone_migration/results.json
               else
                 echo "Failed to create PR"
+
+                echo "Deleting branch $new_branch since PR creation failed"
+                git push origin --delete $new_branch 2>/dev/null || echo "Branch deletion failed"
+                
                 # Record failure
                 jq --argjson result "{\"original_pr\": $pr_number, \"status\": \"failure\", \"message\": \"Failed to create PR\"}" \
                   '.+= [$result]' /tmp/milestone_migration/results.json > /tmp/milestone_migration/results.json.tmp
@@ -338,6 +342,10 @@ jobs:
               fi
             else
               echo "⏭️ Skip PR #$pr_number: no actual changes"
+
+              echo "Deleting branch $new_branch since PR creation failed"
+              git push origin --delete $new_branch 2>/dev/null || echo "Branch deletion failed"
+
               # Record as skipped
               jq --argjson result "{\"original_pr\": $pr_number, \"status\": \"skipped\", \"message\": \"No actual changes\"}" \
                 '.+= [$result]' /tmp/milestone_migration/results.json > /tmp/milestone_migration/results.json.tmp
@@ -347,6 +355,8 @@ jobs:
             # Switch back to target branch
             git checkout $TARGET_BRANCH
           done
+
+      # Pending
 
       # - name: Create results report
       #   run: |
