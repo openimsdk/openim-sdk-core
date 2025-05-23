@@ -416,6 +416,11 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pushMessages map[str
 // Called after successful reconnection to synchronize the latest message
 func (m *MsgSyncer) doConnected(ctx context.Context) {
 	reinstalled := m.reinstalled
+	if reinstalled {
+		common.DispatchSyncFlagWithMeta(ctx, constant.AppDataSyncBegin, nil, m.conversationEventQueue)
+	} else {
+		common.DispatchSyncFlagWithMeta(ctx, constant.MsgSyncBegin, nil, m.conversationEventQueue)
+	}
 	var resp sdkws.GetMaxSeqResp
 	if err := m.longConnMgr.SendReqWaitResp(ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(ctx, "get max seq error", err)
@@ -431,15 +436,15 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 	convCount := len(needSyncAllSeqMap)
 
 	if convCount == 0 {
-		log.ZInfo(ctx, "no conversations need sync")
-		return
+		log.ZInfo(ctx, "no conversations messages need to sync")
 	}
 
 	// In cases where there is no uninstall and reinstall,
 	// the amount of conversation data to be synchronized in a single operation is too large
 	if len(needSyncAllSeqMap) >= maxConversations {
-		log.ZDebug(ctx, "large conversations to sync", nil, "length", len(needSyncAllSeqMap))
+		log.ZDebug(ctx, "large conversations to sync", "length", len(needSyncAllSeqMap))
 		m.isLargeDataSync = true
+		common.DispatchSyncFlagWithMeta(ctx, constant.LargeDataSyncBegin, nil, m.conversationEventQueue)
 	}
 
 	maxSeqs, sortConversationList, err := m.SyncAndSortConversations(ctx, reinstalled)
@@ -447,13 +452,13 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 		log.ZError(ctx, "SyncAndSortConversations err", err)
 	}
 	if reinstalled {
-		common.DispatchSyncFlagWithMeta(ctx, constant.AppDataSyncBegin, maxSeqs, m.conversationEventQueue)
+		common.DispatchSyncFlagWithMeta(ctx, constant.AppDataSyncData, maxSeqs, m.conversationEventQueue)
 	} else {
 		if m.isLargeDataSync {
 			log.ZWarn(ctx, "too many conversations to sync", nil, "maxConversations", maxConversations)
-			common.DispatchSyncFlagWithMeta(ctx, constant.LargeDataSyncBegin, maxSeqs, m.conversationEventQueue)
+			common.DispatchSyncFlagWithMeta(ctx, constant.LargeDataSyncData, maxSeqs, m.conversationEventQueue)
 		} else {
-			common.DispatchSyncFlagWithMeta(ctx, constant.MsgSyncBegin, maxSeqs, m.conversationEventQueue)
+			common.DispatchSyncFlagWithMeta(ctx, constant.MsgSyncData, maxSeqs, m.conversationEventQueue)
 		}
 	}
 
@@ -488,7 +493,7 @@ func (m *MsgSyncer) handleMessage(ctx context.Context, batchID int, needSyncTopS
 		}
 	} else {
 		if m.isLargeDataSync {
-			log.ZWarn(ctx, "handleMessage large conversations to sync", nil, "length", len(needSyncTopSeqMap), "isFirst", isFirst, "maxConversations", maxConversations)
+			log.ZDebug(ctx, "handleMessage large conversations to sync", "length", len(needSyncTopSeqMap), "isFirst", isFirst, "maxConversations", maxConversations)
 			_ = m.syncAndTriggerReinstallMsgs(ctx, needSyncTopSeqMap, isFirst, connectPullNums)
 			if isFirst {
 				common.DispatchSyncFlag(ctx, constant.LargeDataSyncEnd, m.conversationEventQueue)

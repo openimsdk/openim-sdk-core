@@ -7,14 +7,12 @@ import (
 
 func ServerFriendRequestToLocalFriendRequest(info *sdkws.FriendRequest) *model_struct.LocalFriendRequest {
 	return &model_struct.LocalFriendRequest{
-		FromUserID:   info.FromUserID,
-		FromNickname: info.FromNickname,
-		FromFaceURL:  info.FromFaceURL,
-		//FromGender:    info.FromGender,
-		ToUserID:   info.ToUserID,
-		ToNickname: info.ToNickname,
-		ToFaceURL:  info.ToFaceURL,
-		//ToGender:      info.ToGender,
+		FromUserID:    info.FromUserID,
+		FromNickname:  info.FromNickname,
+		FromFaceURL:   info.FromFaceURL,
+		ToUserID:      info.ToUserID,
+		ToNickname:    info.ToNickname,
+		ToFaceURL:     info.ToFaceURL,
 		HandleResult:  info.HandleResult,
 		ReqMsg:        info.ReqMsg,
 		CreateTime:    info.CreateTime,
@@ -22,7 +20,6 @@ func ServerFriendRequestToLocalFriendRequest(info *sdkws.FriendRequest) *model_s
 		HandleMsg:     info.HandleMsg,
 		HandleTime:    info.HandleTime,
 		Ex:            info.Ex,
-		//AttachedInfo:  info.AttachedInfo,
 	}
 }
 
@@ -37,8 +34,7 @@ func ServerFriendToLocalFriend(info *sdkws.FriendInfo) *model_struct.LocalFriend
 		Nickname:       info.FriendUser.Nickname,
 		FaceURL:        info.FriendUser.FaceURL,
 		Ex:             info.Ex,
-		//AttachedInfo:   info.FriendUser.AttachedInfo,
-		IsPinned: info.IsPinned,
+		IsPinned:       info.IsPinned,
 	}
 }
 
@@ -52,6 +48,5 @@ func ServerBlackToLocalBlack(info *sdkws.BlackInfo) *model_struct.LocalBlack {
 		Nickname:       info.BlackUserInfo.Nickname,
 		FaceURL:        info.BlackUserInfo.FaceURL,
 		Ex:             info.Ex,
-		//AttachedInfo:   info.FriendUser.AttachedInfo,
 	}
 }
