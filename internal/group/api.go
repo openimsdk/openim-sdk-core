@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/tools/utils/datautil"
@@ -432,7 +433,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 }
 
 func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context, req *sdk_params_callback.GetGroupApplicationListAsRecipientReq) ([]*model_struct.LocalGroupRequest, error) {
-	groupRequests, err := g.getServerAdminGroupApplicationList(ctx, req.GroupIDs, req.HandleResults, req.Offset/req.Count+1, req.Count)
+	groupRequests, err := g.getServerAdminGroupApplicationList(ctx, req.GroupIDs, req.HandleResults, utils.GetPageNumber(req.Offset, req.Count), req.Count)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +441,7 @@ func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context, req *sdk
 }
 
 func (g *Group) GetGroupApplicationListAsApplicant(ctx context.Context, req *sdk_params_callback.GetGroupApplicationListAsApplicantReq) ([]*model_struct.LocalGroupRequest, error) {
-	groupRequests, err := g.getServerSelfGroupApplication(ctx, req.GroupIDs, req.HandleResults, req.Offset/req.Count+1, req.Count)
+	groupRequests, err := g.getServerSelfGroupApplication(ctx, req.GroupIDs, req.HandleResults, utils.GetPageNumber(req.Offset, req.Count), req.Count)
 	if err != nil {
 		return nil, err
 	}
