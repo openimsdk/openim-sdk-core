@@ -47,7 +47,3 @@ type GetGroupApplicationListAsApplicantReq struct {
 type GetGroupApplicationUnhandledCountReq struct {
 	Time int64 `json:"time"`
 }
-
-type GetSelfUnhandledApplyCountReq struct {
-	Time int64 `json:"time"`
-}

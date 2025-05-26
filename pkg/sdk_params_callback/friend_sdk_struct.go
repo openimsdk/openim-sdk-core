@@ -55,3 +55,7 @@ type GetFriendApplicationListAsApplicantReq struct {
 	Offset int32 `json:"offset"`
 	Count  int32 `json:"count"`
 }
+
+type GetSelfUnhandledApplyCountReq struct {
+	Time int64 `json:"time"`
+}
