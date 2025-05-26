@@ -88,12 +88,12 @@ func GetGroupMemberList(callback open_im_sdk_callback.Base, operationID string, 
 	call(callback, operationID, IMUserContext.Group().GetGroupMemberList, groupID, filter, offset, count)
 }
 
-func GetGroupApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsRecipient)
+func GetGroupApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsRecipient, req)
 }
 
-func GetGroupApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsApplicant)
+func GetGroupApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsApplicant, req)
 }
 
 func SearchGroupMembers(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
@@ -128,6 +128,6 @@ func CheckGroupMemberFullSync(callback open_im_sdk_callback.Base, operationID st
 	call(callback, operationID, IMUserContext.Group().CheckGroupMemberFullSync, groupID)
 }
 
-func GetGroupApplicationUnhandledCount(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.Group().GetGroupApplicationUnhandledCount)
+func GetGroupApplicationUnhandledCount(callback open_im_sdk_callback.Base, operationID string, req string) {
+	call(callback, operationID, IMUserContext.Group().GetGroupApplicationUnhandledCount, req)
 }
