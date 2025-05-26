@@ -72,3 +72,11 @@ func (r *Relation) removeBlack(ctx context.Context, userID string) error {
 		BlackUserID: userID,
 	})
 }
+
+func (r *Relation) getSelfUnhandledApplyCount(ctx context.Context, time int64) (int32, error) {
+	resp, err := api.GetSelfUnhandledApplyCount.Invoke(ctx, &relation.GetSelfUnhandledApplyCountReq{UserID: r.loginUserID, Time: time})
+	if err != nil {
+		return 0, err
+	}
+	return int32(resp.GetCount()), nil
+}

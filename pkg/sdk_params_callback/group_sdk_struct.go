@@ -43,3 +43,11 @@ type GetGroupApplicationListAsApplicantReq struct {
 	Offset        int32    `json:"offset"`
 	Count         int32    `json:"count"`
 }
+
+type GetGroupApplicationUnhandledCountReq struct {
+	Time int64 `json:"time"`
+}
+
+type GetSelfUnhandledApplyCountReq struct {
+	Time int64 `json:"time"`
+}

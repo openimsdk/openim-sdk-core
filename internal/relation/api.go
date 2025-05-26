@@ -298,3 +298,7 @@ func (r *Relation) UpdateFriends(ctx context.Context, req *relation.UpdateFriend
 
 	return r.IncrSyncFriends(ctx)
 }
+
+func (r *Relation) GetSelfUnhandledApplyCount(ctx context.Context, req *sdk.GetSelfUnhandledApplyCountReq) (int32, error) {
+	return r.getSelfUnhandledApplyCount(ctx, req.Time)
+}

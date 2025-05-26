@@ -522,12 +522,15 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	if err := g.handlerGroupApplication(ctx, req); err != nil {
 		return err
 	}
-	// SyncAdminGroupApplication todo
 	return nil
 }
 
 func (g *Group) GetGroupMemberNameAndFaceURL(ctx context.Context, groupID string, userIDs []string) (map[string]*model_struct.LocalGroupMember, error) {
 	return g.GetGroupMembersInfo(ctx, groupID, userIDs)
+}
+
+func (g *Group) GetGroupApplicationUnhandledCount(ctx context.Context, req *sdk_params_callback.GetGroupApplicationUnhandledCountReq) (int32, error) {
+	return g.getGroupApplicationUnhandledCount(ctx, req.Time)
 }
 
 func (g *Group) GetGroupApplicationUnhandledCount(ctx context.Context, req *sdk_params_callback.GetGroupApplicationUnhandledCountReq) (int32, error) {

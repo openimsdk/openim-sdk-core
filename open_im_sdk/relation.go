@@ -44,13 +44,6 @@ func UpdateFriends(callback open_im_sdk_callback.Base, operationID string, req s
 	call(callback, operationID, UserForSDK.Relation().UpdateFriends, req)
 }
 
-//func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, userIDRemark string) {
-//	call(callback, operationID, UserForSDK.Relation().SetFriendRemark, userIDRemark)
-//}
-//func PinFriends(callback open_im_sdk_callback.Base, operationID string, pinFriendsParams string) {
-//	call(callback, operationID, UserForSDK.Relation().PinFriends, pinFriendsParams)
-//}
-
 func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friendUserID string) {
 	call(callback, operationID, UserForSDK.Relation().DeleteFriend, friendUserID)
 }
@@ -83,6 +76,6 @@ func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeU
 	call(callback, operationID, UserForSDK.Relation().RemoveBlack, removeUserID)
 }
 
-//func SetFriendsEx(callback open_im_sdk_callback.Base, operationID string, friendIDs string, ex string) {
-//	call(callback, operationID, UserForSDK.Relation().SetFriendsEx, friendIDs, ex)
-//}
+func GetSelfUnhandledApplyCount(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.Relation().GetSelfUnhandledApplyCount)
+}
