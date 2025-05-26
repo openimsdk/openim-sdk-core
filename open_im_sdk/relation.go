@@ -75,3 +75,7 @@ func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
 func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeUserID string) {
 	call(callback, operationID, IMUserContext.Relation().RemoveBlack, removeUserID)
 }
+
+func GetSelfUnhandledApplyCount(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, IMUserContext.Relation().GetSelfUnhandledApplyCount)
+}
