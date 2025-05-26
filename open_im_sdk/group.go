@@ -120,12 +120,12 @@ func RefuseGroupApplication(callback open_im_sdk_callback.Base, operationID stri
 	call(callback, operationID, IMUserContext.Group().RefuseGroupApplication, groupID, fromUserID, handleMsg)
 }
 
-func CheckLocalGroupFullSync(callback open_im_sdk_callback.Base, operationID string, groupID string, fromUserID string, handleMsg string) {
-	call(callback, operationID, IMUserContext.Group().CheckLocalGroupFullSync, groupID, fromUserID, handleMsg)
+func CheckLocalGroupFullSync(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, IMUserContext.Group().CheckLocalGroupFullSync)
 }
 
-func CheckGroupMemberFullSync(callback open_im_sdk_callback.Base, operationID string, groupID string, fromUserID string, handleMsg string) {
-	call(callback, operationID, IMUserContext.Group().CheckGroupMemberFullSync, groupID, fromUserID, handleMsg)
+func CheckGroupMemberFullSync(callback open_im_sdk_callback.Base, operationID string, groupID string) {
+	call(callback, operationID, IMUserContext.Group().CheckGroupMemberFullSync, groupID)
 }
 
 func GetGroupApplicationUnhandledCount(callback open_im_sdk_callback.Base, operationID string) {
