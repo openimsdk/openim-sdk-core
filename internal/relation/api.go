@@ -3,6 +3,7 @@ package relation
 import (
 	"context"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/relation"
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -73,7 +74,7 @@ func (r *Relation) AddFriend(ctx context.Context, req *relation.ApplyToAddFriend
 }
 
 func (r *Relation) GetFriendApplicationListAsRecipient(ctx context.Context, req *sdk.GetFriendApplicationListAsRecipientReq) ([]*model_struct.LocalFriendRequest, error) {
-	friendRequests, err := r.getRecvFriendApplicationList(ctx, req.HandleResults, req.Offset/req.Count+1, req.Count)
+	friendRequests, err := r.getRecvFriendApplicationList(ctx, req.HandleResults, utils.GetPageNumber(req.Offset, req.Count), req.Count)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func (r *Relation) GetFriendApplicationListAsRecipient(ctx context.Context, req 
 }
 
 func (r *Relation) GetFriendApplicationListAsApplicant(ctx context.Context, req *sdk.GetFriendApplicationListAsApplicantReq) ([]*model_struct.LocalFriendRequest, error) {
-	friendRequests, err := r.getSelfFriendApplicationList(ctx, req.Offset/req.Count+1, req.Count)
+	friendRequests, err := r.getSelfFriendApplicationList(ctx, utils.GetPageNumber(req.Offset, req.Count), req.Count)
 	if err != nil {
 		return nil, err
 	}

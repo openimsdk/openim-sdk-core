@@ -277,3 +277,13 @@ func UnmarshalNotificationElem(bytes []byte, t interface{}) error {
 	}
 	return nil
 }
+
+func GetPageNumber(offset, count int32) int32 {
+	if count <= 0 {
+		return 1
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return offset/count + 1
+}
