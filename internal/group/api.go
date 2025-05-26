@@ -505,7 +505,6 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	if err := g.handlerGroupApplication(ctx, req); err != nil {
 		return err
 	}
-	// SyncAdminGroupApplication todo
 	return nil
 }
 
@@ -537,4 +536,8 @@ func (g *Group) CheckGroupMemberFullSync(ctx context.Context, groupID string) (b
 		return false, nil
 	}
 	return true, nil
+}
+
+func (g *Group) GetGroupApplicationUnhandledCount(ctx context.Context, req *sdk_params_callback.GetGroupApplicationUnhandledCountReq) (int32, error) {
+	return g.getGroupApplicationUnhandledCount(ctx, req.Time)
 }
