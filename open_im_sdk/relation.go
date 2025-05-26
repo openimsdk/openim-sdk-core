@@ -76,6 +76,6 @@ func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeU
 	call(callback, operationID, UserForSDK.Relation().RemoveBlack, removeUserID)
 }
 
-func GetSelfUnhandledApplyCount(callback open_im_sdk_callback.Base, operationID, req string) {
-	call(callback, operationID, UserForSDK.Relation().GetSelfUnhandledApplyCount, req)
+func GetFriendApplicationUnhandledCount(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, UserForSDK.Relation().GetFriendApplicationUnhandledCount, req)
 }
