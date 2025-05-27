@@ -88,7 +88,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		syncWaitFunctions := []func(c context.Context) error{
 
 			c.IncrSyncConversations,
-			c.SyncAllConUnreadAndCreateNewCon,
+			c.SyncAllConUnreadAndCreateNewConWithoutTrigger,
 		}
 		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
 		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
@@ -106,6 +106,12 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		c.progress = 100
 		c.ConversationListener().OnSyncServerProgress(c.progress)
 		c.ConversationListener().OnSyncServerFinish(true)
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountNewerDB(ctx)
+		if err != nil {
+			log.ZWarn(ctx, "GetTotalUnreadMsgCountDB err", err)
+		} else {
+			c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
+		}
 	case constant.MsgSyncData:
 		c.seqs = seqs
 		log.ZDebug(ctx, "MsgSyncBegin")
@@ -435,7 +441,7 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 	asyncFuncs := []func(c context.Context) error{
 		c.user.SyncLoginUserInfo,
 		c.relation.SyncAllBlackList,
-		c.group.IncrSyncJoinGroupWithLock,
+		c.group.SyncAllJoinedGroupsAndMembersWithLock,
 		c.relation.IncrSyncFriendsWithLock,
 		c.IncrSyncConversationsWithLock,
 	}
