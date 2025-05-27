@@ -112,6 +112,7 @@ type ConversationModel interface {
 	UpdateAllConversation(ctx context.Context, conversation *model_struct.LocalConversation) error
 	IncrConversationUnreadCount(ctx context.Context, conversationID string) error
 	DecrConversationUnreadCount(ctx context.Context, conversationID string, count int64) (err error)
+	GetTotalUnreadMsgCountNewerDB(ctx context.Context) (totalUnreadCount int32, err error)
 	GetTotalUnreadMsgCountDB(ctx context.Context) (totalUnreadCount int32, err error)
 	SetMultipleConversationRecvMsgOpt(ctx context.Context, conversationIDList []string, opt int) (err error)
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)

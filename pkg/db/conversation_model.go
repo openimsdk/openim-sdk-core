@@ -342,6 +342,20 @@ func (d *DataBase) IncrConversationUnreadCount(ctx context.Context, conversation
 	return errs.WrapMsg(t.Error, "IncrConversationUnreadCount failed")
 }
 
+func (d *DataBase) GetTotalUnreadMsgCountNewerDB(ctx context.Context) (totalUnreadCount int32, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var result []int64
+	err = d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("recv_msg_opt < ? ", constant.ReceiveNotNotifyMessage).Pluck("unread_count", &result).Error
+	if err != nil {
+		return totalUnreadCount, errs.WrapMsg(errors.New("GetTotalUnreadMsgCount err"), "GetTotalUnreadMsgCount err")
+	}
+	for _, v := range result {
+		totalUnreadCount += int32(v)
+	}
+	return totalUnreadCount, nil
+}
+
 func (d *DataBase) GetTotalUnreadMsgCountDB(ctx context.Context) (totalUnreadCount int32, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
