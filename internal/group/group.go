@@ -38,14 +38,14 @@ import (
 )
 
 const (
-	groupSyncLimit              = 1047
+	groupSyncLimit              = 1000
 	groupMemberSyncLimit        = 1000
 	NotificationFilterCacheSize = 1024
 	NotificationFilterTimeout   = 10 * time.Second
 )
 
 func NewGroup(
-	conversationEventQueue *common.EventQueue) *Group {
+	conversationEventQueue chan common.Cmd2Value) *Group {
 	g := &Group{
 		conversationEventQueue: conversationEventQueue,
 		filter:                 NewNotificationFilter(NotificationFilterCacheSize, NotificationFilterTimeout),
@@ -61,7 +61,7 @@ type Group struct {
 	db                     db_interface.DataBase
 	groupSyncer            *syncer.Syncer[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string]
 	groupMemberSyncer      *syncer.Syncer[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string]
-	conversationEventQueue *common.EventQueue
+	conversationEventQueue chan common.Cmd2Value
 	groupSyncMutex         sync.Mutex
 	listenerForService     open_im_sdk_callback.OnListenerForService
 	groupMemberCache       *cache.Cache[string, *model_struct.LocalGroupMember]

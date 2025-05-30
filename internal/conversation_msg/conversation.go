@@ -40,8 +40,6 @@ import (
 	pbConversation "github.com/openimsdk/protocol/conversation"
 )
 
-const MaxRecursionDepth = 3
-
 func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq, localConversation *model_struct.LocalConversation) error {
 	apiReq.Conversation.ConversationID = localConversation.ConversationID
 	apiReq.Conversation.ConversationType = localConversation.ConversationType

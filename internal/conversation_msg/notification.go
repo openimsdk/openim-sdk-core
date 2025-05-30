@@ -67,18 +67,14 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
-	seqs := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Seqs
 	switch syncFlag {
-	case constant.AppDataSyncBegin, constant.LargeDataSyncBegin:
-		c.ConversationListener().OnSyncServerStart(true)
-
-	case constant.AppDataSyncData, constant.LargeDataSyncData:
-		log.ZDebug(ctx, "AppDataSyncBegin")
-		c.seqs = seqs
+	case constant.AppDataSyncStart:
+		log.ZDebug(ctx, "AppDataSyncStart")
 		c.startTime = time.Now()
+		c.ConversationListener().OnSyncServerStart(true)
 		c.ConversationListener().OnSyncServerProgress(1)
 		asyncWaitFunctions := []func(c context.Context) error{
-			c.group.IncrSyncJoinGroup,
+			c.group.SyncAllJoinedGroupsAndMembersWithLock,
 			c.relation.IncrSyncFriends,
 		}
 		runSyncFunctions(ctx, asyncWaitFunctions, asyncWait)
@@ -86,9 +82,8 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		c.ConversationListener().OnSyncServerProgress(c.progress) // notify server current Progress
 
 		syncWaitFunctions := []func(c context.Context) error{
-
 			c.IncrSyncConversations,
-			c.SyncAllConUnreadAndCreateNewConWithoutTrigger,
+			c.SyncAllConversationHashReadSeqs,
 		}
 		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
 		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
@@ -101,25 +96,15 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		}
 		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
-	case constant.AppDataSyncEnd, constant.LargeDataSyncEnd:
-		log.ZDebug(ctx, "AppDataSyncEnd", "time", time.Since(c.startTime).Milliseconds())
+	case constant.AppDataSyncFinish:
+		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).Milliseconds())
 		c.progress = 100
 		c.ConversationListener().OnSyncServerProgress(c.progress)
 		c.ConversationListener().OnSyncServerFinish(true)
-		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountNewerDB(ctx)
-		if err != nil {
-			log.ZWarn(ctx, "GetTotalUnreadMsgCountDB err", err)
-		} else {
-			c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
-		}
-	case constant.MsgSyncData:
-		c.seqs = seqs
-		log.ZDebug(ctx, "MsgSyncBegin")
-		c.syncData(c2v)
-
 	case constant.MsgSyncBegin:
+		log.ZDebug(ctx, "MsgSyncBegin")
 		c.ConversationListener().OnSyncServerStart(false)
-
+		c.syncData(c2v)
 	case constant.MsgSyncFailed:
 		c.ConversationListener().OnSyncServerFailed(false)
 	case constant.MsgSyncEnd:
@@ -432,7 +417,7 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 
 	// Synchronous sync functions
 	syncFuncs := []func(c context.Context) error{
-		c.SyncAllConUnreadAndCreateNewCon,
+		c.SyncAllConversationHashReadSeqs,
 	}
 
 	runSyncFunctions(ctx, syncFuncs, syncWait)
