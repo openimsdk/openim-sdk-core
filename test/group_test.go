@@ -135,7 +135,10 @@ func Test_GetSpecifiedGroupsInfo(t *testing.T) {
 }
 
 func Test_GetGroupApplicationListAsRecipient(t *testing.T) {
-	info, err := open_im_sdk.IMUserContext.Group().GetGroupApplicationListAsRecipient(ctx)
+	info, err := open_im_sdk.IMUserContext.Group().GetGroupApplicationListAsRecipient(ctx, &sdk_params_callback.GetGroupApplicationListAsRecipientReq{
+		Offset: 0,
+		Count:  10,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +149,10 @@ func Test_GetGroupApplicationListAsRecipient(t *testing.T) {
 }
 
 func Test_GetGroupApplicationListAsApplicant(t *testing.T) {
-	info, err := open_im_sdk.IMUserContext.Group().GetGroupApplicationListAsApplicant(ctx)
+	info, err := open_im_sdk.IMUserContext.Group().GetGroupApplicationListAsApplicant(ctx, &sdk_params_callback.GetGroupApplicationListAsApplicantReq{
+		Offset: 0,
+		Count:  10,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +242,10 @@ func Test_GetGroup(t *testing.T) {
 }
 func Test_GetGroupApplicantsList(t *testing.T) {
 	t.Log("--------------------------")
-	infos, err := open_im_sdk.IMUserContext.Group().GetGroupApplicationListAsRecipient(ctx)
+	infos, err := open_im_sdk.IMUserContext.Group().GetGroupApplicationListAsRecipient(ctx, &sdk_params_callback.GetGroupApplicationListAsRecipientReq{
+		Offset: 0,
+		Count:  10,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
