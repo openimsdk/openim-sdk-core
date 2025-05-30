@@ -24,7 +24,7 @@ const (
 	friendSyncLimit int64 = 10000
 )
 
-func NewRelation(conversationEventQueue *common.EventQueue, user *user.User) *Relation {
+func NewRelation(conversationEventQueue chan common.Cmd2Value, user *user.User) *Relation {
 	r := &Relation{conversationEventQueue: conversationEventQueue, user: user}
 	r.initSyncer()
 	return r
@@ -37,7 +37,7 @@ type Relation struct {
 	user                   *user.User
 	friendSyncer           *syncer.Syncer[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string]
 	blackSyncer            *syncer.Syncer[*model_struct.LocalBlack, syncer.NoResp, [2]string]
-	conversationEventQueue *common.EventQueue
+	conversationEventQueue chan common.Cmd2Value
 	listenerForService     open_im_sdk_callback.OnListenerForService
 	relationSyncMutex      sync.Mutex
 }

@@ -241,16 +241,12 @@ const (
 const BigVersion = "v3"
 
 const (
-	MsgSyncBegin       = 1001 //
-	MsgSyncData        = 1002 //
-	MsgSyncEnd         = 1003 //
-	MsgSyncFailed      = 1004
-	AppDataSyncBegin   = 1005
-	AppDataSyncData    = 1006
-	AppDataSyncEnd     = 1007
-	LargeDataSyncBegin = 1008
-	LargeDataSyncData  = 1009
-	LargeDataSyncEnd   = 1010
+	MsgSyncBegin      = 1001 //
+	MsgSyncProcessing = 1002 //
+	MsgSyncEnd        = 1003 //
+	MsgSyncFailed     = 1004
+	AppDataSyncStart  = 1005
+	AppDataSyncFinish = 1006
 )
 
 const (
