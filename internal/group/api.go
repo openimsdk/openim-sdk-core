@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/tools/utils/datautil"
@@ -63,9 +64,9 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 	if err := g.joinGroup(ctx, req); err != nil {
 		return err
 	}
-	if err := g.SyncSelfGroupApplications(ctx, groupID); err != nil {
-		return err
-	}
+	//if err := g.SyncSelfGroupApplications(ctx, groupID); err != nil {
+	//	return err
+	//}
 	return nil
 }
 
@@ -262,7 +263,7 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 			return localGroupMembers, true, err
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			serverGroupMember, err := g.getDesignatedGroupMembers(ctx, groupID, userIDs)
 			if err != nil {
 				return nil, err
 			}
@@ -321,7 +322,7 @@ func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string
 			return localGroupMembers, true, nil
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			serverGroupMember, err := g.getDesignatedGroupMembers(ctx, groupID, userIDs)
 			if err != nil {
 				return nil, err
 			}
@@ -390,7 +391,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 			return nil, false, sdkerrs.ErrArgs
 		},
 		func(ctx context.Context, userIDs []string) ([]*model_struct.LocalGroupMember, error) {
-			serverGroupMember, err := g.GetDesignatedGroupMembers(ctx, groupID, userIDs)
+			serverGroupMember, err := g.getDesignatedGroupMembers(ctx, groupID, userIDs)
 			if err != nil {
 				return nil, err
 			}
@@ -414,12 +415,20 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 	return dataFetcher.FetchWithPagination(ctx, int(offset), int(count))
 }
 
-func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
-	return g.db.GetAdminGroupApplication(ctx)
+func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context, req *sdk_params_callback.GetGroupApplicationListAsRecipientReq) ([]*model_struct.LocalGroupRequest, error) {
+	groupRequests, err := g.getServerAdminGroupApplicationList(ctx, req.GroupIDs, req.HandleResults, utils.GetPageNumber(req.Offset, req.Count), req.Count)
+	if err != nil {
+		return nil, err
+	}
+	return datautil.Batch(ServerGroupRequestToLocalGroupRequest, groupRequests), nil
 }
 
-func (g *Group) GetGroupApplicationListAsApplicant(ctx context.Context) ([]*model_struct.LocalGroupRequest, error) {
-	return g.db.GetSendGroupApplication(ctx)
+func (g *Group) GetGroupApplicationListAsApplicant(ctx context.Context, req *sdk_params_callback.GetGroupApplicationListAsApplicantReq) ([]*model_struct.LocalGroupRequest, error) {
+	groupRequests, err := g.getServerSelfGroupApplication(ctx, req.GroupIDs, req.HandleResults, utils.GetPageNumber(req.Offset, req.Count), req.Count)
+	if err != nil {
+		return nil, err
+	}
+	return datautil.Batch(ServerGroupRequestToLocalGroupRequest, groupRequests), nil
 }
 
 func (g *Group) SearchGroupMembers(ctx context.Context, searchParam *sdk_params_callback.SearchGroupMembersParam) ([]*model_struct.LocalGroupMember, error) {
@@ -497,7 +506,6 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 	if err := g.handlerGroupApplication(ctx, req); err != nil {
 		return err
 	}
-	// SyncAdminGroupApplication todo
 	return nil
 }
 
@@ -529,4 +537,8 @@ func (g *Group) CheckGroupMemberFullSync(ctx context.Context, groupID string) (b
 		return false, nil
 	}
 	return true, nil
+}
+
+func (g *Group) GetGroupApplicationUnhandledCount(ctx context.Context, req *sdk_params_callback.GetGroupApplicationUnhandledCountReq) (int32, error) {
+	return g.getGroupApplicationUnhandledCount(ctx, req.Time)
 }

@@ -108,3 +108,8 @@ func (w *WrapperFriend) AddBlack(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.AddBlack, callback, &args).AsyncCallWithCallback()
 }
+
+func (w *WrapperFriend) GetFriendApplicationUnhandledCount(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetFriendApplicationUnhandledCount, callback, &args).AsyncCallWithCallback()
+}

@@ -78,8 +78,10 @@ func (g *Group) getDesignatedGroupMembers(ctx context.Context, groupID string, u
 	return api.ExtractField(ctx, api.GetGroupMembersInfo.Invoke, req, (*group.GetGroupMembersInfoResp).GetMembers)
 }
 
-func (g *Group) getServerSelfGroupApplication(ctx context.Context) ([]*sdkws.GroupRequest, error) {
-	req := &group.GetUserReqApplicationListReq{UserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}
+func (g *Group) getServerSelfGroupApplication(ctx context.Context, groupIDs []string,
+	handleResults []int32, pageNumber, showNumber int32) ([]*sdkws.GroupRequest, error) {
+	req := &group.GetUserReqApplicationListReq{UserID: g.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber},
+		GroupIDs: groupIDs, HandleResults: handleResults}
 	return api.Page(ctx, req, api.GetSendGroupApplicationList.Invoke, (*group.GetUserReqApplicationListResp).GetGroupRequests)
 }
 
@@ -88,8 +90,10 @@ func (g *Group) getServerJoinGroup(ctx context.Context) ([]*sdkws.GroupInfo, err
 	return api.Page(ctx, req, api.GetJoinedGroupList.Invoke, (*group.GetJoinedGroupListResp).GetGroups)
 }
 
-func (g *Group) getServerAdminGroupApplicationList(ctx context.Context) ([]*sdkws.GroupRequest, error) {
-	req := &group.GetGroupApplicationListReq{FromUserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}
+func (g *Group) getServerAdminGroupApplicationList(ctx context.Context, groupIDs []string,
+	handleResults []int32, pageNumber, showNumber int32) ([]*sdkws.GroupRequest, error) {
+	req := &group.GetGroupApplicationListReq{FromUserID: g.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber},
+		GroupIDs: groupIDs, HandleResults: handleResults}
 	return api.Page(ctx, req, api.GetRecvGroupApplicationList.Invoke, (*group.GetGroupApplicationListResp).GetGroupRequests)
 }
 
@@ -104,4 +108,13 @@ func (g *Group) inviteUserToGroup(ctx context.Context, req *group.InviteUserToGr
 
 func (g *Group) handlerGroupApplication(ctx context.Context, req *group.GroupApplicationResponseReq) error {
 	return api.AcceptGroupApplication.Execute(ctx, req)
+}
+
+func (g *Group) getGroupApplicationUnhandledCount(ctx context.Context, time int64) (int32, error) {
+	req := &group.GetGroupApplicationUnhandledCountReq{UserID: g.loginUserID, Time: time}
+	resp, err := api.GetGroupApplicationUnhandledCount.Invoke(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+	return int32(resp.GetCount()), nil
 }

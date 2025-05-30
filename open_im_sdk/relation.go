@@ -48,12 +48,12 @@ func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friend
 	call(callback, operationID, IMUserContext.Relation().DeleteFriend, friendUserID)
 }
 
-func GetFriendApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.Relation().GetFriendApplicationListAsRecipient)
+func GetFriendApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, IMUserContext.Relation().GetFriendApplicationListAsRecipient, req)
 }
 
-func GetFriendApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.Relation().GetFriendApplicationListAsApplicant)
+func GetFriendApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, IMUserContext.Relation().GetFriendApplicationListAsApplicant, req)
 }
 
 func AcceptFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
@@ -74,4 +74,8 @@ func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
 
 func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeUserID string) {
 	call(callback, operationID, IMUserContext.Relation().RemoveBlack, removeUserID)
+}
+
+func GetFriendApplicationUnhandledCount(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, IMUserContext.Relation().GetFriendApplicationUnhandledCount, req)
 }

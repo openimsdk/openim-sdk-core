@@ -88,12 +88,12 @@ func GetGroupMemberList(callback open_im_sdk_callback.Base, operationID string, 
 	call(callback, operationID, IMUserContext.Group().GetGroupMemberList, groupID, filter, offset, count)
 }
 
-func GetGroupApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsRecipient)
+func GetGroupApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsRecipient, req)
 }
 
-func GetGroupApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsApplicant)
+func GetGroupApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID, req string) {
+	call(callback, operationID, IMUserContext.Group().GetGroupApplicationListAsApplicant, req)
 }
 
 func SearchGroupMembers(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
@@ -120,10 +120,14 @@ func RefuseGroupApplication(callback open_im_sdk_callback.Base, operationID stri
 	call(callback, operationID, IMUserContext.Group().RefuseGroupApplication, groupID, fromUserID, handleMsg)
 }
 
-func CheckLocalGroupFullSync(callback open_im_sdk_callback.Base, operationID string, groupID string, fromUserID string, handleMsg string) {
-	call(callback, operationID, IMUserContext.Group().CheckLocalGroupFullSync, groupID, fromUserID, handleMsg)
+func CheckLocalGroupFullSync(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, IMUserContext.Group().CheckLocalGroupFullSync)
 }
 
-func CheckGroupMemberFullSync(callback open_im_sdk_callback.Base, operationID string, groupID string, fromUserID string, handleMsg string) {
-	call(callback, operationID, IMUserContext.Group().CheckGroupMemberFullSync, groupID, fromUserID, handleMsg)
+func CheckGroupMemberFullSync(callback open_im_sdk_callback.Base, operationID string, groupID string) {
+	call(callback, operationID, IMUserContext.Group().CheckGroupMemberFullSync, groupID)
+}
+
+func GetGroupApplicationUnhandledCount(callback open_im_sdk_callback.Base, operationID string, req string) {
+	call(callback, operationID, IMUserContext.Group().GetGroupApplicationUnhandledCount, req)
 }
