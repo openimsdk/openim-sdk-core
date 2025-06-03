@@ -29,10 +29,8 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 
-	"github.com/openimsdk/tools/log"
-	"github.com/openimsdk/tools/mw"
-
 	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 )
 
 func isNumeric(kind reflect.Kind) bool {
@@ -110,8 +108,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 			if err == nil {
 				log.ZInfo(ctx, "fn call success", "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed), "resp", res)
 			} else {
-				log.ZError(ctx, "fn call error", mw.FormatError(err), "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
-
+				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
 			}
 
 		}
