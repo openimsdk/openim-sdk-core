@@ -91,3 +91,9 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 func (c *Conversation) conversationTableName() string {
 	return model_struct.LocalConversation{}.TableName()
 }
+
+func (c *Conversation) IncrSyncConversationsWithLock(ctx context.Context) error {
+	c.conversationSyncMutex.Lock()
+	defer c.conversationSyncMutex.Unlock()
+	return c.IncrSyncConversations(ctx)
+}

@@ -23,3 +23,10 @@ import (
 func (g *Group) GetServerJoinGroup(ctx context.Context) ([]*sdkws.GroupInfo, error) {
 	return g.getServerJoinGroup(ctx)
 }
+
+func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
+		return err
+	}
+	return g.IncrSyncJoinGroupMember(ctx)
+}

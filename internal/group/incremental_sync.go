@@ -30,6 +30,15 @@ func (g *Group) groupTableName() string {
 	return model_struct.LocalGroup{}.TableName()
 }
 
+func (g *Group) SyncAllJoinedGroupsAndMembersWithLock(ctx context.Context) error {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+	if err := g.IncrSyncJoinGroup(ctx); err != nil {
+		return err
+	}
+	return g.IncrSyncJoinGroupMember(ctx)
+}
+
 func (g *Group) IncrSyncJoinGroupMember(ctx context.Context) error {
 	groups, err := g.db.GetJoinedGroupListDB(ctx)
 	if err != nil {

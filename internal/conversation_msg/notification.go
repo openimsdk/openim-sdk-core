@@ -428,7 +428,7 @@ func (c *Conversation) syncData(c2v common.Cmd2Value) {
 	asyncFuncs := []func(c context.Context) error{
 		c.user.SyncLoginUserInfo,
 		c.relation.SyncAllBlackList,
-		c.group.IncrSyncJoinGroupWithLock,
+		c.group.SyncAllJoinedGroupsAndMembersWithLock,
 		c.relation.IncrSyncFriendsWithLock,
 		c.IncrSyncConversationsWithLock,
 	}
