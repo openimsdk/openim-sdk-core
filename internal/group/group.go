@@ -253,13 +253,3 @@ func (g *Group) FetchGroupOrError(ctx context.Context, groupID string) (*model_s
 	}
 	return groups[0], nil
 }
-
-// SetDataBase sets the DataBase field in Group struct
-func (g *Group) SetDataBase(db db_interface.DataBase) {
-	g.db = db
-}
-
-// SetLoginUserID sets the loginUserID field in Group struct
-func (g *Group) SetLoginUserID(loginUserID string) {
-	g.loginUserID = loginUserID
-}
