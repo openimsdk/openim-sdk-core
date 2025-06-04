@@ -80,6 +80,13 @@ func UnInitSDK(_ string) {
 	IMUserContext.UnInitSDK()
 }
 
+func GetLoginUserID() string {
+	if IMUserContext == nil {
+		return ""
+	}
+	return IMUserContext.GetLoginUserID()
+}
+
 func Login(callback open_im_sdk_callback.Base, operationID string, userID, token string) {
 	call(callback, operationID, IMUserContext.Login, userID, token)
 }

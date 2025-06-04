@@ -29,3 +29,21 @@ type SearchGroupMembersParam struct {
 	Count                  int      `json:"count"`
 	PageNumber             int      `json:"pageNumber"`
 }
+
+type GetGroupApplicationListAsRecipientReq struct {
+	GroupIDs      []string `json:"groupIDs"`
+	HandleResults []int32  `json:"handleResults"`
+	Offset        int32    `json:"offset"`
+	Count         int32    `json:"count"`
+}
+
+type GetGroupApplicationListAsApplicantReq struct {
+	GroupIDs      []string `json:"groupIDs"`
+	HandleResults []int32  `json:"handleResults"`
+	Offset        int32    `json:"offset"`
+	Count         int32    `json:"count"`
+}
+
+type GetGroupApplicationUnhandledCountReq struct {
+	Time int64 `json:"time"`
+}

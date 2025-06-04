@@ -34,7 +34,7 @@ import (
 )
 
 // NewUser creates a new User object.
-func NewUser(conversationEventQueue *common.EventQueue) *User {
+func NewUser(conversationEventQueue chan common.Cmd2Value) *User {
 	user := &User{conversationEventQueue: conversationEventQueue}
 	user.initSyncer()
 	return user
@@ -46,7 +46,7 @@ type User struct {
 	loginUserID            string
 	listener               func() open_im_sdk_callback.OnUserListener
 	userSyncer             *syncer.Syncer[*model_struct.LocalUser, syncer.NoResp, string]
-	conversationEventQueue *common.EventQueue
+	conversationEventQueue chan common.Cmd2Value
 	userCache              *cache.UserCache[string, *model_struct.LocalUser]
 	once                   sync.Once
 

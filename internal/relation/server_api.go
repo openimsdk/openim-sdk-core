@@ -12,12 +12,15 @@ func (r *Relation) getDesignatedFriendsApply(ctx context.Context, req *relation.
 	return api.ExtractField(ctx, api.GetDesignatedFriendsApply.Invoke, req, (*relation.GetDesignatedFriendsApplyResp).GetFriendRequests)
 }
 
-func (r *Relation) getSelfFriendApplicationList(ctx context.Context, req *relation.GetPaginationFriendsApplyFromReq) ([]*sdkws.FriendRequest, error) {
+func (r *Relation) getSelfFriendApplicationList(ctx context.Context, pageNumber, showNumber int32) ([]*sdkws.FriendRequest, error) {
+	req := &relation.GetPaginationFriendsApplyFromReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber}}
 	return api.Page(ctx, req, api.GetSelfFriendApplicationList.Invoke, (*relation.GetPaginationFriendsApplyFromResp).GetFriendRequests)
 }
 
-func (r *Relation) getFriendApplicationList(ctx context.Context, req *relation.GetPaginationFriendsApplyToReq) ([]*sdkws.FriendRequest, error) {
-	return api.Page(ctx, req, api.GetFriendApplicationList.Invoke, (*relation.GetPaginationFriendsApplyToResp).GetFriendRequests)
+func (r *Relation) getRecvFriendApplicationList(ctx context.Context, handleResults []int32, pageNumber, showNumber int32) ([]*sdkws.FriendRequest, error) {
+	req := &relation.GetPaginationFriendsApplyToReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber},
+		HandleResults: handleResults}
+	return api.Page(ctx, req, api.GetRecvFriendApplicationList.Invoke, (*relation.GetPaginationFriendsApplyToResp).GetFriendRequests)
 }
 
 func (r *Relation) getBlackList(ctx context.Context) ([]*sdkws.BlackInfo, error) {
@@ -68,4 +71,12 @@ func (r *Relation) removeBlack(ctx context.Context, userID string) error {
 		OwnerUserID: r.loginUserID,
 		BlackUserID: userID,
 	})
+}
+
+func (r *Relation) getSelfUnhandledApplyCount(ctx context.Context, time int64) (int32, error) {
+	resp, err := api.GetSelfUnhandledApplyCount.Invoke(ctx, &relation.GetSelfUnhandledApplyCountReq{UserID: r.loginUserID, Time: time})
+	if err != nil {
+		return 0, err
+	}
+	return int32(resp.GetCount()), nil
 }

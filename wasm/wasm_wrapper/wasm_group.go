@@ -173,3 +173,8 @@ func (w *WrapperGroup) GetSpecifiedGroupsInfo(_ js.Value, args []js.Value) inter
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetSpecifiedGroupsInfo, callback, &args).AsyncCallWithCallback()
 }
+
+func (w *WrapperGroup) GetGroupApplicationUnhandledCount(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetGroupApplicationUnhandledCount, callback, &args).AsyncCallWithCallback()
+}
