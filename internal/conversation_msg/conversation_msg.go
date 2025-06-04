@@ -763,7 +763,9 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 		}
 
 		if len(needNotificationMsgList) != 0 {
+			log.ZDebug(ctx, "before trigger OnRecvOfflineNewMessages", "needNotificationMsgList length", len(needNotificationMsgList), "needNotificationMsgList", needNotificationMsgList)
 			c.batchMsgListener().OnRecvOfflineNewMessages(utils.StructToJsonString(needNotificationMsgList))
+			log.ZDebug(ctx, "after trigger OnRecvOfflineNewMessages")
 		}
 	} else { // online
 		for _, w := range newMessagesList {
@@ -775,7 +777,9 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 		}
 
 		if len(needNotificationMsgList) != 0 {
+			log.ZDebug(ctx, "before trigger OnRecvNewMessages", "needNotificationMsgList length", len(needNotificationMsgList), "needNotificationMsgList", needNotificationMsgList)
 			c.batchMsgListener().OnRecvNewMessages(utils.StructToJsonString(needNotificationMsgList))
+			log.ZDebug(ctx, "after trigger OnRecvNewMessages")
 		}
 	}
 }
