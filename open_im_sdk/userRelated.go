@@ -91,7 +91,7 @@ func (u *UserContext) initResources() {
 	u.relation = relation.NewRelation(u.conversationEventQueue, u.user)
 	u.group = group.NewGroup(u.conversationEventQueue)
 	u.third = third.NewThird(u.file)
-	u.msgSyncer = interaction.NewMsgSyncer(u.msgSyncerCh, u.conversationEventQueue, u.longConnMgr)
+	u.msgSyncer = interaction.NewMsgSyncer(u.conversationEventQueue, u.msgSyncerCh, u.longConnMgr)
 	u.conversation = conv.NewConversation(u.longConnMgr, u.msgSyncerCh, u.conversationEventQueue,
 		u.relation, u.group, u.user, u.file)
 	u.setListener(ctx)
