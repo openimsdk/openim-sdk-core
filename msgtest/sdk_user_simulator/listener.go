@@ -1,6 +1,7 @@
 package sdk_user_simulator
 
 import (
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -202,6 +203,9 @@ func (testGroupListener) OnGroupDismissed(callbackInfo string) {
 type testConnListener struct {
 }
 
+func NewTestConnListener() open_im_sdk_callback.OnConnListener {
+	return &testConnListener{}
+}
 func (t *testConnListener) OnUserTokenInvalid(errMsg string) {}
 
 func (t *testConnListener) OnUserTokenExpired() {
