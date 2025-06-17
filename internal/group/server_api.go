@@ -82,7 +82,14 @@ func (g *Group) getServerSelfGroupApplication(ctx context.Context, groupIDs []st
 	handleResults []int32, pageNumber, showNumber int32) ([]*sdkws.GroupRequest, error) {
 	req := &group.GetUserReqApplicationListReq{UserID: g.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber},
 		GroupIDs: groupIDs, HandleResults: handleResults}
-	return api.Page(ctx, req, api.GetSendGroupApplicationList.Invoke, (*group.GetUserReqApplicationListResp).GetGroupRequests)
+	if showNumber <= 0 {
+		return api.Page(ctx, req, api.GetSendGroupApplicationList.Invoke, (*group.GetUserReqApplicationListResp).GetGroupRequests)
+	}
+	resp, err := api.GetSendGroupApplicationList.Invoke(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetGroupRequests(), nil
 }
 
 func (g *Group) getServerJoinGroup(ctx context.Context) ([]*sdkws.GroupInfo, error) {
@@ -94,7 +101,14 @@ func (g *Group) getServerAdminGroupApplicationList(ctx context.Context, groupIDs
 	handleResults []int32, pageNumber, showNumber int32) ([]*sdkws.GroupRequest, error) {
 	req := &group.GetGroupApplicationListReq{FromUserID: g.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber},
 		GroupIDs: groupIDs, HandleResults: handleResults}
-	return api.Page(ctx, req, api.GetRecvGroupApplicationList.Invoke, (*group.GetGroupApplicationListResp).GetGroupRequests)
+	if showNumber <= 0 {
+		return api.Page(ctx, req, api.GetRecvGroupApplicationList.Invoke, (*group.GetGroupApplicationListResp).GetGroupRequests)
+	}
+	resp, err := api.GetRecvGroupApplicationList.Invoke(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetGroupRequests(), nil
 }
 
 func (g *Group) getGroupsInfoFromServer(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
