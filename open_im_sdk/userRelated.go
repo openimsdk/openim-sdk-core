@@ -455,16 +455,13 @@ func (u *LoginMgr) logout(ctx context.Context, isTokenValid bool) error {
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	if u.longConnMgr.GetConnectionStatus() == interaction.DefaultNotConnect {
-		u.longConnMgr.SetBackground(isBackground)
-		return nil
-	}
+	u.longConnMgr.SetBackground(isBackground)
+
 	var resp sdkws.SetAppBackgroundStatusResp
 	err := u.longConnMgr.SendReqWaitResp(ctx, &sdkws.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, &resp)
 	if err != nil {
 		return err
 	} else {
-		u.longConnMgr.SetBackground(isBackground)
 		if !isBackground {
 			_ = common.TriggerCmdWakeUpDataSync(ctx, u.msgSyncerCh)
 		}
