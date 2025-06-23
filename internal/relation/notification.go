@@ -35,7 +35,9 @@ func (r *Relation) doNotification(ctx context.Context, msg *sdkws.MsgData) error
 		if err != nil {
 			return err
 		}
-		r.friendshipListener.OnFriendApplicationAccepted(*ServerFriendRequestToLocalFriendRequest(tips.Request))
+		if tips.Request != nil {
+			r.friendshipListener.OnFriendApplicationAccepted(*ServerFriendRequestToLocalFriendRequest(tips.Request))
+		}
 		return r.IncrSyncFriends(ctx)
 	case constant.FriendApplicationRejectedNotification:
 		var tips sdkws.FriendApplicationRejectedTips
