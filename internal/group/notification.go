@@ -65,7 +65,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		if g.filter.ShouldExecute(detail.Uuid) {
-			g.listener().OnGroupMemberAdded(utils.StructToJsonString(
+			g.listener().OnGroupApplicationAdded(utils.StructToJsonString(
 				ServerGroupRequestToLocalGroupRequestForNotification(detail.GetGroup(), detail.GetRequest())))
 		}
 	default:
