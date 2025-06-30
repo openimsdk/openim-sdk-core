@@ -1,8 +1,8 @@
 # Using gomobile to compile openim-sdk-core for Android/iOS
 
 <p align="center">
-    <a href="./README.md"><b>English</b></a> •
-    <a href="./README_zh-CN.md"><b>中文</b></a>
+    <a href="./gomobile-android-ios-setup.md"><b>English</b></a> •
+    <a href="./gomobile-android-ios-setup-cn.md"><b>中文</b></a>
 </p>
 
 ## Environment Setup
