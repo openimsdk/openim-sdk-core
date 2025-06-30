@@ -98,7 +98,7 @@ Once the SDK is tested successfully, you can build and package it for various pl
 
 - **Android/iOS**
 
-Refer to [this guide](./docs/gomobile-android-ios-setup-cn.md) for detailed instructions on building and packaging for Android and iOS.
+Refer to [this guide](./docs/gomobile-android-ios-setup.md) for detailed instructions on building and packaging for Android and iOS.
 
 - **WebAssembly**
 
