@@ -110,7 +110,7 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 		}
 
 		if len(changes) > 0 {
-			changeKeys := datautil.SliceSubFunc(lvs.UIDList, datautil.Slice(changes, o.Key), func(uid string) string { return uid })
+			changeKeys := datautil.SliceSub(lvs.UIDList, datautil.Slice(changes, o.Key))
 			if changeKeys != nil {
 				lvs.UIDList = append(lvs.UIDList, changeKeys...)
 			}
