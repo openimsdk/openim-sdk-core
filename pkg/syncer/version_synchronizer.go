@@ -196,12 +196,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		}
 		if len(insert) > 0 {
 			lvs.UIDList = append(lvs.UIDList, datautil.Slice(insert, o.Key)...)
-		}
-		if len(changes) > 0 {
-			changeKeys := datautil.SliceSubFunc(lvs.UIDList, datautil.Slice(changes, o.Key), func(uid string) string { return uid })
-			if changeKeys != nil {
-				lvs.UIDList = append(lvs.UIDList, changeKeys...)
-			}
+			changes = append(changes, insert...)
 		}
 
 		local, err := o.Local()
@@ -213,7 +208,6 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 			return o.Key(v), v
 		})
 
-		changes = append(changes, insert...)
 		for i, change := range changes {
 			key := o.Key(change)
 			kv[key] = changes[i]
