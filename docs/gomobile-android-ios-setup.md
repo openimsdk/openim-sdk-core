@@ -56,7 +56,7 @@ gomobile init
 
 2. **Install Android Development Environment**: Ensure the latest version of **Android Studio** is installed.
 
-3. **Configure Android NDK**: Download NDK for Windows (recommended version: `r20b`), extract it to the `ndk-bundle` directory of Android SDK. For example:
+3. **Configure Android NDK**: Download NDK for Windows (recommended version: `20.1.5948944`(`r20b`) ), extract it to the `ndk-bundle` directory of Android SDK. For example:
 
    ```
    C:\Users\Admin\AppData\Local\Android\Sdk\ndk-bundle
@@ -106,7 +106,7 @@ gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android
 #### Environment Requirements
 
 1. Install Xcode: Ensure Xcode is installed (recommended version: 15.4 or higher).
-2. Install Android Studio: Ensure Android SDK and NDK are installed and configured (Mac recommended NDK version: 20.0.5594570).
+2. Install Android Studio: Ensure Android SDK and NDK are installed and configured (Mac recommended NDK version: `20.1.5948944`(`r20b`) or `20.0.5594570`).
 
 #### Compiling Android AAR Package
 
@@ -150,6 +150,6 @@ After compilation is complete, import the generated AAR package into your Androi
 
 3. **NDK Version Compatibility Issues**
 
-- If you encounter NDK version compatibility issues, try switching to the recommended version (`r20b` or `20.0.5594570`) and ensure the path is correct.
+- If you encounter NDK version compatibility issues, try switching to the recommended version (`20.1.5948944`(`r20b`) or `20.0.5594570`) and ensure the path is correct.
 
 Through `gomobile`, you can easily package Go language written openim-sdk-core code into Android AAR packages or iOS xcframework libraries, making it convenient for integration and use on mobile
