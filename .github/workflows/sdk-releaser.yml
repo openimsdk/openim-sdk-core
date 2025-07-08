@@ -7,16 +7,23 @@ on:
   #   tags:
   #     - "v*"
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name for release (e.g., v3.8.4)"
+        required: true
+        type: string
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
     env:
-      TAG_VERSION: ${{ github.ref_name }}
+      TAG_VERSION: ${{ github.event.inputs.tag_name || github.ref_name }}
       PROJECT_NAME: ${{ github.event.repository.name }}
       NDK_VERSION: "20.1.5948944" # NDK r20b
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag_name || github.ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -71,8 +78,9 @@ jobs:
 
       - name: Upload Android AAR to Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag_name
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: ${{ env.PROJECT_NAME }}_${{ env.TAG_VERSION }}_Android_aar.zip
           draft: false
         env:
@@ -81,10 +89,12 @@ jobs:
   build-ios:
     runs-on: macos-latest
     env:
-      TAG_VERSION: ${{ github.ref_name }}
+      TAG_VERSION: ${{ github.event.inputs.tag_name || github.ref_name }}
       PROJECT_NAME: ${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag_name || github.ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -113,8 +123,9 @@ jobs:
 
       - name: Upload iOS xcframework to Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag_name
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: ${{ env.PROJECT_NAME }}_${{ env.TAG_VERSION }}_iOS_xcframework.zip
           draft: false
         env:
@@ -123,10 +134,12 @@ jobs:
   build-wasm:
     runs-on: ubuntu-latest
     env:
-      TAG_VERSION: ${{ github.ref_name }}
+      TAG_VERSION: ${{ github.event.inputs.tag_name || github.ref_name }}
       PROJECT_NAME: ${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag_name || github.ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -150,8 +163,9 @@ jobs:
 
       - name: Upload WASM files to Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag_name
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: wasm/cmd/${{ env.PROJECT_NAME }}_${{ env.TAG_VERSION }}_JS_wasm.zip
           draft: false
         env:
