@@ -46,8 +46,6 @@ type IndexDB struct {
 	LocalConversationUnreadMessages
 	LocalGroups
 	LocalGroupMember
-	LocalGroupRequest
-	*FriendRequest
 	*Black
 	*Friend
 	loginUserID string

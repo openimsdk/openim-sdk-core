@@ -39,7 +39,6 @@ func ServerGroupToLocalGroup(info *sdkws.GroupInfo) *model_struct.LocalGroup {
 		ApplyMemberFriend:      info.ApplyMemberFriend,
 		NotificationUpdateTime: info.NotificationUpdateTime,
 		NotificationUserID:     info.NotificationUserID,
-		//AttachedInfo:           info.AttachedInfo, // TODO
 	}
 }
 
@@ -56,7 +55,6 @@ func ServerGroupMemberToLocalGroupMember(info *sdkws.GroupMemberFullInfo) *model
 		MuteEndTime:    info.MuteEndTime,
 		OperatorUserID: info.OperatorUserID,
 		Ex:             info.Ex,
-		//AttachedInfo:   info.AttachedInfo, // todo
 	}
 }
 
@@ -76,22 +74,22 @@ func ServerGroupRequestToLocalGroupRequest(info *sdkws.GroupRequest) *model_stru
 		UserID:        info.UserInfo.UserID,
 		Nickname:      info.UserInfo.Nickname,
 		UserFaceURL:   info.UserInfo.FaceURL,
-		//Gender:        info.UserInfo.Gender,
-		HandleResult: info.HandleResult,
-		ReqMsg:       info.ReqMsg,
-		HandledMsg:   info.HandleMsg,
-		ReqTime:      info.ReqTime,
-		HandleUserID: info.HandleUserID,
-		HandledTime:  info.HandleTime,
-		Ex:           info.Ex,
-		//AttachedInfo:  info.AttachedInfo,
+		HandleResult:  info.HandleResult,
+		ReqMsg:        info.ReqMsg,
+		HandledMsg:    info.HandleMsg,
+		ReqTime:       info.ReqTime,
+		HandleUserID:  info.HandleUserID,
+		HandledTime:   info.HandleTime,
+		Ex:            info.Ex,
 		JoinSource:    info.JoinSource,
 		InviterUserID: info.InviterUserID,
 	}
 }
 
-func ServerGroupRequestToLocalAdminGroupRequest(info *sdkws.GroupRequest) *model_struct.LocalAdminGroupRequest {
-	return &model_struct.LocalAdminGroupRequest{
-		LocalGroupRequest: *ServerGroupRequestToLocalGroupRequest(info),
+func ServerGroupRequestToLocalGroupRequestForNotification(groupInfo *sdkws.GroupInfo, groupRequest *sdkws.GroupRequest) *model_struct.LocalGroupRequest {
+	if groupInfo != nil {
+		groupRequest.GroupInfo = groupInfo
 	}
+	return ServerGroupRequestToLocalGroupRequest(groupRequest)
+
 }

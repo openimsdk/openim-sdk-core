@@ -30,15 +30,6 @@ type GroupModel interface {
 	GetGroups(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error)
 	GetGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
 	GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error)
-
-	InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error
-	DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error
-	UpdateAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error
-	GetAdminGroupApplication(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error)
-	InsertGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
-	DeleteGroupRequest(ctx context.Context, groupID, userID string) error
-	UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
-	GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error)
 	GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error)
 	GetGroupMemberCount(ctx context.Context, groupID string) (int32, error)
 	GetGroupSomeMemberInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error)
@@ -121,6 +112,7 @@ type ConversationModel interface {
 	UpdateAllConversation(ctx context.Context, conversation *model_struct.LocalConversation) error
 	IncrConversationUnreadCount(ctx context.Context, conversationID string) error
 	DecrConversationUnreadCount(ctx context.Context, conversationID string, count int64) (err error)
+	GetTotalUnreadMsgCountNewerDB(ctx context.Context) (totalUnreadCount int32, err error)
 	GetTotalUnreadMsgCountDB(ctx context.Context) (totalUnreadCount int32, err error)
 	SetMultipleConversationRecvMsgOpt(ctx context.Context, conversationIDList []string, opt int) (err error)
 	GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error)
@@ -148,13 +140,6 @@ type FriendModel interface {
 	SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error)
 	GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID string) (*model_struct.LocalFriend, error)
 	GetFriendInfoList(ctx context.Context, friendUserIDList []string) ([]*model_struct.LocalFriend, error)
-	InsertFriendRequest(ctx context.Context, friendRequest *model_struct.LocalFriendRequest) error
-	DeleteFriendRequestBothUserID(ctx context.Context, fromUserID, toUserID string) error
-	UpdateFriendRequest(ctx context.Context, friendRequest *model_struct.LocalFriendRequest) error
-	GetRecvFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error)
-	GetSendFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error)
-	GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error)
-	GetBothFriendReq(ctx context.Context, fromUserID, toUserID string) ([]*model_struct.LocalFriendRequest, error)
 	UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]interface{}) error
 
 	GetBlackListDB(ctx context.Context) ([]*model_struct.LocalBlack, error)

@@ -79,7 +79,7 @@ func (u *UserContext) initResources() {
 	ctx := ccontext.WithInfo(context.Background(), u.info)
 	u.ctx, u.cancel = context.WithCancel(ctx)
 	u.setFGCtx()
-	u.conversationEventQueue = common.NewEventQueue(1000)
+	u.conversationEventQueue = make(chan common.Cmd2Value, 1000)
 	u.msgSyncerCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value, 1)
 
@@ -91,7 +91,7 @@ func (u *UserContext) initResources() {
 	u.relation = relation.NewRelation(u.conversationEventQueue, u.user)
 	u.group = group.NewGroup(u.conversationEventQueue)
 	u.third = third.NewThird(u.file)
-	u.msgSyncer = interaction.NewMsgSyncer(u.msgSyncerCh, u.conversationEventQueue, u.longConnMgr)
+	u.msgSyncer = interaction.NewMsgSyncer(u.conversationEventQueue, u.msgSyncerCh, u.longConnMgr)
 	u.conversation = conv.NewConversation(u.longConnMgr, u.msgSyncerCh, u.conversationEventQueue,
 		u.relation, u.group, u.user, u.file)
 	u.setListener(ctx)
@@ -146,7 +146,7 @@ type UserContext struct {
 
 	//conversationCh chan common.Cmd2Value
 
-	conversationEventQueue *common.EventQueue
+	conversationEventQueue chan common.Cmd2Value
 	cmdWsCh                chan common.Cmd2Value
 	msgSyncerCh            chan common.Cmd2Value
 	loginMgrCh             chan common.Cmd2Value
@@ -263,6 +263,10 @@ func (u *UserContext) SetUserListener(userListener open_im_sdk_callback.OnUserLi
 
 func (u *UserContext) SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
 	u.businessListener = listener
+}
+
+func (u *UserContext) GetLoginUserID() string {
+	return u.loginUserID
 }
 
 func (u *UserContext) logoutListener(ctx context.Context) {
@@ -430,7 +434,7 @@ func setListener[T any](ctx context.Context, listener *T, getter func() T, setFu
 func (u *UserContext) run(ctx context.Context) {
 	u.longConnMgr.Run(ctx, u.fgCtx)
 	go u.msgSyncer.DoListener(ctx)
-	go u.conversation.ConsumeConversationEventLoop(ctx)
+	go common.DoListener(u.ctx, u.conversation)
 	go u.logoutListener(ctx)
 }
 

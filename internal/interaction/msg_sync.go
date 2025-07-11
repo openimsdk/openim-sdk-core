@@ -29,15 +29,10 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sort_conversation"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/protocol/msg"
-	"github.com/openimsdk/tools/errs"
-	"github.com/openimsdk/tools/mcontext"
-	"github.com/openimsdk/tools/utils/datautil"
-	"github.com/openimsdk/tools/utils/stringutil"
-
 	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 )
 
@@ -53,19 +48,16 @@ const (
 // MsgSyncer is a central hub for message relay, responsible for sequential message gap pulling,
 // handling network events, and managing app foreground and background events.
 type MsgSyncer struct {
-	loginUserID string                // login user ID
-	longConnMgr *LongConnMgr          // long connection manager
-	recvCh      chan common.Cmd2Value // channel for receiving push messages and the maximum SEQ number
-	//conversationEventQueue chan common.Cmd2Value // storage and session triggering
-	conversationEventQueue *common.EventQueue
+	loginUserID            string                // login user ID
+	longConnMgr            *LongConnMgr          // long connection manager
+	PushMsgAndMaxSeqCh     chan common.Cmd2Value // channel for receiving push messages and the maximum SEQ number
+	conversationEventQueue chan common.Cmd2Value // storage and session triggering
 	syncedMaxSeqs          map[string]int64      // map of the maximum synced SEQ numbers for all group IDs
 	syncedMaxSeqsLock      sync.RWMutex          // syncedMaxSeqs map lock
 	db                     db_interface.DataBase // data store
 	reinstalled            bool                  //true if the app was uninstalled and reinstalled
 	isSyncing              bool                  // indicates whether data is being synced
 	isSyncingLock          sync.Mutex            // lock for syncing state
-
-	isLargeDataSync bool
 }
 
 func (m *MsgSyncer) SetLoginUserID(loginUserID string) {
@@ -77,11 +69,11 @@ func (m *MsgSyncer) SetDataBase(db db_interface.DataBase) {
 }
 
 // NewMsgSyncer creates a new instance of the message synchronizer.
-func NewMsgSyncer(recvCh chan common.Cmd2Value, conversationEventQueue *common.EventQueue,
+func NewMsgSyncer(conversationEventQueue, PushMsgAndMaxSeqCh chan common.Cmd2Value,
 	longConnMgr *LongConnMgr) *MsgSyncer {
 	return &MsgSyncer{
 		longConnMgr:            longConnMgr,
-		recvCh:                 recvCh,
+		PushMsgAndMaxSeqCh:     PushMsgAndMaxSeqCh,
 		conversationEventQueue: conversationEventQueue,
 		syncedMaxSeqs:          make(map[string]int64),
 	}
@@ -180,7 +172,7 @@ func (m *MsgSyncer) DoListener(ctx context.Context) {
 	}()
 	for {
 		select {
-		case cmd := <-m.recvCh:
+		case cmd := <-m.PushMsgAndMaxSeqCh:
 			m.handlePushMsgAndEvent(cmd)
 		case <-ctx.Done():
 			log.ZInfo(ctx, "msg syncer done, sdk logout.....")
@@ -337,7 +329,7 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync ma
 			}
 			m.reinstalled = false
 		}()
-		_ = m.syncAndTriggerReinstallMsgs(ctx, needSyncSeqMap, true, pullNums)
+		_ = m.syncAndTriggerReinstallMsgs(ctx, needSyncSeqMap, pullNums)
 	} else {
 		for conversationID, maxSeq := range maxSeqToSync {
 			if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
@@ -416,6 +408,11 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pushMessages map[str
 // Called after successful reconnection to synchronize the latest message
 func (m *MsgSyncer) doConnected(ctx context.Context) {
 	reinstalled := m.reinstalled
+	if reinstalled {
+		common.DispatchSyncFlag(ctx, constant.AppDataSyncStart, m.conversationEventQueue)
+	} else {
+		common.DispatchSyncFlag(ctx, constant.MsgSyncBegin, m.conversationEventQueue)
+	}
 	var resp sdkws.GetMaxSeqResp
 	if err := m.longConnMgr.SendReqWaitResp(ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(ctx, "get max seq error", err)
@@ -424,78 +421,11 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 	} else {
 		log.ZDebug(ctx, "get max seq success", "resp", resp.MaxSeqs)
 	}
-
-	// Calculate the list of conversations that need to be synchronized,
-	// including the start and end sequence (seq)
-	needSyncAllSeqMap := m.getNeedSyncConversations(ctx, resp.MaxSeqs)
-	convCount := len(needSyncAllSeqMap)
-
-	if convCount == 0 {
-		log.ZInfo(ctx, "no conversations need sync")
-		return
-	}
-
-	// In cases where there is no uninstall and reinstall,
-	// the amount of conversation data to be synchronized in a single operation is too large
-	if len(needSyncAllSeqMap) >= maxConversations {
-		log.ZDebug(ctx, "large conversations to sync", nil, "length", len(needSyncAllSeqMap))
-		m.isLargeDataSync = true
-	}
-
-	maxSeqs, sortConversationList, err := m.SyncAndSortConversations(ctx, reinstalled)
-	if err != nil {
-		log.ZError(ctx, "SyncAndSortConversations err", err)
-	}
+	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, connectPullNums)
 	if reinstalled {
-		common.DispatchSyncFlagWithMeta(ctx, constant.AppDataSyncBegin, maxSeqs, m.conversationEventQueue)
+		common.DispatchSyncFlag(ctx, constant.AppDataSyncFinish, m.conversationEventQueue)
 	} else {
-		if m.isLargeDataSync {
-			log.ZWarn(ctx, "too many conversations to sync", nil, "maxConversations", maxConversations)
-			common.DispatchSyncFlagWithMeta(ctx, constant.LargeDataSyncBegin, maxSeqs, m.conversationEventQueue)
-		} else {
-			common.DispatchSyncFlagWithMeta(ctx, constant.MsgSyncBegin, maxSeqs, m.conversationEventQueue)
-		}
-	}
-
-	sort_conversation.NewConversationBatchProcessor(sortConversationList, needSyncAllSeqMap, synMaxConversations).Run(ctx, m.handleMessage)
-
-	if reinstalled {
-		defer m.markInstallDone(ctx)
-
-	} else {
-		if !m.isLargeDataSync {
-			common.DispatchSyncFlag(ctx, constant.MsgSyncEnd, m.conversationEventQueue)
-		}
-
-	}
-}
-
-func (m *MsgSyncer) markInstallDone(ctx context.Context) {
-	if err := m.db.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Installed: true}); err != nil {
-		log.ZError(ctx, "SetAppSDKVersion failed", err)
-	}
-	m.reinstalled = false
-}
-func (m *MsgSyncer) handleMessage(ctx context.Context, batchID int, needSyncTopSeqMap map[string][2]int64, isFirst bool) {
-	ctx = mcontext.WithTriggerIDContext(ctx, stringutil.IntToString(batchID))
-	reinstalled := m.reinstalled
-	log.ZDebug(ctx, "handle message need sync top message map", "length", len(needSyncTopSeqMap), "needSyncTopSeqMap", needSyncTopSeqMap)
-
-	if reinstalled {
-		_ = m.syncAndTriggerReinstallMsgs(ctx, needSyncTopSeqMap, isFirst, connectPullNums)
-		if isFirst {
-			common.DispatchSyncFlag(ctx, constant.AppDataSyncEnd, m.conversationEventQueue)
-		}
-	} else {
-		if m.isLargeDataSync {
-			log.ZWarn(ctx, "handleMessage large conversations to sync", nil, "length", len(needSyncTopSeqMap), "isFirst", isFirst, "maxConversations", maxConversations)
-			_ = m.syncAndTriggerReinstallMsgs(ctx, needSyncTopSeqMap, isFirst, connectPullNums)
-			if isFirst {
-				common.DispatchSyncFlag(ctx, constant.LargeDataSyncEnd, m.conversationEventQueue)
-			}
-		} else {
-			_ = m.syncAndTriggerMsgs(ctx, needSyncTopSeqMap, connectPullNums)
-		}
+		common.DispatchSyncFlag(ctx, constant.MsgSyncEnd, m.conversationEventQueue)
 	}
 }
 
@@ -592,26 +522,22 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 }
 
 // Fragment synchronization message, seq refresh after successful trigger
-func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[string][2]int64, isFirst bool, syncMsgNum int64) error {
+func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
 	if len(seqMap) > 0 {
 		log.ZDebug(ctx, "current sync seqMap", "seqMap", seqMap)
 		var (
 			tempSeqMap = make(map[string][2]int64, 50)
 			msgNum     = 0
-			total      = 0
+			total      = len(seqMap)
 			gr         *errgroup.Group
 		)
-		if isFirst {
-			total = len(seqMap)
-		}
+
 		gr, _ = errgroup.WithContext(ctx)
 		gr.SetLimit(pullMsgGoroutineLimit)
 		for k, v := range seqMap {
 			oneConversationSyncNum := min(v[1]-v[0]+1, syncMsgNum)
 			tempSeqMap[k] = v
-			if IsNotification(k) {
-				msgNum += int(oneConversationSyncNum)
-			} else {
+			if oneConversationSyncNum > 0 {
 				// For regular conversations, ensure msgNum is the minimum of oneConversationSyncNum and syncMsgNum
 				msgNum += int(min(oneConversationSyncNum, syncMsgNum))
 			}
@@ -805,70 +731,4 @@ func (m *MsgSyncer) triggerNotification(ctx context.Context, msgs map[string]*sd
 	}
 	return nil
 
-}
-
-func (m *MsgSyncer) SyncAndSortConversations(ctx context.Context, reinstalled bool) (map[string]*msg.Seqs, *sort_conversation.SortConversationList, error) {
-	startTime := time.Now()
-	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
-
-	resp := msg.GetConversationsHasReadAndMaxSeqResp{}
-	req := msg.GetConversationsHasReadAndMaxSeqReq{UserID: m.loginUserID, ReturnPinned: reinstalled}
-	err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.GetConvMaxReadSeq, &resp)
-	if err != nil {
-		log.ZWarn(ctx, "SendReqWaitResp err", err)
-		return nil, nil, err
-	}
-	seqs := resp.Seqs
-	log.ZDebug(ctx, "getServerHasReadAndMaxSeqs completed", "duration", time.Since(startTime).Seconds())
-
-	if len(seqs) == 0 {
-		return nil, nil, nil
-	}
-
-	stepStartTime := time.Now()
-	conversationsOnLocal, err := m.db.GetAllConversations(ctx)
-	if err != nil {
-		log.ZWarn(ctx, "get all conversations err", err)
-		return nil, nil, err
-	}
-	log.ZDebug(ctx, "GetAllConversations completed", "duration", time.Since(stepStartTime).Seconds())
-
-	conversationsOnLocalMap := datautil.SliceToMap(conversationsOnLocal, func(e *model_struct.LocalConversation) string {
-		return e.ConversationID
-	})
-
-	var (
-		list                  []*sort_conversation.ConversationMetaData
-		pinnedConversationIDs []string
-	)
-	pinnedConversationIDsMap := datautil.SliceSetAny(resp.PinnedConversationIDs, func(e string) string {
-		return e
-	})
-	stepStartTime = time.Now()
-	for conversationID, v := range seqs {
-		sortConversationMetaData := &sort_conversation.ConversationMetaData{
-			ConversationID:    conversationID,
-			LatestMsgSendTime: v.MaxSeqTime,
-		}
-		if _, ok := pinnedConversationIDsMap[conversationID]; ok {
-			sortConversationMetaData.IsPinned = true
-			pinnedConversationIDs = append(pinnedConversationIDs, conversationID)
-		}
-
-		if conversation, ok := conversationsOnLocalMap[conversationID]; ok {
-			if conversation.IsPinned {
-				sortConversationMetaData.IsPinned = true
-				pinnedConversationIDs = append(pinnedConversationIDs, conversationID)
-			}
-			if conversation.DraftTextTime > 0 {
-				sortConversationMetaData.DraftTextTime = conversation.DraftTextTime
-			}
-		}
-		list = append(list, sortConversationMetaData)
-	}
-
-	sortConversationList := sort_conversation.NewSortConversationList(list, pinnedConversationIDs)
-
-	log.ZDebug(ctx, "Process seqs completed", "duration", time.Since(stepStartTime).Seconds())
-	return resp.Seqs, sortConversationList, nil
 }

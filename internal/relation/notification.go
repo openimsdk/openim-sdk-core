@@ -26,30 +26,23 @@ func (r *Relation) doNotification(ctx context.Context, msg *sdkws.MsgData) error
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		return r.SyncBothFriendRequest(ctx,
-			tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
+		r.friendshipListener.OnFriendApplicationAdded(*ServerFriendRequestToLocalFriendRequest(tips.Request))
 	case constant.FriendApplicationApprovedNotification:
 		var tips sdkws.FriendApplicationApprovedTips
 		err := utils.UnmarshalNotificationElem(msg.Content, &tips)
 		if err != nil {
 			return err
 		}
-
-		if tips.FromToUserID.FromUserID == r.loginUserID {
-			err = r.IncrSyncFriends(ctx)
-		} else if tips.FromToUserID.ToUserID == r.loginUserID {
-			err = r.IncrSyncFriends(ctx)
+		if tips.Request != nil {
+			r.friendshipListener.OnFriendApplicationAccepted(*ServerFriendRequestToLocalFriendRequest(tips.Request))
 		}
-		if err != nil {
-			return err
-		}
-		return r.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
+		return r.IncrSyncFriends(ctx)
 	case constant.FriendApplicationRejectedNotification:
 		var tips sdkws.FriendApplicationRejectedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		return r.SyncBothFriendRequest(ctx, tips.FromToUserID.FromUserID, tips.FromToUserID.ToUserID)
+		r.friendshipListener.OnFriendApplicationRejected(*ServerFriendRequestToLocalFriendRequest(tips.Request))
 	case constant.FriendAddedNotification:
 		var tips sdkws.FriendAddedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {

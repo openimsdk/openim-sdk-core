@@ -75,6 +75,7 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 		}
 		resp = o.ServerVersion()
 	}
+
 	delIDs := o.Delete(resp)
 	changes := o.Update(resp)
 	insert := o.Insert(resp)
@@ -84,6 +85,7 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 			extraData = temp
 		}
 	}
+
 	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && extraData == nil {
 		log.ZDebug(o.Ctx, "no data to sync", "table", o.TableName, "entityID", o.EntityID)
 		return nil
@@ -102,19 +104,26 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 		if len(delIDs) > 0 {
 			lvs.UIDList = datautil.DeleteElems(lvs.UIDList, delIDs...)
 		}
-		if len(insert) > 0 {
-			lvs.UIDList = append(lvs.UIDList, datautil.Slice(insert, o.Key)...)
 
+		if len(insert) > 0 {
+			changes = append(changes, insert...)
 		}
+
+		if len(changes) > 0 {
+			changeKeys := datautil.SliceSub(lvs.UIDList, datautil.Slice(changes, o.Key))
+			if changeKeys != nil {
+				lvs.UIDList = append(lvs.UIDList, changeKeys...)
+			}
+		}
+
 		local, err := o.Local()
 		if err != nil {
 			return err
 		}
+
 		kv := datautil.SliceToMapAny(local, func(v V) (string, V) {
 			return o.Key(v), v
 		})
-
-		changes = append(changes, insert...)
 
 		for i, change := range changes {
 			key := o.Key(change)
@@ -124,6 +133,7 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 		for _, id := range delIDs {
 			delete(kv, id)
 		}
+
 		server := datautil.Values(kv)
 		if err := o.Syncer(server, local); err != nil {
 			return err
@@ -132,8 +142,8 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 			if err := o.ExtraDataProcessor(o.Ctx, extraData); err != nil {
 				return err
 			}
-
 		}
+
 		// The ordering of fullID has changed due to modifications such as group role level changes or friend list reordering.
 		// Therefore, it is necessary to refresh and obtain the fullID again.
 		if o.IDOrderChanged != nil && o.IDOrderChanged(resp) {
@@ -151,6 +161,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	if err != nil {
 		return err
 	}
+
 	var extraData any
 	resp := o.ServerVersion()
 	delIDs := o.Delete(resp)
@@ -163,10 +174,12 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 			extraData = temp
 		}
 	}
+
 	if len(delIDs) == 0 && len(changes) == 0 && len(insert) == 0 && !o.Full(resp) && extraData == nil {
 		log.ZWarn(o.Ctx, "exception no data to sync", errs.New("notification no data"), "table", o.TableName, "entityID", o.EntityID)
 		return nil
 	}
+
 	log.ZDebug(o.Ctx, "check version sync", "table", o.TableName, "entityID", o.EntityID, "versionID", versionID, "localVersionID", lvs.VersionID, "version", version, "localVersion", lvs.Version)
 	/// If the version unique ID cannot correspond with the local version,
 	// it indicates that the data might have been tampered with or an exception has occurred.
@@ -176,22 +189,25 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		o.ServerVersion = nil
 		return o.IncrementalSync()
 	}
+
 	if lvs.Version+1 == version {
 		if len(delIDs) > 0 {
 			lvs.UIDList = datautil.DeleteElems(lvs.UIDList, delIDs...)
 		}
 		if len(insert) > 0 {
 			lvs.UIDList = append(lvs.UIDList, datautil.Slice(insert, o.Key)...)
-
+			changes = append(changes, insert...)
 		}
+
 		local, err := o.Local()
 		if err != nil {
 			return err
 		}
+
 		kv := datautil.SliceToMapAny(local, func(v V) (string, V) {
 			return o.Key(v), v
 		})
-		changes = append(changes, insert...)
+
 		for i, change := range changes {
 			key := o.Key(change)
 			kv[key] = changes[i]
@@ -200,6 +216,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		for _, id := range delIDs {
 			delete(kv, id)
 		}
+
 		server := datautil.Values(kv)
 		if err := o.Syncer(server, local); err != nil {
 			return err
@@ -210,6 +227,7 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 			}
 
 		}
+
 		// The ordering of fullID has changed due to modifications such as group role level changes or friend list reordering.
 		// Therefore, it is necessary to refresh and obtain the fullID again.
 		if o.IDOrderChanged != nil && o.IDOrderChanged(resp) {

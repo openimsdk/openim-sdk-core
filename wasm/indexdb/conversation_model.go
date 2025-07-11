@@ -331,6 +331,20 @@ func (i *LocalConversations) GetTotalUnreadMsgCountDB(ctx context.Context) (tota
 		}
 	}
 }
+func (i *LocalConversations) GetTotalUnreadMsgCountNewerDB(ctx context.Context) (totalUnreadCount int32, err error) {
+	count, err := exec.Exec()
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := count.(float64); ok {
+			var result int32
+			result = int32(v)
+			return result, err
+		} else {
+			return 0, exec.ErrType
+		}
+	}
+}
 
 func (i *LocalConversations) SetMultipleConversationRecvMsgOpt(ctx context.Context, conversationIDList []string, opt int) (err error) {
 	_, err = exec.Exec(utils.StructToJsonString(conversationIDList), opt)

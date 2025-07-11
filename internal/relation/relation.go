@@ -24,7 +24,7 @@ const (
 	friendSyncLimit int64 = 10000
 )
 
-func NewRelation(conversationEventQueue *common.EventQueue, user *user.User) *Relation {
+func NewRelation(conversationEventQueue chan common.Cmd2Value, user *user.User) *Relation {
 	r := &Relation{conversationEventQueue: conversationEventQueue, user: user}
 	r.initSyncer()
 	return r
@@ -37,14 +37,9 @@ type Relation struct {
 	user                   *user.User
 	friendSyncer           *syncer.Syncer[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string]
 	blackSyncer            *syncer.Syncer[*model_struct.LocalBlack, syncer.NoResp, [2]string]
-	requestRecvSyncer      *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
-	requestSendSyncer      *syncer.Syncer[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string]
-	conversationEventQueue *common.EventQueue
+	conversationEventQueue chan common.Cmd2Value
 	listenerForService     open_im_sdk_callback.OnListenerForService
 	relationSyncMutex      sync.Mutex
-
-	requestRecvSyncerLock sync.Mutex
-	requestSendSyncerLock sync.Mutex
 }
 
 func (r *Relation) initSyncer() {
@@ -150,56 +145,6 @@ func (r *Relation) initSyncer() {
 			r.friendshipListener.OnBlackAdded(*server)
 		case syncer.Delete:
 			r.friendshipListener.OnBlackDeleted(*local)
-		}
-		return nil
-	})
-	r.requestRecvSyncer = syncer.New[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
-		return r.db.InsertFriendRequest(ctx, value)
-	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
-		return r.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
-	}, func(ctx context.Context, server *model_struct.LocalFriendRequest, local *model_struct.LocalFriendRequest) error {
-		return r.db.UpdateFriendRequest(ctx, server)
-	}, func(value *model_struct.LocalFriendRequest) [2]string {
-		return [...]string{value.FromUserID, value.ToUserID}
-	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
-		switch state {
-		case syncer.Insert:
-			r.friendshipListener.OnFriendApplicationAdded(*server)
-		case syncer.Delete:
-			r.friendshipListener.OnFriendApplicationDeleted(*local)
-		case syncer.Update:
-			switch server.HandleResult {
-			case constant.FriendResponseAgree:
-				r.friendshipListener.OnFriendApplicationAccepted(*server)
-			case constant.FriendResponseRefuse:
-				r.friendshipListener.OnFriendApplicationRejected(*server)
-			case constant.FriendResponseDefault:
-				r.friendshipListener.OnFriendApplicationAdded(*server)
-			}
-		}
-		return nil
-	})
-	r.requestSendSyncer = syncer.New[*model_struct.LocalFriendRequest, syncer.NoResp, [2]string](func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
-		return r.db.InsertFriendRequest(ctx, value)
-	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
-		return r.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
-	}, func(ctx context.Context, server *model_struct.LocalFriendRequest, local *model_struct.LocalFriendRequest) error {
-		return r.db.UpdateFriendRequest(ctx, server)
-	}, func(value *model_struct.LocalFriendRequest) [2]string {
-		return [...]string{value.FromUserID, value.ToUserID}
-	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
-		switch state {
-		case syncer.Insert:
-			r.friendshipListener.OnFriendApplicationAdded(*server)
-		case syncer.Delete:
-			r.friendshipListener.OnFriendApplicationDeleted(*local)
-		case syncer.Update:
-			switch server.HandleResult {
-			case constant.FriendResponseAgree:
-				r.friendshipListener.OnFriendApplicationAccepted(*server)
-			case constant.FriendResponseRefuse:
-				r.friendshipListener.OnFriendApplicationRejected(*server)
-			}
 		}
 		return nil
 	})
