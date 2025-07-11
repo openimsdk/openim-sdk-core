@@ -286,8 +286,9 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	var sendMsgResp sdkws.UserSendMsgResp
-	err = c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	//var sendMsgResp sdkws.UserSendMsgResp
+	//err = c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	err = c.sendMsg(ctx, &s, &wsMsgData, nil)
 	if err != nil {
 		log.ZError(ctx, "send msg to server failed", err, "message", s)
 		return err
