@@ -33,7 +33,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.24"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -109,7 +109,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.23"
+          go-version: "1.24"
 
       - name: Install gomobile
         run: |
@@ -159,7 +159,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.24"
 
       - name: Install make and zip
         run: sudo apt-get update && sudo apt-get install -y make zip
@@ -168,12 +168,13 @@ jobs:
         run: |
           cd wasm/cmd
           make wasm
+          make static/wasm_exec.js
 
       - name: Create WASM archive
         run: |
           cd wasm/cmd
           archive_name="${PROJECT_NAME}_${TAG_VERSION}_JS_wasm.zip"
-          zip $archive_name openIM.wasm
+          zip -r $archive_name openIM.wasm static/
           echo "Created archive: $archive_name"
 
       - name: Upload WASM files to Release
