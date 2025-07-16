@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -539,12 +538,9 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 			}
 
 			if msgNum >= SplitPullMsgNum {
-				tpSeqMap := make(map[string][2]int64, len(tempSeqMap))
-				maps.Copy(tpSeqMap, tempSeqMap)
-
-				resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
+				resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 				if err != nil {
-					log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tpSeqMap)
+					log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tempSeqMap)
 					return err
 				}
 
@@ -552,7 +548,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
 				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
 
-				for conversationID, seqs := range tpSeqMap {
+				for conversationID, seqs := range tempSeqMap {
 					m.syncedMaxSeqs[conversationID] = seqs[1]
 				}
 
