@@ -35,7 +35,7 @@ type VersionSynchronizer[V, R any] struct {
 
 func (o *VersionSynchronizer[V, R]) getVersionInfo() (*model_struct.LocalVersionSync, error) {
 	versionInfo, err := o.DB.GetVersionSync(o.Ctx, o.TableName, o.EntityID)
-	if err != nil && errs.Unwrap(err) != errs.ErrRecordNotFound {
+	if err != nil && !errs.ErrRecordNotFound.Is(errs.Unwrap(err)) {
 		log.ZWarn(o.Ctx, "get version info", err)
 		return nil, err
 

@@ -93,18 +93,6 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	return nil
 }
 
-//func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, groupID string, rule int32) error {
-//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
-//}
-//
-//func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule int32) error {
-//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
-//}
-//
-//func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
-//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
-//}
-
 func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
 	if isMute {
 		err = g.muteGroup(ctx, groupID)
@@ -212,6 +200,22 @@ func (g *Group) GetJoinedGroupListPage(ctx context.Context, offset, count int32)
 }
 
 func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+	g.groupSyncMutex.Lock()
+	defer g.groupSyncMutex.Unlock()
+
+	_, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	if err != nil {
+		if !errs.ErrRecordNotFound.Is(err) {
+			return nil, err
+		}
+
+		err := g.IncrSyncJoinGroup(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupTableName(),
@@ -234,7 +238,7 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 			return datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo), nil
 		},
 	)
-	return dataFetcher.FetchMissingAndCombineLocal(ctx, groupIDs)
+	return dataFetcher.FetchMissingAndFillLocal(ctx, groupIDs)
 }
 
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
