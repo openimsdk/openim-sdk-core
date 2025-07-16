@@ -102,16 +102,21 @@ func CheckResourceLoad(userContext *UserContext, funcName string) error {
 	if userContext.Info().IMConfig == nil {
 		return sdkerrs.ErrSDKNotInit.WrapMsg(funcName)
 	}
+
 	if funcName == "" {
 		return nil
 	}
+
 	parts := strings.Split(funcName, ".")
-	if parts[len(parts)-1] == "Login-fm" {
+	shortFuncName := parts[len(parts)-1]
+	if shortFuncName == "Login-fm" || shortFuncName == "Log-fm" {
 		return nil
 	}
+
 	if userContext.getLoginStatus(context.Background()) != Logged {
 		return sdkerrs.ErrSDKNotLogin.WrapMsg(funcName)
 	}
+
 	return nil
 }
 
