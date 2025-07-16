@@ -487,9 +487,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
 				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
 				for conversationID, seqs := range tempSeqMap {
-					m.syncedMaxSeqsLock.Lock()
 					m.syncedMaxSeqs[conversationID] = seqs[1]
-					m.syncedMaxSeqsLock.Unlock()
 				}
 
 				// renew
