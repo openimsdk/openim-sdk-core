@@ -18,12 +18,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/sync/errgroup"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
@@ -529,11 +528,8 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 			tempSeqMap = make(map[string][2]int64, 50)
 			msgNum     = 0
 			total      = len(seqMap)
-			gr         *errgroup.Group
 		)
 
-		gr, _ = errgroup.WithContext(ctx)
-		gr.SetLimit(pullMsgGoroutineLimit)
 		for k, v := range seqMap {
 			oneConversationSyncNum := min(v[1]-v[0]+1, syncMsgNum)
 			tempSeqMap[k] = v
@@ -541,60 +537,52 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				// For regular conversations, ensure msgNum is the minimum of oneConversationSyncNum and syncMsgNum
 				msgNum += int(min(oneConversationSyncNum, syncMsgNum))
 			}
+
 			if msgNum >= SplitPullMsgNum {
 				tpSeqMap := make(map[string][2]int64, len(tempSeqMap))
-				for k, v := range tempSeqMap {
-					tpSeqMap[k] = v
+				maps.Copy(tpSeqMap, tempSeqMap)
+
+				resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
+				if err != nil {
+					log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tpSeqMap)
+					return err
 				}
 
-				gr.Go(func() error {
-					resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
-					if err != nil {
-						log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tpSeqMap)
-						return err
-					}
-					m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
-					_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
-					_ = m.triggerNotification(ctx, resp.NotificationMsgs)
-					for conversationID, seqs := range tpSeqMap {
-						m.syncedMaxSeqsLock.Lock()
-						m.syncedMaxSeqs[conversationID] = seqs[1]
-						m.syncedMaxSeqsLock.Unlock()
-					}
-					return nil
-				})
+				m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
+				_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
+				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
+
+				for conversationID, seqs := range tpSeqMap {
+					m.syncedMaxSeqs[conversationID] = seqs[1]
+				}
 
 				tempSeqMap = make(map[string][2]int64, 50)
 				msgNum = 0
 			}
 		}
-		if len(tempSeqMap) > 0 && msgNum > 0 {
-			gr.Go(func() error {
-				resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
-				if err != nil {
-					log.ZError(ctx, "syncMsgFromServer err", err, "seqMap", seqMap)
-					return err
-				}
-				m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
-				_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
-				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
-				for conversationID, seqs := range tempSeqMap {
-					m.syncedMaxSeqsLock.Lock()
-					m.syncedMaxSeqs[conversationID] = seqs[1]
-					m.syncedMaxSeqsLock.Unlock()
-				}
-				return nil
-			})
-		}
-		if err := gr.Wait(); err != nil {
-			return err
-		}
 
+		if len(tempSeqMap) > 0 && msgNum > 0 {
+			resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
+			if err != nil {
+				log.ZError(ctx, "syncMsgFromServer err", err, "seqMap", seqMap)
+				return err
+			}
+
+			m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
+			_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
+			_ = m.triggerNotification(ctx, resp.NotificationMsgs)
+
+			for conversationID, seqs := range tempSeqMap {
+				m.syncedMaxSeqs[conversationID] = seqs[1]
+			}
+		}
 	} else {
 		log.ZDebug(ctx, "noting conversation to sync", "syncMsgNum", syncMsgNum)
 	}
+
 	return nil
 }
+
 func (m *MsgSyncer) checkMessagesAndGetLastMessage(ctx context.Context, messages map[string]*sdkws.PullMsgs) {
 	var conversationIDs []string
 
