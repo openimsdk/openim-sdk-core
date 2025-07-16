@@ -70,16 +70,21 @@ func CheckResourceLoad(uSDK *LoginMgr, funcName string) error {
 	if uSDK == nil {
 		return errs.New("SDK not initialized,userForSDK is nil", "funcName", funcName).Wrap()
 	}
+
 	if funcName == "" {
 		return nil
 	}
+
 	parts := strings.Split(funcName, ".")
-	if parts[len(parts)-1] == "Login-fm" {
+	shortFuncName := parts[len(parts)-1]
+	if shortFuncName == "Login-fm" || shortFuncName == "Log-fm" {
 		return nil
 	}
+
 	if uSDK.getLoginStatus(context.Background()) != Logged {
 		return errs.New("SDK not logged in", "funcName", funcName).Wrap()
 	}
+
 	return nil
 }
 
