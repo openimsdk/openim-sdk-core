@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -479,23 +478,21 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				msgNum += int(min(oneConversationSyncNum, syncMsgNum))
 			}
 			if msgNum >= SplitPullMsgNum {
-				tpSeqMap := make(map[string][2]int64, len(tempSeqMap))
-				maps.Copy(tpSeqMap, tempSeqMap)
-
-				resp, err := m.pullMsgBySeqRange(ctx, tpSeqMap, syncMsgNum)
+				resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)
 				if err != nil {
-					log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tpSeqMap)
+					log.ZError(ctx, "syncMsgFromServer err", err, "tempSeqMap", tempSeqMap)
 					return err
 				}
 				m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
 				_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
 				_ = m.triggerNotification(ctx, resp.NotificationMsgs)
-				for conversationID, seqs := range tpSeqMap {
+				for conversationID, seqs := range tempSeqMap {
 					m.syncedMaxSeqsLock.Lock()
 					m.syncedMaxSeqs[conversationID] = seqs[1]
 					m.syncedMaxSeqsLock.Unlock()
 				}
 
+				// renew
 				tempSeqMap = make(map[string][2]int64, 50)
 				msgNum = 0
 			}
@@ -507,6 +504,7 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 				log.ZError(ctx, "syncMsgFromServer err", err, "seqMap", seqMap)
 				return err
 			}
+
 			m.checkMessagesAndGetLastMessage(ctx, resp.Msgs)
 			_ = m.triggerReinstallConversation(ctx, resp.Msgs, total)
 			_ = m.triggerNotification(ctx, resp.NotificationMsgs)
