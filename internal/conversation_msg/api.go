@@ -3,7 +3,6 @@ package conversation_msg
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/protocol/msg"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/openimsdk/protocol/msg"
 
 	"github.com/openimsdk/tools/errs"
 
@@ -639,7 +640,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	s.Content = ""
 	var sendMsgResp msg.SendMsgResp
 	//err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
-	err := c.sendMsg(ctx, s, &wsMsgData, nil)
+	err := c.sendMsg(ctx, s, &wsMsgData, &sendMsgResp)
 	if err != nil {
 		//if send message network timeout need to double-check message has received by db.
 		if sdkerrs.ErrNetworkTimeOut.Is(err) && !isOnlineOnly {
@@ -664,9 +665,11 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 			return s, err
 		}
 	}
-	s.SendTime = sendMsgResp.SendTime
-	s.Status = constant.MsgStatusSendSuccess
-	s.ServerMsgID = sendMsgResp.ServerMsgID
+	if s.SendTime == 0 {
+		s.SendTime = sendMsgResp.SendTime
+		s.Status = constant.MsgStatusSendSuccess
+		s.ServerMsgID = sendMsgResp.ServerMsgID
+	}
 	go func() {
 		//remove media cache file
 		for _, file := range delFiles {
