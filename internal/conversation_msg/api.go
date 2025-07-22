@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"context"
 	"fmt"
+	"github.com/openimsdk/protocol/msg"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -643,13 +644,16 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	}
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	s.Content = ""
-	var sendMsgResp sdkws.UserSendMsgResp
-
-	err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	var sendMsgResp msg.SendMsgResp
+	//err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	err := c.sendMsg(ctx, s, &wsMsgData, nil)
 	if err != nil {
 		//if send message network timeout need to double-check message has received by db.
 		if sdkerrs.ErrNetworkTimeOut.Is(err) && !isOnlineOnly {
-			oldMessage, _ := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
+			oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
+			if err != nil {
+				return nil, err
+			}
 			if oldMessage.Status == constant.MsgStatusSendSuccess {
 				sendMsgResp.SendTime = oldMessage.SendTime
 				sendMsgResp.ClientMsgID = oldMessage.ClientMsgID
@@ -684,6 +688,30 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	}()
 	return s, nil
 
+}
+
+func (c *Conversation) sendMsg(ctx context.Context, s *sdk_struct.MsgStruct, wsMsgData *sdkws.MsgData, sendMsgResp *msg.SendMsgResp) error {
+	if sendMsgResp == nil {
+		sendMsgResp = &msg.SendMsgResp{}
+	}
+	if err := c.LongConnMgr.SendReqWaitResp(ctx, wsMsgData, constant.SendMsg, sendMsgResp); err != nil {
+		return err
+	}
+	if sendMsgResp.Modify == nil {
+		s.SendTime = sendMsgResp.SendTime
+		s.Status = constant.MsgStatusSendSuccess
+		s.ServerMsgID = sendMsgResp.ServerMsgID
+	} else {
+		log.ZDebug(ctx, "the sent message was modified by the server", "before", wsMsgData, "after", sendMsgResp.Modify)
+		chatLog := MsgDataToLocalChatLog(sendMsgResp.Modify)
+		*s = *LocalChatLogToMsgStruct(chatLog)
+		s.Status = constant.MsgStatusSendSuccess
+		conversationID := utils.GetConversationIDByMsg(s)
+		if err := c.db.UpdateMessage(ctx, conversationID, chatLog); err != nil {
+			log.ZError(ctx, "update modify message", err, "conversationID", conversationID, "chatLog", chatLog)
+		}
+	}
+	return nil
 }
 
 func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_callback.ConversationArgs) (*sdk_params_callback.FindMessageListCallback, error) {
