@@ -14,13 +14,27 @@ func (r *Relation) getDesignatedFriendsApply(ctx context.Context, req *relation.
 
 func (r *Relation) getSelfFriendApplicationList(ctx context.Context, pageNumber, showNumber int32) ([]*sdkws.FriendRequest, error) {
 	req := &relation.GetPaginationFriendsApplyFromReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber}}
-	return api.Page(ctx, req, api.GetSelfFriendApplicationList.Invoke, (*relation.GetPaginationFriendsApplyFromResp).GetFriendRequests)
+	if showNumber <= 0 {
+		return api.Page(ctx, req, api.GetSelfFriendApplicationList.Invoke, (*relation.GetPaginationFriendsApplyFromResp).GetFriendRequests)
+	}
+	resp, err := api.GetSelfFriendApplicationList.Invoke(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetFriendRequests(), nil
 }
 
 func (r *Relation) getRecvFriendApplicationList(ctx context.Context, handleResults []int32, pageNumber, showNumber int32) ([]*sdkws.FriendRequest, error) {
 	req := &relation.GetPaginationFriendsApplyToReq{UserID: r.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: pageNumber, ShowNumber: showNumber},
 		HandleResults: handleResults}
-	return api.Page(ctx, req, api.GetRecvFriendApplicationList.Invoke, (*relation.GetPaginationFriendsApplyToResp).GetFriendRequests)
+	if showNumber <= 0 {
+		return api.Page(ctx, req, api.GetRecvFriendApplicationList.Invoke, (*relation.GetPaginationFriendsApplyToResp).GetFriendRequests)
+	}
+	resp, err := api.GetRecvFriendApplicationList.Invoke(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetFriendRequests(), nil
 }
 
 func (r *Relation) getBlackList(ctx context.Context) ([]*sdkws.BlackInfo, error) {
