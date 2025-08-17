@@ -3,11 +3,11 @@ package interaction
 import (
 	"errors"
 	"fmt"
-	"github.com/openimsdk/protocol/sdkws"
-	"github.com/openimsdk/tools/utils/datautil"
-	"slices"
 	"sync"
 	"unsafe"
+
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/utils/datautil"
 )
 
 type subscriptionStatues struct {
@@ -85,6 +85,17 @@ func (s *subscription) onConnSuccess() {
 	//s.err = nil
 	//close(s.done)
 }
+func equal[S ~[]E, E comparable](s1, s2 S) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	for i := range s1 {
+		if s1[i] != s2[i] {
+			return false
+		}
+	}
+	return true
+}
 
 func (s *subscription) setUserState(changes []*sdkws.SubUserOnlineStatusElem) map[string][]int32 {
 	if len(changes) == 0 {
@@ -99,7 +110,7 @@ func (s *subscription) setUserState(changes []*sdkws.SubUserOnlineStatusElem) ma
 		}
 		if status, ok := s.load[v.UserID]; ok {
 			delete(s.unsub, v.UserID)
-			if !slices.Equal(status.online, v.OnlinePlatformIDs) {
+			if equal(status.online, v.OnlinePlatformIDs) {
 				change[v.UserID] = v.OnlinePlatformIDs
 			}
 			status.finish(v.OnlinePlatformIDs, nil)
