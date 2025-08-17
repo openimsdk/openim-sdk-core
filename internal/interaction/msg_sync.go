@@ -460,6 +460,13 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2
 	return nil
 }
 
+func min64(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // Fragment synchronization message, seq refresh after successful trigger
 func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
 	if len(seqMap) > 0 {
@@ -471,11 +478,11 @@ func (m *MsgSyncer) syncAndTriggerReinstallMsgs(ctx context.Context, seqMap map[
 		)
 
 		for k, v := range seqMap {
-			oneConversationSyncNum := min(v[1]-v[0]+1, syncMsgNum)
+			oneConversationSyncNum := min64(v[1]-v[0]+1, syncMsgNum)
 			tempSeqMap[k] = v
 			if oneConversationSyncNum > 0 {
 				// For regular conversations, ensure msgNum is the minimum of oneConversationSyncNum and syncMsgNum
-				msgNum += int(min(oneConversationSyncNum, syncMsgNum))
+				msgNum += int(min64(oneConversationSyncNum, syncMsgNum))
 			}
 			if msgNum >= SplitPullMsgNum {
 				resp, err := m.pullMsgBySeqRange(ctx, tempSeqMap, syncMsgNum)

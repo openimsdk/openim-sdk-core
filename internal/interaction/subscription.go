@@ -62,13 +62,19 @@ func (s *subscription) getNewConnSubUserIDs() []string {
 	return datautil.Keys(s.sub)
 }
 
+func mapClear[K comparable, V any](m map[K]V) {
+	for k := range m {
+		delete(m, k)
+	}
+}
+
 func (s *subscription) onConnClosed(err error) {
 	if err == nil {
 		err = fmt.Errorf("connection closed")
 	}
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	clear(s.unsub)
+	mapClear(s.unsub)
 	for userID, statues := range s.load {
 		statues.finish(nil, err)
 		delete(s.load, userID)
@@ -81,7 +87,7 @@ func (s *subscription) onConnClosed(err error) {
 func (s *subscription) onConnSuccess() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	clear(s.unsub)
+	mapClear(s.unsub)
 	//s.err = nil
 	//close(s.done)
 }
@@ -183,7 +189,7 @@ func (s *subscription) getUserOnline(userIDs []string) (map[string][]int32, map[
 	if len(subUserIDs) == 0 {
 		return exist, wait, nil, nil
 	}
-	defer clear(s.unsub)
+	defer mapClear(s.unsub)
 	return exist, wait, subUserIDs, datautil.Keys(s.unsub)
 }
 
