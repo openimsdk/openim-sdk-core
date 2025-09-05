@@ -213,124 +213,86 @@ func (d *DataBase) DeleteConversationMsgsBySeqs(ctx context.Context, conversatio
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq IN ?", seqs).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationMsgs failed")
 }
 
-func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType []int, senderUserIDList []string, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 
-	var condition strings.Builder
-	var args []interface{}
+	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where("send_time BETWEEN ? AND ?", startTime, endTime).
+		Where("status <= ?", constant.MsgStatusSendFailed).
+		Where("content_type IN ?", contentType).
+		Order("send_time DESC").
+		Offset(offset).
+		Limit(count).
+		Find(&result).Error, "SearchMessage failed")
 
-	condition.WriteString("send_time between ? AND ? AND status <= ? AND content_type IN (?) ")
-	args = append(args, startTime, endTime, constant.MsgStatusSendFailed, contentType)
-
-	if len(senderUserIDList) != 0 {
-		condition.WriteString(" And send_id IN (?)")
-		args = append(args, senderUserIDList)
-	}
-
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition.String(), args...).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
 	return result, err
 }
-
-func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int, senderUserIDList []string, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 
-	var condition strings.Builder
-	var subCondition strings.Builder
-	var args []interface{}
+	query := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where("send_time BETWEEN ? AND ?", startTime, endTime).
+		Where("status <= ?", constant.MsgStatusSendFailed).
+		Where("content_type IN ?", contentType)
 
-	condition.WriteString(" send_time between ? AND ? AND status <= ? AND content_type IN (?)")
-	args = append(args, startTime, endTime, constant.MsgStatusSendFailed, contentType)
-
-	// Construct a sub-condition for SQL query based on keyword list and match type
-	if keywordListMatchType == constant.KeywordMatchOr {
-		// Use OR logic if keywordListMatchType is KeywordMatchOr
-		subCondition.WriteString(" AND (")
-		for i, keyword := range keywordList {
-			if i > 0 {
-				subCondition.WriteString(" OR ")
+	if len(keywordList) > 0 {
+		if keywordListMatchType == constant.KeywordMatchOr {
+			orConditions := make([]string, len(keywordList))
+			args := make([]any, len(keywordList))
+			for i, keyword := range keywordList {
+				orConditions[i] = "content LIKE ?"
+				args[i] = "%" + keyword + "%"
 			}
+			query = query.Where("("+strings.Join(orConditions, " OR ")+")", args...)
 
-			subCondition.WriteString("content LIKE ?")
-			args = append(args, "%"+keyword+"%")
-		}
-		subCondition.WriteString(") ")
-	} else {
-		// Use AND logic for other keywordListMatchType
-		subCondition.WriteString(" AND (")
-		for i, keyword := range keywordList {
-			if i > 0 {
-				subCondition.WriteString(" AND ")
+		} else {
+			// Use AND logic for other keywordListMatchType
+			for _, keyword := range keywordList {
+				query = query.Where("content LIKE ?", "%"+keyword+"%")
 			}
-
-			subCondition.WriteString("content LIKE ?")
-			args = append(args, "%"+keyword+"%")
 		}
-		subCondition.WriteString(") ")
 	}
 
-	condition.WriteString(subCondition.String())
-
-	if senderUserIDList != nil {
-		condition.WriteString(" And send_id IN (?)")
-		args = append(args, senderUserIDList)
-	}
-
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition.String(), args...).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
+	err = errs.WrapMsg(query.Order("send_time DESC").
+		Offset(offset).
+		Limit(count).
+		Find(&result).Error, "SearchMessage failed")
 
 	return result, err
 }
 
 // SearchMessageByContentTypeAndKeyword searches for messages in the database that match specified content types and keywords within a given time range.
-func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, senderUserIDList []string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 
-	var condition strings.Builder
-	var subCondition strings.Builder
-	var args []interface{}
+	query := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where("send_time BETWEEN ? AND ?", startTime, endTime).
+		Where("status <= ?", constant.MsgStatusSendFailed).
+		Where("content_type IN ?", contentType)
 
-	// Construct the main SQL condition string
-	condition.WriteString(" send_time between ? AND ? AND status <= ? AND content_type IN (?)")
-	args = append(args, startTime, endTime, constant.MsgStatusSendFailed, contentType)
-
-	// Construct a sub-condition for SQL query based on keyword list and match type
-	if keywordListMatchType == constant.KeywordMatchOr {
-		// Use OR logic if keywordListMatchType is KeywordMatchOr
-		subCondition.WriteString(" AND (")
-		for i, keyword := range keywordList {
-			if i > 0 {
-				subCondition.WriteString(" OR ")
+	if len(keywordList) > 0 {
+		if keywordListMatchType == constant.KeywordMatchOr {
+			orConditions := make([]string, len(keywordList))
+			args := make([]any, len(keywordList))
+			for i, keyword := range keywordList {
+				orConditions[i] = "content LIKE ?"
+				args[i] = "%" + keyword + "%"
 			}
+			query = query.Where("("+strings.Join(orConditions, " OR ")+")", args...)
 
-			subCondition.WriteString("content LIKE ?")
-			args = append(args, "%"+keyword+"%")
-		}
-		subCondition.WriteString(") ")
-	} else {
-		// Use AND logic for other keywordListMatchType
-		subCondition.WriteString(" AND (")
-		for i, keyword := range keywordList {
-			if i > 0 {
-				subCondition.WriteString(" AND ")
+		} else {
+			// Use AND logic for other keywordListMatchType
+			for _, keyword := range keywordList {
+				query = query.Where("content LIKE ?", "%"+keyword+"%")
 			}
-
-			subCondition.WriteString("content LIKE ?")
-			args = append(args, "%"+keyword+"%")
 		}
-		subCondition.WriteString(") ")
 	}
 
-	condition.WriteString(subCondition.String())
-
-	if senderUserIDList != nil {
-		condition.WriteString(" And send_id IN (?)")
-		args = append(args, senderUserIDList)
-	}
-
-	// Execute the query using the constructed condition and handle errors
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition.String(), args...).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
+	err = errs.WrapMsg(query.Order("send_time DESC").
+		Find(&result).Error, "SearchMessage failed")
 
 	return result, err
 }
@@ -459,7 +421,7 @@ func (d *DataBase) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL s
 	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
-		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+		map[string]any{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
 }
 
 func (d *DataBase) GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
