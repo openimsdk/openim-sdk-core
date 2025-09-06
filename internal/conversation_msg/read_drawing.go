@@ -26,6 +26,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
+	"gorm.io/gorm"
 
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
@@ -248,7 +249,8 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) er
 			return err
 
 		}
-		if conversation.ConversationType == constant.SingleChatType {
+		switch conversation.ConversationType {
+		case constant.SingleChatType:
 			latestMsg := &sdk_struct.MsgStruct{}
 			if err := json.Unmarshal([]byte(conversation.LatestMsg), latestMsg); err != nil {
 				log.ZWarn(ctx, "Unmarshal err", err, "conversationID", tips.ConversationID, "latestMsg", conversation.LatestMsg)
@@ -277,7 +279,46 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) er
 			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
 				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
 			c.msgListener().OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+
+		case constant.ReadGroupChatType:
+
+			maxReadSeq := tips.HasReadSeq
+			if maxReadSeq > 0 {
+				cursor, err := c.db.GetGroupReadCursor(ctx, tips.ConversationID, tips.MarkAsReadUserID)
+				if err != nil {
+					if err == gorm.ErrRecordNotFound {
+						newCursor := &model_struct.LocalGroupReadCursor{
+							ConversationID: tips.ConversationID,
+							UserID:         tips.MarkAsReadUserID,
+							MaxReadSeq:     maxReadSeq,
+						}
+						if err = c.db.InsertGroupReadCursor(ctx, newCursor); err != nil {
+							log.ZWarn(ctx, "InsertGroupReadCursor err", err, "conversationID", tips.ConversationID, "userID", tips.MarkAsReadUserID)
+						}
+						if err = c.db.IncrementGroupReadCursorVersion(ctx, tips.ConversationID); err != nil {
+							log.ZWarn(ctx, "IncrementGroupReadCursorVersion err", err, "conversationID", tips.ConversationID, "userID", tips.MarkAsReadUserID)
+						}
+					} else {
+						log.ZWarn(ctx, "GetGroupReadCursor err", err, "conversationID", tips.ConversationID, "userID", tips.MarkAsReadUserID)
+						return err
+					}
+
+				} else {
+					if maxReadSeq > cursor.MaxReadSeq {
+						if err = c.db.UpdateGroupReadCursor(ctx, tips.ConversationID, tips.MarkAsReadUserID, maxReadSeq); err != nil {
+							log.ZWarn(ctx, "UpdateGroupReadCursor err", err, "conversationID", tips.ConversationID, "userID", tips.MarkAsReadUserID)
+						}
+						if err = c.db.IncrementGroupReadCursorVersion(ctx, tips.ConversationID); err != nil {
+							log.ZWarn(ctx, "IncrementGroupReadCursorVersion err", err, "conversationID", tips.ConversationID, "userID", tips.MarkAsReadUserID)
+						}
+					}
+				}
+			}
+			var groupReceiptResp = []*sdk_struct.MessageReceipt{{GroupID: conversation.GroupID, UserID: tips.MarkAsReadUserID, MsgIDList: nil,
+				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
+			c.msgListener().OnRecvGroupReadReceipt(utils.StructToJsonString(groupReceiptResp))
 		}
+
 	} else {
 		return c.doUnreadCount(ctx, conversation, tips.HasReadSeq, tips.Seqs)
 	}
