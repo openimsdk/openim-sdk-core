@@ -20,7 +20,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -420,8 +419,14 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 func (d *DataBase) SearchConversations(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
-	// Define the search condition based on the searchParam
-	condition := fmt.Sprintf("show_name like %q ", "%"+searchParam+"%")
+
 	var conversationList []*model_struct.LocalConversation
-	return conversationList, errs.WrapMsg(d.conn.WithContext(ctx).Where(condition).Order("latest_msg_send_time DESC").Find(&conversationList).Error, "SearchConversation failed ")
+
+	// Define the search condition based on the searchParam
+	err := d.conn.WithContext(ctx).
+		Where("show_name LIKE ?", "%"+searchParam+"%").
+		Order("latest_msg_send_time DESC").
+		Find(&conversationList).Error
+
+	return conversationList, errs.WrapMsg(err, "SearchConversation failed ")
 }
