@@ -20,7 +20,7 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -93,27 +93,36 @@ func (d *DataBase) DeleteAllFriend(ctx context.Context) error {
 func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
-	var count int
+
 	var friendList []*model_struct.LocalFriend
-	var condition string
+	query := d.conn.WithContext(ctx)
+
+	var conditions []string
+	var args []any
+
 	if isSearchUserID {
-		condition = fmt.Sprintf("friend_user_id like %q ", "%"+keyword+"%")
-		count++
+		conditions = append(conditions, "friend_user_id LIKE ?")
+		args = append(args, "%"+keyword+"%")
 	}
+
 	if isSearchNickname {
-		if count > 0 {
-			condition += "or "
-		}
-		condition += fmt.Sprintf("name like %q ", "%"+keyword+"%")
-		count++
+		conditions = append(conditions, "name LIKE ?")
+		args = append(args, "%"+keyword+"%")
 	}
+
 	if isSearchRemark {
-		if count > 0 {
-			condition += "or "
-		}
-		condition += fmt.Sprintf("remark like %q ", "%"+keyword+"%")
+		conditions = append(conditions, "remark LIKE ?")
+		args = append(args, "%"+keyword+"%")
 	}
-	err := d.conn.WithContext(ctx).Where(condition).Order("create_time DESC").Find(&friendList).Error
+
+	if len(conditions) > 0 {
+		query = query.Where(
+			"("+strings.Join(conditions, " OR ")+")",
+			args...,
+		)
+	}
+
+	err := query.Order("create_time DESC").Find(&friendList).Error
 	return friendList, errs.WrapMsg(err, "SearchFriendList failed")
 }
 
@@ -132,7 +141,7 @@ func (d *DataBase) GetFriendInfoList(ctx context.Context, friendUserIDList []str
 	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
 	return friendList, err
 }
-func (d *DataBase) UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]interface{}) error {
+func (d *DataBase) UpdateColumnsFriend(ctx context.Context, friendIDs []string, args map[string]any) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalFriend{}).Where("friend_user_id IN ?", friendIDs).Updates(args).Error, "UpdateColumnsFriend failed")
