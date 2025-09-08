@@ -20,7 +20,6 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -120,18 +119,22 @@ func (c *Conversation) deleteMessage(ctx context.Context, conversationID string,
 	if err != nil {
 		return err
 	}
+
 	localMessage, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
 	if err != nil {
 		return err
 	}
+
 	if localMessage.Status == constant.MsgStatusSendFailed {
 		log.ZInfo(ctx, "delete msg status is send failed, do not need delete", "msg", localMessage)
 		return nil
 	}
+
 	if localMessage.Seq == 0 {
-		log.ZInfo(ctx, "delete msg seq is 0, try again", "msg", localMessage)
-		return sdkerrs.ErrMsgHasNoSeq
+		log.ZInfo(ctx, "delete msg seq is 0, only delete in local", "msg", localMessage)
+		return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
 	}
+
 	err = c.deleteMessagesFromServer(ctx, conversationID, []int64{localMessage.Seq})
 	if err != nil {
 		return err
