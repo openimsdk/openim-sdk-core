@@ -8,6 +8,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"runtime"
 	"runtime/debug"
 	"time"
 
@@ -128,6 +129,8 @@ func main() {
 	}
 
 	if vars.EnablePprof {
+		runtime.SetBlockProfileRate(1000)
+		runtime.SetMutexProfileFraction(5)
 		go func() {
 			log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 		}()
