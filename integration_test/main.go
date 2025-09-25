@@ -129,8 +129,8 @@ func main() {
 	}
 
 	if vars.EnablePprof {
-		runtime.SetBlockProfileRate(1000)
-		runtime.SetMutexProfileFraction(5)
+		runtime.SetBlockProfileRate(1)
+		runtime.SetMutexProfileFraction(1)
 		go func() {
 			log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 		}()
