@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/flagconst"
@@ -34,6 +35,8 @@ func InitFlag() {
 
 	flag.Float64Var(&vars.LoginRate, vars.FlagMap["LoginRate"], 0, "number of login user rate")
 
+	flag.BoolVar(&vars.EnablePprof, vars.FlagMap["EnablePprof"], false, "enable pprof or not")
+
 }
 
 // SetFlagLimit prevent parameters from exceeding the limit
@@ -54,7 +57,7 @@ func SetFlagLimit() {
 
 func PrintFlag() {
 	result := fmt.Sprintf(
-		"TestMode-%s:%t, UserNum-%s:%d, SuperUserNum-%s:%d, LargeGroupNum-%s:%d, LargeGroupMemberNum-%s:%d, CommonGroupNum-%s:%d, CommonGroupMemberNum-%s:%d, SingleMessageNum-%s:%d, GroupMessageNum-%s:%d, ShouldRegister-%s:%t, ShouldImportFriends-%s:%t, ShouldCreateGroup-%s:%t, ShouldSendMsg-%s:%t, ShouldCheckGroupNum-%s:%t, ShouldCheckConversationNum-%s:%t, ShouldCheckMessageNum-%s:%t, ShouldCheckUninsAndReins-%s:%t, LoginRate-%s:%.2f",
+		"TestMode-%s:%t, UserNum-%s:%d, SuperUserNum-%s:%d, LargeGroupNum-%s:%d, LargeGroupMemberNum-%s:%d, CommonGroupNum-%s:%d, CommonGroupMemberNum-%s:%d, SingleMessageNum-%s:%d, GroupMessageNum-%s:%d, ShouldRegister-%s:%t, ShouldImportFriends-%s:%t, ShouldCreateGroup-%s:%t, ShouldSendMsg-%s:%t, ShouldCheckGroupNum-%s:%t, ShouldCheckConversationNum-%s:%t, ShouldCheckMessageNum-%s:%t, ShouldCheckUninsAndReins-%s:%t, LoginRate-%s:%.2f, EnablePprof-%s:%t",
 		vars.FlagMap["TestMode"], flagconst.TestMode,
 		vars.FlagMap["UserNum"], vars.UserNum,
 		vars.FlagMap["SuperUserNum"], vars.SuperUserNum,
@@ -73,6 +76,7 @@ func PrintFlag() {
 		vars.FlagMap["ShouldCheckMessageNum"], vars.ShouldCheckMessageNum,
 		vars.FlagMap["ShouldCheckUninsAndReins"], vars.ShouldCheckUninsAndReins,
 		vars.FlagMap["LoginRate"], vars.LoginRate,
+		vars.FlagMap["EnablePprof"], vars.EnablePprof,
 	)
 	fmt.Println(result)
 	log.ZWarn(context.TODO(), "flags", nil, "flag params", result)

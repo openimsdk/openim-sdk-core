@@ -21,6 +21,8 @@ var (
 	ShouldCheckUninsAndReins   bool // determine whether check again after uninstall and reinstall
 
 	LoginRate float64 // number of login user rate
+
+	EnablePprof bool // enable pprof
 )
 
 var (
@@ -43,6 +45,7 @@ var (
 		"ShouldCheckMessageNum":      "ckmsn",
 		"ShouldCheckUninsAndReins":   "ckuni",
 		"LoginRate":                  "lgr",
+		"EnablePprof":                "pprof",
 	}
 )
 

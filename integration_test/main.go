@@ -4,6 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	log2 "log"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"runtime/debug"
+	"time"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/checker"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/manager"
@@ -14,9 +21,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/formatutil"
-	"os"
-	"runtime/debug"
-	"time"
 )
 
 const runFailed = -1
@@ -122,6 +126,13 @@ func main() {
 		fmt.Println("init err")
 		return
 	}
+
+	if vars.EnablePprof {
+		go func() {
+			log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+		}()
+	}
+
 	if err = DoFlagFunc(ctx); err != nil {
 		log.ZError(ctx, "do flag err", err, "stack", utils.FormatErrorStack(err))
 		fmt.Println("do flag err")
