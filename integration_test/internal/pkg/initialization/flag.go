@@ -23,6 +23,8 @@ func InitFlag() {
 	flag.IntVar(&vars.SingleMessageNum, vars.FlagMap["SingleMessageNum"], 5, "number of single message each user send")
 	flag.IntVar(&vars.GroupMessageNum, vars.FlagMap["GroupMessageNum"], 1, "number of group message each user send")
 
+	flag.IntVar(&vars.MessageSendInterval, vars.FlagMap["MessageSendInterval"], 500, "MessageSendInterval")
+
 	flag.BoolVar(&vars.ShouldRegister, vars.FlagMap["ShouldRegister"], false, "determine whether register")
 	flag.BoolVar(&vars.ShouldImportFriends, vars.FlagMap["ShouldImportFriends"], false, "determine whether import friends")
 	flag.BoolVar(&vars.ShouldCreateGroup, vars.FlagMap["ShouldCreateGroup"], false, "determine whether create group")
@@ -57,7 +59,7 @@ func SetFlagLimit() {
 
 func PrintFlag() {
 	result := fmt.Sprintf(
-		"TestMode-%s:%t, UserNum-%s:%d, SuperUserNum-%s:%d, LargeGroupNum-%s:%d, LargeGroupMemberNum-%s:%d, CommonGroupNum-%s:%d, CommonGroupMemberNum-%s:%d, SingleMessageNum-%s:%d, GroupMessageNum-%s:%d, ShouldRegister-%s:%t, ShouldImportFriends-%s:%t, ShouldCreateGroup-%s:%t, ShouldSendMsg-%s:%t, ShouldCheckGroupNum-%s:%t, ShouldCheckConversationNum-%s:%t, ShouldCheckMessageNum-%s:%t, ShouldCheckUninsAndReins-%s:%t, LoginRate-%s:%.2f, EnablePprof-%s:%t",
+		"TestMode-%s:%t, UserNum-%s:%d, SuperUserNum-%s:%d, LargeGroupNum-%s:%d, LargeGroupMemberNum-%s:%d, CommonGroupNum-%s:%d, CommonGroupMemberNum-%s:%d, SingleMessageNum-%s:%d, GroupMessageNum-%s:%d, MessageSendIntercal-%s:%d, ShouldRegister-%s:%t, ShouldImportFriends-%s:%t, ShouldCreateGroup-%s:%t, ShouldSendMsg-%s:%t, ShouldCheckGroupNum-%s:%t, ShouldCheckConversationNum-%s:%t, ShouldCheckMessageNum-%s:%t, ShouldCheckUninsAndReins-%s:%t, LoginRate-%s:%.2f, EnablePprof-%s:%t",
 		vars.FlagMap["TestMode"], flagconst.TestMode,
 		vars.FlagMap["UserNum"], vars.UserNum,
 		vars.FlagMap["SuperUserNum"], vars.SuperUserNum,
@@ -67,6 +69,7 @@ func PrintFlag() {
 		vars.FlagMap["CommonGroupMemberNum"], vars.CommonGroupMemberNum,
 		vars.FlagMap["SingleMessageNum"], vars.SingleMessageNum,
 		vars.FlagMap["GroupMessageNum"], vars.GroupMessageNum,
+		vars.FlagMap["MessageSendInterval"], vars.MessageSendInterval,
 		vars.FlagMap["ShouldRegister"], vars.ShouldRegister,
 		vars.FlagMap["ShouldImportFriends"], vars.ShouldImportFriends,
 		vars.FlagMap["ShouldCreateGroup"], vars.ShouldCreateGroup,

@@ -10,6 +10,8 @@ var (
 	SingleMessageNum     int // number of single message each user send
 	GroupMessageNum      int // number of group message each user send
 
+	MessageSendInterval int // MessageSendInterval unit: ms
+
 	ShouldRegister      bool // determine whether register
 	ShouldImportFriends bool // determine whether import friends
 	ShouldCreateGroup   bool // determine whether create group
@@ -36,6 +38,7 @@ var (
 		"CommonGroupMemberNum":       "cgm",
 		"SingleMessageNum":           "sm",
 		"GroupMessageNum":            "gm",
+		"MessageSendInterval":        "msgitv",
 		"ShouldRegister":             "reg",
 		"ShouldImportFriends":        "imf",
 		"ShouldCreateGroup":          "crg",
