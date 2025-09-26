@@ -31,6 +31,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
+	"github.com/openimsdk/openim-sdk-core/v3/version"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -655,9 +656,10 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	defer c.connWrite.Unlock()
 	c.listener().OnConnecting()
 	c.SetConnectionStatus(Connecting)
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t",
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t&sdkVersion=%s",
 		ccontext.Info(ctx).WsAddr(), ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(),
-		ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.GetBackground())
+		ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.GetBackground(),
+		version.Version)
 	if c.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
