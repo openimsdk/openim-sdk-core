@@ -93,17 +93,17 @@ func (g *Group) initSyncer() {
 		}),
 		syncer.WithNotice[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, state int, server, local *model_struct.LocalGroup) error {
 			switch state {
-			//case syncer.Insert:
-			//	// when a user kicked to the group and invited to the group again, group info maybe updated,
-			//	// so conversation info need to be updated
-			//	g.listener().OnJoinedGroupAdded(utils.StructToJsonString(server))
-			//	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
-			//		Action: constant.UpdateConFaceUrlAndNickName,
-			//		Args: common.SourceIDAndSessionType{
-			//			SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
-			//			FaceURL: server.FaceURL, Nickname: server.GroupName,
-			//		},
-			//	}, g.conversationCh)
+			case syncer.Insert:
+				// when a user kicked to the group and invited to the group again, group info maybe updated,
+				// so conversation info need to be updated
+				g.listener().OnJoinedGroupAdded(utils.StructToJsonString(server))
+				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{
+					Action: constant.UpdateConFaceUrlAndNickName,
+					Args: common.SourceIDAndSessionType{
+						SourceID: server.GroupID, SessionType: constant.ReadGroupChatType,
+						FaceURL: server.FaceURL, Nickname: server.GroupName,
+					},
+				}, g.conversationCh)
 			case syncer.Delete:
 				local.MemberCount = 0
 				g.listener().OnJoinedGroupDeleted(utils.StructToJsonString(local))
@@ -163,17 +163,17 @@ func (g *Group) initSyncer() {
 		}),
 		syncer.WithNotice[*model_struct.LocalGroupMember, group.GetGroupMemberListResp, [2]string](func(ctx context.Context, state int, server, local *model_struct.LocalGroupMember) error {
 			switch state {
-			//case syncer.Insert:
-			//	g.listener().OnGroupMemberAdded(utils.StructToJsonString(server))
-			//	// When a user is kicked and invited to the group again, group member info will be updated.
-			//	_ = common.TriggerCmdUpdateMessage(ctx,
-			//		common.UpdateMessageNode{
-			//			Action: constant.UpdateMsgFaceUrlAndNickName,
-			//			Args: common.UpdateMessageInfo{
-			//				SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
-			//				Nickname: server.Nickname, GroupID: server.GroupID,
-			//			},
-			//		}, g.conversationCh)
+			case syncer.Insert:
+				g.listener().OnGroupMemberAdded(utils.StructToJsonString(server))
+				// When a user is kicked and invited to the group again, group member info will be updated.
+				_ = common.TriggerCmdUpdateMessage(ctx,
+					common.UpdateMessageNode{
+						Action: constant.UpdateMsgFaceUrlAndNickName,
+						Args: common.UpdateMessageInfo{
+							SessionType: constant.ReadGroupChatType, UserID: server.UserID, FaceURL: server.FaceURL,
+							Nickname: server.Nickname, GroupID: server.GroupID,
+						},
+					}, g.conversationCh)
 			case syncer.Delete:
 				g.listener().OnGroupMemberDeleted(utils.StructToJsonString(local))
 			case syncer.Update:
