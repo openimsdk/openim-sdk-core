@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
@@ -29,7 +30,7 @@ func NewGroupManager(m *MetaManager) *TestGroupManager {
 func (m *TestGroupManager) CreateGroups(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
 	var (
 		total int
 		now   int
