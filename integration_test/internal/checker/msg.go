@@ -34,7 +34,7 @@ func CheckMessageNum(ctx context.Context) error {
 
 		// invite group member notification
 		if vars.LargeGroupMemberNum > config.ApiParamLength {
-			largeGroupNum += (vars.LargeGroupNum-config.ApiParamLength-1)/singleQuantity + 1
+			largeGroupNum += ((vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1) * vars.LargeGroupNum
 		}
 
 		commonGroupNum := 0
@@ -82,6 +82,9 @@ func CheckMessageNum(ctx context.Context) error {
 					// self send large group message
 					res -= vars.GroupMessageNum * vars.LargeGroupNum
 					res -= createdLargeGroupNum
+					if vars.LargeGroupMemberNum > config.ApiParamLength {
+						res -= ((vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1) * createdLargeGroupNum
+					}
 				} else {
 					// friend send message num
 					res += vars.SingleMessageNum * vars.LoginUserNum
@@ -95,6 +98,9 @@ func CheckMessageNum(ctx context.Context) error {
 					res -= vars.GroupMessageNum * vars.LargeGroupNum
 					// self created large group num
 					res -= createdLargeGroupNum
+					if vars.LargeGroupMemberNum > config.ApiParamLength {
+						res -= ((vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1) * createdLargeGroupNum
+					}
 				} else {
 					// self send large group message
 					res -= 0
@@ -115,6 +121,9 @@ func CheckMessageNum(ctx context.Context) error {
 			// create more one large group
 			if userNum < corrects[2] {
 				res--
+				if vars.LargeGroupMemberNum > config.ApiParamLength {
+					res -= (vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1
+				}
 			}
 			return res
 		},
