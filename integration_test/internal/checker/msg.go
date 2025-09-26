@@ -2,19 +2,24 @@ package checker
 
 import (
 	"context"
+
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/config"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
 )
 
+const (
+	singleQuantity = 50
+)
+
 // CheckMessageNum check message num.
 func CheckMessageNum(ctx context.Context) error {
 	createdLargeGroupNum := vars.LargeGroupNum / vars.LoginUserNum
 	corrects := func() [3]int {
-		// corrects[0]: super user msg num
+		// corrects[0]: superuser msg num
 		// corrects[1]: common user msg num
-		// corrects[2]: create more one large group largest user no + 1
+		// corrects[2]: create more one large group the largest user number + 1
 
 		// if a user num smaller than remainder, it means this user created more one large group
 		remainder := vars.LargeGroupNum % vars.LoginUserNum
@@ -26,6 +31,11 @@ func CheckMessageNum(ctx context.Context) error {
 				vars.LargeGroupNum
 		// self send group message(cal by userID) -
 		// self create group notification message. Complete the calculation based on user ID in CalCorrectCount.
+
+		// invite group member notification
+		if vars.LargeGroupMemberNum > config.ApiParamLength {
+			largeGroupNum += ((vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1) * vars.LargeGroupNum
+		}
 
 		commonGroupNum := 0
 		// self create group notification message
@@ -72,6 +82,9 @@ func CheckMessageNum(ctx context.Context) error {
 					// self send large group message
 					res -= vars.GroupMessageNum * vars.LargeGroupNum
 					res -= createdLargeGroupNum
+					if vars.LargeGroupMemberNum > config.ApiParamLength {
+						res -= ((vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1) * createdLargeGroupNum
+					}
 				} else {
 					// friend send message num
 					res += vars.SingleMessageNum * vars.LoginUserNum
@@ -85,6 +98,9 @@ func CheckMessageNum(ctx context.Context) error {
 					res -= vars.GroupMessageNum * vars.LargeGroupNum
 					// self created large group num
 					res -= createdLargeGroupNum
+					if vars.LargeGroupMemberNum > config.ApiParamLength {
+						res -= ((vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1) * createdLargeGroupNum
+					}
 				} else {
 					// self send large group message
 					res -= 0
@@ -105,6 +121,9 @@ func CheckMessageNum(ctx context.Context) error {
 			// create more one large group
 			if userNum < corrects[2] {
 				res--
+				if vars.LargeGroupMemberNum > config.ApiParamLength {
+					res -= (vars.LargeGroupMemberNum-config.ApiParamLength-1)/singleQuantity + 1
+				}
 			}
 			return res
 		},

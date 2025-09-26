@@ -31,7 +31,7 @@ func NewMsgManager(m *MetaManager) *TestMsgManager {
 func (m *TestMsgManager) SendMessages(ctx context.Context) error {
 	defer decorator.FuncLog(ctx)()
 
-	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupCommonLimit)
+	gr, cctx := reerrgroup.WithContext(ctx, config.ErrGroupSmallLimit)
 
 	var (
 		total int
@@ -81,7 +81,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						log.ZWarn(ctx, "sendSingleMessages end", nil, "time cost:", time.Since(t))
 						p.IncBar(bar)
 
-						time.Sleep(time.Millisecond * 500)
+						time.Sleep(time.Millisecond * time.Duration(vars.MessageSendInterval))
 
 					}
 				} else {
@@ -138,7 +138,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					log.ZWarn(ctx, "sendGroupMessages end", nil, "time cost:", time.Since(t))
 
 					p.IncBar(bar)
-					time.Sleep(time.Millisecond * 500)
+					time.Sleep(time.Millisecond * time.Duration(vars.MessageSendInterval))
 				}
 			}
 			return nil
