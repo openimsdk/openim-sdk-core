@@ -57,8 +57,8 @@ func (s *TestSDK) createGroup(ctx context.Context, memberUserIds []string, group
 		return nil, err
 	}
 
-	if len(memberUserIds) > 1000 {
-		for i := 1000; i < len(memberUserIds); i += config.ApiParamLength {
+	if len(memberUserIds) > config.ApiParamLength {
+		for i := config.ApiParamLength; i < len(memberUserIds); i += config.ApiParamLength {
 			end := i + config.ApiParamLength
 			if end > len(memberUserIds) {
 				end = len(memberUserIds)
