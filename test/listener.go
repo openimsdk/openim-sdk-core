@@ -17,6 +17,7 @@ package test
 import (
 	"context"
 	"fmt"
+
 	"github.com/openimsdk/tools/log"
 )
 
@@ -140,8 +141,7 @@ func (o *onAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
 }
 
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
-	//TODO implement me
-	panic("implement me")
+	log.ZDebug(o.ctx, "OnRecvOfflineNewMessage", "message", message)
 }
 
 func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
