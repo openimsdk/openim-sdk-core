@@ -115,6 +115,11 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 		body = response.Body
 	case "gzip":
 		body, err = gzip.NewReader(response.Body)
+		if err != nil {
+			log.ZError(ctx, "http response gzip NewReader failed", err, "url", reqUrl)
+			return sdkerrs.ErrSdkInternal.WrapMsg("gzip NewReader failed " + err.Error())
+		}
+
 		defer body.Close()
 	default:
 		log.ZWarn(ctx, "http response content encoding not supported", nil, "url", reqUrl, "contentEncoding", contentEncoding)
