@@ -74,6 +74,11 @@ func (c *Conversation) getIncrementalConversationFromServer(ctx context.Context,
 	return api.GetIncrementalConversation.Invoke(ctx, req)
 }
 
+func (c *Conversation) getConversationReadCursors(ctx context.Context, conversationIDs []string) (*pbConversation.GetConversationReadCursorsResp, error) {
+	req := &pbConversation.GetConversationReadCursorsReq{ConversationIDs: conversationIDs}
+	return api.GetConversationReadCursors.Invoke(ctx, req)
+}
+
 func (c *Conversation) GetActiveConversations(ctx context.Context) ([]*jssdk.ConversationMsg, error) {
 	conf, err := cliconf.GetClientConfig(ctx)
 	if err != nil {
