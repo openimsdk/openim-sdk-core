@@ -90,18 +90,3 @@ func Test_DeleteAllFriend(t *testing.T) {
 	}
 
 }
-
-// func Test_UpdateColumnsFriend(t *testing.T) {
-// 	ctx := context.Background()
-// 	db, err := db.NewDataBase(ctx, "1695766238", "./", 6)
-// 	if err != nil {
-// 		return
-// 	}
-// 	// log.ZError(ctx, "DB err test", nil, "key", "vale")
-
-// 	err = db.UpdateColumnsFriend(ctx)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// }

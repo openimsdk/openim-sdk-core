@@ -19,11 +19,6 @@ func TestUpload(t *testing.T) {
 	ctx := ccontext.WithInfo(context.WithValue(context.Background(), "operationID", "OP123456"), conf)
 	f := NewFile(nil, conf.UserID)
 
-	//fp := `C:\Users\openIM\Desktop\my_image (2).tar`
-	//fp := `C:\Users\openIM\Desktop\1234.zip`
-	//fp := `C:\Users\openIM\Desktop\openIM.wasm`
-	//fp := `C:\Users\openIM\Desktop\ubuntu.7z`
-	//fp := `C:\Users\openIM\Desktop\log2023-10-31.log`
 	fp := `C:\Users\openIM\Desktop\protoc.zip`
 
 	resp, err := f.UploadFile(ctx, &UploadFileReq{
