@@ -90,19 +90,19 @@ type DeleteConNode struct {
 type SyncReactionExtensionsNode struct {
 	OperationID string
 	Action      int
-	Args        interface{}
+	Args        any
 }
 
 type UpdateConNode struct {
 	ConID  string
 	Action int //1 Delete the conversation; 2 Update the latest news in the conversation or add a conversation; 3 Put a conversation on the top;
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
-	Args interface{}
+	Args any
 }
 
 type UpdateMessageNode struct {
 	Action int
-	Args   interface{}
+	Args   any
 }
 
 type UpdateConInfo struct {
