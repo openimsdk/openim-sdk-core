@@ -412,13 +412,34 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 		common.DispatchSyncFlag(ctx, constant.MsgSyncBegin, m.conversationEventQueue)
 	}
 	var resp sdkws.GetMaxSeqResp
-	if err := m.longConnMgr.SendReqWaitResp(ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
+	maxRetries := 3                  // max number of retries
+	retryInterval := 2 * time.Second // wait time between retries
+
+	var err error
+	for retry := range maxRetries {
+		if retry > 0 {
+			log.ZWarn(ctx, "retrying to get max seq", nil, "attempt", retry+1, "max", maxRetries)
+
+			// Exponential Backoff Strategy
+			time.Sleep(retryInterval)
+			retryInterval *= 2
+		}
+
+		err = m.longConnMgr.SendReqWaitResp(ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp)
+		if err == nil {
+			log.ZDebug(ctx, "get max seq success", "resp", resp.MaxSeqs)
+			break
+		}
+
+		log.ZWarn(ctx, "get max seq attempt failed", err, "attempt", retry+1, "max", maxRetries)
+	}
+
+	if err != nil {
 		log.ZError(ctx, "get max seq error", err)
 		common.DispatchSyncFlag(ctx, constant.MsgSyncFailed, m.conversationEventQueue)
 		return
-	} else {
-		log.ZDebug(ctx, "get max seq success", "resp", resp.MaxSeqs)
 	}
+
 	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, connectPullNums)
 	if reinstalled {
 		common.DispatchSyncFlag(ctx, constant.AppDataSyncFinish, m.conversationEventQueue)
@@ -665,7 +686,7 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, se
 		var pullMsgResp sdkws.PullMessageBySeqsResp
 		err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgByRange, &pullMsgResp)
 		if err != nil {
-			log.ZError(ctx, "syncMsgFromServerSplit err", err, "pullMsgReq", pullMsgReq)
+			log.ZError(ctx, "syncMsgFromServerSplit err", err, "pullMsgReq", &pullMsgReq)
 			continue
 		}
 		i++
