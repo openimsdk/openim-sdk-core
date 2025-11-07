@@ -1,17 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package interaction
 
 import (
@@ -139,33 +125,14 @@ func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan *GeneralWsResp, timeo
 	select {
 	case r, ok := <-ch:
 		if !ok { //ch has been closed
-			//log.Debug(operationID, "ws network has been changed ")
 			return nil, nil
 		}
-		//log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
-			//log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
-			//switch r.ErrCode {
-			//case int(constant.ErrInBlackList.ErrCode):
-			//	return nil, &constant.ErrInBlackList
-			//case int(constant.ErrNotFriend.ErrCode):
-			//	return nil, &constant.ErrNotFriend
-			//}
-			//return nil, errors.New(utils.IntToString(r.ErrCode) + ":" + r.ErrMsg)
 		} else {
 			return r, nil
 		}
 
 	case <-time.After(time.Second * time.Duration(timeout)):
-		//log.Error(operationID, "ws ch recvMsg err, timeout")
-		//if w.conn.IsNil() {
-		//	return nil, errors.New("ws ch recvMsg err, timeout,conn is nil")
-		//}
-		//if w.conn.CheckSendConnDiffNow() {
-		//	return nil, constant.WsRecvConnDiff
-		//} else {
-		//	return nil, constant.WsRecvConnSame
-		//}
 	}
 	return nil, nil
 }
