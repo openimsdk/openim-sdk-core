@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
@@ -78,6 +79,23 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				return err
 			}
 
+			conversationID := utils.GetConversationIDByGroupID(detail.Group.GroupID)
+			if err := g.db.InsertGroupReadCursorState(ctx, &model_struct.LocalGroupReadCursorState{
+				ConversationID: conversationID,
+				CursorVersion:  1,
+			}); err != nil {
+				log.ZError(ctx, "InsertGroupReadCursorState on GroupCreatedNotification failed", err, "groupID", detail.Group.GroupID)
+			}
+			for _, member := range detail.MemberList {
+				if err := g.db.InsertGroupReadCursor(ctx, &model_struct.LocalGroupReadCursor{
+					ConversationID: conversationID,
+					UserID:         member.UserID,
+					MaxReadSeq:     0,
+				}); err != nil {
+					log.ZError(ctx, "InsertGroupReadCursor on GroupCreatedNotification failed", err, "groupID", detail.Group.GroupID, "userID", member.UserID)
+				}
+			}
+
 			if err := g.IncrSyncJoinGroup(ctx); err != nil {
 				return err
 			}
@@ -96,9 +114,23 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 				return err
 			}
+			conversationID := utils.GetConversationIDByGroupID(detail.Group.GroupID)
 			if detail.QuitUser.UserID == g.loginUserID {
+				if err := g.db.DeleteGroupReadCursorsByConversationID(ctx, conversationID); err != nil {
+					log.ZWarn(ctx, "DeleteGroupReadCursorsByConversationID err", err, "conversationID", conversationID)
+				}
+				if err := g.db.DeleteGroupReadCursorState(ctx, conversationID); err != nil {
+					log.ZWarn(ctx, "DeleteGroupReadCursorState err", err, "conversationID", conversationID)
+				}
 				return g.IncrSyncJoinGroup(ctx)
 			} else {
+				if err := g.db.DeleteGroupReadCursor(ctx, conversationID, detail.QuitUser.UserID); err != nil {
+					log.ZWarn(ctx, "DeleteGroupReadCursor err", err, "conversationID", conversationID, "userID", detail.QuitUser.UserID)
+				} else {
+					if err := g.db.IncrementGroupReadCursorVersion(ctx, conversationID); err != nil {
+						log.ZWarn(ctx, "IncrementGroupReadCursorVersion err", err, "conversationID", conversationID)
+					}
+				}
 				return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, []*sdkws.GroupMemberFullInfo{detail.QuitUser}, nil,
 					nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 			}
@@ -125,9 +157,29 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 					break
 				}
 			}
+			conversationID := utils.GetConversationIDByGroupID(detail.Group.GroupID)
 			if self {
+				if err := g.db.DeleteGroupReadCursorsByConversationID(ctx, conversationID); err != nil {
+					log.ZWarn(ctx, "DeleteGroupReadCursorsByConversationID err", err, "conversationID", conversationID)
+				}
+				if err := g.db.DeleteGroupReadCursorState(ctx, conversationID); err != nil {
+					log.ZWarn(ctx, "DeleteGroupReadCursorState err", err, "conversationID", conversationID)
+				}
 				return g.IncrSyncJoinGroup(ctx)
 			} else {
+				deleted := false
+				for _, info := range detail.KickedUserList {
+					if err := g.db.DeleteGroupReadCursor(ctx, conversationID, info.UserID); err != nil {
+						log.ZWarn(ctx, "DeleteGroupReadCursor err", err, "conversationID", conversationID, "userID", info.UserID)
+					} else {
+						deleted = true
+					}
+				}
+				if deleted {
+					if err := g.db.IncrementGroupReadCursorVersion(ctx, conversationID); err != nil {
+						log.ZWarn(ctx, "IncrementGroupReadCursorVersion err", err, "conversationID", conversationID)
+					}
+				}
 				return g.onlineSyncGroupAndMember(ctx, detail.Group.GroupID, detail.KickedUserList, nil,
 					nil, detail.Group, groupSortIDUnchanged, detail.GroupMemberVersion, detail.GroupMemberVersionID)
 			}
@@ -139,6 +191,21 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			userIDMap := datautil.SliceSetAny(detail.InvitedUserList, func(e *sdkws.GroupMemberFullInfo) string {
 				return e.UserID
 			})
+
+			conversationID := utils.GetConversationIDByGroupID(detail.Group.GroupID)
+			for _, member := range detail.InvitedUserList {
+				if err := g.db.InsertGroupReadCursor(ctx, &model_struct.LocalGroupReadCursor{
+					ConversationID: conversationID,
+					UserID:         member.UserID,
+					MaxReadSeq:     0,
+				}); err != nil {
+					log.ZError(ctx, "InsertGroupReadCursor on MemberInvitedNotification failed", err, "groupID", detail.Group.GroupID, "userID", member.UserID)
+				}
+			}
+			if err := g.db.IncrementGroupReadCursorVersion(ctx, conversationID); err != nil {
+				log.ZError(ctx, "IncrementGroupReadCursorVersion err", err, "conversationID", conversationID)
+			}
+
 			//Also invited as a member
 			if _, ok := userIDMap[g.loginUserID]; ok {
 				if err := g.IncrSyncJoinGroup(ctx); err != nil {
@@ -154,6 +221,19 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 				return err
 			}
+
+			conversationID := utils.GetConversationIDByGroupID(detail.Group.GroupID)
+			if err := g.db.InsertGroupReadCursor(ctx, &model_struct.LocalGroupReadCursor{
+				ConversationID: conversationID,
+				UserID:         detail.EntrantUser.UserID,
+				MaxReadSeq:     0,
+			}); err != nil {
+				log.ZError(ctx, "InsertGroupReadCursor on MemberEnterNotification failed", err, "groupID", detail.Group.GroupID, "userID", detail.EntrantUser.UserID)
+			}
+			if err := g.db.IncrementGroupReadCursorVersion(ctx, conversationID); err != nil {
+				log.ZError(ctx, "IncrementGroupReadCursorVersion err", err, "conversationID", conversationID)
+			}
+
 			if detail.EntrantUser.UserID == g.loginUserID {
 				if err := g.IncrSyncJoinGroup(ctx); err != nil {
 					return err
@@ -169,6 +249,14 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 				return err
 			}
 			g.listener().OnGroupDismissed(utils.StructToJsonString(detail.Group))
+
+			conversationID := utils.GetConversationIDByGroupID(detail.Group.GroupID)
+			if err := g.db.DeleteGroupReadCursorsByConversationID(ctx, conversationID); err != nil {
+				log.ZWarn(ctx, "DeleteGroupReadCursorsByConversationID err", err, "conversationID", conversationID)
+			}
+			if err := g.db.DeleteGroupReadCursorState(ctx, conversationID); err != nil {
+				log.ZWarn(ctx, "DeleteGroupReadCursorState err", err, "conversationID", conversationID)
+			}
 
 			return g.IncrSyncJoinGroup(ctx)
 		case constant.GroupMemberMutedNotification: // 1512
