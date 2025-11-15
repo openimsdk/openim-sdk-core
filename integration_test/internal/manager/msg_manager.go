@@ -133,6 +133,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 					t := time.Now()
 					log.ZWarn(ctx, "sendGroupMessages begin", nil)
+					ctx = ccontext.WithSendMessageCallback(ctx, sdk_user_simulator.TestSendMsgCallBackListener{UserID: msg.SendID})
 					_, err = testSDK.SendGroupMsg(ctx, msg, group)
 					if err != nil {
 						return err
