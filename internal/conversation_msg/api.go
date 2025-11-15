@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/protocol/msg"
 
 	"github.com/openimsdk/tools/errs"
