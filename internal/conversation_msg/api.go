@@ -3,7 +3,6 @@ package conversation_msg
 import (
 	"context"
 	"fmt"
-	"github.com/openimsdk/protocol/msg"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,7 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
+	"github.com/openimsdk/protocol/msg"
+
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
@@ -259,7 +259,9 @@ func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionTy
 	case constant.ReadGroupChatType:
 		return "sg_" + sourceID // super group chat
 	case constant.NotificationChatType:
-		return "sn_" + sourceID + "_" + c.loginUserID // server notification chat
+		l := []string{c.loginUserID, sourceID}
+		sort.Strings(l)
+		return "sn_" + strings.Join(l, "_") // server notification chat
 	}
 	return ""
 }
@@ -646,7 +648,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	s.Content = ""
 	var sendMsgResp msg.SendMsgResp
 	//err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
-	err := c.sendMsg(ctx, s, &wsMsgData, nil)
+	err := c.sendMsg(ctx, s, &wsMsgData, &sendMsgResp)
 	if err != nil {
 		//if send message network timeout need to double-check message has received by db.
 		if sdkerrs.ErrNetworkTimeOut.Is(err) && !isOnlineOnly {
@@ -671,9 +673,11 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 			return s, err
 		}
 	}
-	s.SendTime = sendMsgResp.SendTime
-	s.Status = constant.MsgStatusSendSuccess
-	s.ServerMsgID = sendMsgResp.ServerMsgID
+	if s.SendTime == 0 {
+		s.SendTime = sendMsgResp.SendTime
+		s.Status = constant.MsgStatusSendSuccess
+		s.ServerMsgID = sendMsgResp.ServerMsgID
+	}
 	go func() {
 		//remove media cache file
 		for _, file := range delFiles {
@@ -900,13 +904,12 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	if sendID != c.loginUserID {
 		faceUrl, name, err := c.getUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
-			// log.Error("", "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
+			log.ZWarn(ctx, "getUserNameAndFaceUrlByUid err", err, "sendID", sendID)
 		}
 		s.SenderFaceURL = faceUrl
 		s.SenderNickname = name
 	}
 	s.SendID = sendID
-	s.RecvID = groupID
 	s.GroupID = groupID
 	s.ClientMsgID = utils.GetMsgID(s.SendID)
 	s.SendTime = utils.GetCurrentTimestampByMill()

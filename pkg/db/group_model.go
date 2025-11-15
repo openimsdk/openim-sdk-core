@@ -20,7 +20,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/tools/errs"
@@ -92,16 +91,18 @@ func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyw
 	defer d.mRWMutex.RUnlock()
 
 	var groupList []*model_struct.LocalGroup
-	var condition string
+	query := d.conn.WithContext(ctx)
+
 	if isSearchGroupID {
 		if isSearchGroupName {
-			condition = fmt.Sprintf("group_id like %q or name like %q", "%"+keyword+"%", "%"+keyword+"%")
+			query = query.Where("group_id LIKE ? OR name LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
 		} else {
-			condition = fmt.Sprintf("group_id like %q ", "%"+keyword+"%")
+			query = query.Where("group_id LIKE ?", "%"+keyword+"%")
 		}
 	} else {
-		condition = fmt.Sprintf("name like %q ", "%"+keyword+"%")
+		query = query.Where("name LIKE ?", "%"+keyword+"%")
 	}
-	err := d.conn.WithContext(ctx).Where(condition).Order("create_time DESC").Find(&groupList).Error
+
+	err := query.Order("create_time DESC").Find(&groupList).Error
 	return groupList, errs.WrapMsg(err, "GetAllGroupInfoByGroupIDOrGroupName failed ")
 }

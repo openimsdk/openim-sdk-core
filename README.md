@@ -98,7 +98,7 @@ Once the SDK is tested successfully, you can build and package it for various pl
 
 - **Android/iOS**
 
-Refer to [this guide](./docs/gomobile-android-ios-setup-cn.md) for detailed instructions on building and packaging for Android and iOS.
+Refer to [this guide](./docs/gomobile-android-ios-setup.md) for detailed instructions on building and packaging for Android and iOS.
 
 - **WebAssembly**
 
@@ -170,7 +170,16 @@ Please leave your use cases in the comments [here](https://github.com/openimsdk/
 
 ## License
 
-For more details, please refer to [here](./LICENSE).
+This software is licensed under a dual-license model:
+
+- The GNU Affero General Public License (AGPL), Version 3 or later; **OR**
+- Commercial license terms from OpenIMSDK.
+
+If you wish to use this software under commercial terms, please contact us at: contact@openim.io
+
+For more information, see: https://www.openim.io/en/licensing
+
+
 
 ## Thanks to our contributors!
 
