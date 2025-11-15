@@ -20,7 +20,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -182,32 +181,25 @@ func (d *DataBase) SearchGroupMembersDB(ctx context.Context, keyword string, gro
 		return nil, errors.New("args failed")
 	}
 
-	var countCon int
-	var condition string
-	if isSearchUserID {
-		condition = fmt.Sprintf("user_id like %q ", "%"+keyword+"%")
-		countCon++
-	}
-	if isSearchMemberNickname {
-		if countCon > 0 {
-			condition += "or "
-		}
-		condition += fmt.Sprintf("nickname like %q ", "%"+keyword+"%")
+	var groupMemberList []*model_struct.LocalGroupMember
+	query := d.conn.WithContext(ctx)
+
+	if isSearchUserID && isSearchMemberNickname {
+		query = query.Where("user_id LIKE ? OR nickname LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	} else if isSearchUserID {
+		query = query.Where("user_id LIKE ?", "%"+keyword+"%")
+	} else if isSearchMemberNickname {
+		query = query.Where("nickname LIKE ?", "%"+keyword+"%")
 	}
 
-	var groupMemberList []model_struct.LocalGroupMember
 	if groupID != "" {
-		condition = "( " + condition + " ) "
-		condition += " and group_id IN ? "
-		err = d.conn.WithContext(ctx).Where(condition, []string{groupID}).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-	} else {
-		err = d.conn.WithContext(ctx).Where(condition).Order("role_level DESC,join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-
+		query = query.Where("group_id IN ?", []string{groupID})
 	}
 
-	for _, v := range groupMemberList {
-		v1 := v
-		result = append(result, &v1)
-	}
-	return result, err
+	err = query.Order("role_level DESC,join_time ASC").
+		Offset(offset).
+		Limit(count).
+		Find(&groupMemberList).Error
+
+	return groupMemberList, err
 }
