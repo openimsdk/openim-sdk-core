@@ -32,11 +32,10 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
-const StatusNetWorkChanged websocket.StatusCode = 3001
-
 const (
-	TextPing = "ping"
-	TextPong = "pong"
+	TextPing                                  = "ping"
+	TextPong                                  = "pong"
+	StatusNetWorkChanged websocket.StatusCode = 3001
 )
 
 type TextMessage struct {
@@ -117,26 +116,6 @@ func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
 	}
 }
 
-func (w *JSWebSocket) Read() (websocket.MessageType, []byte, error) {
-	ctx := w.ctx
-	if deadline := w.readDeadline; !deadline.IsZero() {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithDeadline(ctx, deadline)
-		defer cancel()
-	}
-	return w.conn.Read(ctx)
-}
-
-func (w *JSWebSocket) Write(typ websocket.MessageType, p []byte) error {
-	ctx := w.ctx
-	if deadline := w.writeDeadline; !deadline.IsZero() {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithDeadline(ctx, deadline)
-		defer cancel()
-	}
-	return w.conn.Write(ctx, typ, p)
-}
-
 func (w *JSWebSocket) handlerText(b []byte) error {
 	var msg TextMessage
 	if err := json.Unmarshal(b, &msg); err != nil {
@@ -159,6 +138,26 @@ func (w *JSWebSocket) handlerText(b []byte) error {
 		return handler(str)
 	}
 	return nil
+}
+
+func (w *JSWebSocket) Read() (websocket.MessageType, []byte, error) {
+	ctx := w.ctx
+	if deadline := w.readDeadline; !deadline.IsZero() {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, deadline)
+		defer cancel()
+	}
+	return w.conn.Read(ctx)
+}
+
+func (w *JSWebSocket) Write(typ websocket.MessageType, p []byte) error {
+	ctx := w.ctx
+	if deadline := w.writeDeadline; !deadline.IsZero() {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, deadline)
+		defer cancel()
+	}
+	return w.conn.Write(ctx, typ, p)
 }
 
 func (w *JSWebSocket) ReadMessage() (int, []byte, error) {

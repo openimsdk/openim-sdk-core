@@ -9,6 +9,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/decorator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/progress"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/reerrgroup"
+	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/sdk_user_simulator"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/sdk"
 	"github.com/openimsdk/openim-sdk-core/v3/integration_test/internal/vars"
@@ -74,6 +75,7 @@ func (m *TestMsgManager) sendSingleMessages(ctx context.Context, gr *reerrgroup.
 						ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 						t := time.Now()
 						log.ZWarn(ctx, "sendSingleMessages begin", nil)
+						ctx = ccontext.WithSendMessageCallback(ctx, sdk_user_simulator.TestSendMsgCallBackListener{UserID: msg.SendID})
 						_, err = testSDK.SendSingleMsg(ctx, msg, friend.FriendUserID)
 						if err != nil {
 							return err
@@ -131,6 +133,7 @@ func (m *TestMsgManager) sendGroupMessages(ctx context.Context, gr *reerrgroup.G
 					ctx = ccontext.WithOperationID(ctx, sdkUtils.OperationIDGenerator())
 					t := time.Now()
 					log.ZWarn(ctx, "sendGroupMessages begin", nil)
+					ctx = ccontext.WithSendMessageCallback(ctx, sdk_user_simulator.TestSendMsgCallBackListener{UserID: msg.SendID})
 					_, err = testSDK.SendGroupMsg(ctx, msg, group)
 					if err != nil {
 						return err

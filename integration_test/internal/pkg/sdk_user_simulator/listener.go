@@ -268,3 +268,17 @@ func (t *testConnListener) OnSuccess() {
 func (t *testConnListener) OnError(code int32, msg string) {
 
 }
+
+type TestSendMsgCallBackListener struct {
+	UserID string
+}
+
+func (t TestSendMsgCallBackListener) OnError(errCode int32, errMsg string) {
+
+}
+
+func (t TestSendMsgCallBackListener) OnSuccess(data string) {
+}
+
+func (t TestSendMsgCallBackListener) OnProgress(progress int) {
+}
