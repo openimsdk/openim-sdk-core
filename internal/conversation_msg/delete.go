@@ -125,13 +125,8 @@ func (c *Conversation) deleteMessage(ctx context.Context, conversationID string,
 		return err
 	}
 
-	if localMessage.Status == constant.MsgStatusSendFailed {
-		log.ZInfo(ctx, "delete msg status is send failed, do not need delete", "msg", localMessage)
-		return nil
-	}
-
-	if localMessage.Seq == 0 {
-		log.ZInfo(ctx, "delete msg seq is 0, only delete in local", "msg", localMessage)
+	if localMessage.Seq == 0 || localMessage.Status == constant.MsgStatusSendFailed {
+		log.ZInfo(ctx, "delete msg seq is 0 or status is send failed, only delete in local", "msg", localMessage)
 		return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
 	}
 
