@@ -674,11 +674,6 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 			return s, err
 		}
 	}
-	if s.SendTime == 0 {
-		s.SendTime = sendMsgResp.SendTime
-		s.Status = constant.MsgStatusSendSuccess
-		s.ServerMsgID = sendMsgResp.ServerMsgID
-	}
 	go func() {
 		//remove media cache file
 		for _, file := range delFiles {
