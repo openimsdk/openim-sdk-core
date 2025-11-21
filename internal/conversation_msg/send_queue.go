@@ -137,7 +137,7 @@ func (m *messageSender) runTask(task *sendTask) {
 }
 
 func notifySendSuccess(ctx context.Context, msg *sdk_struct.MsgStruct) {
-	callback, _ := ctx.Value(ccontext.Callback).(open_im_sdk_callback.SendMsgCallBack)
+	callback, _ := ctx.Value(ccontext.CtxCallback).(open_im_sdk_callback.SendMsgCallBack)
 	if callback == nil {
 		return
 	}
@@ -150,7 +150,7 @@ func notifySendSuccess(ctx context.Context, msg *sdk_struct.MsgStruct) {
 }
 
 func notifySendError(ctx context.Context, err error) {
-	callback, _ := ctx.Value(ccontext.Callback).(open_im_sdk_callback.SendMsgCallBack)
+	callback, _ := ctx.Value(ccontext.CtxCallback).(open_im_sdk_callback.SendMsgCallBack)
 	if callback == nil {
 		return
 	}
