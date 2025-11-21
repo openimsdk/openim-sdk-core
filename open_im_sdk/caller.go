@@ -363,7 +363,7 @@ func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID stri
 		log.ZWarn(context.Background(), "callback is nil", nil)
 		return
 	}
-	go messageCall_(callback, operationID, fn, args...)
+	messageCall_(callback, operationID, fn, args...)
 }
 func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
 	defer func() {
@@ -455,32 +455,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 
 		outVals = outVals[:len(outVals)-1]
 	}
-	// Convert nil maps and slices to non-nil
-	for i := 0; i < len(outVals); i++ {
-		switch outs[i].Kind() {
-		case reflect.Map:
-			if outs[i].IsNil() {
-				outVals[i] = reflect.MakeMap(outs[i].Type()).Interface()
-			}
-		case reflect.Slice:
-			if outs[i].IsNil() {
-				outVals[i] = reflect.MakeSlice(outs[i].Type(), 0, 0).Interface()
-			}
-		}
-	}
-	var jsonVal any
-	if len(outVals) == 1 {
-		jsonVal = outVals[0]
-	} else {
-		jsonVal = outVals
-	}
-	jsonData, err := json.Marshal(jsonVal)
-	if err != nil {
-		callback.OnError(sdkerrs.ArgsError, err.Error())
-		return
-	}
-	log.ZInfo(ctx, "output resp", "function name", funcName, "resp", jsonVal, "cost time", time.Since(t))
-	callback.OnSuccess(string(jsonData))
+	log.ZInfo(ctx, "async send enqueued", "function name", funcName, "cost time", time.Since(t))
 }
 
 func listenerCall(fn any, listener any) {
