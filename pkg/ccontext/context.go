@@ -16,6 +16,7 @@ package ccontext
 
 import (
 	"context"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -129,3 +130,31 @@ type ApiErrCodeCallback interface {
 type emptyApiErrCodeCallback struct{}
 
 func (e *emptyApiErrCodeCallback) OnError(ctx context.Context, err error) {}
+
+type sendOrderKey struct{}
+
+type SendOrderLane int
+
+const (
+	SendOrderLaneText SendOrderLane = iota + 1
+	SendOrderLaneMedia
+)
+
+type SendOrderInfo struct {
+	Lane     SendOrderLane
+	Ordered  bool
+	Seq      int64
+	Deadline time.Time
+}
+
+func WithSendOrderInfo(ctx context.Context, info *SendOrderInfo) context.Context {
+	if info == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, sendOrderKey{}, info)
+}
+
+func GetSendOrderInfo(ctx context.Context) (*SendOrderInfo, bool) {
+	info, ok := ctx.Value(sendOrderKey{}).(*SendOrderInfo)
+	return info, ok
+}
