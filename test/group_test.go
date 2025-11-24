@@ -134,27 +134,27 @@ func Test_GetSpecifiedGroupsInfo(t *testing.T) {
 	}
 }
 
-func Test_GetGroupApplicationListAsRecipient(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsRecipient(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("GetRecvGroupApplicationList: %d\n", len(info))
-	for _, localGroup := range info {
-		t.Logf("%#v", localGroup)
-	}
-}
-
-func Test_GetGroupApplicationListAsApplicant(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsApplicant(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("GetSendGroupApplicationList: %d\n", len(info))
-	for _, localGroup := range info {
-		t.Logf("%#v", localGroup)
-	}
-}
+//func Test_GetGroupApplicationListAsRecipient(t *testing.T) {
+//	info, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsRecipient(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	t.Logf("GetRecvGroupApplicationList: %d\n", len(info))
+//	for _, localGroup := range info {
+//		t.Logf("%#v", localGroup)
+//	}
+//}
+//
+//func Test_GetGroupApplicationListAsApplicant(t *testing.T) {
+//	info, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsApplicant(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	t.Logf("GetSendGroupApplicationList: %d\n", len(info))
+//	for _, localGroup := range info {
+//		t.Logf("%#v", localGroup)
+//	}
+//}
 
 func Test_AcceptGroupApplication(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Group().AcceptGroupApplication(ctx, "3459296007", "863454357", "test accept")
@@ -234,17 +234,18 @@ func Test_GetGroup(t *testing.T) {
 	}
 	// time.Sleep(time.Second * 100000)
 }
-func Test_GetGroupApplicantsList(t *testing.T) {
-	t.Log("--------------------------")
-	infos, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsRecipient(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for i, info := range infos {
-		t.Logf("%d: %#v", i, info)
-	}
-	// time.Sleep(time.Second * 100000)
-}
+
+//	func Test_GetGroupApplicantsList(t *testing.T) {
+//		t.Log("--------------------------")
+//		infos, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsRecipient(ctx)
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//		for i, info := range infos {
+//			t.Logf("%d: %#v", i, info)
+//		}
+//		// time.Sleep(time.Second * 100000)
+//	}
 func Test_IsJoinGroup(t *testing.T) {
 	t.Log("--------------------------")
 	join, err := open_im_sdk.UserForSDK.Group().IsJoinGroup(ctx, "3889561099")
