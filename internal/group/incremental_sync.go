@@ -88,6 +88,12 @@ func (g *Group) IncrSyncGroupAndMember(ctx context.Context, groupIDs ...string) 
 		if err != nil {
 			return err
 		}
+		if len(groupVersion) == 0 {
+			for _, req := range groups {
+				delete(groupIDSet, req.GroupID)
+			}
+			continue
+		}
 		groups = groups[:0]
 		for groupID, resp := range groupVersion {
 			tempResp := resp
