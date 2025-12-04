@@ -35,8 +35,6 @@ import (
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
-	"github.com/jinzhu/copier"
 )
 
 const (
@@ -285,7 +283,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			msg.Status = constant.MsgStatusSendSuccess
 
 			//De-analyze data
-			err := converter.MsgHandleByContentType(msg)
+			err := converter.PopulateMsgStructByContentType(msg)
 			if err != nil {
 				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType, "msg", msg)
 				continue
@@ -516,13 +514,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 		for _, v := range msgs.Msgs {
 
 			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
-			msg := &sdk_struct.MsgStruct{}
-			// TODO need replace when after.
-			copier.Copy(msg, v)
-			msg.Content = string(v.Content)
-			var attachedInfo sdk_struct.AttachedInfoElem
-			_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
-			msg.AttachedInfoElem = &attachedInfo
+			msg := converter.MsgDataToMsgStruct(v)
 
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
 			if msg.Status == constant.MsgStatusHasDeleted {

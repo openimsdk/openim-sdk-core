@@ -117,12 +117,6 @@ func LocalChatLogToMsgStruct(local *model_struct.LocalChatLog) *sdk_struct.MsgSt
 		LocalEx:          local.LocalEx,
 	}
 
-	var attachedInfo sdk_struct.AttachedInfoElem
-	if err := utils.JsonStringToStruct(local.AttachedInfo, &attachedInfo); err != nil {
-		log.ZWarn(context.Background(), "JsonStringToStruct error", err, "localMessage.AttachedInfo", local.AttachedInfo)
-	}
-	msg.AttachedInfoElem = &attachedInfo
-
 	if err := PopulateMsgStructByContentType(msg); err != nil {
 		log.ZWarn(context.Background(), "Parsing data error", err, "messageContent", msg.Content)
 	}
@@ -200,6 +194,13 @@ func PopulateMsgStructByContentType(msg *sdk_struct.MsgStruct) (err error) {
 		elem := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &elem)
 		msg.NotificationElem = &elem
+	}
+	var attachedInfo sdk_struct.AttachedInfoElem
+	if msg.AttachedInfo != "" {
+		if err := utils.JsonStringToStruct(msg.AttachedInfo, &attachedInfo); err != nil {
+			log.ZWarn(context.Background(), "JsonStringToStruct error", err, "localMessage.AttachedInfo", msg.AttachedInfo)
+		}
+		msg.AttachedInfoElem = &attachedInfo
 	}
 	msg.Content = ""
 	return errs.Wrap(err)
@@ -338,76 +339,4 @@ func MsgDataToMsgStruct(serverMessage *sdkws.MsgData) *sdk_struct.MsgStruct {
 		AttachedInfo:     serverMessage.AttachedInfo,
 		Ex:               serverMessage.Ex,
 	}
-}
-
-func MsgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
-	switch msg.ContentType {
-	case constant.Text:
-		t := sdk_struct.TextElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.TextElem = &t
-	case constant.Picture:
-		t := sdk_struct.PictureElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.PictureElem = &t
-	case constant.Sound:
-		t := sdk_struct.SoundElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.SoundElem = &t
-	case constant.Video:
-		t := sdk_struct.VideoElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.VideoElem = &t
-	case constant.File:
-		t := sdk_struct.FileElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.FileElem = &t
-	case constant.AdvancedText:
-		t := sdk_struct.AdvancedTextElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.AdvancedTextElem = &t
-	case constant.AtText:
-		t := sdk_struct.AtTextElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.AtTextElem = &t
-	case constant.Location:
-		t := sdk_struct.LocationElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.LocationElem = &t
-	case constant.Custom:
-		fallthrough
-	case constant.CustomMsgNotTriggerConversation:
-		fallthrough
-	case constant.CustomMsgOnlineOnly:
-		t := sdk_struct.CustomElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.CustomElem = &t
-	case constant.Typing:
-		t := sdk_struct.TypingElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.TypingElem = &t
-	case constant.Quote:
-		t := sdk_struct.QuoteElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.QuoteElem = &t
-	case constant.Merger:
-		t := sdk_struct.MergeElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.MergeElem = &t
-	case constant.Face:
-		t := sdk_struct.FaceElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.FaceElem = &t
-	case constant.Card:
-		t := sdk_struct.CardElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.CardElem = &t
-	default:
-		t := sdk_struct.NotificationElem{}
-		err = utils.JsonStringToStruct(msg.Content, &t)
-		msg.NotificationElem = &t
-	}
-	msg.Content = ""
-
-	return errs.Wrap(err)
 }
