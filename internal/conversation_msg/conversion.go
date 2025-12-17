@@ -97,44 +97,119 @@ func MsgDataToLocalChatLog(serverMessage *sdkws.MsgData) *model_struct.LocalChat
 	return localMessage
 }
 
-func LocalChatLogToMsgStruct(localMessage *model_struct.LocalChatLog) *sdk_struct.MsgStruct {
-	message := &sdk_struct.MsgStruct{
-		ClientMsgID:      localMessage.ClientMsgID,
-		ServerMsgID:      localMessage.ServerMsgID,
-		CreateTime:       localMessage.CreateTime,
-		SendTime:         localMessage.SendTime,
-		SessionType:      localMessage.SessionType,
-		SendID:           localMessage.SendID,
-		RecvID:           localMessage.RecvID,
-		MsgFrom:          localMessage.MsgFrom,
-		ContentType:      localMessage.ContentType,
-		SenderPlatformID: localMessage.SenderPlatformID,
-		SenderNickname:   localMessage.SenderNickname,
-		SenderFaceURL:    localMessage.SenderFaceURL,
-		Content:          localMessage.Content,
-		Seq:              localMessage.Seq,
-		IsRead:           localMessage.IsRead,
-		Status:           localMessage.Status,
-		Ex:               localMessage.Ex,
-		LocalEx:          localMessage.LocalEx,
+func LocalChatLogToMsgStruct(local *model_struct.LocalChatLog) *sdk_struct.MsgStruct {
+	if local == nil {
+		return nil
+	}
+	msg := &sdk_struct.MsgStruct{
+		ClientMsgID:      local.ClientMsgID,
+		ServerMsgID:      local.ServerMsgID,
+		CreateTime:       local.CreateTime,
+		SendTime:         local.SendTime,
+		SessionType:      local.SessionType,
+		SendID:           local.SendID,
+		RecvID:           local.RecvID,
+		MsgFrom:          local.MsgFrom,
+		ContentType:      local.ContentType,
+		SenderPlatformID: local.SenderPlatformID,
+		SenderNickname:   local.SenderNickname,
+		SenderFaceURL:    local.SenderFaceURL,
+		Content:          local.Content,
+		Seq:              local.Seq,
+		IsRead:           local.IsRead,
+		Status:           local.Status,
+		Ex:               local.Ex,
+		LocalEx:          local.LocalEx,
+		AttachedInfo:     local.AttachedInfo,
+	}
+
+	if err := PopulateMsgStructByContentType(msg); err != nil {
+		log.ZWarn(context.Background(), "Parsing data error", err, "messageContent", msg.Content)
+	}
+
+	switch local.SessionType {
+	case constant.WriteGroupChatType, constant.ReadGroupChatType:
+		msg.GroupID = local.RecvID
+	}
+	return msg
+}
+
+func PopulateMsgStructByContentType(msg *sdk_struct.MsgStruct) (err error) {
+	switch msg.ContentType {
+	case constant.Text:
+		elem := sdk_struct.TextElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.TextElem = &elem
+	case constant.Picture:
+		elem := sdk_struct.PictureElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.PictureElem = &elem
+	case constant.Sound:
+		elem := sdk_struct.SoundElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.SoundElem = &elem
+	case constant.Video:
+		elem := sdk_struct.VideoElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.VideoElem = &elem
+	case constant.File:
+		elem := sdk_struct.FileElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.FileElem = &elem
+	case constant.AdvancedText:
+		elem := sdk_struct.AdvancedTextElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.AdvancedTextElem = &elem
+	case constant.AtText:
+		elem := sdk_struct.AtTextElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.AtTextElem = &elem
+	case constant.Location:
+		elem := sdk_struct.LocationElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.LocationElem = &elem
+	case constant.Custom, constant.CustomMsgNotTriggerConversation, constant.CustomMsgOnlineOnly:
+		elem := sdk_struct.CustomElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.CustomElem = &elem
+	case constant.Typing:
+		elem := sdk_struct.TypingElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.TypingElem = &elem
+	case constant.Quote:
+		elem := sdk_struct.QuoteElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.QuoteElem = &elem
+	case constant.Merger:
+		elem := sdk_struct.MergeElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.MergeElem = &elem
+	case constant.Face:
+		elem := sdk_struct.FaceElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.FaceElem = &elem
+	case constant.Card:
+		elem := sdk_struct.CardElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.CardElem = &elem
+	case constant.MarkdownText:
+		elem := sdk_struct.MarkdownTextElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.MarkdownTextElem = &elem
+	default:
+		elem := sdk_struct.NotificationElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.NotificationElem = &elem
 	}
 	var attachedInfo sdk_struct.AttachedInfoElem
-	err := utils.JsonStringToStruct(localMessage.AttachedInfo, &attachedInfo)
-	if err != nil {
-		log.ZWarn(context.Background(), "JsonStringToStruct error", err, "localMessage.AttachedInfo", localMessage.AttachedInfo)
+	if msg.AttachedInfo != "" {
+		if err := utils.JsonStringToStruct(msg.AttachedInfo, &attachedInfo); err != nil {
+			log.ZWarn(context.Background(), "JsonStringToStruct error", err, "localMessage.AttachedInfo", msg.AttachedInfo)
+		}
 	}
-	message.AttachedInfoElem = &attachedInfo
-	errParse := msgHandleByContentType(message)
-	if errParse != nil {
-		log.ZWarn(context.Background(), "Parsing data error", err, "messageContent", message.Content)
-	}
-	switch localMessage.SessionType {
-	case constant.WriteGroupChatType:
-		fallthrough
-	case constant.ReadGroupChatType:
-		message.GroupID = localMessage.RecvID
-	}
-	return message
+	msg.AttachedInfoElem = &attachedInfo
+	msg.Content = ""
+	return errs.Wrap(err)
 }
 
 func msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
