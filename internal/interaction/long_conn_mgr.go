@@ -15,6 +15,7 @@
 package interaction
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -29,6 +30,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	"github.com/openimsdk/tools/mcontext"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
@@ -103,6 +105,8 @@ type LongConnMgr struct {
 	connWrite *sync.Mutex
 
 	sub *subscription
+
+	mb *MessageBatcher
 }
 
 type Message struct {
@@ -127,6 +131,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
 	l.ctx = ctx
+	l.mb = NewMessageBatcher(l.doBatch)
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
@@ -491,10 +496,11 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		if err := c.Syncer.NotifyResp(ctx, wsResp); err != nil {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 		}
+		c.mb.Close()
 		return sdkerrs.ErrLoginOut
 	case constant.KickOnlineMsg:
 		log.ZDebug(ctx, "socket receive client kicked offline")
-
+		c.mb.Close()
 		err = errs.ErrTokenKicked.WrapMsg("socket receive client kicked offline")
 		ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
 		return err
@@ -698,13 +704,41 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	return true, nil
 }
 
+func (c *LongConnMgr) doBatch(ctxs []context.Context, msg *sdkws.PushMessages) {
+	var ctx context.Context
+	switch len(ctxs) {
+	case 0:
+		return
+	case 1:
+		ctx = ctxs[0]
+	default:
+		var buf bytes.Buffer
+		buf.WriteString("Batch_")
+		for _, v := range ctxs {
+			operationID := mcontext.GetOperationID(v)
+			if operationID != "" {
+				buf.WriteString(operationID)
+				buf.WriteString("$")
+			}
+		}
+		data := buf.Bytes()
+		data = data[:len(data)-1]
+		ctx = mcontext.SetOperationID(ctxs[0], string(data))
+	}
+	if err := common.TriggerCmdPushMsg(ctx, msg, c.pushMsgAndMaxSeqCh); err != nil {
+		log.ZError(ctx, "doBatch DispatchPushMsg", err, "msg", msg)
+	}
+}
+
 func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
 	var msg sdkws.PushMessages
 	err := proto.Unmarshal(wsResp.Data, &msg)
 	if err != nil {
 		return err
 	}
-	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
+	log.ZDebug(ctx, "recv push msg", "msgNum", len(msg.Msgs), "notificationNum", len(msg.NotificationMsgs), "msg", &msg)
+	c.mb.Enqueue(ctx, &msg)
+	return nil
 }
 func (c *LongConnMgr) Close(ctx context.Context) {
 	if c.GetConnectionStatus() == Connected {
