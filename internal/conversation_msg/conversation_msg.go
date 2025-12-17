@@ -239,6 +239,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 	for conversationID, msgs := range allMsg {
 		conversationIDs = append(conversationIDs, conversationID)
+
 		log.ZDebug(ctx, "parse message in one conversation", "conversationID", conversationID, "message length", len(msgs.Msgs), "data", msgs.Msgs)
 
 		clientIDs := make([]string, 0, len(msgs.Msgs))
@@ -450,12 +451,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 	}
 
-	if err := c.db.BatchUpdateConversationList(ctx, append(mapConversationToList(conversationChangedSet), mapConversationToList(phConversationChangedSet)...)); err != nil {
+	if err := c.db.BatchUpdateConversationList(ctx, append(datautil.Values(conversationChangedSet), datautil.Values(phConversationChangedSet)...)); err != nil {
 		log.ZError(ctx, "insert changed conversation err :", err)
 	}
 	//New conversation storage
 
-	if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(phNewConversationSet)); err != nil {
+	if err := c.db.BatchInsertConversationList(ctx, datautil.Values(phNewConversationSet)); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
 	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
@@ -463,14 +464,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	c.newMessage(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
 
 	if len(newConversationSet) > 0 {
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
+		c.ConversationListener().OnNewConversation(utils.StructToJsonString(datautil.Values(newConversationSet)))
 	}
 	if len(conversationChangedSet) > 0 {
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChangeDirect, Args: utils.StructToJsonString(mapConversationToList(conversationChangedSet))}})
+		c.ConversationListener().OnConversationChanged(utils.StructToJsonString(datautil.Values(conversationChangedSet)))
 	}
 
 	if isTriggerUnReadCount {
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}})
+		_ = c.OnTotalUnreadMessageCountChanged(ctx)
 	}
 
 	for _, msgs := range allMsg {
@@ -486,6 +487,18 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 
 	log.ZDebug(ctx, "insert msg", "duration", fmt.Sprintf("%dms", time.Since(b)), "len", len(allMsg))
+}
+
+func (c *Conversation) OnTotalUnreadMessageCountChanged(ctx context.Context) error {
+	log.ZInfo(ctx, "OnTotalUnreadMessageCountChanged", "caller", common.GetCaller(2))
+	totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
+	if err != nil {
+		log.ZWarn(ctx, "TotalUnreadMessageChanged GetTotalUnreadMsgCountDB err", err)
+	} else {
+		log.ZDebug(ctx, "TotalUnreadMessageChanged", "totalUnreadCount", totalUnreadCount)
+		c.ConversationListener().OnTotalUnreadMessageCountChanged(totalUnreadCount)
+	}
+	return nil
 }
 
 func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
