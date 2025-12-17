@@ -317,30 +317,52 @@ func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerNotification)
 }
 
-func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pushMessages map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
+func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pushMessages map[string]*sdkws.PullMsgs,
+	triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
 	if len(pushMessages) == 0 {
 		return
 	}
+
 	needSyncSeqMap := make(map[string][2]int64)
-	var lastSeq int64
-	var storageMsgs []*sdkws.MsgData
+	res := make(map[string]*sdkws.PullMsgs)
+
 	for conversationID, msgs := range pushMessages {
+		var (
+			lastSeq     int64
+			storageMsgs []*sdkws.MsgData
+		)
+
 		for _, msg := range msgs.Msgs {
 			if msg.Seq == 0 {
-				_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: []*sdkws.MsgData{msg}}})
+				_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{
+					conversationID: {Msgs: []*sdkws.MsgData{msg}},
+				})
 				continue
 			}
 			lastSeq = msg.Seq
 			storageMsgs = append(storageMsgs, msg)
 		}
-		if lastSeq == m.syncedMaxSeqs[conversationID]+int64(len(storageMsgs)) && lastSeq != 0 {
-			log.ZDebug(ctx, "trigger msgs", "msgs", storageMsgs)
-			_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: storageMsgs}})
-			m.syncedMaxSeqs[conversationID] = lastSeq
-		} else if lastSeq != 0 && lastSeq > m.syncedMaxSeqs[conversationID] {
-			//must pull message when message type is notification
-			needSyncSeqMap[conversationID] = [2]int64{m.syncedMaxSeqs[conversationID] + 1, lastSeq}
+
+		if len(storageMsgs) == 0 {
+			continue
 		}
+
+		expectedLast := m.syncedMaxSeqs[conversationID] + int64(len(storageMsgs))
+		if lastSeq == expectedLast {
+			log.ZDebug(ctx, "trigger msgs", "conversationID", conversationID, "msgs", storageMsgs)
+			res[conversationID] = &sdkws.PullMsgs{Msgs: storageMsgs}
+			m.syncedMaxSeqs[conversationID] = lastSeq
+		} else if lastSeq > m.syncedMaxSeqs[conversationID] {
+			// must pull message when message type is notification
+			needSyncSeqMap[conversationID] = [2]int64{
+				m.syncedMaxSeqs[conversationID] + 1,
+				lastSeq,
+			}
+		}
+	}
+
+	if len(res) > 0 {
+		_ = triggerFunc(ctx, res)
 	}
 	m.syncAndTriggerMsgs(ctx, needSyncSeqMap, defaultPullNums)
 }
