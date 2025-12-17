@@ -389,6 +389,11 @@ func (d *DataBase) MarkConversationAllMessageAsRead(ctx context.Context, convers
 }
 
 func (d *DataBase) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (msgs []*model_struct.LocalChatLog, err error) {
+	err = d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return nil, err
+	}
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id IN ?", msgIDs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesByClientMsgIDs error")
