@@ -115,6 +115,7 @@ func LocalChatLogToMsgStruct(local *model_struct.LocalChatLog) *sdk_struct.MsgSt
 		Status:           local.Status,
 		Ex:               local.Ex,
 		LocalEx:          local.LocalEx,
+		AttachedInfo:     local.AttachedInfo,
 	}
 
 	if err := PopulateMsgStructByContentType(msg); err != nil {
@@ -196,8 +197,8 @@ func PopulateMsgStructByContentType(msg *sdk_struct.MsgStruct) (err error) {
 		if err := utils.JsonStringToStruct(msg.AttachedInfo, &attachedInfo); err != nil {
 			log.ZWarn(context.Background(), "JsonStringToStruct error", err, "localMessage.AttachedInfo", msg.AttachedInfo)
 		}
-		msg.AttachedInfoElem = &attachedInfo
 	}
+	msg.AttachedInfoElem = &attachedInfo
 	msg.Content = ""
 	return errs.Wrap(err)
 }
