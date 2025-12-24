@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -208,12 +209,39 @@ func (d *DataBase) UpdateConversationForSync(ctx context.Context, c *model_struc
 }
 
 func (d *DataBase) BatchUpdateConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
-	for _, v := range conversationList {
-		err := d.UpdateConversation(ctx, v)
-		if err != nil {
-			return errs.WrapMsg(err, "BatchUpdateConversationList failed")
-		}
+	if conversationList == nil {
+		return nil
+	}
 
+	start := time.Now()
+
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+
+	txErr := d.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		tx = tx.Session(&gorm.Session{SkipDefaultTransaction: true})
+		for _, v := range conversationList {
+			if v == nil {
+				continue
+			}
+			t := tx.Model(&model_struct.LocalConversation{}).
+				Where("conversation_id = ?", v.ConversationID).
+				Updates(v)
+			if t.Error != nil {
+				return t.Error
+			}
+			if t.RowsAffected == 0 {
+				return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
+			}
+		}
+		return nil
+	})
+	if txErr != nil {
+		return errs.WrapMsg(txErr, "BatchUpdateConversationList failed")
+	}
+
+	if dur := time.Since(start); dur > 50*time.Millisecond {
+		log.ZDebug(ctx, "BatchUpdateConversationList done", "duration", dur.String(), "count", len(conversationList))
 	}
 	return nil
 }
