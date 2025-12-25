@@ -74,6 +74,9 @@ type Conversation struct {
 	startTime time.Time
 
 	typing *typing
+
+	sender     *messageSender
+	senderOnce sync.Once
 }
 
 func (c *Conversation) SetMsgListener(msgListener func() open_im_sdk_callback.OnAdvancedMsgListener) {
@@ -118,6 +121,13 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	n.initSyncer()
 	n.cache = cache.NewCache[string, *model_struct.LocalConversation]()
 	return n
+}
+
+func (c *Conversation) getSender() *messageSender {
+	c.senderOnce.Do(func() {
+		c.sender = newMessageSender(c)
+	})
+	return c.sender
 }
 
 func (c *Conversation) initSyncer() {
