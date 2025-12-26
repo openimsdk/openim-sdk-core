@@ -104,11 +104,11 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 			p := fmt.Sprintf("panic: %+v\n%s", r, debug.Stack())
 			err = fmt.Errorf("call panic: %+v", p)
 		} else {
-			elapsed := time.Since(start).Milliseconds()
+			elapsed := time.Since(start).String()
 			if err == nil {
-				log.ZInfo(ctx, "fn call success", "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed), "resp", res)
+				log.ZInfo(ctx, "fn call success", "function name", funcName, "cost time", elapsed, "resp", res)
 			} else {
-				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
+				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", elapsed)
 			}
 
 		}
@@ -266,11 +266,11 @@ func syncCall(operationID string, fn any, args ...any) (res string) {
 		if r := recover(); r != nil {
 			fmt.Printf("panic: %+v\n%s", r, debug.Stack())
 		} else {
-			elapsed := time.Since(start).Milliseconds()
+			elapsed := time.Since(start).String()
 			if err == nil {
-				log.ZInfo(ctx, "fn call success", "function name", funcName, "resp", res, "cost time", fmt.Sprintf("%d ms", elapsed))
+				log.ZInfo(ctx, "fn call success", "function name", funcName, "resp", res, "cost time", elapsed)
 			} else {
-				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", fmt.Sprintf("%d ms", elapsed))
+				log.ZError(ctx, "fn call error", err, "function name", funcName, "cost time", elapsed)
 			}
 
 		}

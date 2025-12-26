@@ -414,18 +414,19 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.ZDebug(ctx, "GetMultipleConversationDB done", "duration", time.Since(tGetMultipleConversationDB).String(), "count", len(list))
 
 	var hList []*model_struct.LocalConversation
+	tBuildLocalConversationMap := time.Now()
 	m := datautil.SliceToMap(list, func(e *model_struct.LocalConversation) string {
 		if e.LatestMsgSendTime == 0 {
 			hList = append(hList, e)
 		}
 		return e.ConversationID
 	})
-	log.ZDebug(ctx, "listToMap: ", "local conversation", list, "generated c map", conversationSet)
+	log.ZDebug(ctx, "doMsgNew buildLocalConversationMap done", "duration", time.Since(tBuildLocalConversationMap).String(), "local", len(list), "hidden", len(hList))
 
 	tDiff := time.Now()
 	c.diff(ctx, m, conversationSet, conversationChangedSet, newConversationSet)
 	log.ZDebug(ctx, "diff done", "duration", time.Since(tDiff).String(), "new", len(newConversationSet), "changed", len(conversationChangedSet))
-	log.ZInfo(ctx, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
+	log.ZDebug(ctx, "doMsgNew conversationChanges", "new", len(newConversationSet), "changed", len(conversationChangedSet))
 
 	//seq sync message update
 	tBatchUpdateMessageList := time.Now()
@@ -478,7 +479,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
 	log.ZDebug(ctx, "BatchInsertConversationList done", "duration", time.Since(tBatchInsertConversationList).String(), "count", len(phNewConversationSet))
-	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).String(), "len", len(allMsg))
+	log.ZDebug(ctx, "doMsgNew before callbacks", "duration", time.Since(b).String(), "conversations", len(allMsg), "incomingMsgs", totalIncomingMsgs)
 
 	if c.batchMsgListener() != nil {
 		c.batchNewMessages(ctx, newMessages, conversationChangedSet, newConversationSet, onlineMap)
@@ -508,7 +509,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.ZWarn(ctx, "exceptionMsg show: ", nil, "msg", *v)
 	}
 
-	log.ZDebug(ctx, "insert msg", "duration", time.Since(b).String(), "len", len(allMsg))
+	log.ZDebug(ctx, "doMsgNew done", "duration", time.Since(b).String(), "conversations", len(allMsg), "incomingMsgs", totalIncomingMsgs, "newMessages", len(newMessages))
 }
 
 func (c *Conversation) OnTotalUnreadMessageCountChanged(ctx context.Context) error {
@@ -607,7 +608,7 @@ func (c *Conversation) doMsgSyncByReinstalled(c2v common.Cmd2Value) {
 	if err := c.db.BatchUpdateConversationList(ctx, conversationList); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
 	}
-	log.ZDebug(ctx, "before trigger msg", "cost time", time.Since(b).Seconds(), "len", len(allMsg))
+	log.ZDebug(ctx, "doMsgSyncByReinstalled before callbacks", "duration", time.Since(b).String(), "conversations", len(allMsg))
 
 	// log.ZDebug(ctx, "progress is", "msgLen", msgLen, "msgOffset", c.msgOffset, "total", total, "now progress is", (c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)
 	c.ConversationListener().OnSyncServerProgress((c.msgOffset*(100-InitSyncProgress))/total + InitSyncProgress)

@@ -89,7 +89,7 @@ func (m *MetaManager) apiPost(ctx context.Context, route string, req, resp any) 
 		return errs.ErrArgs.WrapMsg("io.ReadAll(ApiResponse) failed " + err.Error())
 	}
 	log.ZDebug(ctx, "ApiResponse", "url", reqUrl, "status", response.Status,
-		"body", string(respBody), "time", time.Since(start).Milliseconds())
+		"body", string(respBody), "time", time.Since(start).String())
 	var baseApi network.ApiResponse
 	if err := json.Unmarshal(respBody, &baseApi); err != nil {
 		return sdkerrs.ErrSdkInternal.WrapMsg(fmt.Sprintf("api %s json.Unmarshal(%q, %T) failed %s", m.apiAddr, string(respBody), &baseApi, err.Error()))
