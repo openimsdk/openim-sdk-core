@@ -238,7 +238,7 @@ type MsgStruct struct {
 	NotificationElem *NotificationElem      `json:"notificationElem,omitempty"`
 	AdvancedTextElem *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
 	TypingElem       *TypingElem            `json:"typingElem,omitempty"`
-	AttachedInfoElem *AttachedInfoElem `json:"attachedInfoElem,omitempty"`
+	AttachedInfoElem *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
 }
 
 type AtInfo struct {

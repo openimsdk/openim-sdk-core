@@ -854,7 +854,7 @@ func (c *Conversation) batchAddFaceURLAndName(ctx context.Context, conversations
 		return err
 	}
 
-	groupInfoList, err := c.group.GetSpecifiedGroupsInfo(ctx, groupIDs)
+	groupInfoList, err := c.group.GetSpecifiedGroupsInfoSafe(ctx, groupIDs)
 	if err != nil {
 		return err
 	}
