@@ -228,6 +228,74 @@ func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) (
 	return dataFetcher.FetchMissingAndCombineLocal(ctx, groupIDs)
 }
 
+// GetSpecifiedGroupsInfoSafe fetches group info without writing to local storage or touching version sync.
+func (g *Group) GetSpecifiedGroupsInfoSafe(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+	if len(groupIDs) == 0 {
+		return nil, nil
+	}
+
+	dataFetcher := datafetcher.NewDataFetcher(
+		g.db,
+		g.groupTableName(),
+		g.loginUserID,
+		func(localGroup *model_struct.LocalGroup) string {
+			return localGroup.GroupID
+		},
+		func(ctx context.Context, values []*model_struct.LocalGroup) error {
+			return nil
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, bool, error) {
+			var (
+				res    []*model_struct.LocalGroup
+				needDB []string
+			)
+
+			for _, groupID := range groupIDs {
+				if v, ok := g.groupInfoCache.Load(groupID); ok {
+					res = append(res, v)
+				} else {
+					needDB = append(needDB, groupID)
+				}
+			}
+
+			if len(needDB) == 0 {
+				return res, false, nil
+			}
+
+			localGroups, err := g.db.GetGroups(ctx, needDB)
+			if err != nil {
+				return nil, false, err
+			}
+
+			localMap := datautil.SliceToMap(localGroups, func(e *model_struct.LocalGroup) string {
+				return e.GroupID
+			})
+			for _, info := range localGroups {
+				g.groupInfoCache.Store(info.GroupID, info)
+				res = append(res, info)
+			}
+
+			if len(localMap) == len(needDB) {
+				return res, false, nil
+			}
+
+			return res, true, nil
+		},
+		func(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+			serverGroupInfo, err := g.getGroupsInfoFromServer(ctx, groupIDs)
+			if err != nil {
+				return nil, err
+			}
+			converted := datautil.Batch(ServerGroupToLocalGroup, serverGroupInfo)
+			for _, info := range converted {
+				g.groupInfoCache.Store(info.GroupID, info)
+			}
+			return converted, nil
+		},
+	)
+	return dataFetcher.FetchMissingAndCombineLocal(ctx, groupIDs)
+}
+
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
 		return nil, sdkerrs.ErrArgs.WrapMsg("keyword is null or search field all false")
