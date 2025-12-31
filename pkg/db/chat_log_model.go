@@ -407,6 +407,59 @@ func (d *DataBase) GetMessagesBySeqs(ctx context.Context, conversationID string,
 	return msgs, err
 }
 
+func (d *DataBase) InsertGroupReadCursor(ctx context.Context, cursor *model_struct.LocalGroupReadCursor) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(cursor).Error, "InsertGroupReadCursor failed")
+}
+
+func (d *DataBase) UpdateGroupReadCursor(ctx context.Context, conversationID, userID string, maxReadSeq int64) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+
+	return errs.WrapMsg(
+		d.conn.WithContext(ctx).
+			Model(&model_struct.LocalGroupReadCursor{}).
+			Where("conversation_id = ? AND user_id = ? AND max_read_seq < ?", conversationID, userID, maxReadSeq).
+			Update("max_read_seq", maxReadSeq).Error,
+		"UpdateGroupReadCursor failed",
+	)
+}
+
+func (d *DataBase) GetGroupReadCursor(ctx context.Context, conversationID, userID string) (*model_struct.LocalGroupReadCursor, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var cursor model_struct.LocalGroupReadCursor
+	err := d.conn.WithContext(ctx).Where("conversation_id = ? AND user_id = ?", conversationID, userID).First(&cursor).Error
+	if err != nil {
+		return nil, errs.WrapMsg(err, "GetGroupReadCursor failed")
+	}
+	return &cursor, nil
+}
+
+func (d *DataBase) GetGroupReadCursorsByConversationID(ctx context.Context, conversationID string) ([]*model_struct.LocalGroupReadCursor, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var cursors []*model_struct.LocalGroupReadCursor
+	err := d.conn.WithContext(ctx).Where("conversation_id = ?", conversationID).Find(&cursors).Error
+	return cursors, errs.WrapMsg(err, "GetGroupReadCursorsByConversationID failed")
+}
+
+func (d *DataBase) DeleteGroupReadCursor(ctx context.Context, conversationID, userID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id = ? AND user_id = ?", conversationID, userID).
+		Delete(&model_struct.LocalGroupReadCursor{}).Error, "DeleteGroupReadCursor failed")
+}
+
+// DeleteGroupReadCursorsByConversationID deletes all group read cursors for the given conversationID.
+func (d *DataBase) DeleteGroupReadCursorsByConversationID(ctx context.Context, conversationID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id = ?", conversationID).
+		Delete(&model_struct.LocalGroupReadCursor{}).Error, "DeleteGroupReadCursorsByConversationID failed")
+}
+
 func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	err := d.initChatLog(ctx, conversationID)
 	if err != nil {
@@ -502,4 +555,35 @@ func (d *DataBase) GetLatestValidServerMessage(ctx context.Context, conversation
 	}
 
 	return &result, nil
+}
+
+func (d *DataBase) InsertGroupReadCursorState(ctx context.Context, state *model_struct.LocalGroupReadCursorState) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Create(state).Error, "InsertGroupReadCursorState failed")
+}
+
+func (d *DataBase) GetGroupReadCursorState(ctx context.Context, conversationID string) (*model_struct.LocalGroupReadCursorState, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var state model_struct.LocalGroupReadCursorState
+	err := d.conn.WithContext(ctx).Where("conversation_id = ?", conversationID).First(&state).Error
+	if err != nil {
+		return nil, errs.WrapMsg(err, "GetGroupReadCursorState failed")
+	}
+	return &state, nil
+}
+
+func (d *DataBase) DeleteGroupReadCursorState(ctx context.Context, conversationID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Where("conversation_id = ?", conversationID).Delete(&model_struct.LocalGroupReadCursorState{}).Error, "DeleteGroupReadCursorState failed")
+}
+
+func (d *DataBase) IncrementGroupReadCursorVersion(ctx context.Context, conversationID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalGroupReadCursorState{}).
+		Where("conversation_id = ?", conversationID).
+		UpdateColumn("cursor_version", gorm.Expr("cursor_version + 1")).Error, "IncrementGroupReadCursorVersion failed")
 }
