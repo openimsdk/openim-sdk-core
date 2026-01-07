@@ -25,8 +25,9 @@ func (g *Group) GetServerJoinGroup(ctx context.Context) ([]*sdkws.GroupInfo, err
 }
 
 func (g *Group) SyncAllJoinedGroupsAndMembers(ctx context.Context) error {
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
+	groupIDs, err := g.IncrSyncJoinGroupAndGetIDs(ctx)
+	if err != nil {
 		return err
 	}
-	return g.IncrSyncJoinGroupMember(ctx)
+	return g.IncrSyncJoinGroupMember(ctx, groupIDs...)
 }
