@@ -25,20 +25,23 @@ func (g *Group) groupTableName() string {
 func (g *Group) SyncAllJoinedGroupsAndMembersWithLock(ctx context.Context) error {
 	g.groupSyncMutex.Lock()
 	defer g.groupSyncMutex.Unlock()
-	if err := g.IncrSyncJoinGroup(ctx); err != nil {
-		return err
-	}
-	return g.IncrSyncJoinGroupMember(ctx)
-}
-
-func (g *Group) IncrSyncJoinGroupMember(ctx context.Context) error {
-	groups, err := g.db.GetJoinedGroupListDB(ctx)
+	groupIDs, err := g.IncrSyncJoinGroupAndGetIDs(ctx)
 	if err != nil {
 		return err
 	}
-	groupIDs := datautil.Slice(groups, func(e *model_struct.LocalGroup) string {
-		return e.GroupID
-	})
+	return g.IncrSyncJoinGroupMember(ctx, groupIDs...)
+}
+
+func (g *Group) IncrSyncJoinGroupMember(ctx context.Context, groupIDs ...string) error {
+	if len(groupIDs) == 0 {
+		groups, err := g.db.GetJoinedGroupListDB(ctx)
+		if err != nil {
+			return err
+		}
+		groupIDs = datautil.Slice(groups, func(e *model_struct.LocalGroup) string {
+			return e.GroupID
+		})
+	}
 	return g.IncrSyncGroupAndMember(ctx, groupIDs...)
 }
 
@@ -295,6 +298,11 @@ func (g *Group) onlineSyncGroupAndMember(ctx context.Context, groupID string, de
 }
 
 func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
+	_, err := g.IncrSyncJoinGroupAndGetIDs(ctx)
+	return err
+}
+
+func (g *Group) IncrSyncJoinGroupAndGetIDs(ctx context.Context) ([]string, error) {
 	joinedGroupSyncer := syncer.VersionSynchronizer[*model_struct.LocalGroup, *group.GetIncrementalJoinGroupResp]{
 		Ctx:       ctx,
 		DB:        g.db,
@@ -351,5 +359,12 @@ func (g *Group) IncrSyncJoinGroup(ctx context.Context) error {
 			return false
 		},
 	}
-	return joinedGroupSyncer.IncrementalSync()
+	if err := joinedGroupSyncer.IncrementalSync(); err != nil {
+		return nil, err
+	}
+	lvs, err := g.db.GetVersionSync(ctx, g.groupTableName(), g.loginUserID)
+	if err != nil && !errs.ErrRecordNotFound.Is(err) {
+		return nil, err
+	}
+	return lvs.UIDList, nil
 }
