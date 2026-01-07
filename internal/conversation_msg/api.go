@@ -271,7 +271,7 @@ func (c *Conversation) GetConversationIDBySessionType(_ context.Context, sourceI
 	return c.getConversationIDBySessionType(sourceID, sessionType)
 }
 
-func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) sendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
 	filepathExt := func(name ...string) string {
 		for _, path := range name {
 			if ext := filepath.Ext(path); ext != "" {
@@ -538,7 +538,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options, isOnlineOnly)
 }
 
-func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
+func (c *Conversation) sendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
 	p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
 	options := make(map[string]bool, 2)
 	lc, err := c.checkID(ctx, s, recvID, groupID, options)
@@ -621,6 +621,35 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 		}
 	}
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options, isOnlineOnly)
+}
+
+func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
+	task := &sendTask{
+		ctx: ctx,
+		msg: s,
+		exec: func(taskCtx context.Context) (*sdk_struct.MsgStruct, error) {
+			return c.sendMessage(taskCtx, s, recvID, groupID, p, isOnlineOnly)
+		},
+	}
+	if err := c.getSender().submit(task); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
+	p *sdkws.OfflinePushInfo, isOnlineOnly bool) (*sdk_struct.MsgStruct, error) {
+	task := &sendTask{
+		ctx: ctx,
+		msg: s,
+		exec: func(taskCtx context.Context) (*sdk_struct.MsgStruct, error) {
+			return c.sendMessageNotOss(taskCtx, s, recvID, groupID, p, isOnlineOnly)
+		},
+	}
+	if err := c.getSender().submit(task); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
