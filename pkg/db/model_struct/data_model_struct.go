@@ -148,7 +148,7 @@ type LocalUser struct {
 
 type LocalBlack struct {
 	OwnerUserID string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
-	BlockUserID string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"userID"`
+	BlockUserID string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"blockUserID"`
 	Nickname    string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
 	FaceURL     string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
 	// Gender         int32  `gorm:"column:gender" json:"gender"`
