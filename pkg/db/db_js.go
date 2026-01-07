@@ -78,3 +78,15 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string, logLevel
 	}
 	return i, nil
 }
+
+func (i IndexDB) BatchInsertMessageMap(ctx context.Context, insertMsg map[string][]*model_struct.LocalChatLog) error {
+	for conversationID, messages := range insertMsg {
+		if len(messages) == 0 {
+			continue
+		}
+		if err := i.BatchInsertMessageList(ctx, conversationID, messages); err != nil {
+			return err
+		}
+	}
+	return nil
+}

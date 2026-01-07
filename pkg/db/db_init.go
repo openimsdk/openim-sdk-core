@@ -146,7 +146,7 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	}
 
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
-	sqlDB.SetMaxOpenConns(3)
+	sqlDB.SetMaxOpenConns(5)
 	sqlDB.SetMaxIdleConns(2)
 	sqlDB.SetConnMaxIdleTime(time.Minute * 10)
 	d.conn = db

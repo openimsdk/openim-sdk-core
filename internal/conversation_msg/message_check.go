@@ -493,7 +493,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 		timeNow := time.Now()
 		insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
 		updateMsg[conversationID] = updateMessage
-		log.ZDebug(ctx, "faceURLAndNicknameHandle, ", "cost time", time.Since(timeNow).Milliseconds(),
+		log.ZDebug(ctx, "faceURLAndNicknameHandle, ", "cost time", time.Since(timeNow).String(),
 			"updateMsg", updateMessage, "insertMsg", insertMessage, "selfInsertMessage", selfInsertMessage, "othersInsertMessage", othersInsertMessage)
 
 		//update message
@@ -518,7 +518,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 		timeNow = time.Now()
 		//Normal message storage
 		_ = c.batchInsertMessageList(ctx, insertMsg)
-		log.ZDebug(ctx, "BatchInsertMessageListController, ", "cost time", time.Since(timeNow).Milliseconds())
+		log.ZDebug(ctx, "BatchInsertMessageListController, ", "cost time", time.Since(timeNow).String())
 
 		//Exception message storage
 		for _, v := range exceptionMsg {

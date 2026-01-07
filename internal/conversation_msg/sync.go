@@ -39,7 +39,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		return err
 	}
 	seqs := resp.Seqs
-	log.ZDebug(ctx, "getServerHasReadAndMaxSeqs completed", "duration", time.Since(startTime).Seconds())
+	log.ZDebug(ctx, "getServerHasReadAndMaxSeqs completed", "duration", time.Since(startTime).String())
 
 	if len(seqs) == 0 {
 		return nil
@@ -53,7 +53,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		log.ZWarn(ctx, "get all conversations err", err)
 		return err
 	}
-	log.ZDebug(ctx, "GetAllConversations completed", "duration", time.Since(stepStartTime).Seconds())
+	log.ZDebug(ctx, "GetAllConversations completed", "duration", time.Since(stepStartTime).String())
 
 	conversationsOnLocalMap := datautil.SliceToMap(conversationsOnLocal, func(e *model_struct.LocalConversation) string {
 		return e.ConversationID
@@ -82,7 +82,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 			conversationIDsNeedSync = append(conversationIDsNeedSync, conversationID)
 		}
 	}
-	log.ZDebug(ctx, "Process seqs completed", "duration", time.Since(stepStartTime).Seconds())
+	log.ZDebug(ctx, "Process seqs completed", "duration", time.Since(stepStartTime).String())
 
 	if len(conversationIDsNeedSync) > 0 {
 		stepStartTime = time.Now()
@@ -91,14 +91,14 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 			log.ZWarn(ctx, "getServerConversationsByIDs err", err, "conversationIDs", conversationIDsNeedSync)
 			return err
 		}
-		log.ZDebug(ctx, "getServerConversationsByIDs completed", "duration", time.Since(stepStartTime).Seconds())
+		log.ZDebug(ctx, "getServerConversationsByIDs completed", "duration", time.Since(stepStartTime).String())
 		conversationsOnServer := datautil.Batch(ServerConversationToLocal, r.Conversations)
 		stepStartTime = time.Now()
 		if err := c.batchAddFaceURLAndName(ctx, conversationsOnServer...); err != nil {
 			log.ZWarn(ctx, "batchAddFaceURLAndName err", err, "conversationsOnServer", conversationsOnServer)
 			return err
 		}
-		log.ZDebug(ctx, "batchAddFaceURLAndName completed", "duration", time.Since(stepStartTime).Seconds())
+		log.ZDebug(ctx, "batchAddFaceURLAndName completed", "duration", time.Since(stepStartTime).String())
 
 		for _, conversation := range conversationsOnServer {
 			var unreadCount int32
@@ -120,7 +120,7 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		if err != nil {
 			log.ZWarn(ctx, "BatchInsertConversationList err", err, "conversationsOnServer", conversationsOnServer)
 		}
-		log.ZDebug(ctx, "BatchInsertConversationList completed", "duration", time.Since(stepStartTime).Seconds())
+		log.ZDebug(ctx, "BatchInsertConversationList completed", "duration", time.Since(stepStartTime).String())
 	}
 
 	log.ZDebug(ctx, "update conversations", "conversations", conversationChangedIDs)
@@ -128,9 +128,9 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		stepStartTime = time.Now()
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedIDs}, c.GetCh())
 		common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, c.GetCh())
-		log.ZDebug(ctx, "TriggerCmdUpdateConversation completed", "duration", time.Since(stepStartTime).Seconds())
+		log.ZDebug(ctx, "TriggerCmdUpdateConversation completed", "duration", time.Since(stepStartTime).String())
 	}
 
-	log.ZDebug(ctx, "SyncAllConversationHashReadSeqs completed", "totalDuration", time.Since(startTime).Seconds())
+	log.ZDebug(ctx, "SyncAllConversationHashReadSeqs completed", "totalDuration", time.Since(startTime).String())
 	return nil
 }

@@ -86,7 +86,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 			c.SyncAllConversationHashReadSeqs,
 		}
 		runSyncFunctions(ctx, syncWaitFunctions, syncWait)
-		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).Seconds())
+		log.ZWarn(ctx, "core data sync over", nil, "cost time", time.Since(c.startTime).String())
 		c.addInitProgress(InitSyncProgress * 6 / 10)              // add 60% of InitSyncProgress as progress
 		c.ConversationListener().OnSyncServerProgress(c.progress) // notify server current Progress
 
@@ -97,7 +97,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 		runSyncFunctions(ctx, asyncNoWaitFunctions, asyncNoWait)
 
 	case constant.AppDataSyncFinish:
-		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).Milliseconds())
+		log.ZDebug(ctx, "AppDataSyncFinish", "time", time.Since(c.startTime).String())
 		c.progress = 100
 		c.ConversationListener().OnSyncServerProgress(c.progress)
 		c.ConversationListener().OnSyncServerFinish(true)
@@ -108,7 +108,7 @@ func (c *Conversation) syncFlag(c2v common.Cmd2Value) {
 	case constant.MsgSyncFailed:
 		c.ConversationListener().OnSyncServerFailed(false)
 	case constant.MsgSyncEnd:
-		log.ZDebug(ctx, "MsgSyncEnd", "time", time.Since(c.startTime).Milliseconds())
+		log.ZDebug(ctx, "MsgSyncEnd", "time", time.Since(c.startTime).String())
 		c.ConversationListener().OnSyncServerFinish(false)
 	}
 }
@@ -466,9 +466,9 @@ func executeSyncFunction(ctx context.Context, fn func(c context.Context) error, 
 	err := fn(ctx)
 	duration := time.Since(startTime)
 	if err != nil {
-		log.ZWarn(ctx, fmt.Sprintf("%s sync error", funcName), err, "duration", duration.Seconds())
+		log.ZWarn(ctx, fmt.Sprintf("%s sync error", funcName), err, "duration", duration.String())
 	} else {
-		log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.Seconds())
+		log.ZDebug(ctx, fmt.Sprintf("%s completed successfully", funcName), "duration", duration.String())
 	}
 }
 

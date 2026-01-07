@@ -22,8 +22,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -114,7 +116,78 @@ func (d *DataBase) BatchInsertMessageList(ctx context.Context, conversationID st
 	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Create(MessageList).Error, "BatchInsertMessageList failed")
+	// Ignore duplicates on primary key (client_msg_id) to avoid failing the whole batch.
+	return errs.WrapMsg(
+		d.conn.WithContext(ctx).
+			Table(utils.GetTableName(conversationID)).
+			Clauses(clause.OnConflict{DoNothing: true}).
+			Create(MessageList).Error,
+		"BatchInsertMessageList failed",
+	)
+}
+
+// BatchInsertMessageMap inserts messages across multiple conversation tables in a single transaction.
+// This reduces commit/fsync overhead when a batch contains many conversations (many tables).
+func (d *DataBase) BatchInsertMessageMap(ctx context.Context, insertMsg map[string][]*model_struct.LocalChatLog) error {
+	if insertMsg == nil {
+		return nil
+	}
+
+	start := time.Now()
+	totalConversations := len(insertMsg)
+	totalMessages := 0
+	for _, ms := range insertMsg {
+		totalMessages += len(ms)
+	}
+
+	// Ensure tables exist before starting the transaction to avoid DDL in the write path.
+	for conversationID := range insertMsg {
+		if err := d.initChatLog(ctx, conversationID); err != nil {
+			log.ZWarn(ctx, "initChatLog err", err, "conversationID", conversationID)
+			return err
+		}
+	}
+
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+
+	var maxSingleInsert time.Duration
+	var maxSingleInsertConversationID string
+
+	txErr := d.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		tx = tx.Session(&gorm.Session{SkipDefaultTransaction: true})
+		for conversationID, messages := range insertMsg {
+			if len(messages) == 0 {
+				continue
+			}
+			t0 := time.Now()
+			if err := tx.WithContext(ctx).
+				Table(utils.GetTableName(conversationID)).
+				Clauses(clause.OnConflict{DoNothing: true}).
+				Create(messages).Error; err != nil {
+				return err
+			}
+			if dur := time.Since(t0); dur > maxSingleInsert {
+				maxSingleInsert = dur
+				maxSingleInsertConversationID = conversationID
+			}
+		}
+		return nil
+	})
+	if txErr == nil {
+		if dur := time.Since(start); dur > 50*time.Millisecond {
+			log.ZDebug(
+				ctx,
+				"BatchInsertMessageMap done",
+				"duration", dur.String(),
+				"conversations", totalConversations,
+				"messages", totalMessages,
+				"slowestTable", maxSingleInsertConversationID,
+				"slowestTableDuration", maxSingleInsert.String(),
+			)
+		}
+	}
+	return errs.WrapMsg(txErr, "BatchInsertMessageMap failed")
 }
 
 func (d *DataBase) InsertMessage(ctx context.Context, conversationID string, Message *model_struct.LocalChatLog) error {

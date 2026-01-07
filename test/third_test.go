@@ -20,7 +20,7 @@ func Test_UploadLog(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(time.Since(tm).Microseconds())
+	fmt.Println(time.Since(tm).String())
 
 }
 func Test_SDKLogs(t *testing.T) {
