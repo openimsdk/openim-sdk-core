@@ -54,6 +54,7 @@ func NewGroup(loginUserID string, db db_interface.DataBase,
 	}
 	g.initSyncer()
 	g.groupMemberCache = cache.NewCache[string, *model_struct.LocalGroupMember]()
+	g.groupInfoCache = cache.NewCache[string, *model_struct.LocalGroup]()
 	return g
 }
 
@@ -67,15 +68,21 @@ type Group struct {
 	groupSyncMutex     sync.Mutex
 	listenerForService open_im_sdk_callback.OnListenerForService
 	groupMemberCache   *cache.Cache[string, *model_struct.LocalGroupMember]
+	groupInfoCache     *cache.Cache[string, *model_struct.LocalGroup]
 	filter             *NotificationFilter
 }
 
 func (g *Group) initSyncer() {
 	g.groupSyncer = syncer.New2[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](
 		syncer.WithInsert[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, value *model_struct.LocalGroup) error {
-			return g.db.InsertGroup(ctx, value)
+			if err := g.db.InsertGroup(ctx, value); err != nil {
+				return err
+			}
+			g.groupInfoCache.Store(value.GroupID, value)
+			return nil
 		}),
 		syncer.WithDelete[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, value *model_struct.LocalGroup) error {
+			g.groupInfoCache.Delete(value.GroupID)
 			if err := g.db.DeleteGroupAllMembers(ctx, value.GroupID); err != nil {
 				return err
 			}
@@ -86,7 +93,11 @@ func (g *Group) initSyncer() {
 		}),
 		syncer.WithUpdate[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, server, local *model_struct.LocalGroup) error {
 			log.ZInfo(ctx, "groupSyncer trigger update function", "groupID", server.GroupID, "server", server, "local", local)
-			return g.db.UpdateGroup(ctx, server)
+			if err := g.db.UpdateGroup(ctx, server); err != nil {
+				return err
+			}
+			g.groupInfoCache.Store(server.GroupID, server)
+			return nil
 		}),
 		syncer.WithUUID[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(value *model_struct.LocalGroup) string {
 			return value.GroupID
@@ -132,9 +143,14 @@ func (g *Group) initSyncer() {
 		}),
 
 		syncer.WithBatchInsert[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, values []*model_struct.LocalGroup) error {
-			return g.db.BatchInsertGroup(ctx, values)
+			if err := g.db.BatchInsertGroup(ctx, values); err != nil {
+				return err
+			}
+			g.groupInfoCache.StoreAll(func(v *model_struct.LocalGroup) string { return v.GroupID }, values)
+			return nil
 		}),
 		syncer.WithDeleteAll[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(ctx context.Context, _ string) error {
+			g.groupInfoCache.DeleteAll()
 			return g.db.DeleteAllGroup(ctx)
 		}),
 		syncer.WithBatchPageReq[*model_struct.LocalGroup, group.GetJoinedGroupListResp, string](func(entityID string) page.PageReq {
