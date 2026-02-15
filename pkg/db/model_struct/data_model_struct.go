@@ -222,6 +222,25 @@ func (LocalConversation) TableName() string {
 	return "local_conversations"
 }
 
+type LocalGroupReadCursor struct {
+	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	UserID         string `gorm:"column:user_id;primary_key;type:char(64)" json:"userID"`
+	MaxReadSeq     int64  `gorm:"column:max_read_seq" json:"maxReadSeq"`
+}
+
+func (LocalGroupReadCursor) TableName() string {
+	return "local_group_read_cursor"
+}
+
+type LocalGroupReadCursorState struct {
+	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	CursorVersion  int64  `gorm:"column:cursor_version" json:"cursorVersion"`
+}
+
+func (LocalGroupReadCursorState) TableName() string {
+	return "local_group_read_cursor_state"
+}
+
 type LocalConversationUnreadMessage struct {
 	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
 	ClientMsgID    string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`

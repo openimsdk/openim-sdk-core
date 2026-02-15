@@ -289,6 +289,7 @@ type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
 	HasReadCount      int32    `json:"hasReadCount"`
 	GroupMemberCount  int32    `json:"groupMemberCount"`
+	ReadCursorVersion int64    `json:"readCursorVersion"`
 }
 type NewMsgList []*MsgStruct
 
