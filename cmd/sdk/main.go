@@ -25,7 +25,6 @@ import (
 	"github.com/openimsdk/protocol/constant"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk"
-	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
 
@@ -132,7 +131,7 @@ func main() {
 
 	logPath := *dataDir + "/logs"
 	// 日志级别: 0=Panic 1=Fatal 2=Error 3=Warn 4=Info 5=Debug，设为 Debug 便于观察
-	const logLevelDebug = 5
+	const logLevelDebug = 4
 	cfg := sdk_struct.IMConfig{
 		SystemType:          "cmd",
 		PlatformID:          platformID,
@@ -160,8 +159,7 @@ func main() {
 	}
 	fmt.Println("[SDK] InitSDK 成功")
 
-	open_im_sdk.SetConversationListener(&cmdConversationListener{})
-	open_im_sdk.SetAdvancedMsgListener(&cmdAdvancedMsgListener{})
+	// 不设置会话/消息监听器，统一使用 SDK 默认空回调（em.go）
 
 	loginCB := &loginCallback{}
 	open_im_sdk.Login(loginCB, "cmd_login", uid, imToken)
@@ -207,70 +205,4 @@ func (l *loginCallback) OnError(errCode int32, errMsg string) {
 
 func (l *loginCallback) OnSuccess(data string) {
 	fmt.Println("[Login] OnSuccess, userID:", open_im_sdk.GetLoginUserID())
-}
-
-// cmdConversationListener 实现会话监听，与 SDK 配置一致.
-type cmdConversationListener struct{}
-
-var _ open_im_sdk_callback.OnConversationListener = (*cmdConversationListener)(nil)
-
-func (c *cmdConversationListener) OnSyncServerStart(reinstalled bool) {
-	fmt.Printf("[Conversation] OnSyncServerStart reinstalled=%v\n", reinstalled)
-}
-
-func (c *cmdConversationListener) OnSyncServerFinish(reinstalled bool) {
-	fmt.Printf("[Conversation] OnSyncServerFinish reinstalled=%v\n", reinstalled)
-}
-
-func (c *cmdConversationListener) OnSyncServerProgress(progress int) {
-	fmt.Printf("[Conversation] OnSyncServerProgress progress=%d\n", progress)
-}
-
-func (c *cmdConversationListener) OnSyncServerFailed(reinstalled bool) {
-	fmt.Printf("[Conversation] OnSyncServerFailed reinstalled=%v\n", reinstalled)
-}
-
-func (c *cmdConversationListener) OnNewConversation(conversationList string) {
-	fmt.Println("[Conversation] OnNewConversation", conversationList)
-}
-
-func (c *cmdConversationListener) OnConversationChanged(conversationList string) {
-	fmt.Println("[Conversation] OnConversationChanged", conversationList)
-}
-
-func (c *cmdConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-	fmt.Printf("[Conversation] OnTotalUnreadMessageCountChanged totalUnreadCount=%d\n", totalUnreadCount)
-}
-
-func (c *cmdConversationListener) OnConversationUserInputStatusChanged(change string) {
-	fmt.Println("[Conversation] OnConversationUserInputStatusChanged", change)
-}
-
-// cmdAdvancedMsgListener 实现高级消息监听.
-type cmdAdvancedMsgListener struct{}
-
-var _ open_im_sdk_callback.OnAdvancedMsgListener = (*cmdAdvancedMsgListener)(nil)
-
-func (c *cmdAdvancedMsgListener) OnRecvNewMessage(message string) {
-	fmt.Println("[Msg] OnRecvNewMessage", message)
-}
-
-func (c *cmdAdvancedMsgListener) OnRecvC2CReadReceipt(msgReceiptList string) {
-	fmt.Println("[Msg] OnRecvC2CReadReceipt", msgReceiptList)
-}
-
-func (c *cmdAdvancedMsgListener) OnNewRecvMessageRevoked(messageRevoked string) {
-	fmt.Println("[Msg] OnNewRecvMessageRevoked", messageRevoked)
-}
-
-func (c *cmdAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
-	fmt.Println("[Msg] OnRecvOfflineNewMessage", message)
-}
-
-func (c *cmdAdvancedMsgListener) OnMsgDeleted(message string) {
-	fmt.Println("[Msg] OnMsgDeleted", message)
-}
-
-func (c *cmdAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
-	fmt.Println("[Msg] OnRecvOnlineOnlyMessage", message)
 }
