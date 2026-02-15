@@ -32,7 +32,6 @@ func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener)
 
 func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	listenerCall(IMUserContext.SetUserListener, listener)
-
 }
 
 func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {

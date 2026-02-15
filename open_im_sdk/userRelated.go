@@ -24,10 +24,16 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/tools/errs"
 
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
+
 	"github.com/openimsdk/openim-sdk-core/v3/internal/relation"
+
+	"github.com/openimsdk/protocol/push"
+	"github.com/openimsdk/protocol/sdkws"
+	"github.com/openimsdk/tools/log"
+	"github.com/openimsdk/tools/utils/jsonutil"
 
 	conv "github.com/openimsdk/openim-sdk-core/v3/internal/conversation_msg"
 	"github.com/openimsdk/openim-sdk-core/v3/internal/group"
@@ -43,10 +49,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-	"github.com/openimsdk/protocol/push"
-	"github.com/openimsdk/protocol/sdkws"
-	"github.com/openimsdk/tools/log"
-	"github.com/openimsdk/tools/utils/jsonutil"
 )
 
 const (
@@ -60,7 +62,7 @@ const (
 )
 
 var (
-	// IMUserContext is the global user context instance
+	// IMUserContext is the global user context instance.
 	IMUserContext *UserContext
 	once          sync.Once
 )
@@ -68,7 +70,6 @@ var (
 func init() {
 	IMUserContext = NewIMUserContext()
 	IMUserContext.initResources()
-
 }
 
 func (u *UserContext) InitResources() {
@@ -149,7 +150,7 @@ type UserContext struct {
 	businessListener     open_im_sdk_callback.OnCustomBusinessListener
 	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
 
-	//conversationCh chan common.Cmd2Value
+	// conversationCh chan common.Cmd2Value
 
 	conversationEventQueue chan common.Cmd2Value
 	cmdWsCh                chan common.Cmd2Value
@@ -293,10 +294,10 @@ func (u *UserContext) logoutListener(ctx context.Context) {
 			}
 		case <-ctx.Done():
 			log.ZInfo(ctx, "logoutListener done sdk logout.....")
+
 			return
 		}
 	}
-
 }
 
 func NewIMUserContext() *UserContext {
@@ -305,6 +306,7 @@ func NewIMUserContext() *UserContext {
 			info: &ccontext.GlobalConfig{},
 		}
 	})
+
 	return IMUserContext
 }
 
@@ -313,16 +315,20 @@ func NewLoginMgr() *UserContext {
 		info: &ccontext.GlobalConfig{},
 	}
 }
+
 func (u *UserContext) getLoginStatus(_ context.Context) int {
 	u.w.Lock()
 	defer u.w.Unlock()
+
 	return u.loginStatus
 }
+
 func (u *UserContext) setLoginStatus(status int) {
 	u.w.Lock()
 	defer u.w.Unlock()
 	u.loginStatus = status
 }
+
 func (u *UserContext) checkSendingMessage(ctx context.Context) {
 	sendingMessages, err := u.db.GetAllSendingMessages(ctx)
 	if err != nil {
@@ -361,8 +367,10 @@ func (u *UserContext) handlerSendingMsg(ctx context.Context, sendingMsg *model_s
 	if latestMsg.ClientMsgID == sendingMsg.ClientMsgID {
 		latestMsg.Status = constant.MsgStatusSendFailed
 		conversation.LatestMsg = jsonutil.StructToJsonString(latestMsg)
+
 		return u.db.UpdateConversation(ctx, conversation)
 	}
+
 	return nil
 }
 
@@ -384,6 +392,7 @@ func (u *UserContext) login(ctx context.Context, userID, token string) error {
 	u.run(ctx)
 	u.setLoginStatus(Logged)
 	log.ZDebug(ctx, "login success...", "login cost time: ", time.Since(t1))
+
 	return nil
 }
 
@@ -416,6 +425,7 @@ func (u *UserContext) initialize(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -453,6 +463,7 @@ func (u *UserContext) InitSDK(config *sdk_struct.IMConfig, listener open_im_sdk_
 	}
 	u.info.IMConfig = config
 	u.connListener = listener
+
 	return true
 }
 
@@ -467,13 +478,14 @@ func (u *UserContext) userOnlineStatusChange(users map[string][]int32) {
 func (u *UserContext) UnInitSDK() {
 	if u.getLoginStatus(context.Background()) == Logged {
 		fmt.Println("sdk not logout, please logout first")
+
 		return
 	}
 	u.Info().IMConfig = nil
 	u.setLoginStatus(0)
 }
 
-// token error recycle recourse, kicked not recycle
+// token error recycle recourse, kicked not recycle.
 func (u *UserContext) logout(ctx context.Context, isTokenValid bool) error {
 	if ccontext.Info(ctx).OperationID() == LogoutTips {
 		isTokenValid = true
@@ -497,11 +509,11 @@ func (u *UserContext) logout(ctx context.Context, isTokenValid bool) error {
 	u.initResources()
 	log.ZDebug(ctx, "TriggerCmdLogout client success...",
 		"isTokenValid", isTokenValid)
+
 	return nil
 }
 
 func (u *UserContext) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-
 	u.longConnMgr.SetBackground(isBackground)
 
 	if !isBackground {
@@ -523,6 +535,7 @@ func (u *UserContext) setAppBackgroundStatus(ctx context.Context, isBackground b
 		if !isBackground {
 			_ = common.DispatchWakeUp(ctx, u.msgSyncerCh)
 		}
+
 		return nil
 	}
 }

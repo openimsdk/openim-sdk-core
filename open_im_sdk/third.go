@@ -35,6 +35,7 @@ func UploadLogs(callback open_im_sdk_callback.Base, operationID string, line int
 func Logs(callback open_im_sdk_callback.Base, operationID string, logLevel int, file string, line int, msgs string, err string, keyAndValue string) {
 	if IMUserContext == nil || IMUserContext.Third() == nil {
 		callback.OnError(sdkerrs.SdkInternalError, "sdk not init")
+
 		return
 	}
 	call(callback, operationID, IMUserContext.Third().Log, logLevel, file, line, msgs, err, keyAndValue)

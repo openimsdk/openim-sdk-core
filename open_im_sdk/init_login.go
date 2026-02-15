@@ -20,10 +20,11 @@ import (
 	"fmt"
 	"strings"
 
+	pbConstant "github.com/openimsdk/protocol/constant"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
-	pbConstant "github.com/openimsdk/protocol/constant"
 
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/version"
@@ -44,6 +45,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	var configArgs sdk_struct.IMConfig
 	if err := json.Unmarshal([]byte(config), &configArgs); err != nil {
 		fmt.Println(operationID, "Unmarshal failed ", err.Error(), config)
+
 		return false
 	}
 	if configArgs.PlatformID == 0 {
@@ -62,20 +64,25 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	ctx := mcontext.NewCtx(operationID)
 	if !strings.Contains(configArgs.ApiAddr, "http") {
 		log.ZError(ctx, "api is http protocol, api format is invalid", nil)
+
 		return false
 	}
 	if !strings.Contains(configArgs.WsAddr, "ws") {
 		log.ZError(ctx, "ws is ws protocol, ws format is invalid", nil)
+
 		return false
 	}
 
 	log.ZInfo(ctx, "InitSDK info", "config", configArgs)
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
+
 		return false
 	}
+
 	return IMUserContext.InitSDK(&configArgs, listener)
 }
+
 func UnInitSDK(_ string) {
 	IMUserContext.UnInitSDK()
 }
@@ -84,6 +91,7 @@ func GetLoginUserID() string {
 	if IMUserContext == nil {
 		return ""
 	}
+
 	return IMUserContext.GetLoginUserID()
 }
 
@@ -98,6 +106,7 @@ func Logout(callback open_im_sdk_callback.Base, operationID string) {
 func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID string, isBackground bool) {
 	call(callback, operationID, IMUserContext.SetAppBackgroundStatus, isBackground)
 }
+
 func NetworkStatusChanged(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, IMUserContext.NetworkStatusChanged)
 }
@@ -108,6 +117,7 @@ func GetLoginStatus(operationID string) int {
 
 func (u *UserContext) Login(ctx context.Context, userID, token string) error {
 	cliconf.SetLoginUserID(u.loginUserID)
+
 	return u.login(ctx, userID, token)
 }
 
@@ -118,9 +128,11 @@ func (u *UserContext) Logout(ctx context.Context) error {
 func (u *UserContext) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {
 	return u.setAppBackgroundStatus(ctx, isBackground)
 }
+
 func (u *UserContext) NetworkStatusChanged(ctx context.Context) {
 	u.longConnMgr.Close(ctx)
 }
+
 func (u *UserContext) GetLoginStatus(ctx context.Context) int {
 	return u.getLoginStatus(ctx)
 }

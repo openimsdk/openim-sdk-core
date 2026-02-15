@@ -51,16 +51,19 @@ func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string
 func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, IMUserContext.Conversation().GetTotalUnreadMsgCount)
 }
+
 func GetAtAllTag(operationID string) string {
 	return syncCall(operationID, IMUserContext.Conversation().GetAtAllTag)
-
 }
+
 func CreateAdvancedTextMessage(operationID string, text, messageEntityList string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateAdvancedTextMessage, text, messageEntityList)
 }
+
 func CreateTextAtMessage(operationID string, text, atUserList, atUsersInfo, message string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateTextAtMessage, text, atUserList, atUsersInfo, message)
 }
+
 func CreateTextMessage(operationID string, text string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateTextMessage, text)
 }
@@ -68,15 +71,19 @@ func CreateTextMessage(operationID string, text string) string {
 func CreateLocationMessage(operationID string, description string, longitude, latitude float64) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateLocationMessage, description, longitude, latitude)
 }
+
 func CreateCustomMessage(operationID string, data, extension string, description string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateCustomMessage, data, extension, description)
 }
+
 func CreateQuoteMessage(operationID string, text string, message string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateQuoteMessage, text, message)
 }
+
 func CreateAdvancedQuoteMessage(operationID string, text string, message, messageEntityList string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateAdvancedQuoteMessage, text, message, messageEntityList)
 }
+
 func CreateCardMessage(operationID string, cardInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateCardMessage, cardInfo)
 }
@@ -84,18 +91,23 @@ func CreateCardMessage(operationID string, cardInfo string) string {
 func CreateVideoMessageFromFullPath(operationID string, videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessageFromFullPath, videoFullPath, videoType, duration, snapshotFullPath)
 }
+
 func CreateImageMessageFromFullPath(operationID string, imageFullPath string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessageFromFullPath, imageFullPath)
 }
+
 func CreateSoundMessageFromFullPath(operationID string, soundPath string, duration int64) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessageFromFullPath, soundPath, duration)
 }
+
 func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessageFromFullPath, fileFullPath, fileName)
 }
+
 func CreateImageMessage(operationID string, imagePath string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessage, imagePath)
 }
+
 func CreateImageMessageByURL(operationID string, sourcePath string, sourcePicture, bigPicture, snapshotPicture string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateImageMessageByURL, sourcePath, sourcePicture, bigPicture, snapshotPicture)
 }
@@ -103,9 +115,11 @@ func CreateImageMessageByURL(operationID string, sourcePath string, sourcePictur
 func CreateSoundMessageByURL(operationID string, soundBaseInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessageByURL, soundBaseInfo)
 }
+
 func CreateSoundMessage(operationID string, soundPath string, duration int64) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateSoundMessage, soundPath, duration)
 }
+
 func CreateVideoMessageByURL(operationID string, videoBaseInfo string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateVideoMessageByURL, videoBaseInfo)
 }
@@ -121,18 +135,23 @@ func CreateFileMessageByURL(operationID string, fileBaseInfo string) string {
 func CreateFileMessage(operationID string, filePath string, fileName string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateFileMessage, filePath, fileName)
 }
+
 func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateMergerMessage, messageList, title, summaryList)
 }
+
 func CreateFaceMessage(operationID string, index int, data string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateFaceMessage, index, data)
 }
+
 func CreateForwardMessage(operationID string, m string) string {
 	return syncCall(operationID, IMUserContext.Conversation().CreateForwardMessage, m)
 }
+
 func GetConversationIDBySessionType(operationID string, sourceID string, sessionType int) string {
 	return IMUserContext.Conversation().GetConversationIDBySessionType(context.Background(), sourceID, sessionType)
 }
+
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string, isOnlineOnly bool) {
 	messageCall(callback, operationID, IMUserContext.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo, isOnlineOnly)
 }
@@ -161,7 +180,7 @@ func TypingStatusUpdate(callback open_im_sdk_callback.Base, operationID string, 
 	call(callback, operationID, IMUserContext.Conversation().TypingStatusUpdate, recvID, msgTip)
 }
 
-// mark as read
+// mark as read.
 func MarkConversationMessageAsRead(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	call(callback, operationID, IMUserContext.Conversation().MarkConversationMessageAsRead, conversationID)
 }
@@ -213,6 +232,7 @@ func InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, operat
 func SearchLocalMessages(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, IMUserContext.Conversation().SearchLocalMessages, searchParam)
 }
+
 func SetMessageLocalEx(callback open_im_sdk_callback.Base, operationID string, conversationID, clientMsgID, localEx string) {
 	call(callback, operationID, IMUserContext.Conversation().SetMessageLocalEx, conversationID, clientMsgID, localEx)
 }
