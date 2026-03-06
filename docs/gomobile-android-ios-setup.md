@@ -56,7 +56,7 @@ gomobile init
 
 2. **Install Android Development Environment**: Ensure the latest version of **Android Studio** is installed.
 
-3. **Configure Android NDK**: Download NDK for Windows (recommended version: `20.1.5948944`(`r20b`) ), extract it to the `ndk-bundle` directory of Android SDK. For example:
+3. **Configure Android NDK**: Download NDK for Windows, extract it to the `ndk-bundle` directory of Android SDK. For example:
 
    ```
    C:\Users\Admin\AppData\Local\Android\Sdk\ndk-bundle
@@ -76,7 +76,7 @@ gomobile init
 Navigate to your project root directory, such as `openim-sdk-core`, and run the following command to compile the Android AAR package:
 
 ```bash
-gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
+gomobile bind -androidapi 21 -v -trimpath -ldflags='-s -w -extldflags "-Wl,--gc-sections,--as-needed,-z,max-page-size=16384"' -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
 ```
 
 ##### **Notes**:

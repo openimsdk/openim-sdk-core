@@ -192,12 +192,10 @@ ios:
 
 ## android: Build the Android library
 # Note: to build an AAR on Windows, gomobile, Android Studio, and the NDK must be installed.
-# The NDK version tested by the OpenIM team was r20b.
-# To build an AAR on Mac, gomobile, Android Studio, and the NDK version 20.0.5594570 must be installed.
 .PHONY: android
 android:
 	go get golang.org/x/mobile/bind
-	GOARCH=amd64 gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
+	GOARCH=amd64 gomobile bind -androidapi 21 -v -trimpath -ldflags='-s -w -extldflags "-Wl,--gc-sections,--as-needed,-z,max-page-size=16384"' -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
 
 # Targets
 .PHONY: release
