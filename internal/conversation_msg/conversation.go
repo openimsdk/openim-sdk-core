@@ -217,14 +217,31 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	if err != nil {
 		return nil, err
 	}
+
+	if shouldRepairDuplicateMessages(list) {
+		c.asyncRepairDuplicateMessages(ctx, conversationID)
+	}
+	// Boundary normalization plan: instead of maintaining an anchor based on this batch’s extreme timestamps,
+	// directly use this page’s startTime as the normalization boundary.
+	// Check order: first perform inter-block continuity checks, then intra-block continuity checks,
+	// and finally perform the tail check.
+	// This allows the window to find usable neighbors earlier, reducing the fallback probability
+	// when normalizing at zero time.
 	t = time.Now()
-	thisStartSeq := c.validateAndFillInternalGaps(ctx, conversationID, isReverse,
-		count, startTime, &list, messageListCallback)
-	log.ZDebug(ctx, "internal continuity check over", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
-	t = time.Now()
+	maxSeq, minSeq, _ := c.getMaxAndMinHaveSeqList(list)
+	var thisStartSeq int64
+	if isReverse {
+		thisStartSeq = minSeq
+	} else {
+		thisStartSeq = maxSeq
+	}
 	c.validateAndFillInterBlockGaps(ctx, thisStartSeq, conversationID,
 		isReverse, viewType, count, startTime, &list, messageListCallback)
 	log.ZDebug(ctx, "between continuity check over", "cost time", time.Since(t), "thisStartSeq", thisStartSeq)
+	t = time.Now()
+	c.validateAndFillInternalGaps(ctx, conversationID, isReverse,
+		count, startTime, &list, messageListCallback)
+	log.ZDebug(ctx, "internal continuity check over", "cost time", time.Since(t))
 	t = time.Now()
 	c.validateAndFillEndBlockContinuity(ctx, conversationID, isReverse, viewType,
 		count, startTime, &list, messageListCallback)
@@ -234,6 +251,43 @@ func (c *Conversation) fetchMessagesWithGapCheck(ctx context.Context, conversati
 	missingCount := shouldFetchMoreMessagesNum(list)
 	if missingCount > 0 && !messageListCallback.IsEnd {
 		newStartTime, newStartSeq, newStartClientMsgID := getNewStartMessageInfo(list)
+		// First-batch zero-cursor substitution: when entering a conversation for the first time
+		// (no StartClientMsgID) and the new cursor time is still 0,
+		// use a non-zero sendTime from the current batch as a substitute boundary to avoid
+		// fetching the same page again in the next round due to a zero offset.
+		if startClientMsgID == "" && newStartTime == 0 {
+			var minNonZero, maxNonZero int64
+			for _, m := range list {
+				if m.SendTime == 0 {
+					continue
+				}
+				if minNonZero == 0 || m.SendTime < minNonZero {
+					minNonZero = m.SendTime
+				}
+				if maxNonZero == 0 || m.SendTime > maxNonZero {
+					maxNonZero = m.SendTime
+				}
+			}
+			if isReverse {
+				// Old → New: choose this batch’s maximum non-zero timestamp as the new boundary (advance toward newer side)
+				if maxNonZero > 0 {
+					newStartTime = maxNonZero
+				}
+			} else {
+				// New → Old: choose this batch’s minimum non-zero timestamp as the new boundary (advance toward older side)
+				if minNonZero > 0 {
+					newStartTime = minNonZero
+				}
+			}
+		}
+		// Cursor stall protection: if the new cursor is exactly the same as the old one,
+		// we consider it unable to advance and mark completion immediately to avoid a recursive infinite loop.
+		if newStartTime == startTime && newStartSeq == startSeq && newStartClientMsgID == startClientMsgID {
+			log.ZWarn(ctx, "cursor stalled, stop recursive fetch to avoid loop", nil,
+				"conversationID", conversationID, "startTime", startTime, "startSeq", startSeq, "startClientMsgID", startClientMsgID)
+			messageListCallback.IsEnd = true
+			return validMessages, nil
+		}
 		log.ZDebug(ctx, "fetch more messages", "missingCount", missingCount, "conversationID",
 			conversationID, "newStartTime", newStartTime, "newStartSeq", newStartSeq, "newStartClientMsgID", newStartClientMsgID)
 		missingMessages, err := c.fetchMessagesWithGapCheck(ctx, conversationID, missingCount, newStartTime, newStartSeq, newStartClientMsgID, isReverse, viewType, messageListCallback)
