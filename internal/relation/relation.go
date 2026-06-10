@@ -51,7 +51,7 @@ func (r *Relation) initSyncer() {
 			return r.db.DeleteFriendDB(ctx, value.FriendUserID)
 		}),
 		syncer.WithUpdate[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(ctx context.Context, server, local *model_struct.LocalFriend) error {
-			r.user.UserCache.Delete(server.FriendUserID)
+			r.user.UserCache().Delete(server.FriendUserID)
 			return r.db.UpdateFriend(ctx, server)
 		}),
 		syncer.WithUUID[*model_struct.LocalFriend, relation.GetPaginationFriendsResp, [2]string](func(value *model_struct.LocalFriend) [2]string {
