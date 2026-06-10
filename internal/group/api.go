@@ -16,10 +16,12 @@ package group
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/tools/errs"
+	"gorm.io/gorm"
 
 	"github.com/openimsdk/tools/utils/datautil"
 
@@ -177,6 +179,17 @@ func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGr
 }
 
 func (g *Group) GetJoinedGroupListPage(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, error) {
+	res, err := g.getJoinedGroupListPage(ctx, offset, count)
+	if err != nil {
+		if errs.ErrRecordNotFound.Is(err) || errors.Is(err, gorm.ErrRecordNotFound) {
+			return []*model_struct.LocalGroup{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
+}
+
+func (g *Group) getJoinedGroupListPage(ctx context.Context, offset, count int32) ([]*model_struct.LocalGroup, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		g.db,
 		g.groupTableName(),

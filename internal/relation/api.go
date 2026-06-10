@@ -2,10 +2,13 @@ package relation
 
 import (
 	"context"
+	"errors"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/protocol/relation"
+	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/utils/datautil"
+	"gorm.io/gorm"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/datafetcher"
@@ -186,6 +189,17 @@ func (r *Relation) GetFriendList(ctx context.Context, filterBlack bool) ([]*mode
 }
 
 func (r *Relation) GetFriendListPage(ctx context.Context, offset, count int32, filterBlack bool) ([]*model_struct.LocalFriend, error) {
+	res, err := r.getFriendListPage(ctx, offset, count, filterBlack)
+	if err != nil {
+		if errs.ErrRecordNotFound.Is(err) || errors.Is(err, gorm.ErrRecordNotFound) {
+			return []*model_struct.LocalFriend{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
+}
+
+func (r *Relation) getFriendListPage(ctx context.Context, offset, count int32, filterBlack bool) ([]*model_struct.LocalFriend, error) {
 	dataFetcher := datafetcher.NewDataFetcher(
 		r.db,
 		r.friendListTableName(),
