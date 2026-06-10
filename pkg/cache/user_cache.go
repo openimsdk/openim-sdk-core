@@ -2,9 +2,15 @@ package cache
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
+	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
+)
+
+const (
+	SpecialUserPrefix = "special_"
 )
 
 func NewUserCache[K comparable, V any](
@@ -40,7 +46,7 @@ func (m *UserCache[K, V]) BatchFetch(ctx context.Context, keys []K) (map[K]V, er
 		if data, ok := m.Load(key); ok {
 			res[key] = data
 		} else {
-			queryKeys = append(queryKeys, keys...)
+			queryKeys = append(queryKeys, key)
 		}
 	}
 
@@ -48,6 +54,7 @@ func (m *UserCache[K, V]) BatchFetch(ctx context.Context, keys []K) (map[K]V, er
 	if err != nil {
 		return nil, err
 	}
+	log.ZDebug(ctx, "writeData", "writeData", writeData)
 
 	for i, data := range writeData {
 		res[m.getKeyFunc(data)] = writeData[i]
@@ -102,6 +109,7 @@ func (m *UserCache[K, V]) batchFetch(ctx context.Context, keys []K) ([]V, error)
 		if len(queryData) == 0 {
 			return writeData, sdkerrs.ErrUserIDNotFound.WrapMsg("fetch data not found", "keys", keys)
 		}
+		log.ZDebug(ctx, "writeData server", "writeData", writeData)
 		writeData = append(writeData, queryData...)
 	}
 
@@ -126,4 +134,31 @@ func (m *UserCache[K, V]) fetch(ctx context.Context, key K) (V, error) {
 		return writeData, sdkerrs.ErrUserIDNotFound.WrapMsg("fetch data not found", "key", key)
 	}
 	return writeData, nil
+}
+
+func (m *UserCache[K, V]) specialUserKey(key K) K {
+	return any(fmt.Sprintf("%s%v", SpecialUserPrefix, key)).(K)
+}
+
+func (m *UserCache[K, V]) BatchAddSpecialUser(items map[K]V) {
+	for key, value := range items {
+		sKey := m.specialUserKey(key)
+		m.Store(sKey, value)
+	}
+}
+
+func (m *UserCache[K, V]) BatchGetSpecialUser(_ context.Context, keys []K) (map[K]V, []K) {
+	result := make(map[K]V)
+	var missingKeys []K
+
+	for _, key := range keys {
+		sKey := m.specialUserKey(key)
+		if val, ok := m.Load(sKey); ok {
+			result[key] = val
+		} else {
+			missingKeys = append(missingKeys, key)
+		}
+	}
+
+	return result, missingKeys
 }
