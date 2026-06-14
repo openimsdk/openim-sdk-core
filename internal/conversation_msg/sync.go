@@ -131,6 +131,95 @@ func (c *Conversation) SyncAllConversationHashReadSeqs(ctx context.Context) erro
 		log.ZDebug(ctx, "TriggerCmdUpdateConversation completed", "duration", time.Since(stepStartTime).Seconds())
 	}
 
+	stepStartTime = time.Now()
+	if err := c.syncAllGroupReadCursors(ctx); err != nil {
+		log.ZWarn(ctx, "syncAllGroupReadCursors failed", err)
+	}
+	log.ZDebug(ctx, "syncAllGroupReadCursors completed", "duration", time.Since(stepStartTime).Seconds())
+
 	log.ZDebug(ctx, "SyncAllConversationHashReadSeqs completed", "totalDuration", time.Since(startTime).Seconds())
+	return nil
+}
+
+func (c *Conversation) syncAllGroupReadCursors(ctx context.Context) error {
+	conversations, err := c.db.GetAllConversations(ctx)
+	if err != nil {
+		log.ZWarn(ctx, "GetAllConversations failed", err)
+		return err
+	}
+
+	var groupConversationIDs []string
+	for _, conv := range conversations {
+		if conv.ConversationType == constant.ReadGroupChatType {
+			groupConversationIDs = append(groupConversationIDs, conv.ConversationID)
+		}
+	}
+
+	if len(groupConversationIDs) == 0 {
+		log.ZDebug(ctx, "no group conversations to sync cursors")
+		return nil
+	}
+
+	log.ZDebug(ctx, "found group conversations", "count", len(groupConversationIDs), "conversationIDs", groupConversationIDs)
+
+	for _, conversationID := range groupConversationIDs {
+		if _, err := c.db.GetGroupReadCursorState(ctx, conversationID); err != nil {
+			if ierr := c.db.InsertGroupReadCursorState(ctx, &model_struct.LocalGroupReadCursorState{ConversationID: conversationID, CursorVersion: 1}); ierr != nil {
+				log.ZWarn(ctx, "InsertGroupReadCursorState failed", ierr, "conversationID", conversationID)
+			} else {
+				log.ZDebug(ctx, "initialized LocalGroupReadCursorState", "conversationID", conversationID)
+			}
+		}
+	}
+
+	stepStartTime := time.Now()
+	resp, err := c.getConversationReadCursors(ctx, groupConversationIDs)
+	if err != nil {
+		log.ZWarn(ctx, "getConversationReadCursorsFromServer failed", err)
+		return err
+	}
+	log.ZDebug(ctx, "getConversationReadCursorsFromServer completed", "duration", time.Since(stepStartTime).Seconds())
+
+	stepStartTime = time.Now()
+	allCursorCount := 0
+	for conversationID, cursorList := range resp.Cursors {
+		curCursorCount := 0
+		if cursorList == nil || len(cursorList.Cursors) == 0 {
+			continue
+		}
+
+		for _, cursor := range cursorList.Cursors {
+			localCursor := &model_struct.LocalGroupReadCursor{
+				ConversationID: conversationID,
+				UserID:         cursor.UserID,
+				MaxReadSeq:     cursor.MaxReadSeq,
+			}
+
+			existingCursor, err := c.db.GetGroupReadCursor(ctx, conversationID, cursor.UserID)
+			if err != nil {
+				if err := c.db.InsertGroupReadCursor(ctx, localCursor); err != nil {
+					log.ZWarn(ctx, "InsertGroupReadCursor failed", err, "conversationID", conversationID, "userID", cursor.UserID)
+				} else {
+					curCursorCount++
+				}
+			} else {
+				if cursor.MaxReadSeq > existingCursor.MaxReadSeq {
+					if err := c.db.UpdateGroupReadCursor(ctx, conversationID, cursor.UserID, cursor.MaxReadSeq); err != nil {
+						log.ZWarn(ctx, "UpdateGroupReadCursor failed", err, "conversationID", conversationID, "userID", cursor.UserID)
+					} else {
+						curCursorCount++
+					}
+				}
+			}
+		}
+		allCursorCount += curCursorCount
+		if curCursorCount != 0 {
+			if err := c.db.IncrementGroupReadCursorVersion(ctx, conversationID); err != nil {
+				log.ZWarn(ctx, "IncrementGroupReadCursorVersion failed", err, "conversationID", conversationID)
+			}
+		}
+	}
+
+	log.ZDebug(ctx, "syncAllGroupReadCursors completed", "duration", time.Since(stepStartTime).Seconds(), "cursorCount", allCursorCount)
 	return nil
 }

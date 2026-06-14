@@ -174,6 +174,22 @@ type AppSDKVersion interface {
 	SetAppSDKVersion(ctx context.Context, version *model_struct.LocalAppSDKVersion) error
 }
 
+type GroupReadCursorModel interface {
+	InsertGroupReadCursor(ctx context.Context, cursor *model_struct.LocalGroupReadCursor) error
+	UpdateGroupReadCursor(ctx context.Context, conversationID, userID string, maxReadSeq int64) error
+	GetGroupReadCursor(ctx context.Context, conversationID, userID string) (*model_struct.LocalGroupReadCursor, error)
+	GetGroupReadCursorsByConversationID(ctx context.Context, conversationID string) ([]*model_struct.LocalGroupReadCursor, error)
+	DeleteGroupReadCursor(ctx context.Context, conversationID, userID string) error
+	DeleteGroupReadCursorsByConversationID(ctx context.Context, conversationID string) error
+}
+
+type GroupReadCursorStateModel interface {
+	InsertGroupReadCursorState(ctx context.Context, state *model_struct.LocalGroupReadCursorState) error
+	GetGroupReadCursorState(ctx context.Context, conversationID string) (*model_struct.LocalGroupReadCursorState, error)
+	DeleteGroupReadCursorState(ctx context.Context, conversationID string) error
+	IncrementGroupReadCursorVersion(ctx context.Context, conversationID string) error
+}
+
 type TableMaster interface {
 	GetExistTables(ctx context.Context) ([]string, error)
 }
@@ -189,5 +205,7 @@ type DataBase interface {
 	SendingMessagesModel
 	VersionSyncModel
 	AppSDKVersion
+	GroupReadCursorModel
+	GroupReadCursorStateModel
 	TableMaster
 }

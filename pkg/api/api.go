@@ -90,6 +90,7 @@ var (
 	GetIncrementalConversation = newApi[conversation.GetIncrementalConversationReq, conversation.GetIncrementalConversationResp]("/conversation/get_incremental_conversations")
 	GetFullConversationIDs     = newApi[conversation.GetFullOwnerConversationIDsReq, conversation.GetFullOwnerConversationIDsResp]("/conversation/get_full_conversation_ids")
 	GetOwnerConversation       = newApi[conversation.GetOwnerConversationReq, conversation.GetOwnerConversationResp]("/conversation/get_owner_conversation")
+	GetConversationReadCursors = newApi[conversation.GetConversationReadCursorsReq, conversation.GetConversationReadCursorsResp]("/conversation/get_conversation_read_cursors")
 	GetActiveConversation      = newApi[jssdk.GetActiveConversationsReq, jssdk.GetActiveConversationsResp]("/jssdk/get_active_conversations")
 )
 
