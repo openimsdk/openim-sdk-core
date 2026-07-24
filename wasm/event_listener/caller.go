@@ -57,6 +57,23 @@ func NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Va
 	return &ReflectCall{funcName: funcName, callback: callback, arguments: *arguments}
 }
 
+// jsStringArg converts a JS value to a Go string for SDK string parameters.
+// Older JS SDKs omit optional JSON `req`; undefined/null become "<undefined>"/"<null>"
+// via js.Value.String(), which then fails json.Unmarshal. Default those to "{}".
+func jsStringArg(arg js.Value) (string, bool) {
+	if arg.IsUndefined() || arg.IsNull() {
+		return "{}", true
+	}
+	s := arg.String()
+	if strings.HasPrefix(s, "<undefined>") || strings.HasPrefix(s, "<null>") {
+		return "{}", true
+	}
+	if strings.HasPrefix(s, "<number: ") {
+		return "", false
+	}
+	return s, true
+}
+
 func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 	return r.callback.HandlerFunc(r.asyncCallWithCallback)
 
@@ -100,14 +117,13 @@ func (r *ReflectCall) asyncCallWithCallback() {
 		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
 		switch typeFuncName.In(temp).Kind() {
 		case reflect.String:
-			convertValue := r.arguments[i].String()
-			if !strings.HasPrefix(convertValue, "<number: ") {
-				values = append(values, reflect.ValueOf(convertValue))
-			} else {
+			convertValue, ok := jsStringArg(r.arguments[i])
+			if !ok {
 				log.ZError(ctx, "AsyncCallWithCallback", nil, "input args type err index:",
 					utils.IntToString(i))
 				panic("input args type err index:" + utils.IntToString(i))
 			}
+			values = append(values, reflect.ValueOf(convertValue))
 		case reflect.Int:
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		case reflect.Int32:
@@ -156,16 +172,21 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 
 	r.callback.SetOperationID(r.arguments[0].String())
 	//strings.SplitAfter()
+	funcFieldsNum := typeFuncName.NumIn()
+	if funcFieldsNum > len(r.arguments) {
+		for len(r.arguments) < funcFieldsNum {
+			r.arguments = append(r.arguments, js.Value{})
+		}
+	}
 	for i := 0; i < len(r.arguments); i++ {
 		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
 		switch typeFuncName.In(i).Kind() {
 		case reflect.String:
-			convertValue := r.arguments[i].String()
-			if !strings.HasPrefix(convertValue, "<number: ") {
-				values = append(values, reflect.ValueOf(convertValue))
-			} else {
+			convertValue, ok := jsStringArg(r.arguments[i])
+			if !ok {
 				panic("input args type err index:" + utils.IntToString(i))
 			}
+			values = append(values, reflect.ValueOf(convertValue))
 		case reflect.Int:
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		case reflect.Int32:
@@ -229,6 +250,14 @@ func (r *ReflectCall) SyncCall() (result []interface{}) {
 		r.callback.SetOperationID(r.arguments[0].String())
 		values = append(values, reflect.ValueOf(r.callback))
 	}
+	funcFieldsNum := typeFuncName.NumIn()
+	needed := funcFieldsNum
+	if hasCallback {
+		needed = funcFieldsNum - 1
+	}
+	for len(r.arguments) < needed {
+		r.arguments = append(r.arguments, js.Value{})
+	}
 	for i := 0; i < len(r.arguments); i++ {
 		if hasCallback {
 			temp++
@@ -238,12 +267,11 @@ func (r *ReflectCall) SyncCall() (result []interface{}) {
 		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
 		switch typeFuncName.In(temp).Kind() {
 		case reflect.String:
-			convertValue := r.arguments[i].String()
-			if !strings.HasPrefix(convertValue, "<number: ") {
-				values = append(values, reflect.ValueOf(convertValue))
-			} else {
+			convertValue, ok := jsStringArg(r.arguments[i])
+			if !ok {
 				panic("input args type err index:" + utils.IntToString(i))
 			}
+			values = append(values, reflect.ValueOf(convertValue))
 		case reflect.Int:
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		case reflect.Int32:
