@@ -829,9 +829,10 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	if err != nil {
 		c.SetConnectionStatus(Closed)
 		if resp != nil {
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return true, err
+			body, readErr := io.ReadAll(resp.Body)
+			if readErr != nil {
+				c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())
+				return true, readErr
 			}
 			log.ZInfo(ctx, "reConn resp", "body", string(body))
 			var apiResp struct {
@@ -839,11 +840,14 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 				ErrMsg  string `json:"errMsg"`
 				ErrDlt  string `json:"errDlt"`
 			}
-			if err := json.Unmarshal(body, &apiResp); err != nil {
-				return true, err
+			if unmarshalErr := json.Unmarshal(body, &apiResp); unmarshalErr != nil {
+				c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())
+				return true, unmarshalErr
 			}
-			err = errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
-			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
+			codeErr := errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
+			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, codeErr)
+			// Expose the real server errCode to OnConnectFailed (WASM used to only get 10000).
+			c.listener().OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
 			switch apiResp.ErrCode {
 			case
 				errs.TokenExpiredError,
@@ -853,9 +857,9 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 				errs.TokenUnknownError,
 				errs.TokenNotExistError,
 				errs.TokenKickedError:
-				return false, err
+				return false, codeErr
 			default:
-				return true, err
+				return true, codeErr
 			}
 		}
 		c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())

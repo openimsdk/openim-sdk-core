@@ -180,6 +180,50 @@ func (w *JSWebSocket) ReadMessage() (int, []byte, error) {
 	}
 }
 
+// probeHandshakeError fetches the msg_gateway URL over plain HTTP.
+// Browser WebSocket upgrade failures do not expose the HTTP response body, so when
+// Dial fails we re-request the same query to recover OpenIM JSON errors like 1507.
+func probeHandshakeError(ctx context.Context, wsURL string) *http.Response {
+	u, err := url.Parse(wsURL)
+	if err != nil {
+		return nil
+	}
+	switch u.Scheme {
+	case "wss":
+		u.Scheme = "https"
+	case "ws":
+		u.Scheme = "http"
+	default:
+		return nil
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	if err != nil || len(body) == 0 {
+		return nil
+	}
+	var apiResp struct {
+		ErrCode int `json:"errCode"`
+	}
+	if err := json.Unmarshal(body, &apiResp); err != nil || apiResp.ErrCode == 0 {
+		return nil
+	}
+	log.ZInfo(ctx, "wasm ws dial failed, recovered handshake error body",
+		"errCode", apiResp.ErrCode, "status", resp.StatusCode)
+	return &http.Response{
+		StatusCode: resp.StatusCode,
+		Header:     resp.Header.Clone(),
+		Body:       io.NopCloser(bytes.NewReader(body)),
+	}
+}
+
 func (w *JSWebSocket) dial(ctx context.Context, urlStr string) (*websocket.Conn, *http.Response, error) {
 	u, err := url.Parse(urlStr)
 	if err != nil {
@@ -190,7 +234,11 @@ func (w *JSWebSocket) dial(ctx context.Context, urlStr string) (*websocket.Conn,
 	u.RawQuery = query.Encode()
 	conn, httpResp, err := websocket.Dial(ctx, u.String(), nil)
 	if err != nil {
-		return nil, nil, err
+		dialErr := fmt.Errorf("failed to WebSocket dial %q: %w", u.String(), err)
+		if probe := probeHandshakeError(ctx, u.String()); probe != nil {
+			return nil, probe, dialErr
+		}
+		return nil, nil, dialErr
 	}
 	if httpResp == nil {
 		httpResp = &http.Response{
@@ -208,6 +256,7 @@ func (w *JSWebSocket) dial(ctx context.Context, urlStr string) (*websocket.Conn,
 		ErrDlt  string `json:"errDlt"`
 	}
 	if err := json.Unmarshal(data, &apiResp); err != nil {
+		_ = conn.CloseNow()
 		return nil, nil, fmt.Errorf("unmarshal response error %w", err)
 	}
 	if apiResp.ErrCode == 0 {
@@ -215,7 +264,8 @@ func (w *JSWebSocket) dial(ctx context.Context, urlStr string) (*websocket.Conn,
 	}
 	log.ZDebug(ctx, "ws msg read resp", "data", string(data))
 	httpResp.Body = io.NopCloser(bytes.NewReader(data))
-	return conn, httpResp, fmt.Errorf("read response error %d %s %s",
+	_ = conn.CloseNow()
+	return nil, httpResp, fmt.Errorf("read response error %d %s %s",
 		apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt)
 }
 
