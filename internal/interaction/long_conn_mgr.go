@@ -210,7 +210,6 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 	}
 }
 
-
 // SendReqNoWait 向 websocket 写入一次请求后立即返回，不等待服务端回包。
 // 供 logout 尽力回收推送 token 时使用，避免调用方被阻塞。
 // 在 js/wasm（尤其 Safari）上等待 LogoutMsg 回包会卡死主线程。
@@ -668,6 +667,12 @@ func (c *LongConnMgr) close() error {
 		return nil
 	}
 	c.connStatus = Closed
+	// 被踢时网关侧通常已拆连；客户端再 Close 会触发 Safari/iOS「网络连接已中断」，
+	// 二次被踢时甚至卡死页面。只标记 Closed，不再调底层 websocket.Close。
+	if codeErr, ok := errs.Unwrap(c.closedErr).(errs.CodeError); ok && codeErr.Code() == errs.TokenKickedError {
+		log.ZWarn(c.ctx, "conn closed skip websocket Close after kick", c.closedErr)
+		return nil
+	}
 	log.ZWarn(c.ctx, "conn closed", c.closedErr)
 	return c.conn.Close()
 }

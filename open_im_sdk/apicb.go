@@ -49,10 +49,6 @@ func (c *apiErrCallback) OnError(ctx context.Context, err error) {
 		}
 
 	case errs.TokenKickedError:
-		if atomic.CompareAndSwapInt32(&c.kickedOfflineState, 0, 1) {
-			log.ZError(ctx, "OnKickedOffline callback", err)
-			c.listener().OnKickedOffline()
-			_ = common.DispatchLogout(ctx, c.loginMgrCh)
-		}
+		c.handleKickedOffline(ctx, err)
 	}
 }

@@ -52,8 +52,9 @@ type IndexDB struct {
 }
 
 func (i IndexDB) Close(ctx context.Context) error {
-	_, err := exec.Exec()
-	return err
+	// wasm 上等待 Worker close 会在踢线/页面跳转时卡住 Mobile Safari。
+	// 文档卸载或下次 initDB 会回收 Worker。
+	return nil
 }
 
 func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) error {
