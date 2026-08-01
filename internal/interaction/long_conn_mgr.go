@@ -210,6 +210,29 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 	}
 }
 
+
+// SendReqNoWait 向 websocket 写入一次请求后立即返回，不等待服务端回包。
+// 供 logout 尽力回收推送 token 时使用，避免调用方被阻塞。
+// 在 js/wasm（尤其 Safari）上等待 LogoutMsg 回包会卡死主线程。
+func (c *LongConnMgr) SendReqNoWait(ctx context.Context, m proto.Message, reqIdentifier int) error {
+	data, err := proto.Marshal(m)
+	if err != nil {
+		return sdkerrs.ErrArgs
+	}
+	req := GeneralWsReq{
+		ReqIdentifier: reqIdentifier,
+		SendID:        ccontext.Info(ctx).UserID(),
+		OperationID:   ccontext.Info(ctx).OperationID(),
+		MsgIncr:       utils.OperationIDGenerator(),
+		Data:          data,
+	}
+	if err := c.writeBinaryMsg(req); err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "send message without wait success", "msg", m, "reqIdentifier", reqIdentifier)
+	return nil
+}
+
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -544,6 +567,9 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 		select {
 		case resp := <-tempChan:
 			return resp, nil
+		case <-c.ctx.Done():
+			// logout/Exit 已取消：勿再傻等 sendAndWaitTime（默认 10s），否则 writePump 拖死收尾
+			return nil, sdkerrs.ErrCtxDeadline
 		case <-time.After(sendAndWaitTime):
 			return nil, sdkerrs.ErrNetworkTimeOut
 		}
