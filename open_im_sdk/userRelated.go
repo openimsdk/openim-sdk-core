@@ -479,13 +479,13 @@ func (u *UserContext) logout(ctx context.Context, isTokenValid bool) error {
 		isTokenValid = true
 	}
 	if !isTokenValid {
-		ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
-		defer cancel()
-		err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
+		// 尽力通知服务端回收推送 token，但不等待 LogoutMsg 回包。
+		// 原先 SendReqWaitResp 最长阻塞 20s；在 js/wasm（尤其 Safari）上会卡死主线程，甚至刷新无效。
+		err := u.longConnMgr.SendReqNoWait(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg)
 		if err != nil {
 			log.ZWarn(ctx, "TriggerCmdLogout server recycle resources failed...", err)
 		} else {
-			log.ZDebug(ctx, "TriggerCmdLogout server recycle resources success...")
+			log.ZDebug(ctx, "TriggerCmdLogout server recycle request sent...")
 		}
 	}
 	u.Exit()

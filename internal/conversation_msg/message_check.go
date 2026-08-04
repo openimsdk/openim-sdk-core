@@ -204,31 +204,46 @@ func getLostSeqListWithLimitLength(minSeq, maxSeq int64, haveSeqList []int64, is
 // 2. Check the continuity within a block.
 //
 // 3. Check the continuity between blocks.
+//
+// Large single pulls (esp. with notification payloads) can exceed browser WebSocket
+// frame limits on Safari and arrive truncated; pull in small batches.
 func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, conversationID string, seqList []int64,
 	isReverse bool, count int, startTime int64, list *[]*model_struct.LocalChatLog,
 	messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
-
-	var getSeqMessageResp msg.GetSeqMessageResp
-	var getSeqMessageReq msg.GetSeqMessageReq
-	getSeqMessageReq.UserID = c.loginUserID
-	var conversationSeqs msg.ConversationSeqs
-	conversationSeqs.ConversationID = conversationID
-	conversationSeqs.Seqs = seqList
-	getSeqMessageReq.Conversations = append(getSeqMessageReq.Conversations, &conversationSeqs)
-	if isReverse {
-		getSeqMessageReq.Order = sdkws.PullOrder_PullOrderAsc
-	} else {
-		getSeqMessageReq.Order = sdkws.PullOrder_PullOrderDesc
+	if len(seqList) == 0 {
+		return
 	}
-	log.ZDebug(ctx, "conversation pull message,  ", "req", getSeqMessageReq)
 	if startTime == 0 && !c.LongConnMgr.IsConnected() {
 		return
 	}
-	err := c.SendReqWaitResp(ctx, &getSeqMessageReq, constant.PullMsgBySeqList, &getSeqMessageResp)
-	if err != nil {
-		errHandle(seqList, list, err, messageListCallback)
-		log.ZWarn(ctx, "pull SendReqWaitResp failed", err, "req")
-	} else {
+
+	const pullSeqBatchSize = 8
+	for start := 0; start < len(seqList); start += pullSeqBatchSize {
+		end := start + pullSeqBatchSize
+		if end > len(seqList) {
+			end = len(seqList)
+		}
+		batch := seqList[start:end]
+
+		var getSeqMessageResp msg.GetSeqMessageResp
+		var getSeqMessageReq msg.GetSeqMessageReq
+		getSeqMessageReq.UserID = c.loginUserID
+		var conversationSeqs msg.ConversationSeqs
+		conversationSeqs.ConversationID = conversationID
+		conversationSeqs.Seqs = batch
+		getSeqMessageReq.Conversations = append(getSeqMessageReq.Conversations, &conversationSeqs)
+		if isReverse {
+			getSeqMessageReq.Order = sdkws.PullOrder_PullOrderAsc
+		} else {
+			getSeqMessageReq.Order = sdkws.PullOrder_PullOrderDesc
+		}
+		log.ZDebug(ctx, "conversation pull message", "req", getSeqMessageReq, "batch", len(batch), "offset", start)
+		err := c.SendReqWaitResp(ctx, &getSeqMessageReq, constant.PullMsgBySeqList, &getSeqMessageResp)
+		if err != nil {
+			errHandle(batch, list, err, messageListCallback)
+			log.ZWarn(ctx, "pull SendReqWaitResp failed", err, "req", getSeqMessageReq)
+			return
+		}
 		log.ZDebug(ctx, "syncMsgFromServerSplit pull msg", "resp", getSeqMessageResp)
 		if getSeqMessageResp.Msgs == nil {
 			log.ZWarn(ctx, "syncMsgFromServerSplit pull msg is null", errors.New("pull message is null"),
@@ -248,7 +263,6 @@ func (c *Conversation) fetchAndMergeMissingMessages(ctx context.Context, convers
 			}
 			*list = mergeSortedArrays(*list, localMessage, count, !isReverse)
 		}
-
 	}
 }
 

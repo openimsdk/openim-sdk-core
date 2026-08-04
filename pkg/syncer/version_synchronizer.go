@@ -100,6 +100,10 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 		if err != nil {
 			return err
 		}
+		// Full member sync often omits ExtraData in API response; apply when present.
+		if err := o.applyExtraData(extraData); err != nil {
+			return err
+		}
 	} else {
 		if len(delIDs) > 0 {
 			lvs.UIDList = datautil.DeleteElems(lvs.UIDList, delIDs...)
@@ -138,10 +142,8 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 		if err := o.Syncer(server, local); err != nil {
 			return err
 		}
-		if extraData != nil && o.ExtraDataProcessor != nil {
-			if err := o.ExtraDataProcessor(o.Ctx, extraData); err != nil {
-				return err
-			}
+		if err := o.applyExtraData(extraData); err != nil {
+			return err
 		}
 
 		// The ordering of fullID has changed due to modifications such as group role level changes or friend list reordering.
@@ -154,6 +156,14 @@ func (o *VersionSynchronizer[V, R]) IncrementalSync() error {
 		}
 	}
 	return o.updateVersionInfo(lvs, resp)
+}
+
+// applyExtraData applies notification/API side payload (e.g. group info) when present.
+func (o *VersionSynchronizer[V, R]) applyExtraData(extraData any) error {
+	if extraData == nil || o.ExtraDataProcessor == nil {
+		return nil
+	}
+	return o.ExtraDataProcessor(o.Ctx, extraData)
 }
 
 func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
@@ -185,7 +195,12 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	// it indicates that the data might have been tampered with or an exception has occurred.
 	//Trigger the complete client-server incremental synchronization.
 	if versionID != lvs.VersionID {
-		log.ZDebug(o.Ctx, "version id not match", errs.New("version id not match"), "versionID", versionID, "localVersionID", lvs.VersionID)
+		log.ZWarn(o.Ctx, "version id not match", errs.New("version id not match"), "versionID", versionID, "localVersionID", lvs.VersionID)
+		// Notification often carries ExtraData (e.g. group info) with empty VersionID.
+		// IncrementalSync(full) would drop it — apply before falling back.
+		if err := o.applyExtraData(extraData); err != nil {
+			return err
+		}
 		o.ServerVersion = nil
 		return o.IncrementalSync()
 	}
@@ -221,11 +236,8 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 		if err := o.Syncer(server, local); err != nil {
 			return err
 		}
-		if extraData != nil && o.ExtraDataProcessor != nil {
-			if err := o.ExtraDataProcessor(o.Ctx, extraData); err != nil {
-				return err
-			}
-
+		if err := o.applyExtraData(extraData); err != nil {
+			return err
 		}
 
 		// The ordering of fullID has changed due to modifications such as group role level changes or friend list reordering.
@@ -240,11 +252,15 @@ func (o *VersionSynchronizer[V, R]) CheckVersionSync() error {
 	} else if version <= lvs.Version {
 		log.ZWarn(o.Ctx, "version less than local version", errs.New("version less than local version"),
 			"table", o.TableName, "entityID", o.EntityID, "version", version, "localVersion", lvs.Version)
-		return nil
+		// Member version may be stale/0 while ExtraData still has group info to apply.
+		return o.applyExtraData(extraData)
 	} else {
 		// If the version number has a gap with the local version number,
 		//it indicates that some pushed data might be missing.
 		//Trigger the complete client-server incremental synchronization.
+		if err := o.applyExtraData(extraData); err != nil {
+			return err
+		}
 		o.ServerVersion = nil
 		return o.IncrementalSync()
 	}

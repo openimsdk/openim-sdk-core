@@ -210,6 +210,28 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 	}
 }
 
+// SendReqNoWait 向 websocket 写入一次请求后立即返回，不等待服务端回包。
+// 供 logout 尽力回收推送 token 时使用，避免调用方被阻塞。
+// 在 js/wasm（尤其 Safari）上等待 LogoutMsg 回包会卡死主线程。
+func (c *LongConnMgr) SendReqNoWait(ctx context.Context, m proto.Message, reqIdentifier int) error {
+	data, err := proto.Marshal(m)
+	if err != nil {
+		return sdkerrs.ErrArgs
+	}
+	req := GeneralWsReq{
+		ReqIdentifier: reqIdentifier,
+		SendID:        ccontext.Info(ctx).UserID(),
+		OperationID:   ccontext.Info(ctx).OperationID(),
+		MsgIncr:       utils.OperationIDGenerator(),
+		Data:          data,
+	}
+	if err := c.writeBinaryMsg(req); err != nil {
+		return err
+	}
+	log.ZDebug(ctx, "send message without wait success", "msg", m, "reqIdentifier", reqIdentifier)
+	return nil
+}
+
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -544,6 +566,9 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 		select {
 		case resp := <-tempChan:
 			return resp, nil
+		case <-c.ctx.Done():
+			// logout/Exit 已取消：勿再傻等 sendAndWaitTime（默认 10s），否则 writePump 拖死收尾
+			return nil, sdkerrs.ErrCtxDeadline
 		case <-time.After(sendAndWaitTime):
 			return nil, sdkerrs.ErrNetworkTimeOut
 		}
@@ -642,6 +667,12 @@ func (c *LongConnMgr) close() error {
 		return nil
 	}
 	c.connStatus = Closed
+	// 被踢时网关侧通常已拆连；客户端再 Close 会触发 Safari/iOS「网络连接已中断」，
+	// 二次被踢时甚至卡死页面。只标记 Closed，不再调底层 websocket.Close。
+	if codeErr, ok := errs.Unwrap(c.closedErr).(errs.CodeError); ok && codeErr.Code() == errs.TokenKickedError {
+		log.ZWarn(c.ctx, "conn closed skip websocket Close after kick", c.closedErr)
+		return nil
+	}
 	log.ZWarn(c.ctx, "conn closed", c.closedErr)
 	return c.conn.Close()
 }
@@ -829,9 +860,10 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 	if err != nil {
 		c.SetConnectionStatus(Closed)
 		if resp != nil {
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return true, err
+			body, readErr := io.ReadAll(resp.Body)
+			if readErr != nil {
+				c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())
+				return true, readErr
 			}
 			log.ZInfo(ctx, "reConn resp", "body", string(body))
 			var apiResp struct {
@@ -839,11 +871,14 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 				ErrMsg  string `json:"errMsg"`
 				ErrDlt  string `json:"errDlt"`
 			}
-			if err := json.Unmarshal(body, &apiResp); err != nil {
-				return true, err
+			if unmarshalErr := json.Unmarshal(body, &apiResp); unmarshalErr != nil {
+				c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())
+				return true, unmarshalErr
 			}
-			err = errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
-			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
+			codeErr := errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
+			ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, codeErr)
+			// Expose the real server errCode to OnConnectFailed (WASM used to only get 10000).
+			c.listener().OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
 			switch apiResp.ErrCode {
 			case
 				errs.TokenExpiredError,
@@ -853,9 +888,9 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 				errs.TokenUnknownError,
 				errs.TokenNotExistError,
 				errs.TokenKickedError:
-				return false, err
+				return false, codeErr
 			default:
-				return true, err
+				return true, codeErr
 			}
 		}
 		c.listener().OnConnectFailed(sdkerrs.NetworkError, err.Error())
