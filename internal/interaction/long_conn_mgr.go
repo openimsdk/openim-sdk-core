@@ -30,6 +30,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+
 	"github.com/openimsdk/tools/mcontext"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
@@ -839,18 +840,18 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) (needRecon bool, err
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return true, err
 	}
+	c.SetConnectionStatus(Connected)
 	if err := c.writeConnFirstSubMsg(ctx); err != nil {
 		log.ZError(ctx, "first write user online sub info error", err)
 		ccontext.GetApiErrCodeCallback(ctx).OnError(ctx, err)
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
-		c.conn.Close()
+		c.close()
 		return true, err
 	}
 	c.listener.OnConnectSuccess()
 	c.sub.onConnSuccess()
 	c.ctx = newContext(c.conn.LocalAddr())
 	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)
-	c.SetConnectionStatus(Connected)
 	c.conn.SetPongHandler(c.pongHandler)
 	c.conn.SetPingHandler(c.pingHandler)
 	*num++
