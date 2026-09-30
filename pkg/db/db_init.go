@@ -199,9 +199,8 @@ func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 		return err
 	}
 	if verModel.Version != version.Version {
-		switch version.Version {
-		case "3.8.0":
-			d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{})
+		if err := d.migrateToVersion(version.Version); err != nil {
+			return err
 		}
 		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
 		if err != nil {
@@ -210,4 +209,13 @@ func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (d *DataBase) migrateToVersion(targetVersion string) error {
+	switch targetVersion {
+	case "3.8.0":
+		return d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{})
+	default:
+		return nil
+	}
 }
