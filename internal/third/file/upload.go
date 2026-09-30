@@ -15,6 +15,7 @@
 package file
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/base64"
@@ -29,14 +30,20 @@ import (
 	"sync/atomic"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/protocol/third"
 	"github.com/openimsdk/tools/log"
 )
+
+const uploadPartConcurrency = 4
+const uploadMemoryBudget = 64 * 1024 * 1024
 
 type UploadFileReq struct {
 	Filepath    string `json:"filepath"`
@@ -44,6 +51,7 @@ type UploadFileReq struct {
 	ContentType string `json:"contentType"`
 	Cause       string `json:"cause"`
 	Uuid        string `json:"uuid"`
+	CancelID    string `json:"cancelID"`
 }
 
 type UploadFileResp struct {
@@ -61,7 +69,7 @@ type partInfo struct {
 }
 
 func NewFile() *File {
-	return &File{confLock: &sync.Mutex{}, mapLocker: &sync.Mutex{}, uploading: make(map[string]*lockInfo)}
+	return &File{confLock: &sync.Mutex{}, mapLocker: &sync.Mutex{}, uploading: make(map[string]*lockInfo), cancel: newCancelMap()}
 }
 
 type File struct {
@@ -71,6 +79,7 @@ type File struct {
 	partLimit   *third.PartLimitResp
 	mapLocker   sync.Locker
 	uploading   map[string]*lockInfo
+	cancel      *cancelMap
 }
 
 // SetDataBase sets the DataBase field in File struct
@@ -115,6 +124,11 @@ func (f *File) unlockHash(hash string) {
 }
 
 func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFileCallback) (*UploadFileResp, error) {
+	if req.CancelID != "" {
+		var cancel context.CancelFunc
+		ctx, cancel = f.cancel.WithCancel(ctx, req.CancelID)
+		defer cancel()
+	}
 	if cb == nil {
 		cb = emptyUploadCallback{}
 	}
@@ -177,47 +191,107 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 		return nil, fmt.Errorf("part fileSize not match, expect %d, got %d", partSize, uploadInfo.Resp.Upload.PartSize)
 	}
 	cb.UploadID(uploadInfo.Resp.Upload.UploadID)
+	uploaded := make([]bool, len(partSizes))
 	uploadedSize := fileSize
-	for i := 0; i < len(partSizes); i++ {
-		if !uploadInfo.Bitmap.Get(i) {
+	for i := range partSizes {
+		uploaded[i] = uploadInfo.Bitmap.Get(i)
+		if !uploaded[i] {
 			uploadedSize -= partSizes[i]
 		}
 	}
 	continueUpload := uploadedSize > 0
-	for i, currentPartSize := range partSizes {
+	storedSize := uploadedSize
+	streamed := uploadedSize
+	var dbLock, cbLock sync.Mutex
+	uploadPart := func(ctx context.Context, i int, currentPartSize int64, body io.Reader) error {
 		partNumber := int32(i + 1)
-		md5Reader := NewMd5Reader(io.LimitReader(file, currentPartSize))
-		if uploadInfo.Bitmap.Get(i) {
-			if _, err := io.Copy(io.Discard, md5Reader); err != nil {
-				return nil, err
-			}
-		} else {
-			reader := NewProgressReader(md5Reader, func(current int64) {
-				cb.UploadComplete(fileSize, uploadedSize+current, uploadedSize)
-			})
-			urlval, header, err := uploadInfo.GetPartSign(ctx, partNumber)
-			if err != nil {
-				return nil, err
-			}
-			if err := f.doPut(ctx, http.DefaultClient, urlval, header, reader, currentPartSize); err != nil {
-				log.ZError(ctx, "doPut", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", partNumber)
-				return nil, err
-			}
-			uploadedSize += currentPartSize
-			if uploadInfo.DBInfo != nil && uploadInfo.Bitmap != nil {
-				uploadInfo.Bitmap.Set(i)
-				uploadInfo.DBInfo.UploadInfo = base64.StdEncoding.EncodeToString(uploadInfo.Bitmap.Serialize())
-				if err := f.database.UpdateUpload(ctx, uploadInfo.DBInfo); err != nil {
-					log.ZError(ctx, "SetUploadPartPush", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", partNumber)
-				}
-			}
+		var lastReported int64
+		md5Reader := NewMd5Reader(body)
+		reader := NewProgressReader(md5Reader, func(current int64) {
+			total := atomic.AddInt64(&streamed, current-lastReported)
+			lastReported = current
+			cbLock.Lock()
+			cb.UploadComplete(fileSize, total, storedSize)
+			cbLock.Unlock()
+		})
+		urlval, header, err := uploadInfo.GetPartSign(ctx, partNumber)
+		if err != nil {
+			return err
 		}
-		md5val := md5Reader.Md5()
-		if md5val != partMd5s[i] {
-			return nil, fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
+		if err := f.doPut(ctx, network.GetHttpClient(), urlval, header, reader, currentPartSize); err != nil {
+			log.ZError(ctx, "doPut", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", partNumber)
+			return err
 		}
+		if md5val := md5Reader.Md5(); md5val != partMd5s[i] {
+			return fmt.Errorf("upload part %d failed, md5 not match, expect %s, got %s", i, partMd5s[i], md5val)
+		}
+		if uploadInfo.DBInfo != nil && uploadInfo.Bitmap != nil {
+			dbLock.Lock()
+			uploadInfo.Bitmap.Set(i)
+			uploadInfo.DBInfo.UploadInfo = base64.StdEncoding.EncodeToString(uploadInfo.Bitmap.Serialize())
+			if err := f.database.UpdateUpload(context.WithoutCancel(ctx), uploadInfo.DBInfo); err != nil {
+				log.ZError(ctx, "SetUploadPartPush", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", partNumber)
+			}
+			dbLock.Unlock()
+		}
+		cbLock.Lock()
 		cb.UploadPartComplete(i, currentPartSize, partMd5s[i])
-		log.ZDebug(ctx, "upload part success", "partMd5Val", md5val, "name", req.Name, "partNumber", partNumber)
+		cbLock.Unlock()
+		log.ZDebug(ctx, "upload part success", "partMd5Val", partMd5s[i], "name", req.Name, "partNumber", partNumber)
+		return nil
+	}
+	concurrency := int(uploadMemoryBudget/partSize) - 1
+	if concurrency > uploadPartConcurrency {
+		concurrency = uploadPartConcurrency
+	}
+	log.ZDebug(ctx, "upload part concurrency", "concurrency", concurrency)
+	if concurrency < 2 {
+		for i, currentPartSize := range partSizes {
+			if uploaded[i] {
+				if _, err := io.CopyN(io.Discard, file, currentPartSize); err != nil {
+					return nil, err
+				}
+				cb.UploadPartComplete(i, currentPartSize, partMd5s[i])
+				continue
+			}
+			if err := uploadPart(ctx, i, currentPartSize, io.LimitReader(file, currentPartSize)); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		g, gctx := errgroup.WithContext(ctx)
+		g.SetLimit(concurrency)
+		var produceErr error
+		for i, currentPartSize := range partSizes {
+			if gctx.Err() != nil {
+				break
+			}
+			if uploaded[i] {
+				if _, err := io.CopyN(io.Discard, file, currentPartSize); err != nil {
+					produceErr = err
+					break
+				}
+				cbLock.Lock()
+				cb.UploadPartComplete(i, currentPartSize, partMd5s[i])
+				cbLock.Unlock()
+				continue
+			}
+			buf := make([]byte, currentPartSize)
+			if _, err := io.ReadFull(file, buf); err != nil {
+				produceErr = err
+				break
+			}
+			i, currentPartSize, buf := i, currentPartSize, buf
+			g.Go(func() error {
+				return uploadPart(gctx, i, currentPartSize, bytes.NewReader(buf))
+			})
+		}
+		if err := g.Wait(); err != nil {
+			return nil, err
+		}
+		if produceErr != nil {
+			return nil, produceErr
+		}
 	}
 	log.ZDebug(ctx, "upload all part success", "partHash", partMd5Val, "name", req.Name)
 	resp, err := f.completeMultipartUpload(ctx, &third.CompleteMultipartUploadReq{
@@ -340,6 +414,7 @@ type UploadInfo struct {
 	CreateTime   time.Time
 	BatchSignNum int32
 	f            *File
+	signLock     sync.Mutex
 }
 
 func (u *UploadInfo) getIndex(partNumber int32) int {
@@ -401,6 +476,8 @@ func (u *UploadInfo) GetPartSign(ctx context.Context, partNumber int32) (*url.UR
 	if partNumber < 1 || int(partNumber) > u.PartNum {
 		return nil, nil, errors.New("invalid partNumber")
 	}
+	u.signLock.Lock()
+	defer u.signLock.Unlock()
 	if index := u.getIndex(partNumber); index >= 0 {
 		return u.buildRequest(index)
 	}
@@ -564,17 +641,25 @@ func (f *File) getPartInfo(ctx context.Context, r io.Reader, fileSize int64, cb 
 	var contentType string
 	for i := 0; i < partNum; i++ {
 		h := md5.New()
-		r := io.LimitReader(r, partSize)
+		r := io.LimitReader(r, partSizes[i])
 		for {
-			if n, err := r.Read(buf); err == nil {
+			select {
+			case <-ctx.Done():
+				return nil, context.Cause(ctx)
+			default:
+			}
+			n, err := r.Read(buf)
+			if n > 0 {
 				if contentType == "" {
 					contentType = http.DetectContentType(buf[:n])
 				}
 				h.Write(buf[:n])
 				fileMd5.Write(buf[:n])
-			} else if err == io.EOF {
+			}
+			if err == io.EOF {
 				break
-			} else {
+			}
+			if err != nil {
 				return nil, err
 			}
 		}
