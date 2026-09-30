@@ -1,6 +1,7 @@
 package third
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,7 +69,7 @@ func TestName(t *testing.T) {
 		//filepath.Join(dir, "open-im-sdk-core.2023-11-17"),
 	}
 
-	if err := zipFiles(filepath.Join(dir, "test1.zip"), files); err != nil {
+	if err := zipFiles(context.Background(), filepath.Join(dir, "test1.zip"), files); err != nil {
 		t.Error(err)
 	}
 }

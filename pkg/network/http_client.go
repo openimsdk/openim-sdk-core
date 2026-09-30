@@ -19,6 +19,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,17 +35,17 @@ import (
 	"github.com/openimsdk/tools/log"
 )
 
-// apiClient is a global HTTP client with a timeout of one minute.
-var apiClient = &http.Client{
-	Timeout: time.Second * 10,
-}
-
 // ApiResponse represents the standard structure of an API response.
 type ApiResponse struct {
 	ErrCode int             `json:"errCode"`
 	ErrMsg  string          `json:"errMsg"`
 	ErrDlt  string          `json:"errDlt"`
 	Data    json.RawMessage `json:"data"`
+}
+
+func isCodeErr(err error) bool {
+	var codeErr errs.CodeError
+	return errors.As(err, &codeErr)
 }
 
 // ApiPost performs an HTTP POST request to a specified API endpoint.
@@ -89,6 +90,9 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, reqUrl, bytes.NewReader(reqBody))
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "http.NewRequestWithContext failed")
+		if isCodeErr(err) {
+			return err
+		}
 		return sdkerrs.ErrSdkInternal.WrapMsg("sdk http.NewRequestWithContext failed " + err.Error())
 	}
 
@@ -101,9 +105,12 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request.Header.Set("Accept-Encoding", "gzip")
 
 	// Send the request and receive the response.
-	response, err := apiClient.Do(request)
+	response, err := GetHttpClient().Do(request)
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "network error")
+		if isCodeErr(err) {
+			return err
+		}
 		return sdkerrs.ErrNetwork.WrapMsg("ApiPost http.Client.Do failed " + err.Error())
 	}
 
@@ -129,6 +136,9 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	respBody, err := io.ReadAll(body)
 	if err != nil {
 		log.ZError(ctx, "ApiResponse", err, "type", "read body", "status", response.Status)
+		if isCodeErr(err) {
+			return err
+		}
 		return sdkerrs.ErrSdkInternal.WrapMsg("io.ReadAll(ApiResponse) failed " + err.Error())
 	}
 
