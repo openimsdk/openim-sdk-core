@@ -215,6 +215,9 @@ func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		if err = d.ensureConversationIndexes(ctx); err != nil {
+			return err
+		}
 		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
 		if err != nil {
 			return err
@@ -227,13 +230,33 @@ func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 	if verModel.Version != version.Version {
 		switch version.Version {
 		case "3.8.0":
-			d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{})
+			if err = d.conn.AutoMigrate(&model_struct.LocalAppSDKVersion{}); err != nil {
+				return err
+			}
+		}
+		if err = d.ensureConversationIndexes(ctx); err != nil {
+			return err
 		}
 		err = d.SetAppSDKVersion(ctx, &model_struct.LocalAppSDKVersion{Version: version.Version})
 		if err != nil {
 			return err
 		}
+		return nil
 	}
 
+	return nil
+}
+
+func (d *DataBase) ensureConversationIndexes(ctx context.Context) error {
+	statements := []string{
+		"CREATE INDEX IF NOT EXISTS idx_local_conversations_visible_order ON " +
+			"local_conversations (is_pinned DESC, MAX(latest_msg_send_time,draft_text_time) " +
+			"DESC, conversation_id ASC) WHERE latest_msg_send_time > 0",
+	}
+	for _, statement := range statements {
+		if err := d.conn.WithContext(ctx).Exec(statement).Error; err != nil {
+			return errs.WrapMsg(err, "ensure conversation indexes failed", "sql", statement)
+		}
+	}
 	return nil
 }
