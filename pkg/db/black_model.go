@@ -26,29 +26,29 @@ import (
 )
 
 func (d *DataBase) GetBlackListDB(ctx context.Context) ([]*model_struct.LocalBlack, error) {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var blackList []*model_struct.LocalBlack
 	return blackList, errs.Wrap(d.conn.WithContext(ctx).Find(&blackList).Error)
 }
 
 func (d *DataBase) GetBlackListUserID(ctx context.Context) (blackListUid []string, err error) {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	return blackListUid, errs.WrapMsg(d.conn.WithContext(ctx).Model(&model_struct.LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "GetBlackList failed")
 }
 
 func (d *DataBase) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string) (*model_struct.LocalBlack, error) {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var black model_struct.LocalBlack
 	return &black, errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id = ? AND block_user_id = ? ",
 		d.loginUserID, blockUserID).Take(&black).Error, "GetBlackInfoByBlockUserID failed")
 }
 
 func (d *DataBase) GetBlackInfoList(ctx context.Context, blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var blackList []*model_struct.LocalBlack
 	if err := d.conn.WithContext(ctx).Where("block_user_id IN ? ", blockUserIDList).Find(&blackList).Error; err != nil {
 		return nil, errs.WrapMsg(err, "GetBlackInfoList failed")
@@ -57,14 +57,14 @@ func (d *DataBase) GetBlackInfoList(ctx context.Context, blockUserIDList []strin
 }
 
 func (d *DataBase) InsertBlack(ctx context.Context, black *model_struct.LocalBlack) error {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Create(black).Error, "InsertBlack failed")
 }
 
 func (d *DataBase) UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) error {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	t := d.conn.WithContext(ctx).Updates(black)
 	if t.RowsAffected == 0 {
 		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
@@ -73,7 +73,7 @@ func (d *DataBase) UpdateBlack(ctx context.Context, black *model_struct.LocalBla
 }
 
 func (d *DataBase) DeleteBlack(ctx context.Context, blockUserID string) error {
-	d.friendMtx.Lock()
-	defer d.friendMtx.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Where("owner_user_id=? and block_user_id=?", d.loginUserID, blockUserID).Delete(&model_struct.LocalBlack{}).Error, "DeleteBlack failed")
 }

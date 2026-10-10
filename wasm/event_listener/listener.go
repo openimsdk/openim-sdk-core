@@ -20,7 +20,7 @@ package event_listener
 import (
 	"syscall/js"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/file"
+	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -166,7 +166,15 @@ func (a AdvancedMsgCallback) OnMsgDeleted(message string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }
 
+func (a AdvancedMsgCallback) OnMessageModified(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
+}
+
 func (a AdvancedMsgCallback) OnRecvOnlineOnlyMessage(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnMsgEdited(message string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }
 
@@ -300,21 +308,6 @@ func (u *UploadFileCallback) Complete(size int64, url string, typ int) {
 	u.globalEvent.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(mReply)).SendMessage()
 }
 
-type BatchMessageCallback struct {
-	CallbackWriter
-}
-
-func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
-	return &BatchMessageCallback{CallbackWriter: NewEventData(callback)}
-}
-
-func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
-	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
-}
-func (b *BatchMessageCallback) OnRecvOfflineNewMessages(messageList string) {
-	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
-}
-
 type FriendCallback struct {
 	CallbackWriter
 }
@@ -415,15 +408,6 @@ func NewUserCallback(callback *js.Value) *UserCallback {
 	return &UserCallback{CallbackWriter: NewEventData(callback)}
 }
 func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
-	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
-}
-func (u UserCallback) OnUserCommandAdd(userInfo string) {
-	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
-}
-func (u UserCallback) OnUserCommandDelete(userInfo string) {
-	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
-}
-func (u UserCallback) OnUserCommandUpdate(userInfo string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
 }
 

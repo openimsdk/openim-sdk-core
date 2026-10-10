@@ -4,6 +4,7 @@ components
 logs
 out-test
 *.db
+open-im-sdk-core.*
 
 ### Backup ###
 *.bak
@@ -55,7 +56,6 @@ deploy/Open-IM-SDK-Core
 # Dependency directories (remove the comment below to include it)
 vendor/
 bin/
-tools/
 tmp/
 
 
@@ -170,3 +170,6 @@ fabric.properties
 # CodeStream plugin
 # https://plugins.jetbrains.com/plugin/12206-codestream
 .idea/codestream.xml
+
+# Mac Desktop Services Store
+.DS_Store

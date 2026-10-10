@@ -16,6 +16,7 @@ package ccontext
 
 import (
 	"context"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -23,15 +24,21 @@ import (
 	"github.com/openimsdk/tools/mcontext"
 )
 
+type ctxKey string
+
 const (
-	Callback = "callback"
+	CtxCallback ctxKey = "callback"
+)
+
+const (
+	CtxApiToken ctxKey = "api-token"
 )
 
 type GlobalConfig struct {
 	UserID string
 	Token  string
 
-	sdk_struct.IMConfig
+	*sdk_struct.IMConfig
 }
 
 type ContextInfo interface {
@@ -43,7 +50,6 @@ type ContextInfo interface {
 	DataDir() string
 	LogLevel() uint32
 	OperationID() string
-	IsExternalExtensions() bool
 }
 
 func Info(ctx context.Context) ContextInfo {
@@ -62,7 +68,7 @@ func WithOperationID(ctx context.Context, operationID string) context.Context {
 	return mcontext.SetOperationID(ctx, operationID)
 }
 func WithSendMessageCallback(ctx context.Context, callback open_im_sdk_callback.SendMsgCallBack) context.Context {
-	return context.WithValue(ctx, Callback, callback)
+	return context.WithValue(ctx, CtxCallback, callback)
 }
 
 func WithApiErrCode(ctx context.Context, cb ApiErrCodeCallback) context.Context {
@@ -116,10 +122,6 @@ func (i *info) OperationID() string {
 	return mcontext.GetOperationID(i.ctx)
 }
 
-func (i *info) IsExternalExtensions() bool {
-	return i.conf.IsExternalExtensions
-}
-
 type apiErrCode struct{}
 
 type ApiErrCodeCallback interface {
@@ -129,3 +131,31 @@ type ApiErrCodeCallback interface {
 type emptyApiErrCodeCallback struct{}
 
 func (e *emptyApiErrCodeCallback) OnError(ctx context.Context, err error) {}
+
+type sendOrderKey struct{}
+
+type SendOrderLane int
+
+const (
+	SendOrderLaneText SendOrderLane = iota + 1
+	SendOrderLaneMedia
+)
+
+type SendOrderInfo struct {
+	Lane     SendOrderLane
+	Ordered  bool
+	Seq      int64
+	Deadline time.Time
+}
+
+func WithSendOrderInfo(ctx context.Context, info *SendOrderInfo) context.Context {
+	if info == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, sendOrderKey{}, info)
+}
+
+func GetSendOrderInfo(ctx context.Context) (*SendOrderInfo, bool) {
+	info, ok := ctx.Value(sendOrderKey{}).(*SendOrderInfo)
+	return info, ok
+}

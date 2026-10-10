@@ -15,6 +15,7 @@
 package sdk_struct
 
 import (
+	"github.com/openimsdk/protocol/msg"
 	"github.com/openimsdk/protocol/sdkws"
 )
 
@@ -202,45 +203,45 @@ type TypingElem struct {
 }
 
 type MsgStruct struct {
-	ClientMsgID          string                 `json:"clientMsgID,omitempty"`
-	ServerMsgID          string                 `json:"serverMsgID,omitempty"`
-	CreateTime           int64                  `json:"createTime"`
-	SendTime             int64                  `json:"sendTime"`
-	SessionType          int32                  `json:"sessionType"`
-	SendID               string                 `json:"sendID,omitempty"`
-	RecvID               string                 `json:"recvID,omitempty"`
-	MsgFrom              int32                  `json:"msgFrom"`
-	ContentType          int32                  `json:"contentType"`
-	SenderPlatformID     int32                  `json:"senderPlatformID"`
-	SenderNickname       string                 `json:"senderNickname,omitempty"`
-	SenderFaceURL        string                 `json:"senderFaceUrl,omitempty"`
-	GroupID              string                 `json:"groupID,omitempty"`
-	Content              string                 `json:"content,omitempty"`
-	Seq                  int64                  `json:"seq"`
-	IsRead               bool                   `json:"isRead"`
-	Status               int32                  `json:"status"`
-	IsReact              bool                   `json:"isReact,omitempty"`
-	IsExternalExtensions bool                   `json:"isExternalExtensions,omitempty"`
-	OfflinePush          *sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
-	AttachedInfo         string                 `json:"attachedInfo,omitempty"`
-	Ex                   string                 `json:"ex,omitempty"`
-	LocalEx              string                 `json:"localEx,omitempty"`
-	TextElem             *TextElem              `json:"textElem,omitempty"`
-	CardElem             *CardElem              `json:"cardElem,omitempty"`
-	PictureElem          *PictureElem           `json:"pictureElem,omitempty"`
-	SoundElem            *SoundElem             `json:"soundElem,omitempty"`
-	VideoElem            *VideoElem             `json:"videoElem,omitempty"`
-	FileElem             *FileElem              `json:"fileElem,omitempty"`
-	MergeElem            *MergeElem             `json:"mergeElem,omitempty"`
-	AtTextElem           *AtTextElem            `json:"atTextElem,omitempty"`
-	FaceElem             *FaceElem              `json:"faceElem,omitempty"`
-	LocationElem         *LocationElem          `json:"locationElem,omitempty"`
-	CustomElem           *CustomElem            `json:"customElem,omitempty"`
-	QuoteElem            *QuoteElem             `json:"quoteElem,omitempty"`
-	NotificationElem     *NotificationElem      `json:"notificationElem,omitempty"`
-	AdvancedTextElem     *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
-	TypingElem           *TypingElem            `json:"typingElem,omitempty"`
-	AttachedInfoElem     *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
+	ClientMsgID      string                 `json:"clientMsgID,omitempty"`
+	ServerMsgID      string                 `json:"serverMsgID,omitempty"`
+	CreateTime       int64                  `json:"createTime"`
+	SendTime         int64                  `json:"sendTime"`
+	SessionType      int32                  `json:"sessionType"`
+	SendID           string                 `json:"sendID,omitempty"`
+	RecvID           string                 `json:"recvID,omitempty"`
+	MsgFrom          int32                  `json:"msgFrom"`
+	ContentType      int32                  `json:"contentType"`
+	SenderPlatformID int32                  `json:"senderPlatformID"`
+	SenderNickname   string                 `json:"senderNickname,omitempty"`
+	SenderFaceURL    string                 `json:"senderFaceUrl,omitempty"`
+	GroupID          string                 `json:"groupID,omitempty"`
+	Content          string                 `json:"content,omitempty"`
+	Seq              int64                  `json:"seq"`
+	IsRead           bool                   `json:"isRead"`
+	Status           int32                  `json:"status"`
+	OfflinePush      *sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo     string                 `json:"attachedInfo,omitempty"`
+	Ex               string                 `json:"ex,omitempty"`
+	LocalEx          string                 `json:"localEx,omitempty"`
+	TextElem         *TextElem              `json:"textElem,omitempty"`
+	CardElem         *CardElem              `json:"cardElem,omitempty"`
+	PictureElem      *PictureElem           `json:"pictureElem,omitempty"`
+	SoundElem        *SoundElem             `json:"soundElem,omitempty"`
+	VideoElem        *VideoElem             `json:"videoElem,omitempty"`
+	FileElem         *FileElem              `json:"fileElem,omitempty"`
+	MergeElem        *MergeElem             `json:"mergeElem,omitempty"`
+	AtTextElem       *AtTextElem            `json:"atTextElem,omitempty"`
+	FaceElem         *FaceElem              `json:"faceElem,omitempty"`
+	LocationElem     *LocationElem          `json:"locationElem,omitempty"`
+	CustomElem       *CustomElem            `json:"customElem,omitempty"`
+	QuoteElem        *QuoteElem             `json:"quoteElem,omitempty"`
+	NotificationElem *NotificationElem      `json:"notificationElem,omitempty"`
+	AdvancedTextElem *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
+	TypingElem       *TypingElem            `json:"typingElem,omitempty"`
+	AttachedInfoElem *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
+	MarkdownTextElem *MarkdownTextElem      `json:"markdownTextElem,omitempty"`
+	StreamElem       *StreamElem            `json:"streamElem,omitempty"`
 }
 
 type AtInfo struct {
@@ -256,7 +257,21 @@ type AttachedInfoElem struct {
 	IsEncryption      bool             `json:"isEncryption"`
 	InEncryptStatus   bool             `json:"inEncryptStatus"`
 	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
-	Progress *UploadProgress `json:"uploadProgress,omitempty"`
+	Progress     *UploadProgress `json:"uploadProgress,omitempty"`
+	LastModified *LastModified   `json:"lastModified,omitempty"`
+}
+
+type LastModified struct {
+	UserID        string `json:"userID"`
+	ModifiedTime  int64  `json:"modifiedTime"`
+	ModifiedCount int64  `json:"modifiedCount"`
+}
+
+type StreamElem struct {
+	Type    string   `json:"type"`
+	Content string   `json:"content"`
+	Packets []string `json:"packets"`
+	End     bool     `json:"end"`
 }
 
 type UploadProgress struct {
@@ -308,59 +323,44 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
-	SystemType           string `json:"systemType"`
-	PlatformID           int32  `json:"platformID"`
-	ApiAddr              string `json:"apiAddr"`
-	WsAddr               string `json:"wsAddr"`
-	DataDir              string `json:"dataDir"`
-	LogLevel             uint32 `json:"logLevel"`
-	IsLogStandardOutput  bool   `json:"isLogStandardOutput"`
-	LogFilePath          string `json:"logFilePath"`
-	IsExternalExtensions bool   `json:"isExternalExtensions"`
+	SystemType          string `json:"systemType"`
+	PlatformID          int32  `json:"platformID"`
+	ApiAddr             string `json:"apiAddr"`
+	WsAddr              string `json:"wsAddr"`
+	DataDir             string `json:"dataDir"`
+	LogLevel            uint32 `json:"logLevel"`
+	IsLogStandardOutput bool   `json:"isLogStandardOutput"`
+	LogFilePath         string `json:"logFilePath"`
+	LogRemainCount      uint32 `json:"logRemainCount"`
+	// StopGoroutineOnBackground
+	// Whether to automatically stop goroutines in the background to prevent iOS watchdog issues
+	StopGoroutineOnBackground bool `json:"stopGoroutineOnBackground"`
 }
 
 type CmdNewMsgComeToConversation struct {
 	Msgs     map[string]*sdkws.PullMsgs
+	Seqs     map[string]*msg.Seqs
 	SyncFlag int
 }
 
-type CmdPushMsgToMsgSync struct {
-	Msgs []*sdkws.PushMessages
+type CmdMsgSyncInReinstall struct {
+	Msgs  map[string]*sdkws.PullMsgs
+	Total int
 }
 
-type CmdMaxSeqToMsgSync struct {
-	ConversationMaxSeqOnSvr map[string]int64
+type BasicInfo struct {
+	Nickname string
+	FaceURL  string
 }
 
-type CmdJoinedSuperGroup struct {
-	OperationID string
+type PublicUser struct {
+	UserID     string `json:"userID"`
+	Nickname   string `json:"nickname"`
+	FaceURL    string `json:"faceURL"`
+	Ex         string `json:"ex"`
+	CreateTime int64  `json:"createTime"`
 }
 
-type OANotificationElem struct {
-	NotificationName    string `mapstructure:"notificationName" validate:"required"`
-	NotificationFaceURL string `mapstructure:"notificationFaceURL" validate:"required"`
-	NotificationType    int32  `mapstructure:"notificationType" validate:"required"`
-	Text                string `mapstructure:"text" validate:"required"`
-	Url                 string `mapstructure:"url"`
-	MixType             int32  `mapstructure:"mixType"`
-	Image               struct {
-		SourceUrl   string `mapstructure:"sourceURL"`
-		SnapshotUrl string `mapstructure:"snapshotURL"`
-	} `mapstructure:"image"`
-	Video struct {
-		SourceUrl   string `mapstructure:"sourceURL"`
-		SnapshotUrl string `mapstructure:"snapshotURL"`
-		Duration    int64  `mapstructure:"duration"`
-	} `mapstructure:"video"`
-	File struct {
-		SourceUrl string `mapstructure:"sourceURL"`
-		FileName  string `mapstructure:"fileName"`
-		FileSize  int64  `mapstructure:"fileSize"`
-	} `mapstructure:"file"`
-	Ex string `mapstructure:"ex"`
-}
-type MsgDeleteNotificationElem struct {
-	GroupID     string   `json:"groupID"`
-	IsAllDelete bool     `json:"isAllDelete"`
-	SeqList     []string `json:"seqList"`
+type MarkdownTextElem struct {
+	Content string `json:"content"`
 }

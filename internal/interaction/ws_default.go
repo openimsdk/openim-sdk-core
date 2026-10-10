@@ -17,6 +17,9 @@
 package interaction
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -38,9 +41,7 @@ func (d *Default) SetWriteDeadline(timeout time.Duration) error {
 }
 
 func (d *Default) SetReadLimit(limit int64) {
-	if !d.isSetConf {
-		d.conn.SetReadLimit(limit)
-	}
+	d.conn.SetReadLimit(limit)
 
 }
 
@@ -49,10 +50,7 @@ func (d *Default) SetPingHandler(handler PingPongHandler) {
 }
 
 func (d *Default) SetPongHandler(handler PingPongHandler) {
-	if !d.isSetConf {
-		d.conn.SetPongHandler(handler)
-		d.isSetConf = true
-	}
+	d.conn.SetPongHandler(handler)
 }
 
 func (d *Default) LocalAddr() string {
@@ -74,8 +72,13 @@ func (d *Default) ReadMessage() (int, []byte, error) {
 	return d.conn.ReadMessage()
 }
 
-func (d *Default) Dial(urlStr string, requestHeader http.Header) (*http.Response, error) {
-	conn, httpResp, err := websocket.DefaultDialer.Dial(urlStr, requestHeader)
+func (d *Default) Dial(urlStr string, req map[string]any) (*http.Response, error) {
+	reqData, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	rawURL := fmt.Sprintf("%s?v=%s", urlStr, base64.RawURLEncoding.EncodeToString(reqData))
+	conn, httpResp, err := websocket.DefaultDialer.Dial(rawURL, nil)
 	if err == nil {
 		d.conn = conn
 	}

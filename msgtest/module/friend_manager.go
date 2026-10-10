@@ -1,7 +1,7 @@
 package module
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/protocol/relation"
 )
 
@@ -14,5 +14,5 @@ func (t *TestFriendManager) ImportFriends(ownerUserID string, friendUserIDs []st
 		OwnerUserID:   ownerUserID,
 		FriendUserIDs: friendUserIDs,
 	}
-	return t.postWithCtx(constant.ImportFriendListRouter, &req, nil)
+	return t.postWithCtx(api.ImportFriendList.Route(), &req, nil)
 }

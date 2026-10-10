@@ -50,11 +50,11 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
 			case string:
-				err = utils.Wrap(errors.New(x), "")
+				err = errs.WrapMsg(errors.New(x), "")
 			case error:
 				err = x
 			default:
-				err = utils.Wrap(errors.New("unknown panic"), "")
+				err = errs.WrapMsg(errors.New("unknown panic"), "")
 			}
 		}
 	}()
@@ -70,11 +70,11 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			if r := recover(); r != nil {
 				switch x := r.(type) {
 				case string:
-					err = utils.Wrap(errors.New(x), "")
+					err = errs.WrapMsg(errors.New(x), "")
 				case error:
 					err = x
 				default:
-					err = utils.Wrap(errors.New("unknown panic"), "")
+					err = errs.WrapMsg(errors.New("unknown panic"), "")
 				}
 			}
 		}()
@@ -89,11 +89,11 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			if r := recover(); r != nil {
 				switch x := r.(type) {
 				case string:
-					err = utils.Wrap(errors.New(x), "")
+					err = errs.WrapMsg(errors.New(x), "")
 				case error:
 					err = x
 				default:
-					err = utils.Wrap(errors.New("unknown panic"), "")
+					err = errs.WrapMsg(errors.New("unknown panic"), "")
 				}
 			}
 		}()
@@ -110,7 +110,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			case js.TypeString:
 				interErr := utils.JsonStringToStruct(result[0].String(), &data)
 				if interErr != nil {
-					err = utils.Wrap(err, "return json unmarshal err from javascript")
+					err = errs.WrapMsg(err, "return json unmarshal err from javascript")
 				}
 			case js.TypeObject:
 				return result[0], nil

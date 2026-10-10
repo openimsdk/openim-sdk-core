@@ -15,45 +15,43 @@
 package sdk_params_callback
 
 import (
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 )
 
-type FindMessageListParams []*ConversationArgs
 type ConversationArgs struct {
 	ConversationID  string   `json:"conversationID"`
 	ClientMsgIDList []string `json:"clientMsgIDList"`
 }
+
 type FindMessageListCallback struct {
 	TotalCount      int                           `json:"totalCount"`
 	FindResultItems []*SearchByConversationResult `json:"findResultItems"`
 }
-type GetHistoryMessageListParams struct {
-	UserID           string `json:"userID"`
-	GroupID          string `json:"groupID"`
-	ConversationID   string `json:"conversationID"`
-	StartClientMsgID string `json:"startClientMsgID"`
-	Count            int    `json:"count"`
-}
-type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
+
 type GetAdvancedHistoryMessageListParams struct {
-	LastMinSeq       int64  `json:"lastMinSeq"`
 	ConversationID   string `json:"conversationID"`
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
+	ViewType         int    `json:"viewType"`
 }
+
 type GetAdvancedHistoryMessageListCallback struct {
 	MessageList []*sdk_struct.MsgStruct `json:"messageList"`
-	LastMinSeq  int64                   `json:"lastMinSeq"`
 	IsEnd       bool                    `json:"isEnd"`
 	ErrCode     int32                   `json:"errCode"`
 	ErrMsg      string                  `json:"errMsg"`
 }
 
-type SetConversationStatusParams struct {
-	UserId string `json:"userID" validate:"required"`
-	Status int    `json:"status" validate:"required"`
+type FetchSurroundingMessagesReq struct {
+	StartMessage *sdk_struct.MsgStruct `json:"startMessage"`
+	ViewType     int                   `json:"viewType"`
+	Before       int                   `json:"before"`
+	After        int                   `json:"after"`
 }
+type FetchSurroundingMessagesResp struct {
+	MessageList []*sdk_struct.MsgStruct `json:"messageList"`
+}
+
 type SearchLocalMessagesParams struct {
 	ConversationID       string   `json:"conversationID"`
 	KeywordList          []string `json:"keywordList"`
@@ -65,10 +63,12 @@ type SearchLocalMessagesParams struct {
 	PageIndex            int      `json:"pageIndex"`
 	Count                int      `json:"count"`
 }
+
 type SearchLocalMessagesCallback struct {
 	TotalCount        int                           `json:"totalCount"`
 	SearchResultItems []*SearchByConversationResult `json:"searchResultItems"`
 }
+
 type SearchByConversationResult struct {
 	ConversationID    string                  `json:"conversationID"`
 	ConversationType  int32                   `json:"conversationType"`
@@ -77,44 +77,4 @@ type SearchByConversationResult struct {
 	LatestMsgSendTime int64                   `json:"latestMsgSendTime,omitempty"`
 	MessageCount      int                     `json:"messageCount"`
 	MessageList       []*sdk_struct.MsgStruct `json:"messageList"`
-}
-type SetMessageReactionExtensionsParams []*server_api_params.KeyValue
-
-type SetMessageReactionExtensionsCallback struct {
-	Key     string `json:"key" validate:"required"`
-	Value   string `json:"value" validate:"required"`
-	ErrCode int32  `json:"errCode"`
-	ErrMsg  string `json:"errMsg"`
-}
-
-type AddMessageReactionExtensionsParams []*server_api_params.KeyValue
-
-type AddMessageReactionExtensionsCallback struct {
-	Key     string `json:"key" validate:"required"`
-	Value   string `json:"value" validate:"required"`
-	ErrCode int32  `json:"errCode"`
-	ErrMsg  string `json:"errMsg"`
-}
-type DeleteMessageReactionExtensionsParams []string
-
-type GetTypekeyListResp struct {
-	TypeKeyInfoList []*SingleTypeKeyInfoSum `json:"TypeKeyListInfo"`
-}
-type SingleTypeKeyInfoSum struct {
-	TypeKey       string  `json:"typeKey"`
-	Counter       int64   `json:"counter"`
-	InfoList      []*Info `json:"infoList"`
-	IsContainSelf bool    `json:"isContainSelf"`
-}
-
-type SingleTypeKeyInfo struct {
-	TypeKey     string           `json:"typeKey"`
-	Counter     int64            `json:"counter"`
-	IsCanRepeat bool             `json:"isCanRepeat"`
-	Index       int              `json:"index"`
-	InfoList    map[string]*Info `json:"infoList"`
-}
-type Info struct {
-	UserID string `json:"userID"`
-	Ex     string `json:"ex"`
 }

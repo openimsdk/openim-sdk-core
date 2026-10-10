@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/openimsdk/openim-sdk-core/v3/version"
+	"fmt"
 	log2 "log"
 	"net/http"
 	_ "net/http/pprof"
@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/openimsdk/openim-sdk-core/v3/version"
+
 	"github.com/openimsdk/openim-sdk-core/v3/msgtest/module"
 	"github.com/openimsdk/tools/log"
 )
@@ -20,26 +22,26 @@ import (
 func init() {
 	_ = runtime.GOMAXPROCS(7)
 	InitWithFlag()
-	if err := log.InitFromConfig("sdk.log", "sdk", 3,
-		true, false, "./", 2, 24, version.Version); err != nil {
+	if err := log.InitLoggerFromConfig("sdk.log", "sdk", "", "", 3,
+		true, false, "./", 2, 24, version.Version, false); err != nil {
 		panic(err)
 	}
 }
 
 var (
-	totalOnlineUserNum int     // 总在线用户数
-	randomSender       int     // 随机发送者数
-	randomReceiver     int     // 随机接收者数
-	singleSamplingRate float64 // 单聊抽样率
-	GroupSenderRate    float64 // 群聊随机的发送者比例
-	GroupOnlineRate    float64 //group chat online user rate
+	totalOnlineUserNum int     // total online users num
+	randomSender       int     // random sender num
+	randomReceiver     int     // random receiver num
+	singleSamplingRate float64 // sampling rate for single chat
+	GroupSenderRate    float64 // the random sender ratio for group chats
+	GroupOnlineRate    float64 // group chat online user rate
 	start              int
 	end                int
 	count              int
 	sendInterval       int
 
-	//recvMsgUserNum int // 消息接收者数, 抽样账号
-	isRegisterUser  bool // 是否注册用户
+	//recvMsgUserNum int // the number of message recipients, sampled accounts
+	isRegisterUser  bool // If register users
 	onlineUsersOnly bool
 	pprofEnable     bool
 
@@ -98,9 +100,11 @@ func main() {
 			log2.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 		}()
 	}
-	p := module.NewPressureTester()
+	p, err := module.NewPressureTester()
+	if err != nil {
+		fmt.Println(err)
+	}
 	var f, r, o []string
-	var err error
 	if start != 0 {
 		f, r, o, err = p.SelectSampleFromStarEnd(start, end, singleSamplingRate)
 	} else {

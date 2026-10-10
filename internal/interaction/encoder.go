@@ -17,7 +17,7 @@ package interaction
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
+	"github.com/openimsdk/tools/errs"
 )
 
 type Encoder interface {
@@ -45,7 +45,7 @@ func (g *GobEncoder) Decode(encodeData []byte, decodeData interface{}) error {
 	dec := gob.NewDecoder(buff)
 	err := dec.Decode(decodeData)
 	if err != nil {
-		return utils.Wrap(err, "")
+		return errs.Wrap(err)
 	}
 	return nil
 }

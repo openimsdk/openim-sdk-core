@@ -139,29 +139,3 @@ func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, k
 		}
 	}
 }
-
-func (i *LocalGroups) AddMemberCount(ctx context.Context, groupID string) error {
-	_, err := exec.Exec(groupID)
-	return err
-}
-
-func (i *LocalGroups) SubtractMemberCount(ctx context.Context, groupID string) error {
-	_, err := exec.Exec(groupID)
-	return err
-}
-func (i *LocalGroups) GetGroupMemberAllGroupIDs(ctx context.Context) (result []string, err error) {
-	groupIDList, err := exec.Exec()
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := groupIDList.(string); ok {
-			err := utils.JsonStringToStruct(v, &result)
-			if err != nil {
-				return nil, err
-			}
-			return result, err
-		} else {
-			return nil, exec.ErrType
-		}
-	}
-}

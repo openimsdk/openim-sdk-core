@@ -69,33 +69,11 @@ func (tc *TableChecker) UpdateTable(tableName string) {
 }
 
 type DataBase struct {
-	loginUserID   string
-	dbDir         string
-	conn          *gorm.DB
-	tableChecker  *TableChecker
-	mRWMutex      sync.RWMutex
-	groupMtx      sync.RWMutex
-	friendMtx     sync.RWMutex
-	userMtx       sync.RWMutex
-	versionMtx    sync.RWMutex
-	superGroupMtx sync.RWMutex
-}
-
-func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (d *DataBase) InitSuperLocalErrChatLog(ctx context.Context, groupID string) {
-	panic("implement me")
-}
-
-func (d *DataBase) InitSuperLocalChatLog(ctx context.Context, groupID string) {
-	panic("implement me")
-}
-
-func (d *DataBase) SetChatLogFailedStatus(ctx context.Context) {
-	panic("implement me")
+	loginUserID  string
+	dbDir        string
+	conn         *gorm.DB
+	tableChecker *TableChecker
+	mRWMutex     sync.RWMutex
 }
 
 func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) error {
@@ -147,17 +125,21 @@ func (d *DataBase) initDB(ctx context.Context, logLevel int) error {
 	}
 	log.ZInfo(ctx, "sqlite", "path", dbFileName)
 	// slowThreshold := 500
-	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
+	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.ServerConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
 	if logLevel > 5 {
 		zLogLevel = logger.Info
 	} else {
 		zLogLevel = logger.Silent
 	}
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
+	var (
+		db *gorm.DB
+	)
+	db, err = gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(zLogLevel, false, time.Millisecond*200)})
 	if err != nil {
 		return errs.WrapMsg(err, "open db failed "+dbFileName)
 	}
-	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
+
+	log.ZDebug(ctx, "open db success", "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {
 		return errs.WrapMsg(err, "get sql db failed")
@@ -191,25 +173,17 @@ func (d *DataBase) versionDataMigrate(ctx context.Context) error {
 		err = d.conn.AutoMigrate(
 			&model_struct.LocalAppSDKVersion{},
 			&model_struct.LocalFriend{},
-			&model_struct.LocalFriendRequest{},
 			&model_struct.LocalGroup{},
 			&model_struct.LocalGroupMember{},
-			&model_struct.LocalGroupRequest{},
-			&model_struct.LocalErrChatLog{},
 			&model_struct.LocalUser{},
 			&model_struct.LocalBlack{},
 			&model_struct.LocalConversation{},
 			&model_struct.NotificationSeqs{},
 			&model_struct.LocalChatLog{},
-			&model_struct.LocalAdminGroupRequest{},
-			&model_struct.LocalWorkMomentsNotification{},
-			&model_struct.LocalWorkMomentsNotificationUnreadCount{},
-			&model_struct.TempCacheLocalChatLog{},
 			&model_struct.LocalChatLogReactionExtensions{},
 			&model_struct.LocalUpload{},
 			&model_struct.LocalStranger{},
 			&model_struct.LocalSendingMessages{},
-			&model_struct.LocalUserCommand{},
 			&model_struct.LocalVersionSync{},
 		)
 		if err != nil {

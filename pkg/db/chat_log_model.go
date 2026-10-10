@@ -21,6 +21,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
+	"gorm.io/gorm"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
@@ -32,10 +35,12 @@ import (
 )
 
 func (d *DataBase) initChatLog(ctx context.Context, conversationID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	tableName := utils.GetTableName(conversationID)
 	if !d.tableChecker.HasTable(tableName) {
 		createTableSQL := fmt.Sprintf(`
-            CREATE TABLE %s (
+            CREATE TABLE "%s" (
                 client_msg_id CHAR(64),
                 server_msg_id CHAR(64),
                 send_id CHAR(64),
@@ -64,11 +69,11 @@ func (d *DataBase) initChatLog(ctx context.Context, conversationID string) error
 		if result := d.conn.Exec(createTableSQL); result.Error != nil {
 			return errs.WrapMsg(result.Error, "Create table failed", "table", tableName)
 		}
-		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+conversationID, tableName))
+		result := d.conn.Exec(fmt.Sprintf("CREATE INDEX `%s` ON `%s` (seq)", "index_seq_"+conversationID, tableName))
 		if result.Error != nil {
 			return errs.WrapMsg(result.Error, "Create index_seq failed", "table", tableName, "index", "index_seq_"+conversationID)
 		}
-		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+conversationID, tableName))
+		result = d.conn.Exec(fmt.Sprintf("CREATE INDEX `%s` ON `%s` (send_time)", "index_send_time_"+conversationID, tableName))
 		if result.Error != nil {
 			return errs.WrapMsg(result.Error, "Create index_send_time failed", "table", tableName, "index", "index_send_time_"+conversationID)
 		}
@@ -82,6 +87,8 @@ func (d *DataBase) checkTable(ctx context.Context, tableName string) bool {
 }
 
 func (d *DataBase) UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	t := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Updates(c)
 	if t.RowsAffected == 0 {
 		return errs.WrapMsg(errors.New("RowsAffected == 0"), "no update ")
@@ -96,6 +103,12 @@ func (d *DataBase) UpdateMessageBySeq(ctx context.Context, conversationID string
 }
 
 func (d *DataBase) BatchInsertMessageList(ctx context.Context, conversationID string, MessageList []*model_struct.LocalChatLog) error {
+	err := d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return err
+	}
+
 	if MessageList == nil {
 		return nil
 	}
@@ -115,6 +128,8 @@ func (d *DataBase) GetMessage(ctx context.Context, conversationID string, client
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
 	}
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var c model_struct.LocalChatLog
 	return &c, errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("client_msg_id = ?",
 		clientMsgID).Take(&c).Error, "GetMessage failed")
@@ -126,6 +141,8 @@ func (d *DataBase) GetMessageBySeq(ctx context.Context, conversationID string, s
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
 	}
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var c model_struct.LocalChatLog
 	return &c, errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq = ?",
 		seq).Take(&c).Error, "GetMessage failed")
@@ -137,44 +154,37 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Model(model_struct.LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).
 		Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) GetMessageListNoTime(ctx context.Context, conversationID string,
-	count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	err = d.initChatLog(ctx, conversationID)
-	if err != nil {
+
+func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime, startSeq int64, startClientMsgID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	if err = d.initChatLog(ctx, conversationID); err != nil {
 		log.ZWarn(ctx, "initChatLog err", err)
 		return nil, err
 	}
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	var timeOrder string
-	if isReverse {
-		timeOrder = "send_time ASC"
-	} else {
-		timeOrder = "send_time DESC"
-	}
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var condition, timeOrder, timeSymbol string
 	if isReverse {
-		timeOrder = "send_time ASC"
+		timeOrder = "send_time ASC,seq ASC"
 		timeSymbol = ">"
 	} else {
-		timeOrder = "send_time DESC"
+		timeOrder = "send_time DESC,seq DESC"
 		timeSymbol = "<"
 	}
-	condition = "send_time " + timeSymbol + " ?"
-
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, startTime).
-		Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
-	if err != nil {
-		return nil, err
+	if startTime > 0 {
+		condition = "send_time " + timeSymbol + " ? " +
+			"OR (send_time = ? AND (seq " + timeSymbol + " ? OR (seq = 0 AND client_msg_id != ?)))"
+		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+			Where(condition, startTime, startTime, startSeq, startClientMsgID).
+			Order(timeOrder).Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Order(timeOrder).
+			Offset(0).Limit(count).Find(&result).Error, "GetMessageList failed")
+		if err != nil {
+			return nil, err
+		}
 	}
 	return result, err
 }
@@ -203,98 +213,110 @@ func (d *DataBase) DeleteConversationMsgsBySeqs(ctx context.Context, conversatio
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq IN ?", seqs).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationMsgs failed")
 }
 
-func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	condition := fmt.Sprintf("send_time between %d and %d AND status <=%d And content_type IN ?", startTime, endTime, constant.MsgStatusSendFailed)
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
+func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType []int, senderUserIDList []string, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	query := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where("send_time BETWEEN ? AND ?", startTime, endTime).
+		Where("status <= ?", constant.MsgStatusSendFailed).
+		Where("content_type IN ?", contentType)
+
+	if len(senderUserIDList) != 0 {
+		query = query.Where("send_id IN ?", senderUserIDList)
+	}
+
+	err = errs.WrapMsg(query.Order("send_time DESC").
+		Offset(offset).
+		Limit(count).
+		Find(&result).Error, "SearchMessage failed")
+
 	return result, err
 }
-func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	var condition string
-	var subCondition string
-	if keywordListMatchType == constant.KeywordMatchOr {
-		for i := 0; i < len(keywordList); i++ {
-			if i == 0 {
-				subCondition += "And ("
-			}
-			if i+1 >= len(keywordList) {
-				subCondition += "content like " + "'%" + keywordList[i] + "%') "
-			} else {
-				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "or "
 
-			}
-		}
-	} else {
-		for i := 0; i < len(keywordList); i++ {
-			if i == 0 {
-				subCondition += "And ("
-			}
-			if i+1 >= len(keywordList) {
-				subCondition += "content like " + "'%" + keywordList[i] + "%') "
-			} else {
-				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "and "
-			}
-		}
-	}
-	condition = fmt.Sprintf(" send_time  between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
-	condition += subCondition
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "InsertMessage failed")
-	return result, err
-} // SearchMessageByContentTypeAndKeyword searches for messages in the database that match specified content types and keywords within a given time range.
-func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
-	var condition string
-	var subCondition string
+func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int, senderUserIDList []string, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 
-	// Construct a sub-condition for SQL query based on keyword list and match type
-	if keywordListMatchType == constant.KeywordMatchOr {
+	query := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where("send_time BETWEEN ? AND ?", startTime, endTime).
+		Where("status <= ?", constant.MsgStatusSendFailed).
+		Where("content_type IN ?", contentType)
+
+	if len(keywordList) > 0 {
 		// Use OR logic if keywordListMatchType is KeywordMatchOr
-		for i := 0; i < len(keywordList); i++ {
-			if i == 0 {
-				subCondition += "And ("
+		if keywordListMatchType == constant.KeywordMatchOr {
+			orConditions := make([]string, len(keywordList))
+			args := make([]any, len(keywordList))
+			for i, keyword := range keywordList {
+				orConditions[i] = "content LIKE ?"
+				args[i] = "%" + keyword + "%"
 			}
-			if i+1 >= len(keywordList) {
-				subCondition += "content like " + "'%" + keywordList[i] + "%') "
-			} else {
-				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "or "
-			}
-		}
-	} else {
-		// Use AND logic for other keywordListMatchType
-		for i := 0; i < len(keywordList); i++ {
-			if i == 0 {
-				subCondition += "And ("
-			}
-			if i+1 >= len(keywordList) {
-				subCondition += "content like " + "'%" + keywordList[i] + "%') "
-			} else {
-				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "and "
+			query = query.Where("("+strings.Join(orConditions, " OR ")+")", args...)
+		} else {
+			// Use AND logic for other keywordListMatchType
+			for _, keyword := range keywordList {
+				query = query.Where("content LIKE ?", "%"+keyword+"%")
 			}
 		}
 	}
 
-	// Construct the main SQL condition string
-	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
-	condition += subCondition
+	if len(senderUserIDList) != 0 {
+		query = query.Where("send_id IN ?", senderUserIDList)
+	}
 
-	// Execute the query using the constructed condition and handle errors
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
+	err = errs.WrapMsg(query.Order("send_time DESC").
+		Offset(offset).
+		Limit(count).
+		Find(&result).Error, "SearchMessage failed")
+
+	return result, err
+}
+
+// SearchMessageByContentTypeAndKeyword searches for messages in the database that match specified content types and keywords within a given time range.
+func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, senderUserIDList []string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	query := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where("send_time BETWEEN ? AND ?", startTime, endTime).
+		Where("status <= ?", constant.MsgStatusSendFailed).
+		Where("content_type IN ?", contentType)
+
+	if len(keywordList) > 0 {
+		// Use OR logic if keywordListMatchType is KeywordMatchOr
+		if keywordListMatchType == constant.KeywordMatchOr {
+			orConditions := make([]string, len(keywordList))
+			args := make([]any, len(keywordList))
+			for i, keyword := range keywordList {
+				orConditions[i] = "content LIKE ?"
+				args[i] = "%" + keyword + "%"
+			}
+			query = query.Where("("+strings.Join(orConditions, " OR ")+")", args...)
+		} else {
+			// Use AND logic for other keywordListMatchType
+			for _, keyword := range keywordList {
+				query = query.Where("content LIKE ?", "%"+keyword+"%")
+			}
+		}
+	}
+
+	if len(senderUserIDList) > 0 {
+		query = query.Where("send_id IN ?", senderUserIDList)
+	}
+
+	err = errs.WrapMsg(query.Order("send_time DESC").
+		Find(&result).Error, "SearchMessage failed")
 
 	return result, err
 }
 
 func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error {
-	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Model(model_struct.LocalChatLog{}).Where(
-		"send_id = ?", sendID).Updates(
-		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
-}
-
-func (d *DataBase) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (seqList []int64, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("seq IN ?", lostSeqList).Pluck("seq", &seqList).Error, utils.GetSelfFuncName()+" failed")
-	if err != nil {
-		return nil, err
-	}
-	return seqList, nil
+	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Model(model_struct.LocalChatLog{}).Where(
+		"send_id = ?", sendID).Updates(
+		map[string]any{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 
 func (d *DataBase) UpdateColumnsMessage(ctx context.Context, conversationID, ClientMsgID string, args map[string]interface{}) error {
@@ -308,12 +330,18 @@ func (d *DataBase) UpdateColumnsMessage(ctx context.Context, conversationID, Cli
 	return errs.WrapMsg(t.Error, "UpdateColumnsConversation failed")
 }
 func (d *DataBase) SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) (result []*model_struct.LocalChatLog, err error) {
-	err = d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Model(&model_struct.LocalChatLog{}).Where("content_type = ?", contentType).Find(&result).Error
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	query := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where("content_type = ?", contentType)
+
+	err = query.Find(&result).Error
 	return result, err
 }
 func (d *DataBase) GetUnreadMessage(ctx context.Context, conversationID string) (msgs []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Debug().Where("send_id != ? AND is_read = ?", d.loginUserID, constant.NotRead).Find(&msgs).Error, "GetMessageList failed")
 	return msgs, err
 }
@@ -347,10 +375,6 @@ func (d *DataBase) MarkConversationMessageAsReadDB(ctx context.Context, conversa
 			rowsAffected++
 		}
 	}
-	// t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Update("is_read", constant.HasRead)
-	// if t.RowsAffected == 0 {
-	// 	return 0, errs.WrapMsg(errors.New("RowsAffected == 0"), "no update")
-	// }
 	return rowsAffected, nil
 }
 
@@ -365,11 +389,20 @@ func (d *DataBase) MarkConversationAllMessageAsRead(ctx context.Context, convers
 }
 
 func (d *DataBase) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (msgs []*model_struct.LocalChatLog, err error) {
+	err = d.initChatLog(ctx, conversationID)
+	if err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return nil, err
+	}
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id IN ?", msgIDs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesByClientMsgIDs error")
 	return msgs, err
 }
 
 func (d *DataBase) GetMessagesBySeqs(ctx context.Context, conversationID string, seqs []int64) (msgs []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("seq IN ?", seqs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesBySeqs error")
 	return msgs, err
 }
@@ -380,28 +413,30 @@ func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversation
 		log.ZWarn(ctx, "initChatLog err", err)
 		return 0, err
 	}
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var seq int64
 	err = d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")
 }
 
-func (d *DataBase) GetConversationNormalMsgSeqNoInit(ctx context.Context, conversationID string) (int64, error) {
+func (d *DataBase) CheckConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	var seq int64
-	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
-	return seq, errs.WrapMsg(err, "GetConversationNormalMsgSeq")
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	if d.tableChecker.HasTable(utils.GetConversationTableName(conversationID)) {
+		err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+		return seq, errs.Wrap(err)
+	}
+	return 0, nil
 }
 
 func (d *DataBase) GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var seq int64
 	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Where("send_id != ?", d.loginUserID).Find(&seq).Error
 	return seq, errs.WrapMsg(err, "GetConversationPeerNormalMsgSeq")
-}
-func (d *DataBase) UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
-		"send_id = ? and session_type = ? and sender_nick_name != ? ", sendID, sType, nickname).Updates(
-		map[string]interface{}{"sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 
 func (d *DataBase) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error {
@@ -409,5 +444,62 @@ func (d *DataBase) UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL s
 	defer d.mRWMutex.Unlock()
 	return errs.WrapMsg(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where(
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
-		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+		map[string]any{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+}
+
+func (d *DataBase) GetLatestActiveMessage(ctx context.Context, conversationID string, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	if err = d.initChatLog(ctx, conversationID); err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return nil, err
+	}
+
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	var timeOrder string
+	if isReverse {
+		timeOrder = "send_time ASC"
+	} else {
+		timeOrder = "send_time DESC"
+	}
+
+	// only get status < 4(NotHasDeleted) Msg
+	err = errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("status < ?", constant.MsgStatusHasDeleted).Order(timeOrder).Offset(0).Limit(1).Find(&result).Error, "GetLatestActiveMessage failed")
+	if err != nil {
+		return nil, err
+	}
+
+	return result, err
+}
+func (d *DataBase) GetLatestValidServerMessage(ctx context.Context, conversationID string, startTime int64, isReverse bool) (*model_struct.LocalChatLog, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+
+	var condition, timeOrder, timeSymbol string
+	var result model_struct.LocalChatLog
+
+	if isReverse {
+		timeOrder = "send_time DESC"
+		timeSymbol = "<"
+	} else {
+		timeOrder = "send_time ASC"
+		timeSymbol = ">"
+	}
+
+	condition = "send_time " + timeSymbol + " ? AND seq != ?"
+
+	err := d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).
+		Where(condition, startTime, 0).
+		Order(timeOrder).
+		Limit(1).
+		First(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, errs.WrapMsg(err, "GetLatestValidServerMessage failed")
+	}
+
+	return &result, nil
 }

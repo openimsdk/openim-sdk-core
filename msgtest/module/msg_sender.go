@@ -3,29 +3,29 @@ package module
 import (
 	"context"
 	"fmt"
-
 	"sync"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/internal/interaction"
+	"github.com/openimsdk/openim-sdk-core/v3/msgtest/sdk_user_simulator"
+	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-
-	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/common"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
-
+	pbconstant "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/mcontext"
 )
 
 var (
-	qpsCounter    int64      // 全局变量用于统计请求数
-	qpsMutex      sync.Mutex // 互斥锁用于保护全局变量的并发访问
-	qpsUpdateTime time.Time  // 全局变量用于记录上次更新时间
-	QPSChan       chan int64 // 用于定时更新qpsCounter的channel
+	qpsCounter    int64      // Global variable used to count the number of requests
+	qpsMutex      sync.Mutex // Mutex to protect concurrent access to the global variable
+	qpsUpdateTime time.Time  // Global variable to track the last update time
+	QPSChan       chan int64 // Channel used for periodic updates to qpsCounter
 )
 
 //func init() {
@@ -37,7 +37,7 @@ func IncrementQPS() {
 	defer qpsMutex.Unlock()
 
 	now := time.Now()
-	// 如果距离上次更新时间超过1秒，则重置计数器
+	// If more than 1 second has passed since the last update, reset the counter.
 	if now.Sub(qpsUpdateTime) >= time.Second {
 		QPSChan <- qpsCounter
 		qpsCounter = 0
@@ -123,13 +123,15 @@ func newUserCtx(userID, token string, imConfig sdk_struct.IMConfig) context.Cont
 	return ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
 		UserID:   userID,
 		Token:    token,
-		IMConfig: imConfig})
+		IMConfig: &imConfig})
 }
 
 func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig sdk_struct.IMConfig, opts ...func(core *SendMsgUser)) *SendMsgUser {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ctx := newUserCtx(userID, token, imConfig)
-	longConnMgr := interaction.NewLongConnMgr(ctx, &ConnListner{}, nil, pushMsgAndMaxSeqCh, nil)
+	longConnMgr := interaction.NewLongConnMgr(ctx, func(m map[string][]int32) {}, pushMsgAndMaxSeqCh, nil)
+	l := sdk_user_simulator.NewTestConnListener()
+	longConnMgr.SetListener(func() open_im_sdk_callback.OnConnListener { return l })
 	core := &SendMsgUser{
 		pushMsgAndMaxSeqCh:      pushMsgAndMaxSeqCh,
 		longConnMgr:             longConnMgr,
@@ -150,8 +152,12 @@ func NewUser(userID, token string, timeOffset int64, p *PressureTester, imConfig
 	baseCtx, cancel := context.WithCancel(ctx)
 	core.cancelFunc = cancel
 	go core.recvPushMsg(baseCtx)
-	go core.longConnMgr.Run(baseCtx)
+	go core.longConnMgr.Run(baseCtx, baseCtx)
 	return core
+}
+
+func (b *SendMsgUser) LongConnMgr() *interaction.LongConnMgr {
+	return b.longConnMgr
 }
 
 func (b *SendMsgUser) Close(ctx context.Context) {
@@ -185,12 +191,12 @@ func (b *SendMsgUser) BatchSendSingleMsg(ctx context.Context, userID string, ind
 }
 
 func (b *SendMsgUser) SendGroupMsg(ctx context.Context, groupID string, index int) error {
-	return b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
+	return b.sendMsg(ctx, "", groupID, index, constant.ReadGroupChatType, fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index))
 }
 
 func (b *SendMsgUser) BatchSendGroupMsg(ctx context.Context, groupID string, index int) error {
 	content := fmt.Sprintf("this is test msg user %s to group %s, index: %d", b.userID, groupID, index)
-	err := b.sendMsg(ctx, "", groupID, index, constant.SuperGroupChatType, content)
+	err := b.sendMsg(ctx, "", groupID, index, constant.ReadGroupChatType, content)
 	if err != nil {
 		log.ZError(ctx, "send msg failed", err, "groupID", groupID, "index", index, "content", content)
 		//b.singleFailedMessageMap[content] = err
@@ -211,7 +217,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 		SenderNickname:   b.userID,
 		Content:          []byte(utils.StructToJsonString(text)),
 		CreateTime:       time.Now().UnixMilli(),
-		SenderPlatformID: constant.AdminPlatformID,
+		SenderPlatformID: pbconstant.AdminPlatformID,
 		ClientMsgID:      clientMsgID,
 	}
 	// IncrementQPS()
@@ -222,7 +228,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 			b.singleFailedMessageMap[clientMsgID] = &errorValue{err: err,
 				SendID: b.userID, RecvID: userID, MsgID: clientMsgID, OperationID: mcontext.GetOperationID(ctx)}
 			log.ZError(ctx, "send single msg failed", err, "userID", userID, "index", index, "content", content)
-		case constant.SuperGroupChatType:
+		case constant.ReadGroupChatType:
 			b.groupFailedMessageMap[groupID] = append(b.groupFailedMessageMap[groupID], &errorValue{err: err,
 				SendID: b.userID, RecvID: groupID, MsgID: clientMsgID, GroupID: groupID, OperationID: mcontext.GetOperationID(ctx)})
 			log.ZError(ctx, "send group msg failed", err, "groupID", groupID, "index", index, "content", content)
@@ -241,7 +247,7 @@ func (b *SendMsgUser) sendMsg(ctx context.Context, userID, groupID string, index
 				sendTime:    msg.SendTime,
 			}
 		}
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		b.groupSendSampleNum[groupID]++
 	}
 
@@ -287,7 +293,7 @@ func (b *SendMsgUser) defaultRecvPushMsgCallback(ctx context.Context, msg *sdkws
 				Latency:     b.GetRelativeServerTime() - msg.SendTime,
 			}
 		}
-	case constant.SuperGroupChatType:
+	case constant.ReadGroupChatType:
 		if b.userID == b.p.groupOwnerUserID[msg.GroupID] {
 			b.groupMessage++
 			log.ZWarn(context.Background(), "recv message", nil, "userID", b.userID,
@@ -319,14 +325,25 @@ func (b *SendMsgUser) GetRelativeServerTime() int64 {
 	return utils.GetCurrentTimestampByMill()
 }
 
-type ConnListner struct {
-}
+type ConnListener struct{}
 
-func (c *ConnListner) OnConnecting()     {}
-func (c *ConnListner) OnConnectSuccess() {}
-func (c *ConnListner) OnConnectFailed(errCode int32, errMsg string) {
+func (c *ConnListener) OnConnecting()     {}
+func (c *ConnListener) OnConnectSuccess() {}
+func (c *ConnListener) OnConnectFailed(errCode int32, errMsg string) {
 	// log.ZError(context.Background(), "connect failed", nil, "errCode", errCode, "errMsg", errMsg)
 }
-func (c *ConnListner) OnKickedOffline()                 {}
-func (c *ConnListner) OnUserTokenExpired()              {}
-func (c *ConnListner) OnUserTokenInvalid(errMsg string) {}
+func (c *ConnListener) OnKickedOffline()                 {}
+func (c *ConnListener) OnUserTokenExpired()              {}
+func (c *ConnListener) OnUserTokenInvalid(errMsg string) {}
+
+type UserListener struct{}
+
+func (u *UserListener) OnSelfInfoUpdated(userInfo string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserListener) OnUserStatusChanged(userOnlineStatus string) {
+	//TODO implement me
+	panic("implement me")
+}

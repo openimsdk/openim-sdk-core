@@ -18,12 +18,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 	"unsafe"
+
+	"github.com/openimsdk/tools/errs"
 )
 
 type HttpCli struct {
@@ -54,7 +55,7 @@ func Post(url string) *HttpCli {
 	return &HttpCli{
 		httpClient:  newHttpClient(),
 		httpRequest: request,
-		Error:       utils.Wrap(err, "newRequest failed, url"),
+		Error:       errs.WrapMsg(err, "newRequest failed, url"),
 	}
 }
 
@@ -75,7 +76,7 @@ func (c *HttpCli) BodyWithJson(obj interface{}) *HttpCli {
 
 	buf, err := json.Marshal(obj)
 	if err != nil {
-		c.Error = utils.Wrap(err, "marshal failed, url")
+		c.Error = errs.WrapMsg(err, "marshal failed, url")
 		return c
 	}
 	c.httpRequest.Body = ioutil.NopCloser(bytes.NewReader(buf))
@@ -124,16 +125,16 @@ func (c *HttpCli) ToBytes() (content []byte, err error) {
 
 	resp, err := c.httpClient.Do(c.httpRequest)
 	if err != nil {
-		return nil, utils.Wrap(err, "client.Do failed, url")
+		return nil, errs.WrapMsg(err, "client.Do failed, url")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, utils.Wrap(errors.New(resp.Status), "status code failed ")
+		return nil, errs.WrapMsg(errors.New(resp.Status), "status code failed ")
 	}
 	buf, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, utils.Wrap(err, "ioutil.ReadAll failed, url")
+		return nil, errs.WrapMsg(err, "ioutil.ReadAll failed, url")
 	}
 
 	return buf, nil
@@ -146,20 +147,20 @@ func (c *HttpCli) ToJson(obj interface{}) error {
 
 	resp, err := c.httpClient.Do(c.httpRequest)
 	if err != nil {
-		return utils.Wrap(err, "client.Do failed, url")
+		return errs.WrapMsg(err, "client.Do failed, url")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return utils.Wrap(errors.New(resp.Status), "status code failed ")
+		return errs.WrapMsg(errors.New(resp.Status), "status code failed ")
 	}
 	buf, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return utils.Wrap(err, "ioutil.ReadAll failed, url")
+		return errs.WrapMsg(err, "ioutil.ReadAll failed, url")
 	}
 	err = json.Unmarshal(buf, obj)
 	if err != nil {
-		return utils.Wrap(err, "marshal failed, url")
+		return errs.WrapMsg(err, "marshal failed, url")
 	}
 	return nil
 }

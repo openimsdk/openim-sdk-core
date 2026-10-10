@@ -8,6 +8,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
+	pconstant "github.com/openimsdk/protocol/constant"
 	"github.com/openimsdk/protocol/sdkws"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
@@ -34,9 +35,9 @@ func newTyping(c *Conversation) *typing {
 		send:  cache.New(inputStatesSendTime, inputStatesTimeout),
 		state: cache.New(inputStatesTimeout, inputStatesTimeout),
 	}
-	e.platformIDs = make([]int32, 0, len(constant.PlatformID2Name))
+	e.platformIDs = make([]int32, 0, len(pconstant.PlatformID2Name))
 	e.platformIDSet = make(map[int32]struct{})
-	for id := range constant.PlatformID2Name {
+	for id := range pconstant.PlatformID2Name {
 		e.platformIDSet[int32(id)] = struct{}{}
 		e.platformIDs = append(e.platformIDs, int32(id))
 	}
@@ -128,8 +129,9 @@ func (e *typing) sendMsg(ctx context.Context, conversation *model_struct.LocalCo
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	var sendMsgResp sdkws.UserSendMsgResp
-	err = e.conv.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	//var sendMsgResp sdkws.UserSendMsgResp
+	//err = e.conv.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	err = e.conv.sendMsg(ctx, &s, &wsMsgData, nil)
 	if err != nil {
 		log.ZError(ctx, "typing msg to server failed", err, "message", s)
 		return err
@@ -164,10 +166,7 @@ func (e *typing) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
 		return
 	}
 	now := time.Now().UnixMilli()
-	expirationTimestamp := msg.SendTime + int64(inputStatesSendTime/time.Millisecond)
-	if msg.SendTime > now || expirationTimestamp <= now {
-		return
-	}
+	expirationTimestamp := now + int64(inputStatesSendTime/time.Millisecond)
 	var sourceID string
 	if msg.GroupID == "" {
 		sourceID = msg.SendID

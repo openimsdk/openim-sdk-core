@@ -17,6 +17,7 @@ package open_im_sdk
 import (
 	"context"
 	"errors"
+
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/tools/log"
 )
@@ -195,7 +196,7 @@ func (e *emptyAdvancedMsgListener) OnRecvOnlineOnlyMessage(message string) {
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvNewMessage(message string) {
-	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "message", message)
+	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented OnRecvNewMessage", nil, "message", message)
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvC2CReadReceipt(msgReceiptList string) {
@@ -211,6 +212,10 @@ func (e *emptyAdvancedMsgListener) OnRecvGroupReadReceipt(groupMsgReceiptList st
 
 func (e *emptyAdvancedMsgListener) OnNewRecvMessageRevoked(messageRevoked string) {
 	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "messageRevoked", messageRevoked)
+}
+
+func (e *emptyAdvancedMsgListener) OnMsgEdited(msg string) {
+	log.ZWarn(e.ctx, "OnMsgEdited is not implemented", nil, "msg", msg)
 }
 
 func (e *emptyAdvancedMsgListener) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
@@ -236,34 +241,12 @@ func (e *emptyAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "message", message)
 }
 
-type emptyBatchMsgListener struct{}
-
-func newEmptyBatchMsgListener() *emptyBatchMsgListener {
-	return &emptyBatchMsgListener{}
-}
-
-func (e *emptyBatchMsgListener) OnRecvNewMessages(messageList string) {
-
-}
-
-func (e *emptyBatchMsgListener) OnRecvOfflineNewMessages(messageList string) {
-
+func (e *emptyAdvancedMsgListener) OnMessageModified(message string) {
+	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "message", message)
 }
 
 type emptyUserListener struct {
 	ctx context.Context
-}
-
-func (e *emptyUserListener) OnUserCommandAdd(userCommand string) {
-	log.ZWarn(e.ctx, "UserListener is not implemented", nil, "userCommand", userCommand)
-}
-
-func (e *emptyUserListener) OnUserCommandDelete(userCommand string) {
-	log.ZWarn(e.ctx, "UserListener is not implemented", nil, "userCommand", userCommand)
-}
-
-func (e *emptyUserListener) OnUserCommandUpdate(userCommand string) {
-	log.ZWarn(e.ctx, "UserListener is not implemented", nil, "userCommand", userCommand)
 }
 
 func newEmptyUserListener(ctx context.Context) open_im_sdk_callback.OnUserListener {
