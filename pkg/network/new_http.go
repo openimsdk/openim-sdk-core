@@ -34,7 +34,8 @@ type HttpCli struct {
 }
 
 func newHttpClient() *http.Client {
-	return &http.Client{Timeout: 30 * time.Second}
+	configured := GetHTTPClient()
+	return &http.Client{Timeout: 30 * time.Second, Transport: configured.Transport}
 }
 
 func PostWithTimeOut(url string, data interface{}, token string, timeout time.Duration) (content []byte, err error) {

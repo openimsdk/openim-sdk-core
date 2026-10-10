@@ -219,6 +219,7 @@ func (u *UserContext) ImConfig() sdk_struct.IMConfig {
 		WsAddr:     u.info.WsAddr,
 		DataDir:    u.info.DataDir,
 		LogLevel:   u.info.LogLevel,
+		ProxyURL:   u.info.ProxyURL,
 	}
 }
 
