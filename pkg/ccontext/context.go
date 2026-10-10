@@ -39,6 +39,7 @@ type ContextInfo interface {
 	PlatformID() int32
 	ApiAddr() string
 	WsAddr() string
+	ProxyURL() string
 	DataDir() string
 	LogLevel() uint32
 	OperationID() string
@@ -90,6 +91,8 @@ func (i *info) ApiAddr() string {
 func (i *info) WsAddr() string {
 	return i.conf.WsAddr
 }
+
+func (i *info) ProxyURL() string { return i.conf.ProxyURL }
 
 func (i *info) DataDir() string {
 	return i.conf.DataDir

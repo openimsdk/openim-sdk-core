@@ -316,6 +316,7 @@ type IMConfig struct {
 	IsLogStandardOutput  bool   `json:"isLogStandardOutput"`
 	LogFilePath          string `json:"logFilePath"`
 	IsExternalExtensions bool   `json:"isExternalExtensions"`
+	ProxyURL             string `json:"proxyURL,omitempty"`
 }
 
 type CmdNewMsgComeToConversation struct {

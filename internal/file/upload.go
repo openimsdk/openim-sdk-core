@@ -24,14 +24,16 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"open_im_sdk/internal/util"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/db_interface"
-	"open_im_sdk/pkg/db/model_struct"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"open_im_sdk/internal/util"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db/db_interface"
+	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/network"
 
 	"github.com/OpenIMSDK/protocol/third"
 	"github.com/OpenIMSDK/tools/log"
@@ -181,7 +183,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 			reader := NewProgressReader(md5Reader, func(current int64) {
 				cb.UploadComplete(fileSize, uploadedSize+current, uploadedSize)
 			})
-			if err := f.doPut(ctx, http.DefaultClient, upload.Upload.Sign, part, reader, currentPartSize); err != nil {
+			if err := f.doPut(ctx, network.GetHTTPClient(), upload.Upload.Sign, part, reader, currentPartSize); err != nil {
 				return nil, err
 			}
 			uploadedSize += currentPartSize
@@ -278,7 +280,7 @@ func (f *File) accessURL(ctx context.Context, req *third.AccessURLReq) (*third.A
 }
 
 func (f *File) doHttpReq(req *http.Request) ([]byte, *http.Response, error) {
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := network.GetHTTPClient().Do(req)
 	if err != nil {
 		return nil, nil, err
 	}

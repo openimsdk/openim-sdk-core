@@ -17,6 +17,9 @@ package login
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -37,15 +40,10 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"sync"
-	"time"
-
-	"github.com/OpenIMSDK/protocol/sdkws"
 
 	"github.com/OpenIMSDK/protocol/push"
-
+	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
-
 	"github.com/OpenIMSDK/tools/mcontext"
 )
 
@@ -126,6 +124,7 @@ func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
 		DataDir:              u.info.DataDir,
 		LogLevel:             u.info.LogLevel,
 		IsExternalExtensions: u.info.IsExternalExtensions,
+		ProxyURL:             u.info.ProxyURL,
 	}
 }
 

@@ -21,9 +21,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/sdkerrs"
 	"time"
+
+	"open_im_sdk/pkg/ccontext"
+	"open_im_sdk/pkg/network"
+	"open_im_sdk/pkg/sdkerrs"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/log"
@@ -72,7 +74,8 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("operationID", operationID)
 	request.Header.Set("token", ctxInfo.Token())
-	response, err := new(http.Client).Do(request)
+	client := network.GetHTTPClient()
+	response, err := client.Do(request)
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "network error")
 		return sdkerrs.ErrNetwork.Wrap("ApiPost http.Client.Do failed " + err.Error())

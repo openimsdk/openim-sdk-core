@@ -20,6 +20,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
@@ -27,16 +33,10 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"runtime"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 	"github.com/OpenIMSDK/tools/errs"
 	"github.com/OpenIMSDK/tools/log"
-
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 )

@@ -18,12 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/network"
 	"open_im_sdk/sdk_struct"
-	"strings"
 
 	"github.com/OpenIMSDK/tools/log"
 	"github.com/OpenIMSDK/tools/mcontext"
@@ -69,8 +72,27 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.ZError(ctx, "ws is ws protocol, ws format is invalid", nil)
 		return false
 	}
+	if configArgs.ProxyURL != "" {
+		proxyURL, err := url.Parse(configArgs.ProxyURL)
+		scheme := ""
+		if err == nil {
+			scheme = strings.ToLower(proxyURL.Scheme)
+		}
+		if err != nil || proxyURL.Host == "" || (scheme != "http" && scheme != "https" && scheme != "socks5" && scheme != "socks5h") {
+			log.ZError(ctx, "invalid proxyURL, supported schemes are http/https/socks5/socks5h", err)
+			return false
+		}
+	}
+	if err := network.SetHTTPConfig(configArgs); err != nil {
+		log.ZError(ctx, "set http config failed", err)
+		return false
+	}
 
-	log.ZInfo(ctx, "InitSDK info", "config", configArgs, "sdkVersion", GetSdkVersion())
+	logConfig := configArgs
+	if logConfig.ProxyURL != "" {
+		logConfig.ProxyURL = "[redacted]"
+	}
+	log.ZInfo(ctx, "InitSDK info", "config", logConfig, "sdkVersion", GetSdkVersion())
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
