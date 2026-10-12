@@ -32,6 +32,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/db_interface"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	"github.com/openimsdk/tools/errs"
 
 	"github.com/openimsdk/protocol/third"
@@ -199,7 +200,7 @@ func (f *File) UploadFile(ctx context.Context, req *UploadFileReq, cb UploadFile
 			if err != nil {
 				return nil, err
 			}
-			if err := f.doPut(ctx, http.DefaultClient, urlval, header, reader, currentPartSize); err != nil {
+			if err := f.doPut(ctx, network.GetHTTPClient(), urlval, header, reader, currentPartSize); err != nil {
 				log.ZError(ctx, "doPut", err, "partMd5Val", partMd5Val, "name", req.Name, "partNumber", partNumber)
 				return nil, err
 			}
@@ -309,7 +310,7 @@ func (f *File) accessURL(ctx context.Context, req *third.AccessURLReq) (*third.A
 }
 
 func (f *File) doHttpReq(req *http.Request) ([]byte, *http.Response, error) {
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := network.GetHTTPClient().Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
