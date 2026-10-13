@@ -50,4 +50,5 @@ const (
 	// Group-related errors
 	GroupIDNotFoundError = 10400 // GroupID not found
 	GroupTypeErr         = 10401 // Invalid group type
+	CancelUploadingFile  = 10500
 )

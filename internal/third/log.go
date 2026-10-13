@@ -1,33 +1,19 @@
 package third
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/openimsdk/openim-sdk-core/v3/internal/third/file"
-
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/api"
-
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
-	"github.com/openimsdk/openim-sdk-core/v3/version"
-	"github.com/openimsdk/protocol/constant"
-	"github.com/openimsdk/protocol/third"
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 )
 
-const (
-	buffer = 10 * 1024 * 1024
-)
-
-func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
+func (c *Third) uploadLogs(ctx context.Context, line int, cancelID string, ex string, progress Progress) (err error) {
 	if c.logUploadLock.TryLock() {
 		defer c.logUploadLock.Unlock()
 	} else {
@@ -54,22 +40,6 @@ func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Pr
 		if len(files) == 0 {
 			return errs.New("not found log file").Wrap()
 		}
-		defer func() {
-			if err == nil {
-				// remove old file
-				for _, f := range files[:len(files)-1] {
-					if err := os.Remove(f); err != nil {
-						log.ZError(ctx, "remove file failed", err, "file name", f)
-					}
-				}
-				// truncate now log file
-				f, err := os.OpenFile(files[len(files)-1], os.O_WRONLY|os.O_TRUNC, 0644)
-				if err != nil {
-					log.ZError(ctx, "remove file failed", err, "file name", f)
-				}
-				_ = f.Close()
-			}
-		}()
 	default:
 		for i := len(entrys) - 1; i >= 0; i-- {
 			// get newest log file
@@ -81,17 +51,11 @@ func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Pr
 		if len(files) == 0 {
 			return errs.New("not found log file").Wrap()
 		}
-		lines, err := readLastNLines(files[0], line)
-		if err != nil {
-			return err
-		}
-		data := strings.Join(lines, "\n")
-
 		// create tmp file
 		filename := fmt.Sprintf("%s_temp%s", strings.TrimSuffix(filepath.Base(files[0]), filepath.Ext(files[0])), filepath.Ext(files[0]))
+		src := files[0]
 		files[0] = filepath.Join(logFilePath, filename)
-		err = os.WriteFile(files[0], []byte(data), 0644)
-		if err != nil {
+		if err := writeLastNLines(ctx, src, files[0], line); err != nil {
 			return errs.Wrap(err)
 		}
 		defer func() {
@@ -101,26 +65,7 @@ func (c *Third) uploadLogs(ctx context.Context, line int, ex string, progress Pr
 		}()
 	}
 
-	zippath := filepath.Join(logFilePath, fmt.Sprintf("%d_%d.zip", time.Now().UnixMilli(), rand.Uint32()))
-	defer os.Remove(zippath)
-	if err := zipFiles(zippath, files); err != nil {
-		return err
-	}
-	reqUpload := &file.UploadFileReq{Filepath: zippath, Name: fmt.Sprintf("sdk_log_%s_%s_%s_%s_%s",
-		c.loginUserID, c.appFramework, constant.PlatformID2Name[int(c.platform)], version.Version, filepath.Base(zippath)), Cause: "sdklog", ContentType: "application/zip"}
-	resp, err := c.fileUploader.UploadFile(ctx, reqUpload, &progressConvert{ctx: ctx, p: progress})
-	if err != nil {
-		return err
-	}
-	ccontext.Info(ctx)
-	reqLog := &third.UploadLogsReq{
-		Platform:     c.platform,
-		AppFramework: c.appFramework,
-		Version:      version.Version,
-		FileURLs:     []*third.FileURL{{Filename: zippath, URL: resp.URL}},
-		Ex:           ex,
-	}
-	return api.UploadLogs.Execute(ctx, reqLog)
+	return c.uploadZipAndReport(ctx, logFilePath, files, "sdk_log", "sdklog", ex, cancelID, progress)
 }
 
 func checkLogPath(logPath string) bool {
@@ -154,39 +99,69 @@ func (c *Third) fileCopy(src, dst string) error {
 	return err
 }
 
-func readLastNLines(filename string, n int) ([]string, error) {
-	f, err := os.Open(filename)
+func writeLastNLines(ctx context.Context, filename string, outputPath string, n int) error {
+	src, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer f.Close()
-
-	lines := make([]string, n)
-	count := 0
-
-	scanner := bufio.NewScanner(f)
-	buf := make([]byte, buffer)
-	scanner.Buffer(buf, buffer)
-
-	for scanner.Scan() {
-		lines[count%n] = scanner.Text()
-		count++
+	defer src.Close()
+	info, err := src.Stat()
+	if err != nil {
+		return err
 	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	dst, err := os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
 	}
-
-	start := count - n
-	if start < 0 {
-		start = 0
+	defer dst.Close()
+	if n <= 0 || info.Size() == 0 {
+		return nil
 	}
-	result := make([]string, 0, n)
-	for i := start; i < count; i++ {
-		result = append(result, lines[i%n])
+	start, err := lastNLinesStart(ctx, src, info.Size(), n)
+	if err != nil {
+		return err
 	}
+	_, err = io.Copy(dst, &ctxReader{
+		ctx:    ctx,
+		reader: io.NewSectionReader(src, start, info.Size()-start),
+	})
+	return err
+}
 
-	return result, nil
+func lastNLinesStart(ctx context.Context, f *os.File, size int64, n int) (int64, error) {
+	const blockSize = 64 * 1024
+	start := int64(0)
+	offset := size
+	newlines := 0
+	buf := make([]byte, blockSize)
+	for offset > 0 {
+		select {
+		case <-ctx.Done():
+			return 0, context.Cause(ctx)
+		default:
+		}
+		readSize := int64(blockSize)
+		if offset < readSize {
+			readSize = offset
+		}
+		offset -= readSize
+		chunk := buf[:readSize]
+		if _, err := f.ReadAt(chunk, offset); err != nil && err != io.EOF {
+			return 0, err
+		}
+		for i := len(chunk) - 1; i >= 0; i-- {
+			if chunk[i] != '\n' {
+				continue
+			}
+			newlines++
+			if newlines == n {
+				start = offset + int64(i) + 1
+				offset = 0
+				break
+			}
+		}
+	}
+	return start, nil
 }
 
 func (c *Third) printLog(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {
