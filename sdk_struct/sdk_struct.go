@@ -241,6 +241,7 @@ type MsgStruct struct {
 	TypingElem       *TypingElem            `json:"typingElem,omitempty"`
 	AttachedInfoElem *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
 	MarkdownTextElem *MarkdownTextElem      `json:"markdownTextElem,omitempty"`
+	StreamElem       *StreamElem            `json:"streamElem,omitempty"`
 }
 
 type AtInfo struct {
@@ -256,7 +257,21 @@ type AttachedInfoElem struct {
 	IsEncryption      bool             `json:"isEncryption"`
 	InEncryptStatus   bool             `json:"inEncryptStatus"`
 	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
-	Progress *UploadProgress `json:"uploadProgress,omitempty"`
+	Progress     *UploadProgress `json:"uploadProgress,omitempty"`
+	LastModified *LastModified   `json:"lastModified,omitempty"`
+}
+
+type LastModified struct {
+	UserID        string `json:"userID"`
+	ModifiedTime  int64  `json:"modifiedTime"`
+	ModifiedCount int64  `json:"modifiedCount"`
+}
+
+type StreamElem struct {
+	Type    string   `json:"type"`
+	Content string   `json:"content"`
+	Packets []string `json:"packets"`
+	End     bool     `json:"end"`
 }
 
 type UploadProgress struct {
@@ -319,7 +334,8 @@ type IMConfig struct {
 	LogRemainCount      uint32 `json:"logRemainCount"`
 	// StopGoroutineOnBackground
 	// Whether to automatically stop goroutines in the background to prevent iOS watchdog issues
-	StopGoroutineOnBackground bool `json:"stopGoroutineOnBackground"`
+	StopGoroutineOnBackground bool   `json:"stopGoroutineOnBackground"`
+	ProxyURL                  string `json:"proxyURL,omitempty"`
 }
 
 type CmdNewMsgComeToConversation struct {

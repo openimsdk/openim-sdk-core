@@ -24,7 +24,6 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdk_params_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/sdkerrs"
-	"github.com/openimsdk/openim-sdk-core/v3/pkg/server_api_params"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
 
@@ -1017,43 +1016,11 @@ func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID
 	}
 }
 
-func (c *Conversation) SearchConversation(ctx context.Context, searchParam string) ([]*server_api_params.Conversation, error) {
-	// Check if search parameter is empty
+func (c *Conversation) SearchConversation(ctx context.Context, searchParam string) ([]*model_struct.LocalConversation, error) {
 	if searchParam == "" {
 		return nil, sdkerrs.ErrArgs.WrapMsg("search parameter cannot be empty")
 	}
-
-	// Perform the search in your database or data source
-	// This is a placeholder for the actual database call
-	conversations, err := c.db.SearchConversations(ctx, searchParam)
-	if err != nil {
-		// Handle any errors that occurred during the search
-		return nil, err
-	}
-	apiConversations := make([]*server_api_params.Conversation, len(conversations))
-	for i, localConv := range conversations {
-		// Create new server_api_params.Conversation and map fields from localConv
-		apiConv := &server_api_params.Conversation{
-			ConversationID:        localConv.ConversationID,
-			ConversationType:      localConv.ConversationType,
-			UserID:                localConv.UserID,
-			GroupID:               localConv.GroupID,
-			RecvMsgOpt:            localConv.RecvMsgOpt,
-			UnreadCount:           localConv.UnreadCount,
-			DraftTextTime:         localConv.DraftTextTime,
-			IsPinned:              localConv.IsPinned,
-			IsPrivateChat:         localConv.IsPrivateChat,
-			BurnDuration:          localConv.BurnDuration,
-			GroupAtType:           localConv.GroupAtType,
-			IsNotInGroup:          localConv.IsNotInGroup,
-			UpdateUnreadCountTime: localConv.UpdateUnreadCountTime,
-			AttachedInfo:          localConv.AttachedInfo,
-			Ex:                    localConv.Ex,
-		}
-		apiConversations[i] = apiConv
-	}
-	// Return the list of conversations
-	return apiConversations, nil
+	return c.db.SearchConversations(ctx, searchParam)
 }
 func (c *Conversation) GetInputStates(ctx context.Context, conversationID string, userID string) ([]int32, error) {
 	return c.typing.GetInputStates(conversationID, userID), nil

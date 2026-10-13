@@ -241,6 +241,10 @@ func (e *emptyAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "message", message)
 }
 
+func (e *emptyAdvancedMsgListener) OnMessageModified(message string) {
+	log.ZWarn(e.ctx, "AdvancedMsgListener is not implemented", nil, "message", message)
+}
+
 type emptyUserListener struct {
 	ctx context.Context
 }

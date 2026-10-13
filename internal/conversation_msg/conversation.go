@@ -93,6 +93,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 		sort.Sort(messageList)
 	}
 	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
+	c.handlerStreamTimeout(ctx, messageList)
 	messageListCallback.MessageList = messageList
 
 	return &messageListCallback, nil

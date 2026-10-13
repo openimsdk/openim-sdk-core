@@ -114,6 +114,8 @@ func (m *MsgListenerCallBak) OnRecvC2CReadReceipt(msgReceiptList string) {
 
 func (m *MsgListenerCallBak) OnMsgDeleted(s string) {}
 
+func (m *MsgListenerCallBak) OnMessageModified(message string) {}
+
 func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
 }
 

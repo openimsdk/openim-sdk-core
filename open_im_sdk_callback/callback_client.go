@@ -73,6 +73,7 @@ type OnAdvancedMsgListener interface {
 	OnNewRecvMessageRevoked(messageRevoked string)
 	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
+	OnMessageModified(message string)
 	OnRecvOnlineOnlyMessage(message string)
 }
 

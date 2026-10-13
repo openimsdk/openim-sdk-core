@@ -190,6 +190,10 @@ func PopulateMsgStructByContentType(msg *sdk_struct.MsgStruct) (err error) {
 		elem := sdk_struct.MarkdownTextElem{}
 		err = utils.JsonStringToStruct(msg.Content, &elem)
 		msg.MarkdownTextElem = &elem
+	case constant.Stream:
+		elem := sdk_struct.StreamElem{}
+		err = utils.JsonStringToStruct(msg.Content, &elem)
+		msg.StreamElem = &elem
 	default:
 		elem := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &elem)

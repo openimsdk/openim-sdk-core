@@ -69,6 +69,10 @@ func (c *Conversation) getAllConversationIDsFromServer(ctx context.Context) (*pb
 	return api.GetFullConversationIDs.Invoke(ctx, req)
 }
 
+func (c *Conversation) getStreamMsg(ctx context.Context, req *pbMsg.GetStreamMsgReq) (*pbMsg.GetStreamMsgResp, error) {
+	return api.GetStreamMsg.Invoke(ctx, req)
+}
+
 func (c *Conversation) getIncrementalConversationFromServer(ctx context.Context, version uint64, versionID string) (*pbConversation.GetIncrementalConversationResp, error) {
 	req := &pbConversation.GetIncrementalConversationReq{UserID: c.loginUserID, Version: version, VersionID: versionID}
 	return api.GetIncrementalConversation.Invoke(ctx, req)

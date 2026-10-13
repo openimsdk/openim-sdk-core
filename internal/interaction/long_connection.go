@@ -42,7 +42,7 @@ type LongConn interface {
 
 	// Dial tries to establish a connection.
 	// urlStr must include authentication arguments; requestHeader can control data compression.
-	Dial(urlStr string, requestHeader http.Header) (*http.Response, error)
+	Dial(urlStr string, req map[string]any) (*http.Response, error)
 
 	// IsNil checks whether the current long connection is nil.
 	IsNil() bool

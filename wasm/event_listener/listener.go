@@ -166,6 +166,10 @@ func (a AdvancedMsgCallback) OnMsgDeleted(message string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }
 
+func (a AdvancedMsgCallback) OnMessageModified(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
+}
+
 func (a AdvancedMsgCallback) OnRecvOnlineOnlyMessage(message string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }

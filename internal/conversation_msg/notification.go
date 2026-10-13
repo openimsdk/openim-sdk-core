@@ -168,6 +168,10 @@ func (c *Conversation) doNotification(ctx context.Context, msg *sdkws.MsgData) e
 		return c.doClearConversations(ctx, msg)
 	case constant.DeleteMsgsNotification:
 		return c.doDeleteMsgs(ctx, msg)
+	case constant.ModifyMessageNotification:
+		return c.doModifyMessage(ctx, msg)
+	case constant.StreamMsgNotification:
+		return c.doStreamMsgNotification(ctx, msg)
 	case constant.HasReadReceipt: // 2200
 		return c.doReadDrawing(ctx, msg)
 	}

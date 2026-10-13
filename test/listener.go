@@ -148,6 +148,10 @@ func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 }
 
+func (o *onAdvancedMsgListener) OnMessageModified(message string) {
+	log.ZInfo(o.ctx, "OnMessageModified", "message", message)
+}
+
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
 	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 }

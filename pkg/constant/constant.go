@@ -49,6 +49,7 @@ const (
 	MarkdownText                    = 118
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
+	Stream                          = 143
 
 	NotificationBegin = 1000
 
@@ -107,9 +108,11 @@ const (
 
 	RevokeNotification = 2101
 
-	DeleteMsgsNotification = 2102
+	DeleteMsgsNotification    = 2102
+	ModifyMessageNotification = 2103
 
-	HasReadReceipt = 2200
+	HasReadReceipt        = 2200
+	StreamMsgNotification = 2500
 
 	NotificationEnd = 5000
 	////////////////////////////////////////
