@@ -694,6 +694,12 @@ func (i *LocalChatLogs) MarkDeleteConversationAllMessages(ctx context.Context, c
 	return err
 }
 
+// CleanDuplicateInvalidMessages removes invalid duplicate messages of the session.
+func (i *LocalChatLogs) CleanDuplicateInvalidMessages(ctx context.Context, conversationID string) error {
+	_, err := exec.Exec(conversationID)
+	return err
+}
+
 // DeleteConversationMsgs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error {
 	_, err := exec.Exec(conversationID, utils.StructToJsonString(msgIDs))

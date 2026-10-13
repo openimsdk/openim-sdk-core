@@ -213,6 +213,78 @@ func (d *DataBase) DeleteConversationMsgsBySeqs(ctx context.Context, conversatio
 	return errs.WrapMsg(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq IN ?", seqs).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationMsgs failed")
 }
 
+func (d *DataBase) CleanDuplicateInvalidMessages(ctx context.Context, conversationID string) error {
+	if err := d.initChatLog(ctx, conversationID); err != nil {
+		log.ZWarn(ctx, "initChatLog err", err)
+		return err
+	}
+
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+
+	tableName := utils.GetTableName(conversationID)
+	err := d.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		zeroSendTimeResult := tx.Table(tableName).
+			Where("seq > ? AND send_time = ?", 0, 0).
+			Delete(&model_struct.LocalChatLog{})
+		if zeroSendTimeResult.Error != nil {
+			return errs.WrapMsg(zeroSendTimeResult.Error, "delete zero send_time messages failed")
+		}
+
+		invalidWithValidResult := tx.Exec(fmt.Sprintf(`
+DELETE FROM %s
+WHERE seq > ?
+  AND status >= ?
+  AND seq IN (
+    SELECT seq FROM %s WHERE seq > ? AND status < ? GROUP BY seq
+  )
+`, tableName, tableName), 0, constant.MsgStatusHasDeleted, 0, constant.MsgStatusHasDeleted)
+		if invalidWithValidResult.Error != nil {
+			return errs.WrapMsg(invalidWithValidResult.Error, "delete invalid messages with valid seq failed")
+		}
+
+		dedupeInvalidResult := tx.Exec(fmt.Sprintf(`
+WITH ranked AS (
+  SELECT
+    client_msg_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY seq
+      ORDER BY
+        send_time ASC,
+        client_msg_id ASC
+    ) AS row_num
+  FROM %s
+  WHERE seq > ?
+    AND status >= ?
+    AND seq NOT IN (
+      SELECT seq FROM %s WHERE seq > ? AND status < ? GROUP BY seq
+    )
+    AND seq IN (
+      SELECT seq FROM %s WHERE seq > ? AND status >= ? GROUP BY seq HAVING COUNT(*) > 1
+  )
+)
+DELETE FROM %s
+WHERE client_msg_id IN (
+  SELECT client_msg_id FROM ranked WHERE row_num > 1
+)
+`, tableName, tableName, tableName, tableName),
+			0, constant.MsgStatusHasDeleted,
+			0, constant.MsgStatusHasDeleted,
+			0, constant.MsgStatusHasDeleted)
+		if dedupeInvalidResult.Error != nil {
+			return errs.WrapMsg(dedupeInvalidResult.Error, "dedupe invalid messages by seq failed")
+		}
+
+		log.ZDebug(ctx, "CleanDuplicateInvalidMessages",
+			"conversationID", conversationID,
+			"zeroSendTimeRows", zeroSendTimeResult.RowsAffected,
+			"invalidWithValidRows", invalidWithValidResult.RowsAffected,
+			"dedupeInvalidRows", dedupeInvalidResult.RowsAffected)
+		return nil
+	})
+	return errs.WrapMsg(err, "CleanDuplicateInvalidMessages failed")
+}
+
 func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType []int, senderUserIDList []string, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
