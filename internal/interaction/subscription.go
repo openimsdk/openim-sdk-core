@@ -117,6 +117,7 @@ func (s *subscription) setUserState(changes []*sdkws.SubUserOnlineStatusElem) ma
 		} else {
 			if _, ok := s.sub[v.UserID]; ok {
 				done := make(chan struct{})
+				close(done)
 				s.load[v.UserID] = &subscriptionStatues{
 					done:   done,
 					err:    nil,
@@ -149,6 +150,7 @@ func (s *subscription) unsubscribe(userIDs []string) {
 func (s *subscription) getUserOnline(userIDs []string) (map[string][]int32, map[string]*subscriptionWait, []string, []string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	newSubscription := len(userIDs) > 0
 	if len(userIDs) == 0 {
 		userIDs = datautil.Keys(s.sub)
 	}
@@ -161,6 +163,9 @@ func (s *subscription) getUserOnline(userIDs []string) (map[string][]int32, map[
 			continue
 		}
 		tmp[userID] = struct{}{}
+		if newSubscription {
+			s.sub[userID] = struct{}{}
+		}
 		delete(s.unsub, userID)
 		if status, ok := s.load[userID]; ok {
 			select {
