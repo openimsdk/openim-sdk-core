@@ -334,7 +334,8 @@ type IMConfig struct {
 	LogRemainCount      uint32 `json:"logRemainCount"`
 	// StopGoroutineOnBackground
 	// Whether to automatically stop goroutines in the background to prevent iOS watchdog issues
-	StopGoroutineOnBackground bool `json:"stopGoroutineOnBackground"`
+	StopGoroutineOnBackground bool   `json:"stopGoroutineOnBackground"`
+	ProxyURL                  string `json:"proxyURL,omitempty"`
 }
 
 type CmdNewMsgComeToConversation struct {

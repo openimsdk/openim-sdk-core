@@ -21,11 +21,14 @@ jobs:
       EXCLUDE_FILES: ".md .txt .html .css .min.js .mdx"
 
     steps:
+      # This workflow only scans PR files as text and never executes checked-out code.
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0 
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
 
       - name: Search for Non-English comments in the entire repository
         run: |

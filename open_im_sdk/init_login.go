@@ -23,6 +23,7 @@ import (
 	"github.com/openimsdk/openim-sdk-core/v3/open_im_sdk_callback"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/ccontext"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/cliconf"
+	"github.com/openimsdk/openim-sdk-core/v3/pkg/network"
 	pbConstant "github.com/openimsdk/protocol/constant"
 
 	"github.com/openimsdk/openim-sdk-core/v3/sdk_struct"
@@ -68,8 +69,16 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.ZError(ctx, "ws is ws protocol, ws format is invalid", nil)
 		return false
 	}
+	if err := network.SetHTTPConfig(configArgs.ProxyURL); err != nil {
+		log.ZError(ctx, "set network proxy failed", err)
+		return false
+	}
 
-	log.ZInfo(ctx, "InitSDK info", "config", configArgs)
+	logConfig := configArgs
+	if logConfig.ProxyURL != "" {
+		logConfig.ProxyURL = "[redacted]"
+	}
+	log.ZInfo(ctx, "InitSDK info", "config", logConfig)
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
