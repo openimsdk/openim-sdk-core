@@ -33,7 +33,8 @@ import (
 )
 
 const (
-	batchSize = 200
+	batchSize         = 200
+	conversationOrder = "is_pinned DESC, MAX(latest_msg_send_time,draft_text_time) DESC, conversation_id ASC"
 )
 
 func (d *DataBase) GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error) {
@@ -48,7 +49,7 @@ func (d *DataBase) GetAllConversationListDB(ctx context.Context) ([]*model_struc
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var conversationList []*model_struct.LocalConversation
-	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Find(&conversationList).Error,
+	err := errs.WrapMsg(d.conn.WithContext(ctx).Where("latest_msg_send_time > 0").Order(conversationOrder).Find(&conversationList).Error,
 		"GetAllConversationList failed")
 	if err != nil {
 		return nil, err
@@ -101,7 +102,7 @@ func (d *DataBase) GetConversationListSplitDB(ctx context.Context, offset, count
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var conversationList []*model_struct.LocalConversation
-	return conversationList, errs.Wrap(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Offset(offset).Limit(count).Find(&conversationList).Error)
+	return conversationList, errs.Wrap(d.conn.WithContext(ctx).Where("latest_msg_send_time > 0").Order(conversationOrder).Offset(offset).Limit(count).Find(&conversationList).Error)
 }
 
 func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
