@@ -16,12 +16,19 @@ package conversation_msg
 
 import (
 	"context"
+	"time"
 
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/syncer"
 	pbConversation "github.com/openimsdk/protocol/conversation"
+	"github.com/openimsdk/tools/errs"
+	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
 )
+
+// fullSyncReconcileBatchSize 非空库全量对账时，每批从服务端拉取并比对的会话数。
+// 100/批的内存占用约 1-2MB，万级会话也不会触发 iOS jetsam。
+const fullSyncReconcileBatchSize = 100
 
 func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 	conversationSyncer := syncer.VersionSynchronizer[*model_struct.LocalConversation, *pbConversation.GetIncrementalConversationResp]{
@@ -63,18 +70,73 @@ func (c *Conversation) IncrSyncConversations(ctx context.Context) error {
 			}
 			if len(conversationIDList) == 0 {
 				return c.conversationSyncer.FullSync(ctx, c.loginUserID)
-			} else {
-				local, err := c.db.GetAllConversations(ctx)
+			}
+			// 非空库对账（中断恢复场景）。原实现一次性拉全部会话
+			// （GetAllConversations 协议无分页），万级会话账号会把 Go 堆撑到
+			// GB 级，iOS 触发 jetsam 杀进程；且同步版本号只在整轮成功后落库，
+			// 中断重启后必然再次落入本分支 → 死循环。
+			// 改为：拉服务端全部会话 ID（纯 ID 列表，轻量）→ 按
+			// fullSyncReconcileBatchSize 分批「服务端拉取 + 本地比对」，
+			// 每批处理完即释放，内存峰值恒定；本地已有数据只做增量比对，
+			// 中断重启后无需重拉全量 → 天然断点续传。
+			// 删除语义与原实现一致（skipDeletion=true，删除由增量通道处理）。
+			resp, err := c.getAllConversationIDsFromServer(ctx)
+			if err != nil {
+				return err
+			}
+			serverIDs := resp.ConversationIDs
+			localIDSet := make(map[string]struct{}, len(conversationIDList))
+			for _, id := range conversationIDList {
+				localIDSet[id] = struct{}{}
+			}
+			var missingNum int
+			for _, id := range serverIDs {
+				if _, ok := localIDSet[id]; !ok {
+					missingNum++
+				}
+			}
+			log.ZDebug(ctx, "full sync reconcile by ids", "serverNum", len(serverIDs),
+				"localNum", len(conversationIDList), "missingNum", missingNum)
+
+			reconcile := func(ids []string) error {
+				convResp, err := c.getConversationsByIDsFromServer(ctx, ids)
 				if err != nil {
 					return err
 				}
-				resp, err := c.getAllConversationListFromServer(ctx)
-				if err != nil {
-					return err
+				server := make([]*model_struct.LocalConversation, 0, len(convResp.Conversations))
+				for _, conv := range convResp.Conversations {
+					server = append(server, ServerConversationToLocal(conv))
 				}
-				server := datautil.Batch(ServerConversationToLocal, resp.Conversations)
+				local := make([]*model_struct.LocalConversation, 0, len(ids))
+				for _, id := range ids {
+					lc, err := c.db.GetConversation(ctx, id)
+					if err != nil {
+						// 本地缺失：跳过，交给 Sync 按缺失走 insert
+						if errs.Unwrap(err) == errs.ErrRecordNotFound {
+							continue
+						}
+						return err
+					}
+					local = append(local, lc)
+				}
 				return c.conversationSyncer.Sync(ctx, server, local, nil, true)
 			}
+
+			for start := 0; start < len(serverIDs); start += fullSyncReconcileBatchSize {
+				end := start + fullSyncReconcileBatchSize
+				if end > len(serverIDs) {
+					end = len(serverIDs)
+				}
+				batchStart := time.Now()
+				if err := reconcile(serverIDs[start:end]); err != nil {
+					return err
+				}
+				log.ZDebug(ctx, "full sync reconcile batch done",
+					"index", start/fullSyncReconcileBatchSize,
+					"size", end-start,
+					"duration", time.Since(batchStart).String())
+			}
+			return nil
 		},
 		FullID: func(ctx context.Context) ([]string, error) {
 			resp, err := c.getAllConversationIDsFromServer(ctx)
