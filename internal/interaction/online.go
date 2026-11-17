@@ -7,9 +7,6 @@ import (
 )
 
 func (c *LongConnMgr) subscribeUsersStatus(ctx context.Context, userIDs []string) ([]*userPb.OnlineStatus, error) {
-	if len(userIDs) == 0 {
-		return []*userPb.OnlineStatus{}, nil
-	}
 	res, err := c.GetUserOnlinePlatformIDs(ctx, userIDs)
 	if err != nil {
 		return nil, err
