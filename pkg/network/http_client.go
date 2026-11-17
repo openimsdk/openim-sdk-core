@@ -101,7 +101,7 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request.Header.Set("Accept-Encoding", "gzip")
 
 	// Send the request and receive the response.
-	response, err := apiClient.Do(request)
+	response, err := GetHTTPClient().Do(request)
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "network error")
 		return sdkerrs.ErrNetwork.WrapMsg("ApiPost http.Client.Do failed " + err.Error())
