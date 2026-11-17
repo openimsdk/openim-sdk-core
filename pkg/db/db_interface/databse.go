@@ -74,6 +74,7 @@ type MessageModel interface {
 	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error
 	DeleteConversationAllMessages(ctx context.Context, conversationID string) error
 	MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error
+	CleanDuplicateInvalidMessages(ctx context.Context, conversationID string) error
 
 	BatchInsertConversationUnreadMessageList(ctx context.Context, messageList []*model_struct.LocalConversationUnreadMessage) error
 	DeleteConversationUnreadMessageList(ctx context.Context, conversationID string, sendTime int64) int64

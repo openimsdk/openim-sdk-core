@@ -3,7 +3,11 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/jinzhu/copier"
+	"github.com/patrickmn/go-cache"
+
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/constant"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/db/model_struct"
 	"github.com/openimsdk/openim-sdk-core/v3/pkg/utils"
@@ -13,8 +17,6 @@ import (
 	"github.com/openimsdk/tools/errs"
 	"github.com/openimsdk/tools/log"
 	"github.com/openimsdk/tools/utils/datautil"
-	"github.com/patrickmn/go-cache"
-	"time"
 )
 
 const (
@@ -129,9 +131,8 @@ func (e *typing) sendMsg(ctx context.Context, conversation *model_struct.LocalCo
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	//var sendMsgResp sdkws.UserSendMsgResp
-	//err = e.conv.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
-	err = e.conv.sendMsg(ctx, &s, &wsMsgData, nil)
+	var sendMsgResp sdkws.UserSendMsgResp
+	err = e.conv.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
 	if err != nil {
 		log.ZError(ctx, "typing msg to server failed", err, "message", s)
 		return err
@@ -153,12 +154,7 @@ func (e *typing) getStateKey(conversationID string, userID string, platformID in
 	return string(data)
 }
 
-func (e *typing) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
-	var enteringElem sdk_struct.TypingElem
-	if err := json.Unmarshal(msg.Content, &enteringElem); err != nil {
-		log.ZError(ctx, "typing onNewMsg Unmarshal failed", err, "message", msg)
-		return
-	}
+func (e *typing) onNewMsg(ctx context.Context, msg *sdk_struct.MsgStruct) {
 	if msg.SendID == e.conv.loginUserID {
 		return
 	}
@@ -175,7 +171,7 @@ func (e *typing) onNewMsg(ctx context.Context, msg *sdkws.MsgData) {
 	}
 	conversationID := e.conv.getConversationIDBySessionType(sourceID, int(msg.SessionType))
 	key := e.getStateKey(conversationID, msg.SendID, msg.SenderPlatformID)
-	if enteringElem.MsgTips == "yes" {
+	if msg.TypingElem.MsgTips == "yes" {
 		d := time.Duration(expirationTimestamp-now) * time.Millisecond
 		if v, t, ok := e.state.GetWithExpiration(key); ok {
 			if t.UnixMilli() >= expirationTimestamp {
