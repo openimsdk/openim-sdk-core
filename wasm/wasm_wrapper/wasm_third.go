@@ -41,6 +41,10 @@ func (w *WrapperThird) UploadFile(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewUploadFileCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetUuid(&args)
 	return event_listener.NewCaller(UploadFile, callback, &args).AsyncCallWithCallback()
 }
+func (w *WrapperThird) CancelUpload(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.CancelUpload, callback, &args).AsyncCallWithCallback()
+}
 
 var _ open_im_sdk_callback.Base = (*TempBase)(nil)
 

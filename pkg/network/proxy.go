@@ -15,7 +15,7 @@ import (
 
 var clientMu sync.RWMutex
 
-func GetHTTPClient() *http.Client { clientMu.RLock(); defer clientMu.RUnlock(); return apiClient }
+func GetHTTPClient() *http.Client { return GetHttpClient() }
 
 func SetHTTPConfig(proxyURL string) error {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
@@ -47,7 +47,7 @@ func SetHTTPConfig(proxyURL string) error {
 		}
 	}
 	clientMu.Lock()
-	apiClient = &http.Client{Timeout: apiClient.Timeout, Transport: transport}
+	setHTTPTransport(transport)
 	clientMu.Unlock()
 	websocket.DefaultDialer = &dialer
 	return nil

@@ -47,6 +47,7 @@ var (
 	// Group-related errors
 	ErrGroupType = errs.NewCodeError(GroupTypeErr, "Invalid group type")
 
-	ErrLoginOut    = errs.NewCodeError(LoginOutError, "User has logged out")
-	ErrLoginRepeat = errs.NewCodeError(LoginRepeatError, "User has logged in repeatedly")
+	ErrLoginOut            = errs.NewCodeError(LoginOutError, "User has logged out")
+	ErrLoginRepeat         = errs.NewCodeError(LoginRepeatError, "User has logged in repeatedly")
+	ErrCancelUploadingFile = errs.NewCodeError(CancelUploadingFile, "actively canceled the upload task")
 )

@@ -24,8 +24,12 @@ func (c *Third) SetAppBadge(ctx context.Context, appUnreadCount int32) error {
 	})
 }
 
-func (c *Third) UploadLogs(ctx context.Context, line int, ex string, progress Progress) (err error) {
-	return c.uploadLogs(ctx, line, ex, progress)
+func (c *Third) UploadLogs(ctx context.Context, line int, cancelID, ex string, progress Progress) (err error) {
+	return c.uploadLogs(ctx, line, cancelID, ex, progress)
+}
+
+func (c *Third) CancelUpload(ctx context.Context, cancelID string) int {
+	return c.fileUploader.CancelUpload(ctx, cancelID)
 }
 
 func (c *Third) Log(ctx context.Context, logLevel int, file string, line int, msg, err string, keysAndValues []any) {

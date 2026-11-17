@@ -29,7 +29,11 @@ func SetAppBadge(callback open_im_sdk_callback.Base, operationID string, appUnre
 }
 
 func UploadLogs(callback open_im_sdk_callback.Base, operationID string, line int, ex string, progress open_im_sdk_callback.UploadLogProgress) {
-	call(callback, operationID, IMUserContext.Third().UploadLogs, line, ex, progress)
+	call(callback, operationID, IMUserContext.Third().UploadLogs, line, operationID, ex, progress)
+}
+
+func CancelUpload(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, IMUserContext.Third().CancelUpload, operationID)
 }
 
 func Logs(callback open_im_sdk_callback.Base, operationID string, logLevel int, file string, line int, msgs string, err string, keyAndValue string) {
