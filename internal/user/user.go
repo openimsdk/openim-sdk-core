@@ -83,7 +83,11 @@ func (u *User) SetListener(listener func() open_im_sdk_callback.OnUserListener) 
 func (u *User) initSyncer() {
 	u.userSyncer = syncer.New[*model_struct.LocalUser, syncer.NoResp, string](
 		func(ctx context.Context, value *model_struct.LocalUser) error {
-			return u.InsertLoginUser(ctx, value)
+			if err := u.InsertLoginUser(ctx, value); err != nil {
+				return err
+			}
+			u.UserCache().Delete(value.UserID)
+			return nil
 		},
 		func(ctx context.Context, value *model_struct.LocalUser) error {
 			return fmt.Errorf("not support delete user %s", value.UserID)
@@ -98,6 +102,8 @@ func (u *User) initSyncer() {
 		nil,
 		func(ctx context.Context, state int, server, local *model_struct.LocalUser) error {
 			switch state {
+			case syncer.Insert:
+				u.listener().OnSelfInfoUpdated(utils.StructToJsonString(server))
 			case syncer.Update:
 				u.listener().OnSelfInfoUpdated(utils.StructToJsonString(server))
 				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
