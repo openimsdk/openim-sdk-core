@@ -377,6 +377,7 @@ func (u *UserContext) login(ctx context.Context, userID, token string) error {
 
 	u.info.UserID = userID
 	u.info.Token = token
+	u.loginUserID = userID
 
 	if err := u.initialize(ctx, userID); err != nil {
 		return err
